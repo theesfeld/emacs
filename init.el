@@ -1371,7 +1371,7 @@
 ;;   :custom
 ;;   (smtpmail-smtp-service 587)
 ;;   (smtpmail-smtp-server "smtp.office365.com")
-;;   (setq user-mail-address "tj.theesfeld@citywide.io")
+;;   (setq user-mail-address "my@email.com")
 ;;   (setq smtpmail-auth-credentials
 ;;       '(("jcubic.<server>" 465 "jcubic@<server>" "<password>")))
 ;;   (setq smtpmail-stream-type 'starttls)
