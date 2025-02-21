@@ -167,7 +167,7 @@
   (load-theme 'dracula t))
 
 (set-face-attribute 'default nil :height 120)
-(set-face-attribute 'variable-pitch nil :height 140)
+(set-face-attribute 'variable-pitch nil :height 130)
 
 (set-face-attribute 'font-lock-comment-face nil
                     :slant 'italic
@@ -562,8 +562,9 @@
 (use-package org-super-agenda
   :after org-agenda
   :init
-  (org-super-agenda-mode 1)
-  :bind (("C-c g" . my/org-roam-refresh-agenda-list))
+  (org-super-agenda-mode)
+  :bind (("C-c g" . my/org-roam-refresh-agenda-list)
+         ("C-c a" . org-agenda))
   :config
   (setq org-super-agenda-groups
         '((:name "Personal Scheduled"
