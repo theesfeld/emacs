@@ -447,7 +447,6 @@
   ;; disable on slow TRAMP connections with diff-hl-disable-on-remote to t
   )
 
-
 (use-package which-key
   :config
   (setq which-key-idle-delay 0.1)
@@ -1310,6 +1309,133 @@
 (use-package elisp-demos
   :config
   (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                               email/mu4e                                  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; (use-package mu4e
+;;   :ensure nil
+;;   :ensure-system-package mu
+;;   :load-path "/usr/share/emacs/site-lisp/mu4e"
+;;   :bind (("C-c M" . mu4e)
+;;          :map mu4e-view-mode-map
+;;          ("n"         . next-line)
+;;          ("p"         . previous-line)
+;;          ("<tab>"     . org-next-link)
+;;          ("<backtab>" . org-previous-link)
+;;          ("<RET>"     . mu4e~view-browse-url-from-binding))
+;;   :hook (mu4e-compose-mode
+;;          . (lambda ()
+;;              (flyspell-mode)
+;;              (auto-fill-mode -1)
+;;              (display-line-numbers-mode -1)))
+;;   :custom
+;;   (mail-user-agent 'mu4e-user-agent)
+;;   (mu4e-get-mail-command "mbsync -c ~/.mbsyncrc -a")
+;;   (mu4e-update-interval 600)
+;;   (mu4e-split-view nil)
+;;   (mu4e-confirm-quit nil)
+;;   (mu4e-use-fancy-chars t)
+;;   (mu4e-view-show-images t)
+;;   (mu4e-view-prefer-html t)
+;;   (mu4e-view-show-addresses t)
+;;   (mu4e-hide-index-messages t)
+;;   (mu4e-attachment-dir "~/Downloads")
+;;   (mu4e-compose-dont-reply-to-self t)
+;;   (mu4e-change-filenames-when-moving t)
+;;   (mu4e-sent-messages-behavior 'delete)
+;;   (mu4e-index-update-error-warning nil)
+;;   (mu4e-html2text-command "w3m -dump -I utf-8 -O utf-8 -T text/html"))
+
+;; (use-package mu4e-headers
+;;   :ensure nil
+;;   :hook (mu4e-headers-mode . (lambda () (eldoc-mode -1)))
+;;   :custom
+;;   (mu4e-headers-auto-update t)
+;;   (mu4e-headers-fields `((:human-date . 12)
+;;                          (:flags      .  6)
+;;                          (:from       . 22)
+;;                          (:subject    . ,(- (window-body-width) 50))))
+;;   :config
+;;   (setq mu4e-headers-attach-mark '("a" . "📎")))
+
+;; (use-package message
+;;   :ensure nil
+;;   :custom
+;;   (message-kill-buffer-on-exit t)
+;;   (message-send-mail-function 'smtpmail-send-it))
+
+;; (use-package smtpmail
+;;   :ensure nil
+;;   :custom
+;;   (smtpmail-smtp-service 587)
+;;   (smtpmail-smtp-server "smtp.office365.com")
+;;   (setq user-mail-address "tj.theesfeld@citywide.io")
+;;   (setq smtpmail-auth-credentials
+;;       '(("jcubic.<server>" 465 "jcubic@<server>" "<password>")))
+;;   (setq smtpmail-stream-type 'starttls)
+;;   (setq smtpmail-debug-info t)
+
+;;   )
+
+;; (use-package org-mime
+;;   :defer t
+;;   :config
+;;   (setq org-mime-export-options '(:section-numbers nil
+;;                                   :with-author nil
+;;                                   :with-toc nil)))
+
+;; (use-package mu4e-context
+;;   :ensure nil
+;;   :custom
+;;   (mu4e-context-policy 'pick-first)
+;;   (mu4e-compose-context-policy 'always-ask)
+;;   :config
+;;   (setq mu4e-contexts
+;;         (list
+;;          (make-mu4e-context
+;;           ;; Personal context
+;;           :name "personal"
+;;           :enter-func (lambda () (mu4e-message "Entering personal context"))
+;;           :match-func (lambda (msg)
+;;                         (when msg
+;;                           (mu4e-message-contact-field-matches
+;;                            msg '(:from :to :cc :bcc) "zoliky@gmail.com")))
+;;           :vars '((user-mail-address  . "zoliky@gmail.com")
+;;                   (user-full-name     . "Zoltan Kiraly")
+;;                   (mu4e-sent-folder   . "/gmail-zoliky/[Gmail].Sent Mail")
+;;                   (mu4e-drafts-folder . "/gmail-zoliky/[Gmail].Drafts")
+;;                   (mu4e-trash-folder  . "/gmail-zoliky/[Gmail].Trash")
+;;                   (smtpmail-queue-dir . "~/Maildir/gmail-zoliky/queue/cur")
+;;                   (smtpmail-smtp-user . "zoliky")
+;;                   (mu4e-maildir-shortcuts
+;;                    . ((:maildir "/gmail-zoliky/INBOX"             :key ?i)
+;;                       (:maildir "/gmail-zoliky/[Gmail].Starred"   :key ?r)
+;;                       (:maildir "/gmail-zoliky/[Gmail].Sent Mail" :key ?s)
+;;                       (:maildir "/gmail-zoliky/[Gmail].Drafts"    :key ?d)
+;;                       (:maildir "/gmail-zoliky/[Gmail].Trash"     :key ?t)))))
+;;          (make-mu4e-context
+;;           ;; Work context
+;;           :name "work"
+;;           :enter-func (lambda () (mu4e-message "Entering work context"))
+;;           :match-func (lambda (msg)
+;;                         (when msg
+;;                           (mu4e-message-contact-field-matches
+;;                            msg '(:from :to :cc :bcc) "zolikydev@gmail.com")))
+;;           :vars '((user-mail-address  . "zolikydev@gmail.com")
+;;                   (user-full-name     . "Zoltan Kiraly")
+;;                   (mu4e-sent-folder   . "/gmail-zolikydev/[Gmail].Sent Mail")
+;;                   (mu4e-drafts-folder . "/gmail-zolikydev/[Gmail].Drafts")
+;;                   (mu4e-trash-folder  . "/gmail-zolikydev/[Gmail].Trash")
+;;                   (smtpmail-queue-dir . "~/Maildir/gmail-zolikydev/queue/cur")
+;;                   (smtpmail-smtp-user . "zolikydev")
+;;                   (mu4e-maildir-shortcuts
+;;                    . ((:maildir "/gmail-zolikydev/INBOX"             :key ?i)
+;;                       (:maildir "/gmail-zolikydev/[Gmail].Starred"   :key ?r)
+;;                       (:maildir "/gmail-zolikydev/[Gmail].Sent Mail" :key ?s)
+;;                       (:maildir "/gmail-zolikydev/[Gmail].Drafts"    :key ?d)
+;;                       (:maildir "/gmail-zolikydev/[Gmail].Trash"     :key ?t))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
