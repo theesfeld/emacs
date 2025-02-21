@@ -1,5 +1,6 @@
 ;;; package --- summary
 ;;; commentary:
+;;; code:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Early Initial Settings                       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -56,11 +57,10 @@
       password-cache-expiry nil
       auth-source-cache-expiry nil
       org-directory "~/.org/"
-      save-place-mode 1
       gc-cons-percentage 0.6
       ;; Visual ellipsis for truncated lines:
       truncate-string-ellipsis "…"
-      scroll-margin 2
+      scroll-margin 1
       garbage-collection-messages nil)
 
 (require 'auth-source)
@@ -85,6 +85,31 @@
 ;;                             Global Emacs Settings                        ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; save to home directory by default
+(setq-default default-directory '~)
+
+;; (much) bigger kill ring
+(setq-default kill-ring-max 5000)
+
+;; smart tab behavior - indent or complete
+(setq tab-always-indent 'complete)
+
+;; utf-8
+(prefer-coding-system 'utf-8)
+(set-default-coding-systems 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+(set-language-environment "UTF-8")
+
+;; save pointer history
+(use-package saveplace
+  :straight t
+  :ensure nil  ;; Emacs built-in
+  :init
+  (save-place-mode)
+  :config
+  (setq save-place-file (expand-file-name ".saveplace" user-emacs-directory)))
+
 ;; Use y/n instead of yes/no
 (fset 'yes-or-no-p 'y-or-n-p)
 
@@ -101,6 +126,20 @@
 
 ;; Pixel-precise scrolling
 (pixel-scroll-precision-mode 1)
+(setq scroll-conservatively 100000
+      scroll-preserve-screen-position 1)
+
+;; mode line settings
+(line-number-mode t)
+(column-number-mode t)
+(size-indication-mode t)
+
+;; better diff coloring
+(eval-after-load 'diff-mode
+  '(progn
+     (set-face-foreground 'diff-added "green4")
+     (set-face-foreground 'diff-removed "red3")))
+
 
 ;; Enable auto-revert of changed files
 (global-auto-revert-mode 1)
@@ -144,6 +183,7 @@
       savehist-additional-variables
       '(kill-ring search-ring regexp-search-ring))
 (savehist-mode 1)
+(setq save-silently t)
 
 ;; Keep an eye on undone changes
 (setq undo-limit 80000000)
@@ -156,6 +196,17 @@
 ;; Replacing kill-buffer key
 (global-set-key (kbd "C-x k") 'kill-current-buffer)
 (global-set-key (kbd "C-x K") 'kill-buffer)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                    vundo                                  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package vundo
+  :straight t
+  :bind
+  ("C-x u" . vundo)
+    :config
+    (setq vundo-glyph-alist vundo-unicode-symbols))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Visual Enhancements                        ;;
@@ -388,6 +439,15 @@
 ;;                              Editing Helpers                              ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; show uncommitted changes in the gutter
+;; https://github.com/dgutov/diff-hl
+(use-package diff-hl
+  :hook (magit-post-refresh . diff-hl-magit-post-refresh)
+  :config (global-diff-hl-mode +1)
+  ;; disable on slow TRAMP connections with diff-hl-disable-on-remote to t
+  )
+
+
 (use-package which-key
   :config
   (setq which-key-idle-delay 0.1)
@@ -395,6 +455,8 @@
 
 (use-package avy
   :bind (("M-j" . avy-goto-char-timer))
+  :init
+  (avy-setup-default)
   :config
   (defun avy-action-exchange (pt)
     "Exchange sexp at PT with the one at point."
@@ -441,8 +503,24 @@
 ;;                                   FlySpell                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(setq ispell-program-name "aspell"
-      ispell-silently-savep t)
+(use-package flyspell
+  ;; (prog-mode . flyspell-prog-mode) is too noisy, too many false positives
+  :hook ((text-mode . flyspell-mode)
+         (org-mode  . flyspell-mode))
+  :init
+  (cond
+   ((executable-find "aspell")
+    (setq ispell-program-name "aspell"
+          ispell-extra-args '("--camel-case")))
+   ((executable-find "hunspell")
+    (setq ispell-program-name "hunspell"))
+   (t
+    (setq ispell-program-name nil)))
+  :custom
+  (flyspell-default-dictionary "american"))
+
+;;(setq ispell-program-name "aspell"
+;;      ispell-silently-savep t)
 
 (use-package flycheck-aspell :defer t)
 
@@ -831,6 +909,8 @@
 (use-package magit :defer t)
 (use-package forge :defer t)
 
+(keymap-global-set "C-c G"  'magit)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                      eshell                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1042,11 +1122,14 @@
 ;; or set them up manually. Once installed, these new modes provide
 ;; improved syntax highlighting and parsing features for many languages.
 
+;; folding
 (when (boundp 'treesit-language-source-alist)  ;; Emacs 29+ check
   ;; Optional package for automatically installing & configuring grammars:
   (use-package treesit-auto
     :straight t
     :config
+      (setq treesit-auto-install 'prompt)
+  (treesit-auto-add-to-auto-mode-alist 'all)
     (global-treesit-auto-mode)))
 
 ;; If you prefer manual control over which modes switch to Tree-sitter:
@@ -1060,7 +1143,7 @@
         (json-mode       . json-ts-mode)
         (css-mode        . css-ts-mode)
         (sh-mode         . bash-ts-mode)
-        ;(org-mode        . org-ts-mode)
+        (org-mode        . org-ts-mode)
         (rust-mode       . rust-ts-mode)
         ;; Add others as grammars become available
         ))
@@ -1084,6 +1167,22 @@
 (global-so-long-mode 1)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                 dired                                     ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package dired-preview
+  :straight t
+  :init
+  (dired-preview-global-mode 1))
+
+(use-package dired-git-info
+  :straight t
+  :config
+  (setq dgi-auto-hide-details-p nil)
+  (with-eval-after-load 'dired
+  (define-key dired-mode-map ")" 'dired-git-info-mode)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                           Electric-quote-mode                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Built into Emacs 29+, `electric-quote-mode` automatically transforms
@@ -1103,6 +1202,28 @@
 
 (setq electric-quote-context-sensitive t)
 (electric-quote-mode 1)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                           calibre / nov.el                                ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package calibredb
+  :straight t
+  :defer t
+  :config
+  (setq calibredb-format-nerd-icons t)
+  (setq calibredb-format-character-icons t)
+  (setq calibredb-root-dir "~/.calibre-library")
+  (setq calibredb-db-dir (expand-file-name "metadata.db" calibredb-root-dir))
+  (setq calibredb-library-alist '(("~/.calibre-library" (name . "Calibre")))))
+
+(use-package nov
+  :straight t
+  :defer t
+  :config
+  (setq nov-unzip-program (executable-find "bsdtar")
+      nov-unzip-args '("-xC" directory "-f" filename))
+  (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                Treemacs Setup
