@@ -9,7 +9,8 @@
 (setq gc-cons-threshold most-positive-fixnum)
 (add-hook 'emacs-startup-hook
           (lambda ()
-            (setq gc-cons-threshold 8000000))) ;; 800k is a typical default.
+            (setq gc-cons-threshold 67108864
+                  gc-cons-percentage 0.1)))
 
 ;; Inhibit startup screen.
 (setq inhibit-startup-message t)
@@ -40,7 +41,8 @@
   (load bootstrap-file nil 'nomessage))
 
 (straight-use-package 'use-package)
-(setq straight-use-package-by-default t)
+(setq straight-use-package-by-default t
+      use-package-always-ensure nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                           Basic Emacs Information                        ;;
@@ -64,7 +66,7 @@
       garbage-collection-messages nil)
 
 (require 'auth-source)
-(set-time-zone-rule "America/New_York")
+(setenv "TZ" "America/New_York")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Shell Environment                          ;;
@@ -157,6 +159,7 @@
 ;; Indentation
 (setq-default indent-tabs-mode nil)  ;; Use spaces instead of tabs
 (setq tab-width 2)
+(setq standard-indent 2)
 
 ;; Tidy up whitespace on save
 (add-hook 'before-save-hook #'whitespace-cleanup)
@@ -666,6 +669,7 @@
   :demand t
   :custom
   (org-roam-directory (concat org-directory "/roam"))
+  (setq org-roam-db-location (concat org-roam-directory "org-roam.db"))
   :bind (("C-c n f" . org-roam-node-find)
          ("M-o"     . ugt-org-roam-node-find)
          ("M-O"     . ugt-org-roam-node-find-document-nodes)
@@ -1288,12 +1292,28 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package yasnippet
+  :init
+  ;; Enable globally at startup
+  (yas-global-mode 1)
+  :custom
+  ;; Explicitly set snippet directories
+  (yas-snippet-dirs
+   (list (expand-file-name "snippets/" user-emacs-directory)  ;; Personal snippets
+         (expand-file-name "straight/repos/yasnippet-snippets/snippets/" user-emacs-directory)))  ;; Pre-built snippets
+  ;; Optional: Show snippet suggestions in completion frameworks like Corfu
+  (yas-prompt-functions '(yas-completing-prompt yas-ido-prompt yas-no-prompt))
   :config
-  (yas-global-mode 1))
+  ;; Reload snippets after configuration to ensure they're picked up
+  (yas-reload-all)
+  ;; Optional: Bind a key to insert snippets manually
+  :bind (:map yas-minor-mode-map
+              ("C-c y" . yas-insert-snippet)))
 
 (use-package yasnippet-snippets
-  :after yasnippet)
-
+  :after yasnippet
+  :config
+  ;; Ensure snippets are loaded when this package is loaded
+  (yas-reload-all))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                elisp coding                               ;;
