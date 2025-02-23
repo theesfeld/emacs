@@ -78,6 +78,14 @@
 (add-hook 'after-save-hook #'my-auto-commit-init-el)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                  sqlite3                                  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package sqlite3
+  :straight t
+  :defer t)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                           Basic Emacs Information                        ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1254,6 +1262,15 @@
 ;;                             Elfeed + Dashboard                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(use-package elfeed-tube
+  :straight (elfeed-tube :type git :host github :repo "karthink/elfeed-tube")
+  :after elfeed
+  :config
+  (elfeed-tube-setup)
+  :bind (:map elfeed-show-mode-map
+              ("v" . elfeed-tube-mpv)  ;; Play video in mpv
+              ("f" . elfeed-tube-mpv-follow-mode)))  ;; Follow mode for live control
+
 (use-package elfeed
   :straight t
   :defer t
@@ -1264,7 +1281,8 @@
   :bind (:map elfeed-search-mode-map
               ("q" . my-elfeed-quit-and-stop-timer)  ;; Custom quit to stop timer
               :map elfeed-show-mode-map
-              ("RET" . shr-browse-url))
+              ("RET" . shr-browse-url)
+              ("v"   . elfeed-tube-mpv))
   :init
   ;; Timer variable for auto-update
   (defvar my-elfeed-update-timer nil
@@ -1671,103 +1689,98 @@
 ;; (setq user-full-name "TJ Theesfeld")
 ;; (setq user-mail-address "tj.theesfeld@citywide.io")
 
-;; ;; Gnus select methods
+;; ;; OAuth2 Configuration for Outlook 365
+;; (setq outlook365-client-id "08162f7c-0fd2-4200-a84a-f25a4db0b584"  ; Thunderbird default
+;;       outlook365-client-secret "TxRBilcHdC6WGBee]fs?QR:SJ8nI[g82"  ; Thunderbird default
+;;       oauth2-token-file "~/.config/emacs/gnus/oauth2-tokens.el")
+
+;; (defun my-generate-state ()
+;;   "Generate a random state string for OAuth2."
+;;   (let ((chars "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+;;         (len 16))
+;;     (apply 'string
+;;            (loop repeat len
+;;                  collect (aref chars (random (length chars)))))))
+
+;; (defun my-outlook365-get-auth-url ()
+;;   "Generate and return the OAuth2 authorization URL for Outlook 365 without opening a browser."
+;;   (message "Copy and paste this URL into your browser to authenticate (check *Messages* for URL):")
+;;   (let* ((state (my-generate-state))
+;;          (params `(("client_id" . ,outlook365-client-id)
+;;                    ("response_type" . "code")
+;;                    ("redirect_uri" . "urn:ietf:wg:oauth:2.0:oob")
+;;                    ("scope" . "https://outlook.office365.com/.default")
+;;                    ("state" . ,state)))
+;;          (url (concat "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
+;;                       "?" (oauth2-url-encode-params params))))
+;;     (message url)  ; Display the URL in the minibuffer and *Messages*
+;;     url))
+
+;; (defun my-outlook365-oauth2-token ()
+;;   "Fetch or refresh OAuth2 token for Outlook 365 manually."
+;;   (message "Fetching OAuth2 token for Outlook 365...")
+;;   (condition-case err
+;;       (let* ((auth-url (my-outlook365-get-auth-url))
+;;              (code (read-string "Enter the authorization code from the browser: ")))
+;;         (let ((token (oauth2-exchange-code-for-token
+;;                       "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+;;                       code
+;;                       "urn:ietf:wg:oauth:2.0:oob"  ; Redirect URI
+;;                       outlook365-client-id
+;;                       outlook365-client-secret
+;;                       "https://outlook.office365.com/.default")))
+;;           (if (plist-get token :access-token)
+;;               (progn
+;;                 (message "Token fetched successfully: %s" (plist-get token :access-token))
+;;                 (oauth2-store-token token oauth2-token-file)
+;;                 (base64-encode-string
+;;                  (format "user=%s\001auth=Bearer %s\001\001"
+;;                          user-mail-address
+;;                          (plist-get token :access-token))))
+;;             (message "Failed to fetch OAuth2 token: No access token in response!")
+;;             nil)))
+;;     (error
+;;      (message "OAuth2 error: %S" err)
+;;      nil)))
+
+;; ;; Gnus select methods (force XOAUTH2 with maximum debugging and strict settings)
 ;; (setq gnus-select-method '(nnnil ""))
 ;; (setq gnus-secondary-select-methods
 ;;       '((nnimap "outlook365"
 ;;                 (nnimap-address "outlook.office365.com")
 ;;                 (nnimap-server-port 993)
 ;;                 (nnimap-stream ssl)
-;;                 (nnimap-authenticator xoauth2)  ; Use xoauth2 explicitly
-;;                 (nnimap-authinfo-file "~/.authinfo.gpg" nil)  ; Disable authinfo
+;;                 (nnimap-authenticator xoauth2)
+;;                 (nnimap-authinfo-file nil)  ; Explicitly disable authinfo file
+;;                 (nnimap-use-authinfo nil)  ; Prevent fallback to authinfo
+;;                 (nnimap-force-xoauth2 t)  ; Force XOAUTH2 (if supported)
+;;                 (nnimap-authinfo (lambda (server)
+;;                                    (message "Starting XOAUTH2 authentication for %s..." server)
+;;                                    (message "Checking auth-sources: %S" auth-sources)  ; Debug auth-sources
+;;                                    (message "Authinfo file: %S" (nnimap-authinfo-file server))
+;;                                    (let ((token (my-outlook365-oauth2-token)))
+;;                                      (if token
+;;                                          (progn
+;;                                            (message "XOAUTH2 token generated successfully: %s" (substring token 0 10))
+;;                                            token)
+;;                                        (progn
+;;                                          (message "XOAUTH2 token generation failed; forcing retry...")
+;;                                          (error "XOAUTH2 token generation failed; please retry"))))))  ; Force retry
 ;;                 (nnimap-expunge t))
-;;         ;; (nnimap "proton-samhain"
-;;         ;;         (nnimap-address "mail.protonmail.com")
-;;         ;;         (nnimap-server-port 993)
-;;         ;;         (nnimap-stream ssl)
-;;         ;;         (nnimap-authinfo-file "~/.authinfo.gpg"))
-;;         ;; (nnimap "proton-theesfeld"
-;;         ;;         (nnimap-address "mail.protonmail.com")
-;;         ;;         (nnimap-server-port 993)
-;;         ;;         (nnimap-stream ssl)
-;;         ;;         (nnimap-authinfo-file "~/.authinfo.gpg"))
-;;         ;; (nnimap "gmail"
-;;         ;;         (nnimap-address "imap.gmail.com")
-;;         ;;         (nnimap-server-port 993)
-;;         ;;         (nnimap-stream ssl)
-;;         ;;         (nnimap-authenticator xoauth2)
-;;         ;;         (nnimap-authinfo-file "~/.authinfo.gpg" nil))
 ;;         (nnrss "feeds"
 ;;                (nnrss-file "~/.config/emacs/gnus/rss-feeds.el"))))
 
-;; ;; SMTP Configuration
+;; ;; SMTP Configuration for Outlook 365
 ;; (setq smtpmail-smtp-user user-mail-address)
-;; (setq smtpmail-stream-type 'ssl)
+;; (setq smtpmail-smtp-server "smtp.office365.com")
+;; (setq smtpmail-smtp-service 587)
+;; (setq smtpmail-stream-type 'starttls)
 ;; (setq send-mail-function 'smtpmail-send-it)
 ;; (setq message-send-mail-function 'smtpmail-send-it)
-;; (setq smtpmail-smtp-service 587)
-;; (defvar my-smtp-servers
-;;   '(("tj.theesfeld@citywide.io" . ("smtp.office365.com" 587))
-;;     ("grim@samhain.su" . ("smtp.protonmail.com" 465))
-;;     ("william@theesfeld.net" . ("smtp.protonmail.com" 465))
-;;     ("tj@elevator.school" . ("smtp.gmail.com" 587))))
 
-;; (defun my-change-smtp ()
-;;   "Change SMTP server based on the From header."
-;;   (save-excursion
-;;     (let* ((from (message-fetch-field "from"))
-;;            (email (when from (cadr (mail-extract-address-components from))))
-;;            (smtp-info (cdr (assoc email my-smtp-servers))))
-;;       (when smtp-info
-;;         (setq smtpmail-smtp-server (car smtp-info)
-;;               smtpmail-smtp-service (cadr smtp-info))))))
-
-;; (add-hook 'message-send-hook 'my-change-smtp)
-
-;; ;; OAuth2 Configuration for Outlook365
-;; (setq outlook365-client-id "08162f7c-0fd2-4200-a84a-f25a4db0b584"  ; Thunderbird default
-;;       outlook365-client-secret "TxRBilcHdC6WGBee]fs?QR:SJ8nI[g82"  ; Thunderbird default
-;;       oauth2-token-file "~/.config/emacs/gnus/oauth2-tokens.el")
-
-;; (defun my-outlook365-oauth2-token (server)
-;;   "Fetch and manage OAuth2 token for Outlook365."
-;;   (let* ((token (oauth2-auth-and-store
-;;                  "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
-;;                  "https://login.microsoftonline.com/common/oauth2/v2.0/token"
-;;                  "https://outlook.office365.com/.default"
-;;                  outlook365-client-id
-;;                  outlook365-client-secret
-;;                  oauth2-token-file))
-;;          (access-token (plist-get token :access-token)))
-;;     (when access-token
-;;       (base64-encode-string
-;;        (format "user=%s\001auth=Bearer %s\001\001" "tj.theesfeld@citywide.io" access-token)))))
-
-;; ;; OAuth2 Configuration for Gmail
-;; (setq gmail-client-id "YOUR_GOOGLE_CLIENT_ID"  ; Replace with your Google credentials
-;;       gmail-client-secret "YOUR_GOOGLE_CLIENT_SECRET"
-;;       oauth2-token-file "~/.config/emacs/gnus/oauth2-tokens.el")
-
-;; (defun my-gmail-oauth2-token (server)
-;;   "Fetch and manage OAuth2 token for Gmail."
-;;   (let* ((token (oauth2-auth-and-store
-;;                  "https://accounts.google.com/o/oauth2/auth"
-;;                  "https://oauth2.googleapis.com/token"
-;;                  "https://mail.google.com/"
-;;                  gmail-client-id
-;;                  gmail-client-secret
-;;                  oauth2-token-file))
-;;          (access-token (plist-get token :access-token)))
-;;     (when access-token
-;;       (base64-encode-string
-;;        (format "user=%s\001auth=Bearer %s\001\001" "tj@elevator.school" access-token)))))
-
-;; ;; Auth-source setup for OAuth2
-;; (setq auth-source-debug t)  ; Enable debugging
-;; (setq auth-sources '((:source oauth2-token-file)))  ; Prioritize OAuth2
-;; (setq gnus-auth-source-oauth2-functions
-;;       '((nnimap "outlook365" . my-outlook365-oauth2-token)
-;;         (nnimap "gmail" . my-gmail-oauth2-token)))
+;; ;; Auth-source configuration (ensure it’s completely ignored for Outlook 365)
+;; (setq auth-sources nil)  ; Keep disabled to test
+;; (setq auth-source-debug t)
 
 ;; ;; Must-have Gnus features and settings
 ;; (setq gnus-summary-line-format "%U%R%z %d %I%(%[%4L: %-23,23f%]%) %s\n"
@@ -1805,6 +1818,9 @@
 ;; (add-hook 'gnus-summary-mode-hook
 ;;           (lambda ()
 ;;             (local-set-key (kbd "m") 'gnus-summary-mail-other-window)))
+
+;; ;; Disable automatic browser opening (handled manually)
+;; (setq browse-url-browser-function 'ignore)  ; Prevent EWW from opening
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                   0x0.st                                  ;;
