@@ -86,6 +86,33 @@
   :defer t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                rebind keys                                ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Ensure Caps Lock is Control, non-toggling
+(define-key input-decode-map (kbd "<capslock>") [control])
+(define-key key-translation-map (kbd "<capslock>") 'event-apply-control-modifier)
+(global-unset-key (kbd "<capslock>"))  ; No standalone action
+
+;; Remap physical Left Control to Hyper
+(defvar my-control-to-hyper-map (make-sparse-keymap))
+(dolist (key '(?a ?b ?c ?d ?e ?f ?g ?h ?i ?j ?k ?l ?m
+               ?n ?o ?p ?q ?r ?s ?t ?u ?v ?w ?x ?y ?z))
+  (define-key my-control-to-hyper-map
+    (vector (list 'control key))
+    (vector (list 'hyper key))))
+(add-to-list 'emulation-mode-map-alists
+             `((my-control-to-hyper-mode . ,my-control-to-hyper-map)))
+(define-minor-mode my-control-to-hyper-mode
+  "Remap Left Control to Hyper."
+  :global t
+  :init-value t)
+
+;; Test bindings
+(global-set-key (kbd "C-t") (lambda () (interactive) (message "Control+T from Caps Lock!")))
+(global-set-key (kbd "H-t") (lambda () (interactive) (message "Hyper+T from Left Control!")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                           Basic Emacs Information                        ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
