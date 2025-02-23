@@ -5,13 +5,6 @@
 ;;                             Early Initial Settings                       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Use a higher GC threshold to speed up initialization, then revert back.
-(setq gc-cons-threshold most-positive-fixnum)
-(add-hook 'emacs-startup-hook
-          (lambda ()
-            (setq gc-cons-threshold 67108864
-                  gc-cons-percentage 0.1)))
-
 ;; Inhibit startup screen.
 (setq inhibit-startup-message t)
 
@@ -19,6 +12,32 @@
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (when (file-exists-p custom-file)
   (load custom-file))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                             Garbage Collection                           ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Use a higher GC threshold during init, then adjust dynamically
+(setq gc-cons-threshold most-positive-fixnum)  ;; Max during startup
+
+(defun my-adjust-gc-threshold ()
+  "Set a reasonable GC threshold after startup and adjust dynamically."
+  (setq gc-cons-threshold (* 100 1024 1024))  ;; 100 MB default
+  (setq gc-cons-percentage 0.1))
+
+(add-hook 'emacs-startup-hook #'my-adjust-gc-threshold)
+
+;; Temporarily increase GC threshold during minibuffer usage
+(defun my-increase-gc-during-minibuffer ()
+  "Increase GC threshold while in minibuffer."
+  (setq gc-cons-threshold most-positive-fixnum))
+
+(defun my-restore-gc-after-minibuffer ()
+  "Restore GC threshold after exiting minibuffer."
+  (setq gc-cons-threshold (* 100 1024 1024)))
+
+(add-hook 'minibuffer-setup-hook #'my-increase-gc-during-minibuffer)
+(add-hook 'minibuffer-exit-hook #'my-restore-gc-after-minibuffer)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                           Straight and Use-Package                       ;;
@@ -42,7 +61,21 @@
 
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t
-      use-package-always-ensure nil)
+      use-package-always-ensure t)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                         Version Control for Config                       ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Automatically commit changes to init.el using vc
+(defun my-auto-commit-init-el ()
+  "Commit changes to init.el after saving."
+  (when (and (buffer-file-name)
+             (string= (file-name-nondirectory (buffer-file-name)) "init.el"))
+    (ignore-errors
+      (vc-checkin (list (buffer-file-name)) 'git nil "Auto-commit init.el changes"))))
+
+(add-hook 'after-save-hook #'my-auto-commit-init-el)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                           Basic Emacs Information                        ;;
@@ -67,6 +100,22 @@
 
 (require 'auth-source)
 (setenv "TZ" "America/New_York")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                             Desktop Session Saving                       ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package desktop
+  :straight (:type built-in)
+  :init
+  (desktop-save-mode 1)
+  :config
+  (setq desktop-path (list user-emacs-directory)  ;; Save in ~/.emacs.d/
+        desktop-dirname user-emacs-directory
+        desktop-base-file-name ".emacs-desktop"
+        desktop-save t                     ;; Always save without prompting
+        desktop-restore-eager 10           ;; Restore 10 buffers immediately, rest lazily
+        desktop-auto-save-timeout 300))    ;; Auto-save every 5 minutes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Shell Environment                          ;;
@@ -164,20 +213,6 @@
 ;; Tidy up whitespace on save
 (add-hook 'before-save-hook #'whitespace-cleanup)
 
-;; Keep backups in a dedicated directory
-(setq backup-directory-alist '(("." . "~/.config/emacs/backups")))
-;; Do not create TRAMP backups
-(with-eval-after-load 'tramp
-  (setq tramp-backup-directory-alist nil))
-
-;; Save auto-save files in a dedicated directory
-(setq auto-save-file-name-transforms '((".*" "~/.config/emacs/auto-save-list/" t)))
-
-;; Versions of backups
-(setq delete-old-versions -1
-      version-control t
-      vc-make-backup-files t)
-
 ;; Savehist
 (setq savehist-file "~/.config/emacs/savehist"
       history-length t
@@ -199,6 +234,38 @@
 ;; Replacing kill-buffer key
 (global-set-key (kbd "C-x k") 'kill-current-buffer)
 (global-set-key (kbd "C-x K") 'kill-buffer)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                             Backup and Auto-Save                         ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Keep backups in a dedicated directory with timestamps
+(setq backup-directory-alist '(("." . "~/.config/emacs/backups")))
+(setq backup-by-copying t    ;; Don't clobber symlinks
+      version-control t      ;; Use versioned backups
+      kept-new-versions 10   ;; Keep 10 new versions
+      kept-old-versions 5    ;; Keep 5 old versions
+      delete-old-versions t  ;; Auto-delete excess backups
+      vc-make-backup-files t ;; Backup even under version control
+      backup-by-copying-when-linked t) ;; Handle hard links safely
+
+;; Timestamped backup files
+(setq make-backup-file-name-function
+      (lambda (file)
+        (concat (file-name-concat "~/.config/emacs/backups" (file-name-nondirectory file))
+                "."
+                (format-time-string "%Y%m%dT%H%M%S")
+                "~")))
+
+;; Save auto-save files in a dedicated directory
+(setq auto-save-file-name-transforms '((".*" "~/.config/emacs/auto-save-list/" t))
+      auto-save-default t
+      auto-save-timeout 30      ;; Auto-save after 30 seconds of idle
+      auto-save-interval 200)   ;; Auto-save after 200 keystrokes
+
+;; No TRAMP backups
+(with-eval-after-load 'tramp
+  (setq tramp-backup-directory-alist nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    vundo                                  ;;
@@ -266,44 +333,21 @@
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                 iBuffer Setup                             ;;
+;;                              Mode Line Cleanup                           ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package ibuffer
-  :straight (:type built-in) ;; ibuffer is part of Emacs
-  :bind
-  (("C-x C-b" . ibuffer))    ;; Replace default list-buffers with ibuffer
+(use-package delight
+  :straight t
   :config
-  ;; Define custom filter groups
-  (setq ibuffer-saved-filter-groups
-        '(("default"
-           ("Emacs"
-            (or (name . "^\\*scratch\\*$")
-                (name . "^\\*Messages\\*$")
-                (name . "^\\*Warnings\\*$")))
-           ("IRC"
-            (derived-mode  . erc-mode))
-           ("Org"
-            (derived-mode . org-mode))
-           ("Magit"
-            (derived-mode . magit-mode))
-           ("Programming"
-            (derived-mode . prog-mode))
-           ("Dired"
-            (derived-mode . dired-mode))
-           ("Help"
-            (or (name . "^\\*Help\\*$")
-                (name . "^\\*Apropos\\*$")
-                (name . "^\\*info\\*$"))))))
-
-  ;; When ibuffer opens, apply the custom groups and sort by recency
-  (add-hook 'ibuffer-mode-hook
-            (lambda ()
-              (ibuffer-switch-to-saved-filter-groups "default")
-              (ibuffer-do-sort-by-recency))))
-
+  (delight '((global-hl-line-mode nil "hl-line")
+             (save-place-mode nil "saveplace")
+             (global-auto-revert-mode nil "autorevert")
+             (corfu-mode " 💡" "corfu")
+             (flyspell-mode " ✍" "flyspell")
+             (which-key-mode nil "which-key")
+             (yas-minor-mode nil "yasnippet")
+             (smartparens-mode nil "smartparens"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Completion Setup                            ;;
@@ -350,33 +394,31 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package vertico
+  :straight t
   :init
   (vertico-mode)
   :custom
-  (vertico-cycle t))
+  (vertico-cycle t)
+  :bind (:map vertico-map
+              ("DEL" . vertico-directory-delete-char)
+              ("M-DEL" . vertico-directory-delete-word)))
 
 ;; Persist minibuffer history over Emacs restarts
 (use-package savehist
   :init
   (savehist-mode 1))
 
-;; Directory navigation in Vertico
-(use-package vertico-directory
-  :straight nil
-  :after vertico
-  :bind (:map vertico-map
-              ("DEL" . vertico-directory-delete-char)
-              ("M-DEL" . vertico-directory-delete-word)))
-
 ;; Consult
 (use-package consult
+  :straight t  ; Fresh install via straight.el
   :bind (("C-c M-x"   . consult-mode-command)
          ("C-c h"     . consult-history)
          ("C-c k"     . consult-kmacro)
          ("C-c m"     . consult-man)
          ("C-c i"     . consult-info)
          ("C-x M-:"   . consult-complex-command)
-         ("C-x b"     . consult-buffer)
+         ("C-x b"     . consult-buffer)  ; Default consult-buffer
+         ("C-x C-b"   . consult-buffer)
          ("C-x 4 b"   . consult-buffer-other-window)
          ("C-x 5 b"   . consult-buffer-other-frame)
          ("C-x t b"   . consult-buffer-other-tab)
@@ -407,8 +449,13 @@
          :map isearch-mode-map
          ("M-e"       . consult-isearch-history)
          ("M-s e"     . consult-isearch-history)
-         ("M-s l"     . consult-line)
-         ("M-s L"     . consult-line-multi)))
+         ("M-s l"     . consult-line))
+  :config
+  ;; Enhance consult-buffer with common settings
+  (consult-customize
+   consult-buffer
+   :sort t  ; Sort by recency (default behavior, just explicit)
+   :history 'buffer-name-history))  ; Use buffer history
 
 ;; Embark
 (use-package embark
@@ -555,16 +602,15 @@
   ("s-p" . projectile-command-map)
   ("C-c p" . projectile-command-map))
 
-(use-package ibuffer-projectile :defer t)
-(use-package ibuffer-vc :defer t)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Eglot (LSP) Setup                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package eglot
   :straight t
-  :hook ((prog-mode . eglot-ensure))
+  :hook ((prog-mode . (lambda ()
+                        (unless (string-match-p "^\\*.*\\*$" (buffer-name))
+                          (eglot-ensure)))))
   :config
   (add-hook 'eglot-managed-mode-hook
             (lambda ()
@@ -1064,31 +1110,52 @@
 (global-set-key (kbd "s-s") #'grim/screenshot)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                     eww                                   ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package eww
+  :straight t
+  :commands (eww-browse-url)
+  :init
+  ;; Define browse-url handlers for EWW and PDFs
+  (setq browse-url-handlers
+        '(("\\.pdf\\'" . my-open-remote-pdf-in-emacs)
+          ("^https?://" . eww-browse-url))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                     pdf                                   ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package pdf-tools
+  :straight t
+  :mode ("\\.pdf\\'" . pdf-view-mode)
+  :init
+  ;; Install pdf-tools on first use
+  (pdf-tools-install :no-query)
+  ;; Handle remote PDFs
+  (defun my-open-remote-pdf-in-emacs (url &rest args)
+    "Download a PDF from URL and open it in Emacs with pdf-view-mode."
+    (interactive)
+    (let ((temp-file (make-temp-file "emacs-pdf-" nil ".pdf")))
+      (url-copy-file url temp-file t)
+      (find-file temp-file)
+      (delete-file temp-file)))
+  :hook
+  ;; Disable line numbers in pdf-view-mode
+  (pdf-view-mode-hook . (lambda () (display-line-numbers-mode -1)))
+  :config
+  ;; Optional: Enhance pdf-view-mode
+  (setq pdf-view-display-size 'fit-page  ;; Fit page by default
+        pdf-view-continuous t            ;; Continuous scrolling
+        pdf-view-use-scaling t))         ;; Better rendering on HiDPI displays
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              ERC (IRC Client)                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun my-erc-connect ()
-  "Retrieve IRC credentials from authinfo.gpg and connect to the IRC server."
-  (interactive)
-  (let* ((host "samhain.su")
-         (port "7000")
-         (auth-entry (car (auth-source-search :host host
-                                              :port port
-                                              :require '(:user :secret)
-                                              :max 1)))
-         (username (plist-get auth-entry :user))
-         (password (if (functionp (plist-get auth-entry :secret))
-                       (funcall (plist-get auth-entry :secret))
-                     (plist-get auth-entry :secret))))
-    (unless (and username password)
-      (error "Could not retrieve IRC credentials from authinfo.gpg"))
-    (erc-tls :server host
-             :port (string-to-number port)
-             :nick username
-             :password password)))
-
 (use-package erc
   :straight t
+  :defer t
   :config
   (setq erc-track-remove-disconnected-buffers t
         erc-hide-list '("PART" "QUIT" "JOIN")
@@ -1097,19 +1164,150 @@
         erc-kill-server-buffer-on-quit t
         erc-track-shorten-start 8
         erc-kill-buffer-on-part t
-        erc-auto-query 'bury))
+        erc-auto-query 'bury
+        erc-prompt (lambda () (concat (propertize "ERC> " 'face '(:foreground "cyan" :weight bold))
+                                     (buffer-name)))
+        erc-timestamp-format "[%H:%M] "
+        erc-insert-timestamp-function 'erc-insert-timestamp-left
+        erc-track-position-in-mode-line t
+        erc-track-exclude-types '("JOIN" "PART" "QUIT" "NICK" "MODE")
+        erc-track-switch-direction 'newest
+        erc-track-visibility 'visible
+        erc-track-showcount t
+        erc-format-query-as-channel-p t
+        erc-fill-function 'erc-fill-static
+        erc-fill-static-center 20
+        erc-log-channels-directory "~/.config/emacs/irc-logs/"
+        erc-save-buffer-on-part t
+        erc-log-write-after-insert t)
+  ;; Enable ERC modules, including nickbar
+  (setq erc-modules (append erc-modules '(nickbar)))
+  (erc-update-modules)
+  ;; Required for Nickbar to update dynamically
+  (setq speedbar-update-flag t)
+  (erc-timestamp-mode 1)
+  (erc-track-mode 1)
+  (erc-autojoin-mode 1)
+  (add-hook 'erc-insert-post-hook 'erc-save-buffer-in-logs)
+  (add-hook 'erc-mode-hook (lambda ()
+                             (require 'erc-pcomplete)
+                             (pcomplete-erc-setup)
+                             (erc-completion-mode 1)))
+  (require 'erc-button)
+  (erc-button-mode 1)
+  (setq erc-button-url-open-function 'eww-browse-url)
+  (set-face-attribute 'erc-nick-default-face nil :foreground "#bd93f9")
+  (set-face-attribute 'erc-timestamp-face nil :foreground "#6272a4")
+  (set-face-attribute 'erc-my-nick-face nil :foreground "#ff79c6" :weight 'bold)
+  :bind (:map erc-mode-map
+              ("C-c e" . erc-button-browse-url)
+              ("C-c l" . erc-view-log-mode)
+              ("C-c n" . erc-nickbar-mode))  ; Toggle Nickbar
+  :init
+  (defun my-erc-connect ()
+    "Retrieve IRC credentials from authinfo.gpg and connect to the IRC server"
+    (interactive)
+    (let* ((host "samhain.su")
+           (port "7000")
+           (auth-entry (car (auth-source-search :host host
+                                                :port port
+                                                :require '(:user :secret)
+                                                :max 1)))
+           (username (plist-get auth-entry :user))
+           (password (if (functionp (plist-get auth-entry :secret))
+                         (funcall (plist-get auth-entry :secret))
+                       (plist-get auth-entry :secret))))
+      (unless (and username password)
+        (error "Could not retrieve IRC credentials from authinfo.gpg"))
+      (erc-tls :server host
+               :port (string-to-number port)
+               :nick username
+               :password password
+               :full-name "blackdream")))
+  :bind (:map global-map
+              ("C-c E" . my-erc-connect)))
 
-(global-set-key (kbd "C-c E") 'my-erc-connect)
+(use-package erc-hl-nicks
+  :straight t
+  :after erc
+  :config
+  (add-to-list 'erc-modules 'hl-nicks)
+  (erc-update-modules))
+
+(use-package erc-image
+  :straight t
+  :after erc
+  :config
+  (setq erc-image-inline-rescale 300)
+  (add-to-list 'erc-modules 'image)
+  (erc-update-modules))
+
+(use-package erc-desktop-notifications
+  :straight (:type built-in)
+  :after erc
+  :config
+  (add-to-list 'erc-modules 'notifications)
+  (erc-update-modules)
+  (setq erc-notifications-keywords '("blackdream")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Elfeed + Dashboard                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(use-package elfeed
+  :straight t
+  :defer t
+  :hook ((elfeed-search-mode-hook . (lambda ()
+                                      (elfeed-update)  ;; Run update on opening
+                                      (my-elfeed-start-auto-update)))  ;; Start timer
+         (elfeed-show-mode . (lambda () (setq shr-external-browser 'eww-browse-url))))
+  :bind (:map elfeed-search-mode-map
+              ("q" . my-elfeed-quit-and-stop-timer)  ;; Custom quit to stop timer
+              :map elfeed-show-mode-map
+              ("RET" . shr-browse-url))
+  :init
+  ;; Timer variable for auto-update
+  (defvar my-elfeed-update-timer nil
+    "Timer for Elfeed auto-updates.")
+  ;; Function to start auto-update
+  (defun my-elfeed-start-auto-update ()
+    "Start auto-updating Elfeed every 30 minutes if search buffer is visible."
+    (interactive)
+    (unless my-elfeed-update-timer
+      (setq my-elfeed-update-timer
+            (run-at-time t 1800  ;; 1800 seconds = 30 minutes
+                         (lambda ()
+                           (when (get-buffer-window "*elfeed-search*" t)
+                             (elfeed-update)
+                             (my-elfeed-update-title)))))))
+  ;; Function to stop auto-update
+  (defun my-elfeed-stop-auto-update ()
+    "Stop Elfeed auto-update timer."
+    (interactive)
+    (when my-elfeed-update-timer
+      (cancel-timer my-elfeed-update-timer)
+      (setq my-elfeed-update-timer nil)))
+  ;; Custom quit function
+  (defun my-elfeed-quit-and-stop-timer ()
+    "Quit Elfeed and stop the auto-update timer."
+    (interactive)
+    (elfeed-search-quit-window)
+    (my-elfeed-stop-auto-update))
+  ;; Function to update buffer title with new articles
+  (defun my-elfeed-update-title ()
+    "Update Elfeed search buffer title with new article count."
+    (interactive)
+    (with-current-buffer "*elfeed-search*"
+      (let ((new-count (length (elfeed-search-filter "unread"))))
+        (rename-buffer (format "*elfeed-search* (%d new)" new-count)))))
+  :config
+  (setq shr-external-browser 'eww-browse-url)
+
 (setq elfeed-feeds
       '("https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fsachachua.com%2Fblog%2Ffeed%2Findex.xml&key=1&hash=48ac81675b0797fda5d8f4f189846563a5ed14d9&max=1000&links=preserve&exc="
         "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fddosecrets.com%2Farticle%2Flexipolleaks&key=1&hash=b9258f920d5b200034edd73868c42b1e68284695&max=1000&links=preserve&exc="
         "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fhnrss.org%2Fnewest&key=1&hash=62a3abd97ca026dbb64c82151d396f32e4c6a4fb&max=1000&links=preserve&exc="
-        "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Ffeeds.bbci.co.uk%2Fnews%2Frss.xml&key=1&hash=78370b961d44c8bff594b1b41a513762d6f34560&max=1000&links=preserve&exc="))
+        "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Ffeeds.bbci.co.uk%2Fnews%2Frss.xml&key=1&hash=78370b961d44c8bff594b1b41a513762d6f34560&max=1000&links=preserve&exc=")))
 
 (use-package elfeed-dashboard
   :config
@@ -1609,13 +1807,18 @@
 ;;             (local-set-key (kbd "m") 'gnus-summary-mail-other-window)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                               Final Cleanup                               ;;
+;;                                   0x0.st                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Restore GC threshold after init
-(add-hook 'after-init-hook
-          (lambda ()
-            (setq gc-cons-threshold 8000000)))
+(use-package 0x0
+  :straight t
+  :bind (:map global-map
+              ("C-c u" . '0x0-dwim)
+              ("C-c U" . '0x0-upload-file)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                               Final Cleanup                               ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (provide 'init)
 ;;; init.el ends here
