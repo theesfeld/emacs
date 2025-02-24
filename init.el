@@ -1206,7 +1206,7 @@
   (add-to-list 'pdf-view-incompatible-modes 'display-line-numbers-mode)
   ;; Explicitly disable line numbers in pdf-view-mode
   (add-hook 'pdf-view-mode-hook (lambda () (display-line-numbers-mode -1)))
-  (define-key pdf-view-mode-map (kbd "Q") 'delete-frame))  ;; Close frame with q
+  (define-key pdf-view-mode-map (kbd "Q") 'my-quit-and-kill))  ;; Close frame with q
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              ERC (IRC Client)                             ;;
@@ -1507,7 +1507,7 @@
   (setq nov-unzip-program (executable-find "bsdtar")
         nov-unzip-args '("-xC" directory "-f" filename))
   (setq nov-verbose t)  ;; Temporary for debugging
-  (define-key nov-mode-map (kbd "q") 'my-quit-and-kill))
+  (define-key nov-mode-map (kbd "Q") 'my-quit-and-kill))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                Treemacs Setup
