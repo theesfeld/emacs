@@ -1487,7 +1487,9 @@
   (setq calibredb-db-dir (expand-file-name "metadata.db" calibredb-root-dir))
   (setq calibredb-library-alist '(("~/.calibre-library" (name . "Calibre")))))
 
-(use-package esxml :straight t)
+(use-package esxml
+  :straight t)
+
 (use-package nov
   :straight t
   :after esxml
