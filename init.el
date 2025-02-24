@@ -77,6 +77,7 @@
 
 (add-hook 'after-save-hook #'my-auto-commit-init-el)
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  sqlite3                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -84,33 +85,6 @@
 (use-package sqlite3
   :straight t
   :defer t)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                rebind keys                                ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Ensure Caps Lock is Control, non-toggling
-(define-key input-decode-map (kbd "<capslock>") [control])
-(define-key key-translation-map (kbd "<capslock>") 'event-apply-control-modifier)
-(global-unset-key (kbd "<capslock>"))  ; No standalone action
-
-;; Remap physical Left Control to Hyper
-(defvar my-control-to-hyper-map (make-sparse-keymap))
-(dolist (key '(?a ?b ?c ?d ?e ?f ?g ?h ?i ?j ?k ?l ?m
-               ?n ?o ?p ?q ?r ?s ?t ?u ?v ?w ?x ?y ?z))
-  (define-key my-control-to-hyper-map
-    (vector (list 'control key))
-    (vector (list 'hyper key))))
-(add-to-list 'emulation-mode-map-alists
-             `((my-control-to-hyper-mode . ,my-control-to-hyper-map)))
-(define-minor-mode my-control-to-hyper-mode
-  "Remap Left Control to Hyper."
-  :global t
-  :init-value t)
-
-;; Test bindings
-(global-set-key (kbd "C-t") (lambda () (interactive) (message "Control+T from Caps Lock!")))
-(global-set-key (kbd "H-t") (lambda () (interactive) (message "Hyper+T from Left Control!")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                           Basic Emacs Information                        ;;
@@ -199,6 +173,10 @@
 ;; Use y/n instead of yes/no
 (fset 'yes-or-no-p 'y-or-n-p)
 
+;; visual wrap prefix mode
+(add-hook 'org-mode-hook #'visual-wrap-prefix-mode)
+(add-hook 'text-mode-hook #'visual-wrap-prefix-mode)
+
 ;; Remove the menu/tool/scroll bars early for minimal UI
 (menu-bar-mode -1)
 (tool-bar-mode -1)
@@ -225,7 +203,6 @@
   '(progn
      (set-face-foreground 'diff-added "green4")
      (set-face-foreground 'diff-removed "red3")))
-
 
 ;; Enable auto-revert of changed files
 (global-auto-revert-mode 1)
@@ -256,10 +233,9 @@
       savehist-additional-variables
       '(kill-ring search-ring regexp-search-ring))
 (savehist-mode 1)
-(setq save-silently t)
 
 ;; Keep an eye on undone changes
-(setq undo-limit 80000000)
+(setq undo-limit 800000)
 
 ;; Show isearch count
 (setq isearch-lazy-count t
@@ -378,7 +354,7 @@
   (delight '((global-hl-line-mode nil "hl-line")
              (save-place-mode nil "saveplace")
              (global-auto-revert-mode nil "autorevert")
-             (corfu-mode " 💡" "corfu")
+  ;           (corfu-mode " 💡" "corfu")
              (flyspell-mode " ✍" "flyspell")
              (which-key-mode nil "which-key")
              (yas-minor-mode nil "yasnippet")
@@ -389,21 +365,44 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Corfu: in-buffer completion
-(use-package corfu
-  :straight (:host github :repo "minad/corfu")
-  :custom
-  (corfu-auto t)
-  (corfu-cycle t)
-  (corfu-auto-prefix 2)
-  (corfu-auto-delay 1.2)
-  :init
-  (global-corfu-mode)
-  :config
-  (defun my-disable-corfu-in-erc ()
-    "Disable Corfu in erc-mode derived buffers."
-    (corfu-mode -1))
+;; (use-package corfu
+;;   :straight (:host github :repo "minad/corfu")
+;;   :custom
+;;   (corfu-auto t)
+;;   (corfu-cycle t)
+;;   (corfu-auto-prefix 2)
+;;   (corfu-auto-delay 1.2)
+;;   :init
+;;   (global-corfu-mode)
+;;   :config
+;;   (defun my-disable-corfu-in-erc ()
+;;     "Disable Corfu in erc-mode derived buffers."
+;;     (corfu-mode -1))
 
-  (add-hook 'erc-mode-hook #'my-disable-corfu-in-erc))
+;;   (add-hook 'erc-mode-hook #'my-disable-corfu-in-erc))
+
+;; built-in completion-preview
+;; Enable Completion Preview mode in code buffers
+(add-hook 'prog-mode-hook #'completion-preview-mode)
+;; also in text buffers
+(add-hook 'text-mode-hook #'completion-preview-mode)
+;; and in \\[shell] and friends
+(with-eval-after-load 'comint
+  (add-hook 'comint-mode-hook #'completion-preview-mode))
+
+(with-eval-after-load 'completion-preview
+  ;; Primary bindings
+  (keymap-set completion-preview-active-mode-map "<tab>" #'completion-preview-insert)
+  (keymap-set completion-preview-active-mode-map "<down>" #'completion-preview-next-candidate)
+  (keymap-set completion-preview-active-mode-map "<up>" #'completion-preview-prev-candidate)
+  ;; Fallbacks for terminals or muscle memory
+  (keymap-set completion-preview-active-mode-map "TAB" #'completion-preview-insert)  ; Same as <tab>, for robustness
+  (keymap-set completion-preview-active-mode-map "C-n" #'completion-preview-next-candidate)
+  (keymap-set completion-preview-active-mode-map "C-p" #'completion-preview-prev-candidate)
+  ;; Customizations
+  (setq completion-preview-minimum-symbol-length 2)
+  (push 'org-self-insert-command completion-preview-commands)
+  (push 'paredit-backward-delete completion-preview-commands))
 
 ;; Better completion styles
 (use-package orderless
@@ -413,16 +412,16 @@
   (completion-category-overrides '((file (styles partial-completion)))))
 
 ;; Terminal-friendly Corfu
-(straight-use-package
- '(corfu-terminal
-   :type git
-   :repo "https://codeberg.org/akib/emacs-corfu-terminal.git"))
+;; (straight-use-package
+;;  '(corfu-terminal
+;;    :type git
+;;    :repo "https://codeberg.org/akib/emacs-corfu-terminal.git"))
 
 ;; Turn off automatic corfu in Eshell, but enable on demand
-(add-hook 'eshell-mode-hook
-          (lambda ()
-            (setq-local corfu-auto nil)
-            (corfu-mode)))
+;; (add-hook 'eshell-mode-hook
+;;           (lambda ()
+;;             (setq-local corfu-auto nil)
+;;             (corfu-mode)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Vertico + Consult                            ;;
@@ -490,7 +489,7 @@
   (consult-customize
    consult-buffer
    :sort t  ; Sort by recency (default behavior, just explicit)
-   :history 'buffer-name-history))  ; Use buffer history
+   :history 'buffer-name-history))  ; Use buffeer history
 
 ;; Embark
 (use-package embark
@@ -524,6 +523,23 @@
 ;;                              Editing Helpers                              ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Auto-format Emacs Lisp files on save
+(defun my-elisp-format-buffer ()
+  "Format the current Emacs Lisp buffer if syntactically valid."
+  (interactive)
+  (when (eq major-mode 'emacs-lisp-mode)
+    (if (check-parens)  ; Returns t if balanced
+        (progn
+          (indent-region (point-min) (point-max))
+          (whitespace-cleanup))
+      (message "Skipping format: Unbalanced parentheses"))))
+
+(add-hook 'emacs-lisp-mode-hook
+          (lambda ()
+            (add-hook 'before-save-hook #'my-elisp-format-buffer nil t)))
+
+(global-set-key (kbd "C-c r") #'replace-regexp-as-diff)
+
 ;; show uncommitted changes in the gutter
 ;; https://github.com/dgutov/diff-hl
 (use-package diff-hl
@@ -533,6 +549,7 @@
   )
 
 (use-package which-key
+  :straight nil
   :config
   (setq which-key-idle-delay 0.1)
   (which-key-mode))
@@ -642,7 +659,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package eglot
-  :straight t
+  :straight nil
   :hook ((prog-mode . (lambda ()
                         (unless (string-match-p "^\\*.*\\*$" (buffer-name))
                           (eglot-ensure)))))
@@ -650,9 +667,8 @@
   (add-hook 'eglot-managed-mode-hook
             (lambda ()
               (add-hook 'before-save-hook #'eglot-format-buffer -10 t)
-              (setq eldoc-documentation-strategy #'eldoc-documentation-compose)))
-  (add-hook 'eglot-managed-mode-hook #'eglot-inlay-hints-mode)
-  )
+              (setq eldoc-documentation-strategy #'eldoc-documentation-compose)
+              (eglot-inlay-hints-mode))))
 
 ;; consult-lsp
 (use-package consult-lsp
@@ -1192,6 +1208,13 @@
   :straight t
   :defer t
   :config
+  (defun my-erc-set-fill-column ()
+    "Set ERC fill column based on display type."
+    (setq-local erc-fill-column
+                (if (display-graphic-p)
+                    (window-width)  ; GUI: Use full window width
+                  (min 80 (window-width)))))  ; Terminal: Cap at 80
+  (add-hook 'erc-mode-hook #'my-erc-set-fill-column)
   (setq erc-track-remove-disconnected-buffers t
         erc-hide-list '("PART" "QUIT" "JOIN")
         erc-interpret-mirc-color t
@@ -1210,7 +1233,8 @@
         erc-track-visibility 'visible
         erc-track-showcount t
         erc-format-query-as-channel-p t
-        erc-fill-function 'erc-fill-static
+        erc-fill-function 'erc-fill-variable
+        erc-fill-prefix "  "
         erc-fill-static-center 20
         erc-log-channels-directory "~/.config/emacs/irc-logs/"
         erc-save-buffer-on-part t
@@ -1506,29 +1530,22 @@
   (global-set-key (kbd "C-c T") #'treemacs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                 Flycheck Setup
+;;                                 Flymake Setup
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package flycheck
-  :init
-  ;; Enable flycheck globally.
-  (global-flycheck-mode)
+(use-package flymake
+  :ensure nil  ; Built-in
+  :hook (prog-mode . flymake-mode)
   :config
-  ;; Visual indicator of errors on the right fringe
-  (setq flycheck-indication-mode 'right-fringe)
-
-  ;; You could customize specific checkers here, e.g.:
-  ;; (setq-default flycheck-python-flake8-executable "python3")
-  )
-
-;; If using Eglot, remove its default Flymake usage:
-(add-hook 'eglot-managed-mode-hook
-          (lambda ()
-            (flymake-mode -1)   ;; Disable Flymake
-            (flycheck-mode 1))) ;; Enable Flycheck
+  (setq flymake-fringe-indicator-position 'right-fringe)
+  ;; Enable Elisp backends
+  (add-hook 'emacs-lisp-mode-hook
+            (lambda ()
+              (add-hook 'flymake-diagnostic-functions #'elisp-flymake-byte-compile nil t)
+              (add-hook 'flymake-diagnostic-functions #'elisp-flymake-checkdoc nil t))))
 
 ;; Optionally, if you want linting in all prog modes even outside Eglot:
-(add-hook 'prog-mode-hook #'flycheck-mode)
+(add-hook 'prog-mode-hook #'flymake-mode)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                        snippets (Yasnippet)                               ;;
@@ -1704,150 +1721,102 @@
 ;;                                   GNUS                                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; (use-package gnus
-;;   :straight t
-;;   :defer t)
-
 ;; (use-package oauth2
 ;;   :straight t
-;;   :defer t)
+;;   :demand t)
+
+;; (use-package auth-source-xoauth2
+;;   :straight (auth-source-xoauth2 :type git :host github :repo "ccann/auth-source-xoauth2")
+;;   :after oauth2
+;;   :demand t
+;;   :config
+;;   ;; Match creds to user AND host
+;;   (add-to-list 'auth-sources 'xoauth2 'append)
+;;   (setq auth-source-xoauth2-creds
+;;         `(("tj.theesfeld@citywide.io@outlook.office365.com" ,(lambda (host port user)
+;;                                                               (message "Fetching XOAUTH2 for %s:%s:%s" host port user)
+;;                                                               (list :client-id "08162f7c-0fd2-4200-a84a-f25a4db0b584"
+;;                                                                     :client-secret "TxRBilcHdC6WGBee]fs?QR:SJ8nI[g82"
+;;                                                                     :auth-url "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
+;;                                                                     :token-url "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+;;                                                                     :scope "https://outlook.office365.com/IMAP.AccessAsUser.All offline_access"
+;;                                                                     :redirect-uri "urn:ietf:wg:oauth:2.0:oob")))))
+;;   (setq auth-source-debug t))
+
+;; (use-package gnus
+;;   :straight t
+;;   :defer t
+;;   :config
+;;   (setq gnus-select-method '(nnnil ""))
+;;   (setq gnus-secondary-select-methods
+;;         '((nnimap "outlook365"
+;;                   (nnimap-address "outlook.office365.com")
+;;                   (nnimap-server-port 993)
+;;                   (nnimap-stream ssl)
+;;                   (nnimap-authenticator xoauth2)
+;;                   (nnimap-user "tj.theesfeld@citywide.io")
+;;                   (nnimap-authinfo-function #'auth-source-xoauth2--get-authinfo)
+;;                   (nnimap-expunge t))
+;;           (nnrss "feeds"
+;;                  (nnrss-file "~/.config/emacs/gnus/rss-feeds.el"))))
+;;   ;; Must-have Gnus features and settings
+;;   (setq gnus-verbose 10
+;;         gnus-verbose-backends t
+;;         gnus-summary-line-format "%U%R%z %d %I%(%[%4L: %-23,23f%]%) %s\n"
+;;         gnus-group-line-format "%M%S%p%P%5y: %(%g%)%l\n"
+;;         gnus-asynchronous t
+;;         gnus-use-adaptive-scoring t
+;;         gnus-use-cache t
+;;         gnus-cache-directory "~/.config/emacs/gnus/cache/"
+;;         gnus-article-save-directory "~/.config/emacs/gnus/saved/"
+;;         gnus-read-active-file 'some
+;;         gnus-check-new-newsgroups nil
+;;         gnus-save-newsrc-file t
+;;         gnus-read-newsrc-file t)
+;;   ;; Threading and sorting
+;;   (setq gnus-thread-sort-functions
+;;         '(gnus-thread-sort-by-most-recent-date
+;;           gnus-thread-sort-by-number))
+;;   (setq gnus-summary-thread-gathering-function 'gnus-gather-threads-by-references)
+;;   ;; Visual enhancements
+;;   (setq gnus-treat-fill-long-lines t
+;;         gnus-treat-display-smileys t
+;;         gnus-treat-emphasize t)
+;;   ;; Startup
+;;   (setq gnus-startup-file "~/.config/emacs/gnus/newsrc"
+;;         gnus-save-killed-list nil
+;;         gnus-use-dribble-file t)
+;;   ;; Keybindings
+;;   (add-hook 'gnus-group-mode-hook
+;;             (lambda ()
+;;               (local-set-key (kbd "g") 'gnus-group-get-new-news)))
+;;   (add-hook 'gnus-summary-mode-hook
+;;             (lambda ()
+;;               (local-set-key (kbd "m") 'gnus-summary-mail-other-window)))
+;;   ;; Manual token test function
+;;   (defun test-xoauth2-token ()
+;;     (interactive)
+;;     (message "Token: %s" (auth-source-xoauth2--access-token "outlook365" "outlook.office365.com" "993" "tj.theesfeld@citywide.io"))))
 
 ;; ;; Basic identity
-;; (setq user-full-name "TJ Theesfeld")
-;; (setq user-mail-address "tj.theesfeld@citywide.io")
-
-;; ;; OAuth2 Configuration for Outlook 365
-;; (setq outlook365-client-id "08162f7c-0fd2-4200-a84a-f25a4db0b584"  ; Thunderbird default
-;;       outlook365-client-secret "TxRBilcHdC6WGBee]fs?QR:SJ8nI[g82"  ; Thunderbird default
-;;       oauth2-token-file "~/.config/emacs/gnus/oauth2-tokens.el")
-
-;; (defun my-generate-state ()
-;;   "Generate a random state string for OAuth2."
-;;   (let ((chars "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-;;         (len 16))
-;;     (apply 'string
-;;            (loop repeat len
-;;                  collect (aref chars (random (length chars)))))))
-
-;; (defun my-outlook365-get-auth-url ()
-;;   "Generate and return the OAuth2 authorization URL for Outlook 365 without opening a browser."
-;;   (message "Copy and paste this URL into your browser to authenticate (check *Messages* for URL):")
-;;   (let* ((state (my-generate-state))
-;;          (params `(("client_id" . ,outlook365-client-id)
-;;                    ("response_type" . "code")
-;;                    ("redirect_uri" . "urn:ietf:wg:oauth:2.0:oob")
-;;                    ("scope" . "https://outlook.office365.com/.default")
-;;                    ("state" . ,state)))
-;;          (url (concat "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
-;;                       "?" (oauth2-url-encode-params params))))
-;;     (message url)  ; Display the URL in the minibuffer and *Messages*
-;;     url))
-
-;; (defun my-outlook365-oauth2-token ()
-;;   "Fetch or refresh OAuth2 token for Outlook 365 manually."
-;;   (message "Fetching OAuth2 token for Outlook 365...")
-;;   (condition-case err
-;;       (let* ((auth-url (my-outlook365-get-auth-url))
-;;              (code (read-string "Enter the authorization code from the browser: ")))
-;;         (let ((token (oauth2-exchange-code-for-token
-;;                       "https://login.microsoftonline.com/common/oauth2/v2.0/token"
-;;                       code
-;;                       "urn:ietf:wg:oauth:2.0:oob"  ; Redirect URI
-;;                       outlook365-client-id
-;;                       outlook365-client-secret
-;;                       "https://outlook.office365.com/.default")))
-;;           (if (plist-get token :access-token)
-;;               (progn
-;;                 (message "Token fetched successfully: %s" (plist-get token :access-token))
-;;                 (oauth2-store-token token oauth2-token-file)
-;;                 (base64-encode-string
-;;                  (format "user=%s\001auth=Bearer %s\001\001"
-;;                          user-mail-address
-;;                          (plist-get token :access-token))))
-;;             (message "Failed to fetch OAuth2 token: No access token in response!")
-;;             nil)))
-;;     (error
-;;      (message "OAuth2 error: %S" err)
-;;      nil)))
-
-;; ;; Gnus select methods (force XOAUTH2 with maximum debugging and strict settings)
-;; (setq gnus-select-method '(nnnil ""))
-;; (setq gnus-secondary-select-methods
-;;       '((nnimap "outlook365"
-;;                 (nnimap-address "outlook.office365.com")
-;;                 (nnimap-server-port 993)
-;;                 (nnimap-stream ssl)
-;;                 (nnimap-authenticator xoauth2)
-;;                 (nnimap-authinfo-file nil)  ; Explicitly disable authinfo file
-;;                 (nnimap-use-authinfo nil)  ; Prevent fallback to authinfo
-;;                 (nnimap-force-xoauth2 t)  ; Force XOAUTH2 (if supported)
-;;                 (nnimap-authinfo (lambda (server)
-;;                                    (message "Starting XOAUTH2 authentication for %s..." server)
-;;                                    (message "Checking auth-sources: %S" auth-sources)  ; Debug auth-sources
-;;                                    (message "Authinfo file: %S" (nnimap-authinfo-file server))
-;;                                    (let ((token (my-outlook365-oauth2-token)))
-;;                                      (if token
-;;                                          (progn
-;;                                            (message "XOAUTH2 token generated successfully: %s" (substring token 0 10))
-;;                                            token)
-;;                                        (progn
-;;                                          (message "XOAUTH2 token generation failed; forcing retry...")
-;;                                          (error "XOAUTH2 token generation failed; please retry"))))))  ; Force retry
-;;                 (nnimap-expunge t))
-;;         (nnrss "feeds"
-;;                (nnrss-file "~/.config/emacs/gnus/rss-feeds.el"))))
+;; (setq user-full-name "TJ Theesfeld"
+;;       user-mail-address "tj.theesfeld@citywide.io")
 
 ;; ;; SMTP Configuration for Outlook 365
-;; (setq smtpmail-smtp-user user-mail-address)
-;; (setq smtpmail-smtp-server "smtp.office365.com")
-;; (setq smtpmail-smtp-service 587)
-;; (setq smtpmail-stream-type 'starttls)
-;; (setq send-mail-function 'smtpmail-send-it)
-;; (setq message-send-mail-function 'smtpmail-send-it)
+;; (setq smtpmail-smtp-user "tj.theesfeld@citywide.io"
+;;       smtpmail-smtp-server "smtp.office365.com"
+;;       smtpmail-smtp-service 587
+;;       smtpmail-stream-type 'starttls
+;;       smtpmail-auth-supported '(xoauth2)
+;;       send-mail-function 'smtpmail-send-it
+;;       message-send-mail-function 'smtpmail-send-it)
 
-;; ;; Auth-source configuration (ensure it’s completely ignored for Outlook 365)
-;; (setq auth-sources nil)  ; Keep disabled to test
+;; ;; Auth-source configuration
+;; (setq auth-sources '(xoauth2))
 ;; (setq auth-source-debug t)
 
-;; ;; Must-have Gnus features and settings
-;; (setq gnus-summary-line-format "%U%R%z %d %I%(%[%4L: %-23,23f%]%) %s\n"
-;;       gnus-group-line-format "%M%S%p%P%5y: %(%g%)%l\n"
-;;       gnus-asynchronous t
-;;       gnus-use-adaptive-scoring t
-;;       gnus-use-cache t
-;;       gnus-cache-directory "~/.config/emacs/gnus/cache/"
-;;       gnus-article-save-directory "~/.config/emacs/gnus/saved/"
-;;       gnus-read-active-file 'some
-;;       gnus-check-new-newsgroups nil
-;;       gnus-save-newsrc-file t
-;;       gnus-read-newsrc-file t)
-
-;; ;; Threading and sorting
-;; (setq gnus-thread-sort-functions
-;;       '(gnus-thread-sort-by-most-recent-date
-;;         gnus-thread-sort-by-number))
-;; (setq gnus-summary-thread-gathering-function 'gnus-gather-threads-by-references)
-
-;; ;; Visual enhancements
-;; (setq gnus-treat-fill-long-lines t
-;;       gnus-treat-display-smileys t
-;;       gnus-treat-emphasize t)
-
-;; ;; Startup
-;; (setq gnus-startup-file "~/.config/emacs/gnus/newsrc"
-;;       gnus-save-killed-list nil
-;;       gnus-use-dribble-file t)
-
-;; ;; Keybindings
-;; (add-hook 'gnus-group-mode-hook
-;;           (lambda ()
-;;             (local-set-key (kbd "g") 'gnus-group-get-new-news)))
-;; (add-hook 'gnus-summary-mode-hook
-;;           (lambda ()
-;;             (local-set-key (kbd "m") 'gnus-summary-mail-other-window)))
-
-;; ;; Disable automatic browser opening (handled manually)
-;; (setq browse-url-browser-function 'ignore)  ; Prevent EWW from opening
+;; ;; Disable automatic browser opening
+;; (setq browse-url-browser-function 'ignore)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                   0x0.st                                  ;;
