@@ -1487,13 +1487,17 @@
   (setq calibredb-db-dir (expand-file-name "metadata.db" calibredb-root-dir))
   (setq calibredb-library-alist '(("~/.calibre-library" (name . "Calibre")))))
 
+(use-package esxml :straight t)
 (use-package nov
   :straight t
-  :defer t
+  :after esxml
+  :init
+  (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
   :config
   (setq nov-unzip-program (executable-find "bsdtar")
-      nov-unzip-args '("-xC" directory "-f" filename))
-  (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode)))
+        nov-unzip-args '("-xC" directory "-f" filename))
+  (setq nov-verbose t)  ;; Temporary for debugging
+  (define-key nov-mode-map (kbd "q") 'delete-frame))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                Treemacs Setup
