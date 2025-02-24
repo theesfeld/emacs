@@ -1097,6 +1097,14 @@
 ;;                                Misc Packages                              ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; kill buffer and close window
+(defun my-quit-and-kill ()
+      (interactive)
+    (let ((buffer (current-buffer)))
+      (quit-window)              ;; Close the window
+      (when (buffer-live-p buffer) ;; Ensure buffer still exists
+        (kill-buffer buffer))))
+
 ;; Recentf
 (use-package recentf
   :init
