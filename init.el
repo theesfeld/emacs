@@ -1191,14 +1191,12 @@
       (url-copy-file url temp-file t)
       (find-file temp-file)
       (delete-file temp-file)))
-  :hook
-  ;; Disable line numbers in pdf-view-mode
-  (pdf-view-mode-hook . (lambda () (display-line-numbers-mode -1)))
   :config
   ;; Optional: Enhance pdf-view-mode
   (setq pdf-view-display-size 'fit-page  ;; Fit page by default
         pdf-view-continuous t            ;; Continuous scrolling
-        pdf-view-use-scaling t))         ;; Better rendering on HiDPI displays
+        pdf-view-use-scaling t)         ;; Better rendering on HiDPI displays
+  (add-to-list 'pdf-view-incompatible-modes 'display-line-numbers-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              ERC (IRC Client)                             ;;
