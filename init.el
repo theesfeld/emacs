@@ -1097,14 +1097,6 @@
 ;;                                Misc Packages                              ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; kill buffer and close window
-(defun my-quit-and-kill ()
-      (interactive)
-    (let ((buffer (current-buffer)))
-      (quit-window)              ;; Close the window
-      (when (buffer-live-p buffer) ;; Ensure buffer still exists
-        (kill-buffer buffer))))
-
 ;; Recentf
 (use-package recentf
   :init
@@ -1205,8 +1197,7 @@
         pdf-view-use-scaling t)          ;; Better rendering on HiDPI
   (add-to-list 'pdf-view-incompatible-modes 'display-line-numbers-mode)
   ;; Explicitly disable line numbers in pdf-view-mode
-  (add-hook 'pdf-view-mode-hook (lambda () (display-line-numbers-mode -1)))
-  (define-key pdf-view-mode-map (kbd "Q") 'my-quit-and-kill))  ;; Close frame with q
+  (add-hook 'pdf-view-mode-hook (lambda () (display-line-numbers-mode -1))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              ERC (IRC Client)                             ;;
@@ -1506,8 +1497,7 @@
   :config
   (setq nov-unzip-program (executable-find "bsdtar")
         nov-unzip-args '("-xC" directory "-f" filename))
-  (setq nov-verbose t)  ;; Temporary for debugging
-  (define-key nov-mode-map (kbd "Q") 'my-quit-and-kill))
+  (setq nov-verbose t))  ;; Temporary for debugging
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                Treemacs Setup
