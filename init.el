@@ -1198,7 +1198,7 @@
   (add-to-list 'pdf-view-incompatible-modes 'display-line-numbers-mode)
   ;; Explicitly disable line numbers in pdf-view-mode
   (add-hook 'pdf-view-mode-hook (lambda () (display-line-numbers-mode -1)))
-  (define-key pdf-view-mode-map (kbd "q") 'server-edit))  ;; Close frame with q
+  (define-key pdf-view-mode-map (kbd "Q") 'delete-frame))  ;; Close frame with q
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              ERC (IRC Client)                             ;;
