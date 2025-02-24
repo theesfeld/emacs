@@ -1191,7 +1191,7 @@
       (url-copy-file url temp-file t)
       (find-file temp-file)
       (delete-file temp-file)))
-g  :config
+  :config
   ;; Optional: Enhance pdf-view-mode
   (setq pdf-view-display-size 'fit-page  ;; Fit page by default
         pdf-view-continuous t            ;; Continuous scrolling
