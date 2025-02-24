@@ -1178,12 +1178,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package pdf-tools
-  :straight t
-  :mode ("\\.pdf\\'" . pdf-view-mode)
+  :straight t  ;; Using straight.el instead of package.el
+  :mode ("\\.pdf\\'" . pdf-view-mode)  ;; Automatically use pdf-view-mode for PDFs
   :init
-  ;; Install pdf-tools on first use
-  (pdf-tools-install :no-query)
-  ;; Handle remote PDFs
+  ;; Define the remote PDF function before pdf-tools loads
   (defun my-open-remote-pdf-in-emacs (url &rest args)
     "Download a PDF from URL and open it in Emacs with pdf-view-mode."
     (interactive)
@@ -1192,12 +1190,15 @@
       (find-file temp-file)
       (delete-file temp-file)))
   :config
-  ;; Optional: Enhance pdf-view-mode
+  ;; Install pdf-tools and configure it
+  (pdf-tools-install :no-query)  ;; Install without prompting
   (setq pdf-view-display-size 'fit-page  ;; Fit page by default
         pdf-view-continuous t            ;; Continuous scrolling
-        pdf-view-use-scaling t)         ;; Better rendering on HiDPI displays
+        pdf-view-use-scaling t)          ;; Better rendering on HiDPI
   (add-to-list 'pdf-view-incompatible-modes 'display-line-numbers-mode)
-(define-key pdf-view-mode-map (kbd "q") 'server-edit))
+  ;; Explicitly disable line numbers in pdf-view-mode
+  (add-hook 'pdf-view-mode-hook (lambda () (display-line-numbers-mode -1)))
+  (define-key pdf-view-mode-map (kbd "q") 'server-edit))  ;; Close frame with q
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              ERC (IRC Client)                             ;;
