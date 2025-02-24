@@ -1191,12 +1191,13 @@
       (url-copy-file url temp-file t)
       (find-file temp-file)
       (delete-file temp-file)))
-  :config
+g  :config
   ;; Optional: Enhance pdf-view-mode
   (setq pdf-view-display-size 'fit-page  ;; Fit page by default
         pdf-view-continuous t            ;; Continuous scrolling
         pdf-view-use-scaling t)         ;; Better rendering on HiDPI displays
-  (add-to-list 'pdf-view-incompatible-modes 'display-line-numbers-mode))
+  (add-to-list 'pdf-view-incompatible-modes 'display-line-numbers-mode)
+(define-key pdf-view-mode-map (kbd "q") 'server-edit))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              ERC (IRC Client)                             ;;
