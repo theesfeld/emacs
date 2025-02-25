@@ -730,7 +730,15 @@
         ("I" "Image Capture" entry
          (file (lambda () (expand-file-name "url.org" org-directory)))
          "* %:description :web:%^g\n:PROPERTIES:\n:URL: %:link\n:ADDED: %U\n:END:\n%(org-download-clipboard)"
-         :immediate-finish t)))
+         :immediate-finish t))
+("n" "Note Capture" entry
+         (file (lambda () (expand-file-name "url.org" org-directory)))
+         "* %:description :web:%^g\n:PROPERTIES:\n:ADDED: %U\n:END:\n%:initial")
+        ("t" "TODO Capture" entry
+         (file (lambda () (expand-file-name "url.org" org-directory)))
+         "* TODO %:description :web:%^g\n:PROPERTIES:\n:ADDED: %U\n:END:\n%:initial")))
+      )
+
 
 ;; Add to agenda for searching
 (setq org-agenda-files (append org-agenda-files (list (expand-file-name "url.org" org-directory))))
