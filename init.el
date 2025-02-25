@@ -862,8 +862,7 @@
     "Open or create today's journal entry in the weekly file."
     (interactive)
     (org-journal-new-entry t)
-    (goto-char (point-max)))
-  :bind (("C-c j" . org-journal-new-entry)))
+    (goto-char (point-max))))
 
 ;; Org Keybindings
 (global-set-key (kbd "C-c a") #'org-agenda)
