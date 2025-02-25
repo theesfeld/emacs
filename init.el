@@ -297,23 +297,23 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Dracula theme
-(use-package dracula-theme
-  :ensure t
-  :config
-  (load-theme 'dracula t))
+ (use-package dracula-theme
+   :ensure t
+   :config
+   (load-theme 'dracula t))
 
-(set-face-attribute 'default nil :height 120)
-(set-face-attribute 'variable-pitch nil :height 130)
+ (set-face-attribute 'default "Berkeley Mono" :height 120)
+ (set-face-attribute 'variable-pitch nil :height 130)
 
-(set-face-attribute 'font-lock-comment-face nil
-                    :slant 'italic
-                    :weight 'light
-                    :distant-foreground "#5c6370"
-                    :foreground "#5c6370"
-                    :background "#282c34")
+ (set-face-attribute 'font-lock-comment-face nil
+                     :slant 'italic
+                     :weight 'light
+                     :distant-foreground "#5c6370"
+                     :foreground "#5c6370"
+                     :background "#282c34")
 
-(set-face-attribute 'font-lock-keyword-face nil
-                    :weight 'black)
+ (set-face-attribute 'font-lock-keyword-face nil
+                     :weight 'black)
 
 ;; Indent bars
 (use-package indent-bars
@@ -1054,7 +1054,6 @@
   ;; Explicitly disable line numbers in pdf-view-mode
   (add-hook 'pdf-view-mode-hook (lambda () (display-line-numbers-mode -1))))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              ERC (IRC Client)                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1093,8 +1092,8 @@
         erc-log-channels-directory "~/.config/emacs/irc-logs/"
         erc-save-buffer-on-part t
         erc-log-write-after-insert t)
-  ;; Enable ERC modules, explicitly excluding nickbar
-  (setq erc-modules '(notifications))  ; Only include what you want
+  ;; Enable ERC modules, including 'networks' but excluding 'nickbar'
+  (setq erc-modules '(networks notifications))  ; Add 'networks' explicitly
   (erc-update-modules)
 
   (defun my-erc-update-notifications-keywords (&rest _)
