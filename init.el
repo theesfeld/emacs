@@ -721,37 +721,57 @@
               ("C-c l D" . consult-lsp-definition)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                       Org, Org-Roam, Org-Super-Agenda                     ;;
+;;                             Org Mode Setup                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; automatically kill file when aborting capture
+(require 'org)
+(require 'org-agenda)
+
+;; Basic Org Settings
+(setq org-directory "~/.org/")
+(setq org-agenda-files (list (expand-file-name "agenda.org" org-directory)
+                             (expand-file-name "todos.org" org-directory)
+                             (expand-file-name "url.org" org-directory)))  ; Include url.org for agenda
+(setq org-default-notes-file (expand-file-name "notes.org" org-directory))
+(setq org-id-link-to-org-use-id t)  ; Enable IDs for linking
+(setq org-startup-folded 'showall)
+(setq org-log-done 'time)
+(setq org-tag-alist '(("@personal" . ?p) ("@work" . ?w)))
+
+(add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))
+(add-hook 'org-mode-hook #'visual-wrap-prefix-mode)
+(add-hook 'org-mode-hook #'flyspell-mode)
+(when (boundp 'treesit-language-source-alist)
+  (add-to-list 'major-mode-remap-alist '(org-mode . org-ts-mode)))
+
+;; Automatically kill file when aborting capture
 (defun my-org-capture-delete-file-after-kill (&rest _)
   "If current buffer has a file, delete it when capture is killed."
   (when (and (buffer-file-name)
              (file-exists-p (buffer-file-name)))
     (delete-file (buffer-file-name))
     (message "Deleted aborted capture file: %s" (buffer-file-name))))
-
 (advice-add 'org-capture-kill :after #'my-org-capture-delete-file-after-kill)
 
-;; org-auto-tangle
+;; Org-auto-tangle
 (use-package org-auto-tangle
+  :ensure t
   :hook (org-mode . org-auto-tangle-mode))
 
-;; org-download
+;; Org-download
 (use-package org-download
+  :ensure t
   :config
   (require 'org-download)
-  (add-hook 'dired-mode-hook 'org-download-enable)
-  ;; Additional keybind for convenience
+  (add-hook 'dired-mode-hook #'org-download-enable)
+  (setq org-download-image-dir (expand-file-name "images" org-directory))
   :bind (:map org-mode-map
               ("C-c n O" . org-download-clipboard)))
 
-;; capture stuff
-
+;; Org-protocol
 (require 'org-protocol)
 
-;; Define capture templates
+;; Org-capture Templates (preserving your originals + new ones)
 (setq org-capture-templates
       '(("L" "Link Capture" entry
          (file (lambda () (expand-file-name "url.org" org-directory)))
@@ -764,31 +784,43 @@
          (file (lambda () (expand-file-name "url.org" org-directory)))
          "* %:description :web:%^g\n:PROPERTIES:\n:URL: %:link\n:ADDED: %U\n:END:\n%(org-download-clipboard)"
          :immediate-finish t)
-      ("n" "Note Capture" entry
+        ("n" "Note Capture" entry
          (file (lambda () (expand-file-name "url.org" org-directory)))
          "* %:description :web:%^g\n:PROPERTIES:\n:ADDED: %U\n:END:\n%:initial")
         ("t" "TODO Capture" entry
          (file (lambda () (expand-file-name "url.org" org-directory)))
-         "* TODO %:description :web:%^g\n:PROPERTIES:\n:ADDED: %U\n:END:\n%:initial")))
-
-
-;; Add to agenda for searching
-(setq org-agenda-files (append org-agenda-files (list (expand-file-name "url.org" org-directory))))
+         "* TODO %:description :web:%^g\n:PROPERTIES:\n:ADDED: %U\n:END:\n%:initial")
+        ;; New templates for agenda/journal
+        ("m" "Meeting" entry
+         (file+headline (lambda () (expand-file-name "agenda.org" org-directory)) "Meetings")
+         "* MEETING %^{Title} %^g\nSCHEDULED: %^{Date and Time}T\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:END:\n%?"
+         :empty-lines 1)
+        ("s" "Scheduled Todo" entry
+         (file+headline (lambda () (expand-file-name "todos.org" org-directory)) "Tasks")
+         "* TODO %^{Title} %^g\nSCHEDULED: %^{Date}T\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:END:\n%?"
+         :empty-lines 1)
+        ("u" "Unscheduled Todo" entry
+         (file+headline (lambda () (expand-file-name "todos.org" org-directory)) "Tasks")
+         "* TODO %^{Title} %^g\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:END:\n%?"
+         :empty-lines 1)
+        ("j" "Journal Entry" entry
+         (function org-journal-new-entry)
+         "* %<%H:%M> %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:END:\n"
+         :empty-lines 1)))
 
 ;; Add IDs for stable linking
 (add-hook 'org-capture-prepare-finalize-hook #'org-id-get-create)
 
-;; Ensure org-download saves to a subdirectory of org-directory
-(setq org-download-image-dir (expand-file-name "images" org-directory))
-
-
-
 ;; Org-timeblock
 (use-package org-timeblock
+  :ensure t
   :vc (:url "https://github.com/ichernyshovvv/org-timeblock")
   :bind (("C-c w" . org-timeblock)))
 
-;; Configure Org Agenda
+;; Org-agenda Configuration
+(setq org-agenda-start-on-weekday 1)  ; Start on Monday
+(setq org-agenda-span 'week)
+(setq org-agenda-include-diary t)
 (setq org-agenda-sorting-strategy
       '((agenda habit-down time-up priority-down tag-up)
         (todo priority-down category-keep)
@@ -797,19 +829,13 @@
 (setq org-agenda-log-mode-items '(closed)
       org-agenda-start-with-log-mode t)
 
-;; Custom agenda command
-(setq org-agenda-custom-commands
-      '(("A" "Super Agenda"
-         ((agenda "")
-          (alltodo "")))))
-
-;; org-super-agenda
+;; Org-super-agenda
 (use-package org-super-agenda
+  :ensure t
   :after org-agenda
   :init
-  (org-super-agenda-mode)
-  :bind (("C-c g" . my/org-roam-refresh-agenda-list)
-         ("C-c a" . org-agenda))
+  (org-super-agenda-mode 1)
+  :bind (("C-c a" . org-agenda))
   :config
   (setq org-super-agenda-groups
         '((:name "Personal Scheduled"
@@ -821,232 +847,42 @@
           (:name "Work Unscheduled"
                  :and (:tag ("work") :not (:scheduled t)))
           (:name "General Scheduled"
-                 :and (:not (:tag ("personal" "work"))
-                            :scheduled t))
+                 :and (:not (:tag ("personal" "work")) :scheduled t))
           (:name "General Unscheduled"
-                 :and (:not (:tag ("personal" "work"))
-                            :not (:scheduled t)))
+                 :and (:not (:tag ("personal" "work")) :not (:scheduled t)))
           (:name "Overdue" :deadline past)
-          (:name "Completed Today" :and (:todo "DONE" :scheduled today)))))
+          (:name "Completed Today" :and (:todo "DONE" :scheduled today))))
+  (setq org-agenda-custom-commands
+        '(("A" "Super Agenda"
+           ((agenda "" ((org-agenda-span 'week)))
+            (alltodo ""))
+           ((org-super-agenda-groups org-super-agenda-groups))))))
 
-;; Org-roam
-(use-package org-roam
-  :demand t
-  :custom
-  (org-roam-directory (concat org-directory "/roam"))
-  (setq org-roam-db-location (concat org-roam-directory "org-roam.db"))
-  :bind (("C-c n f" . org-roam-node-find)
-         ("M-o"     . ugt-org-roam-node-find)
-         ("M-O"     . ugt-org-roam-node-find-document-nodes)
-         ("C-c n r" . org-roam-node-random)
-         ("C-c n n" . org-roam-capture)
-         ("C-c n l" . org-roam-buffer-toggle)
-         ;; Dailies keybindings:
-         ("C-c n d n" . org-roam-dailies-capture-today)
-         ("C-c n d x" . org-roam-dailies-goto-today)
-         ("C-c n d y" . org-roam-dailies-goto-yesterday)
-         ("C-c n d t" . org-roam-dailies-goto-tomorrow)
-         ("C-c n d Y" . org-roam-dailies-capture-yesterday)
-         ("C-c n d T" . org-roam-dailies-capture-tomorrow)
-         (:map org-mode-map
-               (("C-c n i" . org-roam-node-insert)
-                ("C-c n o" . org-id-get-create)
-                ("C-c n b" . org-roam-tag-add)
-                ("C-c n a" . org-roam-alias-add)
-                ("C-c n g" . org-roam-graph))))
+;; Org-journal Setup
+(use-package org-journal
+  :ensure t
+  :init
+  (setq org-journal-dir (expand-file-name "journal/" org-directory))
+  (setq org-journal-file-type 'weekly)
+  (setq org-journal-file-format "%Y-W%W.org")  ; e.g., 2025-W08.org
+  (setq org-journal-date-format "%A, %Y-%m-%d")
+  (setq org-journal-time-prefix "** ")
   :config
-  ;; Display template for nodes
-  (setq org-roam-node-display-template
-        (concat "${title:70}"
-                (propertize "${tags:30}" 'face 'org-tag)
-                "${file:48}"))
+  (defun org-journal-new-entry ()
+    "Open or create today's journal entry in the weekly file."
+    (interactive)
+    (org-journal-new-entry t)
+    (goto-char (point-max)))
+  :bind (("C-c j" . org-journal-new-entry)))
 
-  ;; Capture templates
-  (setq org-roam-capture-templates
-        `(("d" "Default (Personal Note)" plain "%?"
-           :if-new (file+head
-                    (lambda ()
-                      (let* ((title (plist-get org-capture-plist :title))
-                             (slug (if title (org-roam--slugify title) "untitled"))
-                             (timestamp (format-time-string "%Y%m%d%H%M%S")))
-                        (format "personal/%s-%s.org" slug timestamp)))
-                    "#+title: ${title}\n#+date: %<%Y-%m-%d %a %R>\n#+startup: showall\n#+filetags: personal\n\n")
-           :immediate-finish t
-           :jump-to-captured nil
-           :empty-lines 1
-           :unnarrowed t)
-          ("w" "Work Note" plain "%?"
-           :if-new (file+head
-                    (lambda ()
-                      (let* ((title (plist-get org-capture-plist :title))
-                             (slug (if title (org-roam--slugify title) "untitled"))
-                             (timestamp (format-time-string "%Y%m%d%H%M%S")))
-                        (format "work/%s-%s.org" slug timestamp)))
-                    "#+title: ${title}\n#+date: %<%Y-%m-%d %a %R>\n#+filetags: work\n#+updated: \n\n")
-           :immediate-finish t
-           :jump-to-captured nil
-           :empty-lines 1
-           :unnarrowed t)
-          ("c" "Contacts" plain "%?"
-           :if-new (file+head
-                    (lambda ()
-                      (let* ((title (plist-get org-capture-plist :title))
-                             (slug (if title (org-roam--slugify title) "untitled"))
-                             (timestamp (format-time-string "%Y%m%d%H%M%S")))
-                        (format "personal/contacts/%s-%s.org" slug timestamp)))
-                    "#+title: ${title}\n#+date: %<%Y-%m-%d %a %R>\n#+filetags: contacts\n#+startup: showall\n\n")
-           :immediate-finish t
-           :jump-to-captured nil
-           :empty-lines 1
-           :unnarrowed t)
-          ("e" "Emacs Related Note" plain "%?"
-           :if-new (file+head
-                    (lambda ()
-                      (let* ((title (plist-get org-capture-plist :title))
-                             (slug (if title (org-roam--slugify title) "untitled"))
-                             (timestamp (format-time-string "%Y%m%d%H%M%S")))
-                        (format "emacs/%s-%s.org" slug timestamp)))
-                    "#+title: ${title}\n#+date: %<%Y-%m-%d %a %R>\n#+filetags: emacs\n#+startup: content\n")
-           :empty-lines 1
-           :jump-to-captured nil
-           :unnarrowed t)
-          ("m" "Meeting" entry
-           "* TODO MEETING: %^{Meeting Title}\nSCHEDULED: %^{Meeting Date and Time: }T\n\n%?"
-           :if-new (file+head
-                    (lambda ()
-                      (let* ((title (plist-get org-capture-plist :title))
-                             (slug (if title (org-roam--slugify title) "untitled"))
-                             (timestamp (format-time-string "%Y%m%d%H%M%S")))
-                        (format "work/meetings/%s-%s.org" slug timestamp)))
-                    "#+title: %^{Meeting Title}\n#+filetags: work meeting\n\n")
-           :empty-lines 1
-           :jump-to-captured nil
-           :unnarrowed t)
-          ("t" "TODO" plain "* TODO ${title}\n%?"
-           :if-new (file+head
-                    (lambda ()
-                      (let* ((title (plist-get org-capture-plist :title))
-                             (slug (if title (org-roam--slugify title) "untitled"))
-                             (timestamp (format-time-string "%Y%m%d%H%M%S")))
-                        (format "todos/%s-%s.org" slug timestamp)))
-                    "#+title: ${title}\n#+date: %<%Y-%m-%d %a %R>\n#+filetags: %^{Tag:|work|personal}\n#+updated: \n\n")
-           :immediate-finish nil
-           :jump-to-captured nil
-           :empty-lines 1
-           :unnarrowed t)))
+;; Standard Keybindings
+(global-set-key (kbd "C-c a") #'org-agenda)
+(global-set-key (kbd "C-c c") #'org-capture)
+(global-set-key (kbd "C-c l") #'org-store-link)
 
-  ;; Time stamp update snippet
-  (setq time-stamp-start "#\\+updated: [\t]*")
-
-  ;; Dailies capture templates
-  (setq org-roam-dailies-capture-templates
-        '(("d" "default" entry
-           "\n* %<%H:%M> %?\n:properties:\n:created: %U\n:end:\n"
-           :target (file+head "%<%Y-%m-%d>.org"
-                              "#+title: TODO %<%Y-%m-%d %a>\n#+startup: showall\n\n")
-           :empty-lines 1
-           :jump-to-captured nil)))
-
-  ;; Custom slug function
-  (cl-defmethod org-roam-node-slug ((node org-roam-node))
-    "Return the slug of NODE."
-    (let ((title (org-roam-node-title node))
-          (slug-trim-chars '(768 769 770 771 772 774 775 776
-                                 777 778 779 780 795 803 804 805
-                                 807 813 814 816 817)))
-      (cl-flet* ((nonspacing-mark-p (char)
-                   (memq char slug-trim-chars))
-                 (strip-nonspacing-marks (s)
-                   (string-glyph-compose
-                    (apply #'string
-                           (seq-remove #'nonspacing-mark-p
-                                       (string-glyph-decompose s)))))
-                 (cl-replace (title pair)
-                   (replace-regexp-in-string (car pair) (cdr pair) title)))
-        (let* ((pairs '(("[^[:alnum:][:digit:]]" . "-")
-                        ("--*" . "-")
-                        ("^-" . "")
-                        ("-$" . "")))
-               (slug (-reduce-from #'cl-replace
-                                   (strip-nonspacing-marks title)
-                                   pairs)))
-          (downcase slug)))))
-
-  (org-roam-db-autosync-mode)
-  (require 'org-roam-protocol))
-
-;; Additional Org-roam custom functions
-(defvar my-date-regexp "^[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} [A-Za-z]+")
-
-(defun ugt-filter-org-roam-node-file-p (node)
-  "Return non-nil if NODE is a top-level file node, not a journal date."
-  (and (= (org-roam-node-level node) 0)
-       (not (string-match my-date-regexp (org-roam-node-title node)))))
-
-(defun ugt-filter-org-roam-node-exclude-archived-and-journal-files (node)
-  "Exclude nodes that are journal entries, in archive, or tagged 'archive'."
-  (and (not (string-match my-date-regexp (org-roam-node-title node)))
-       (not (member "archive" (org-roam-node-tags node)))
-       (not (string-match-p "archive/" (org-roam-node-file node)))))
-
-(defun ugt-org-roam-node-find ()
-  "Refined search for org-roam nodes excluding archived/journal entries."
-  (interactive)
-  (org-roam-node-find
-   :other-window nil
-   #'ugt-filter-org-roam-node-exclude-archived-and-journal-files))
-
-(defun ugt-org-roam-node-find-document-nodes ()
-  "Refined search for document-level org-roam nodes (excludes dates)."
-  (interactive)
-  (org-roam-node-find
-   :other-window nil
-   #'ugt-filter-org-roam-node-file-p))
-
- (defun ugt-org-roam-dailies-goto-today ()
-   "Open today's journal in another window."
-   (interactive)
-   (split-window-right)
-   (other-window 1)
-   (org-roam-dailies-goto-today))
-
-;; Hooks to refresh org-agenda-files after updates
-(defun my/org-roam-refresh-agenda-list ()
-  "Refresh `org-agenda-files` to include all Org files in org-roam recursively."
-  (interactive)
-  (setq org-agenda-files
-        (directory-files-recursively (concat org-directory "/roam") "\\.org$"))
-  (message "org-agenda-files refreshed."))
-
-(my/org-roam-refresh-agenda-list)
-(add-hook 'org-roam-capture-after-finalize-hook #'my/org-roam-refresh-agenda-list)
-(add-hook 'org-roam-db-autosync-after-save-hook #'my/org-roam-refresh-agenda-list)
-
-;; Hooks for capturing
-(defun ugt-org-capture-after-finalize-hook nil
-  (org-capture-goto-last-stored)
-  (end-of-buffer)
-  (recenter-top-bottom '(4)))
-
-(defun my-org-capture-hook ()
-  (when (plist-member org-capture-plist :org-roam)
-    (org-cycle-hide-drawers 'overview)))
-(add-hook 'org-capture-mode-hook #'my-org-capture-hook)
-
-(defun my-org-roam-hook ()
-  (org-cycle-hide-drawers 'overview))
-(add-hook 'org-roam-mode-hook #'my-org-roam-hook)
-
-(defun ugt-org-roam-dailies-find-file-hook nil
-  (end-of-buffer))
-(add-hook 'org-roam-dailies-find-file-hook #'ugt-org-roam-dailies-find-file-hook)
-
-(defun insert-created-date ()
-  (insert (format-time-string "%Y-%m-%d %a %H:%M:%S ")))
-
-;;(add-hook 'org-roam-dailies-capture-today #'insert-created-date)
-
+;; Modern Org Look
 (use-package org-modern
+  :ensure t
   :hook (org-mode . org-modern-mode)
   :config
   (setq org-modern-table-vertical 2
@@ -1054,7 +890,7 @@
         org-modern-star ["●" "○" "✸" "✿"]
         org-modern-list '((43 . "•") (45 . "–") (42 . "•"))))
 
-
+;; [Rest of your config continues unchanged]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                   Magit/Forge                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
