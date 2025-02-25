@@ -1093,11 +1093,11 @@
         erc-log-channels-directory "~/.config/emacs/irc-logs/"
         erc-save-buffer-on-part t
         erc-log-write-after-insert t)
-  ;; Enable ERC modules, including nickbar
-  (setq erc-modules (append erc-modules '(nickbar notifications)))
+  ;; Enable ERC modules, explicitly excluding nickbar
+  (setq erc-modules '(notifications))  ; Only include what you want
   (erc-update-modules)
 
-(defun my-erc-update-notifications-keywords (&rest _)
+  (defun my-erc-update-notifications-keywords (&rest _)
     "Update notification keywords with current nick."
     (when erc-session-user
       (setq erc-notifications-keywords (list erc-session-user))))
@@ -1105,8 +1105,6 @@
   ;; Initialize with a default or leave it nil until connected
   (setq erc-notifications-keywords nil)
 
-  ;; Required for Nickbar to update dynamically
-  (setq speedbar-update-flag t)
   (erc-timestamp-mode 1)
   (erc-track-mode 1)
   (erc-autojoin-mode 1)
@@ -1123,8 +1121,7 @@
   (set-face-attribute 'erc-my-nick-face nil :foreground "#ff79c6" :weight 'bold)
   :bind (:map erc-mode-map
               ("C-c e" . erc-button-browse-url)
-              ("C-c l" . erc-view-log-mode)
-              ("C-c n" . erc-nickbar-mode))  ; Toggle Nickbar
+              ("C-c l" . erc-view-log-mode))
   :init
   (defun my-erc-connect ()
     "Retrieve IRC credentials from authinfo.gpg and connect to the IRC server"
