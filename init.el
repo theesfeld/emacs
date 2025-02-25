@@ -64,6 +64,29 @@
       use-package-always-ensure t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                             Org Mode Setup                               ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Load Org-mode via straight.el before built-in Org is loaded
+(use-package org
+  :straight t  ; Pull Org from straight.el (latest from GitHub by default)
+  :demand t    ; Load immediately to override built-in Org
+  :init
+  ;; Early settings before Org is loaded
+  (setq org-directory "~/.org/")  ; Moved from "Basic Emacs Information"
+  :config
+  ;; Base Org configuration moved here
+  (add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))
+  (setq org-tag-alist '(("@personal" . ?p) ("@work" . ?w))
+        org-log-done 'time)
+  ;; Hooks previously scattered elsewhere
+  (add-hook 'org-mode-hook #'visual-wrap-prefix-mode)  ; From "Global Emacs Settings"
+  (add-hook 'org-mode-hook #'flyspell-mode)            ; From "FlySpell"
+  ;; Ensure Tree-sitter remapping if available
+  (when (boundp 'treesit-language-source-alist)
+    (add-to-list 'major-mode-remap-alist '(org-mode . org-ts-mode))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -86,6 +109,7 @@
   :straight t
   :defer t)
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                           Basic Emacs Information                        ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -100,7 +124,6 @@
       epg-pinentry-mode 'loopback
       password-cache-expiry nil
       auth-source-cache-expiry nil
-      org-directory "~/.org/"
       gc-cons-percentage 0.6
       ;; Visual ellipsis for truncated lines:
       truncate-string-ellipsis "…"
@@ -132,13 +155,12 @@
 
 ;; Properly set up PATH and environment variables on macOS/Linux.
 (use-package exec-path-from-shell
+  :ensure t  ;; Ensure it’s installed
   :config
-  (when (or (memq window-system '(mac ns x)) (daemonp))
-     (setq exec-path-from-shell-arguments nil)
-    (exec-path-from-shell-initialize)))
-
-;; Ensure local bin is in exec-path
-(setq exec-path (append exec-path '("~/.local/bin/")))
+  (setq exec-path-from-shell-shell-name "/usr/bin/zsh")  ;; Explicitly use Zsh (Arch default path)
+  (setq exec-path-from-shell-arguments '("-l"))          ;; -l makes it a login shell, sourcing .zshrc
+  (exec-path-from-shell-initialize)                      ;; Run unconditionally
+  (message "exec-path-from-shell ran with shell: %s" exec-path-from-shell-shell-name))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Global Emacs Settings                        ;;
@@ -173,7 +195,6 @@
 (fset 'yes-or-no-p 'y-or-n-p)
 
 ;; visual wrap prefix mode
-(add-hook 'org-mode-hook #'visual-wrap-prefix-mode)
 (add-hook 'text-mode-hook #'visual-wrap-prefix-mode)
 
 ;; Remove the menu/tool/scroll bars early for minimal UI
@@ -605,24 +626,15 @@
 
 (use-package flyspell
   ;; (prog-mode . flyspell-prog-mode) is too noisy, too many false positives
-  :hook ((text-mode . flyspell-mode)
-         (org-mode  . flyspell-mode))
+  :hook ((text-mode . flyspell-mode))
   :init
-  (cond
-   ((executable-find "aspell")
     (setq ispell-program-name "aspell"
-          ispell-extra-args '("--camel-case")))
-   ((executable-find "hunspell")
-    (setq ispell-program-name "hunspell"))
-   (t
-    (setq ispell-program-name nil)))
+          ispell-extra-args '("--camel-case"))
   :custom
   (flyspell-default-dictionary "american"))
 
-;;(setq ispell-program-name "aspell"
-;;      ispell-silently-savep t)
-
-(use-package flycheck-aspell :defer t)
+(setq ispell-program-name "aspell"
+      ispell-silently-savep t)
 
 (use-package flyspell-correct
   :after flyspell
@@ -695,11 +707,6 @@
     (message "Deleted aborted capture file: %s" (buffer-file-name))))
 
 (advice-add 'org-capture-kill :after #'my-org-capture-delete-file-after-kill)
-
-;; Use org-mode for .org files
-(add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))
-(setq org-tag-alist '(("@personal" . ?p) ("@work" . ?w))
-      org-log-done 'time)
 
 ;; org-auto-tangle
 (use-package org-auto-tangle
@@ -1106,8 +1113,6 @@
   :config
   (setq aidermacs-default-model "anthropic/claude-3-7-sonnet-20250219")
   (global-set-key (kbd "C-c A") 'aidermacs-transient-menu)
-  ; Ensure emacs can access *_API_KEY through .bashrc or setenv
-  (setenv "ANTHROPIC_API_KEY" anthropic-api-key)
   ; See the Configuration section below
   (setq aidermacs-auto-commits t)
   (setq aidermacs-use-architect-mode t))
@@ -1217,6 +1222,7 @@
   (add-to-list 'pdf-view-incompatible-modes 'display-line-numbers-mode)
   ;; Explicitly disable line numbers in pdf-view-mode
   (add-hook 'pdf-view-mode-hook (lambda () (display-line-numbers-mode -1))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              ERC (IRC Client)                             ;;
