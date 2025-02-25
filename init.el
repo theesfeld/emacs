@@ -1079,7 +1079,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package aidermacs
-  :vc (:url github :repo "MatthewZMD/aidermacs")
+  :vc (:url "https://github.com/MatthewZMD/aidermacs")
   :config
   (setq aidermacs-default-model "anthropic/claude-3-7-sonnet-20250219")
   (global-set-key (kbd "C-c A") 'aidermacs-transient-menu)
