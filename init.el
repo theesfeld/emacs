@@ -134,8 +134,7 @@
 (use-package exec-path-from-shell
   :config
   (when (or (memq window-system '(mac ns x)) (daemonp))
-    ;; Remove "-i" from arguments if needed, so as not to read .bashrc again
-    (setq exec-path-from-shell-arguments nil)
+     (setq exec-path-from-shell-arguments nil)
     (exec-path-from-shell-initialize)))
 
 ;; Ensure local bin is in exec-path
@@ -819,7 +818,7 @@
            :jump-to-captured nil
            :empty-lines 1
            :unnarrowed t)
-          ("l" "Org-Protocol Link" entry
+          ("P" "Org-Protocol" entry
            "%(org-protocol-capture-get-contents)"
            :if-new (file+head
                     (lambda ()
@@ -827,7 +826,19 @@
                              (slug (if title (org-roam--slugify title) "untitled"))
                              (timestamp (format-time-string "%Y%m%d%H%M%S")))
                         (format "links/%s-%s.org" slug timestamp)))
-                    "#+title: ${title}\n#+date: %U\n\n")
+                    "* %^{Title}\nSource: %u, %c\n #+BEGIN_QUOTE\n%i\n#+END_QUOTE\n\n\n%?")
+           :immediate-finish t
+           :jump-to-captured nil
+           :unnarrowed t)
+          ("L" "Org-Protocol Link" entry
+           "%(org-protocol-capture-get-contents)"
+           :if-new (file+head
+                    (lambda ()
+                      (let* ((title (plist-get org-capture-plist :title))
+                             (slug (if title (org-roam--slugify title) "untitled"))
+                             (timestamp (format-time-string "%Y%m%d%H%M%S")))
+                        (format "links/%s-%s.org" slug timestamp)))
+                    "* %? [[%:link][%:description]] \nCaptured On: %U")
            :immediate-finish t
            :jump-to-captured nil
            :unnarrowed t)
