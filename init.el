@@ -47,60 +47,24 @@
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 
-;; Initialize package system (required for ELPA access)
-(package-initialize)
-
-;; Ensure GNU ELPA is in package-archives
-(unless (assoc "gnu" package-archives)
-  (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t))
-
-;; Configure Modus Themes with use-package
-(use-package modus-themes
-  :ensure t  ; Install from ELPA if not present
-  :init
-  ;; Customize settings before loading
-  (setq modus-themes-bold-constructs t)             ; Bold syntactic constructs
-  (setq modus-themes-italic-constructs t)           ; Italics for emphasis
-  (setq modus-themes-fringes 'subtle)               ; Subtle fringe styling
-  (setq modus-themes-mode-line '(borderless))       ; Clean mode-line
-  (setq modus-themes-prompts '(bold intense))       ; Distinct prompts
-  (setq modus-themes-completions                   ; Updated for 2025 version
-        '((matches . (extrabold background))        ; Completion matches: bold + bg
-          (selection . (semibold intense))          ; Selected item: semibold + intense
-          (popup . (accented))))                    ; Popup UI: accented colors
-  (setq modus-themes-org-blocks 'tinted-background) ; Tinted Org blocks
-  (setq modus-themes-headings                       ; Heading styles
-        '((1 . (bold 1.2))                          ; Level 1: bold, larger
-          (2 . (bold 1.1))                          ; Level 2: bold, slightly larger
-          (t . (semibold))))                        ; Others: semibold
-  :config
-  ;; Load the dark theme (modus-vivendi) after package is loaded
-  (modus-themes-load-theme 'modus-vivendi)
-  ;; Optional: Add a toggle keybinding
-  (global-set-key (kbd "<f5>") #'modus-themes-toggle))
-
-;; Optional font settings (uncomment to customize)
-;; (set-face-attribute 'default nil :family "DejaVu Sans Mono" :height 110)
-;; (set-face-attribute 'variable-pitch nil :family "DejaVu Sans" :height 120)
-
 ;; Dracula theme
- ;; (use-package dracula-theme
- ;;   :ensure t
- ;;   :config
- ;;   (load-theme 'dracula t))
+ (use-package dracula-theme
+   :ensure t
+   :config
+   (load-theme 'dracula t))
 
- ;; (set-face-attribute 'default nil :height 120)
- ;; (set-face-attribute 'variable-pitch nil :height 130)
+ (set-face-attribute 'default nil :height 120)
+ (set-face-attribute 'variable-pitch nil :height 130)
 
- ;; (set-face-attribute 'font-lock-comment-face nil
- ;;                     :slant 'italic
- ;;                     :weight 'light
- ;;                     :distant-foreground "#5c6370"
- ;;                     :foreground "#5c6370"
- ;;                     :background "#282c34")
+ (set-face-attribute 'font-lock-comment-face nil
+                     :slant 'italic
+                     :weight 'light
+                     :distant-foreground "#5c6370"
+                     :foreground "#5c6370"
+                     :background "#282c34")
 
- ;; (set-face-attribute 'font-lock-keyword-face nil
- ;;                     :weight 'black)
+ (set-face-attribute 'font-lock-keyword-face nil
+                     :weight 'black)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
