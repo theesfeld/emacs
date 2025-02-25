@@ -854,10 +854,12 @@
     (goto-char (point-max)))
   :bind (("C-c j" . org-journal-new-entry)))
 
-;; Standard Keybindings
+;; Org Keybindings
 (global-set-key (kbd "C-c a") #'org-agenda)
 (global-set-key (kbd "C-c c") #'org-capture)
 (global-set-key (kbd "C-c l") #'org-store-link)
+(global-set-key (kbd "C-c C-t") #'org-todo-list)
+
 
 ;; Modern Org Look
 (use-package org-modern
@@ -869,7 +871,57 @@
         org-modern-star ["●" "○" "✸" "✿"]
         org-modern-list '((43 . "•") (45 . "–") (42 . "•"))))
 
-;; [Rest of your config continues unchanged]
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                            Org Keybindings and Utils                     ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Keybindings
+(global-set-key (kbd "C-c C-s") 'org-schedule)          ;; Schedule item under cursor
+(global-set-key (kbd "C-c C-d") 'org-deadline)          ;; Set deadline for item
+(global-set-key (kbd "C-c t")   'org-toggle-checkbox)   ;; Toggle checkbox state
+(global-set-key (kbd "C-c n t") 'org-time-stamp)        ;; Insert timestamp
+(global-set-key (kbd "C-c n a") 'org-agenda-list)       ;; Show agenda list (all scheduled)
+(global-set-key (kbd "C-c n j") 'org-journal-new-entry)  ;; Quick journal entry (rebinds your C-c j)
+(global-set-key (kbd "C-c n s") 'org-search-view)       ;; Search all agenda files
+
+;; Bindings in Org-mode only
+(define-key org-mode-map (kbd "C-c C-x C-r") 'org-clock-report)  ;; Clock report in buffer
+(define-key org-mode-map (kbd "C-c C-x C-i") 'org-clock-in)      ;; Clock in to task
+(define-key org-mode-map (kbd "C-c C-x C-o") 'org-clock-out)     ;; Clock out of task
+
+;; Utility Functions
+(defun my-org-refile-to-todos ()
+  "Refile current heading to todos.org under 'Tasks'."
+  (interactive)
+  (org-refile nil nil (list "Tasks" (expand-file-name "todos.org" org-directory) nil nil)))
+(global-set-key (kbd "C-c C-x r") 'my-org-refile-to-todos)
+
+(defun my-org-agenda-today ()
+  "Show agenda for today only."
+  (interactive)
+  (org-agenda nil "a")
+  (org-agenda-day-view))
+(global-set-key (kbd "C-c n d") 'my-org-agenda-today)
+
+(defun my-org-capture-note-quick ()
+  "Quickly capture a note without switching buffers."
+  (interactive)
+  (org-capture nil "n"))
+(global-set-key (kbd "C-c n n") 'my-org-capture-note-quick)
+
+;; Enhance org-agenda with a custom jump to current task
+(defun my-org-agenda-goto-current-clock ()
+  "Jump to the currently clocked task in agenda."
+  (interactive)
+  (org-agenda nil "a")
+  (org-agenda-goto (org-clock-is-active)))
+(global-set-key (kbd "C-c n c") 'my-org-agenda-goto-current-clock)
+
+;; Configuration tweaks for these bindings
+(setq org-clock-persist 'history)  ;; Save clock history across sessions
+(org-clock-persistence-insinuate)  ;; Enable clock persistence
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                   Magit/Forge                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
