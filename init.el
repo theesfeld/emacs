@@ -736,8 +736,7 @@
          "* %:description :web:%^g\n:PROPERTIES:\n:ADDED: %U\n:END:\n%:initial")
         ("t" "TODO Capture" entry
          (file (lambda () (expand-file-name "url.org" org-directory)))
-         "* TODO %:description :web:%^g\n:PROPERTIES:\n:ADDED: %U\n:END:\n%:initial")))
-      )
+         "* TODO %:description :web:%^g\n:PROPERTIES:\n:ADDED: %U\n:END:\n%:initial"))
 
 
 ;; Add to agenda for searching
