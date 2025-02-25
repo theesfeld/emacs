@@ -55,29 +55,6 @@
 (setq use-package-always-ensure t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                             Org Mode Setup                               ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Load Org-mode via straight.el before built-in Org is loaded
-(use-package org
-  :ensure t
-  :demand t    ; Load immediately to override built-in Org
-  :init
-  ;; Early settings before Org is loaded
-  (setq org-directory "~/.org/")  ; Moved from "Basic Emacs Information"
-  :config
-  ;; Base Org configuration moved here
-  (add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))
-  (setq org-tag-alist '(("@personal" . ?p) ("@work" . ?w))
-        org-log-done 'time)
-  ;; Hooks previously scattered elsewhere
-  (add-hook 'org-mode-hook #'visual-wrap-prefix-mode)  ; From "Global Emacs Settings"
-  (add-hook 'org-mode-hook #'flyspell-mode)            ; From "FlySpell"
-  ;; Ensure Tree-sitter remapping if available
-  (when (boundp 'treesit-language-source-alist)
-    (add-to-list 'major-mode-remap-alist '(org-mode . org-ts-mode))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
