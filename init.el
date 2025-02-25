@@ -572,9 +572,7 @@
   :ensure t)
 
 (use-package helm
-  :ensure t
-  :config
-  )
+  :ensure t)
 
 (use-package which-key
   :ensure nil
