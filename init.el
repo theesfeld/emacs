@@ -302,7 +302,7 @@
    :config
    (load-theme 'dracula t))
 
- (set-face-attribute 'default "Berkeley Mono" :height 120)
+ (set-face-attribute 'default nil :height 120)
  (set-face-attribute 'variable-pitch nil :height 130)
 
  (set-face-attribute 'font-lock-comment-face nil
