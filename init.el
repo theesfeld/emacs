@@ -74,7 +74,7 @@
 ;; (set-face-attribute 'variable-pitch nil :family "DejaVu Sans" :height 120)
 
 ;; Apply the theme after configuration
-(modus-themes-load-theme 'modus-vivendi)
+(modus-themes-load-theme 'modus-operandi)
 
 ;; Dracula theme
  ;; (use-package dracula-theme
