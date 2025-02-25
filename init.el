@@ -954,6 +954,7 @@
 
 ;; Recentf
 (use-package recentf
+  :ensure nil
   :init
   (recentf-mode 1)
   :config
@@ -1020,7 +1021,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package eww
-  :ensure t
   :commands (eww-browse-url)
   :init
   ;; Define browse-url handlers for EWW and PDFs
@@ -1060,7 +1060,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package erc
-  :ensure t
   :defer t
   :config
   (defun my-erc-set-fill-column ()
