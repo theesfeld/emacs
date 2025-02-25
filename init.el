@@ -1103,18 +1103,14 @@
 
 (use-package aidermacs
   :straight (:host github :repo "MatthewZMD/aidermacs" :files ("*.el"))
-  :bind ("C-c A" . aidermacs-transient-menu)
   :config
-  ;; Specify an Anthropic model
-  (setq aidermacs-args '("--model" "anthropic/claude-3-5-sonnet-20241022"))
-(setq aidermacs-use-architect-mode t)
-(setq aidermacs-architect-model "o3-mini") ; default
-(setq aidermacs-editor-model "deepseek/deepseek-chat") ;; defaults to aidermacs-default-model
-  ;; Load the Anthropic API key from env
-  ;; (let ((anthropic-api-key
-  ;;        (string-trim (shell-command-to-string "$SHELL --login -c 'echo $ANTHROPIC_API_KEY'"))))
-  ;;   (setenv "ANTHROPIC_API_KEY" anthropic-api-key)))
-)
+  (setq aidermacs-default-model "anthropic/claude-3-7-sonnet-20250219")
+  (global-set-key (kbd "C-c A") 'aidermacs-transient-menu)
+  ; Ensure emacs can access *_API_KEY through .bashrc or setenv
+  (setenv "ANTHROPIC_API_KEY" anthropic-api-key)
+  ; See the Configuration section below
+  (setq aidermacs-auto-commits t)
+  (setq aidermacs-use-architect-mode t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                Misc Packages                              ;;
