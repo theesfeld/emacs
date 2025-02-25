@@ -633,6 +633,7 @@
 
 (use-package flyspell
   ;; (prog-mode . flyspell-prog-mode) is too noisy, too many false positives
+  :ensure nil
   :hook ((text-mode . flyspell-mode)
          (prog-mode . flyspell-prog-mode)
          (org-mode  . flyspell-mode))
