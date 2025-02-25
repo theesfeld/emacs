@@ -633,7 +633,9 @@
 
 (use-package flyspell
   ;; (prog-mode . flyspell-prog-mode) is too noisy, too many false positives
-  :hook ((text-mode . flyspell-mode))
+  :hook ((text-mode . flyspell-mode)
+         (prog-mode . flyspell-prog-mode)
+         (org-mode  . flyspell-mode))
   :init
     (setq ispell-program-name "aspell"
           ispell-extra-args '("--camel-case"))
