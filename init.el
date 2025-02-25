@@ -571,6 +571,11 @@
 (use-package dash
   :ensure t)
 
+(use-package helm
+  :ensure t
+  :config
+  )
+
 (use-package which-key
   :ensure nil
   :config
