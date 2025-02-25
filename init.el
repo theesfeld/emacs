@@ -564,6 +564,8 @@
 
 (global-set-key (kbd "C-c r") #'replace-regexp-as-diff)
 
+(global-set-key (kbd "C-x C-;") 'comment-or-uncomment-region)
+
 ;; show uncommitted changes in the gutter
 ;; https://github.com/dgutov/diff-hl
 (use-package diff-hl
