@@ -40,36 +40,12 @@
 (add-hook 'minibuffer-exit-hook #'my-restore-gc-after-minibuffer)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                           Straight and Use-Package                       ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name
-        "straight/repos/straight.el/bootstrap.el"
-        (or (bound-and-true-p straight-base-dir)
-            user-emacs-directory)))
-      (bootstrap-version 7))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
-
-(straight-use-package 'use-package)
-(setq straight-use-package-by-default t
-      use-package-always-ensure t)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Org Mode Setup                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Load Org-mode via straight.el before built-in Org is loaded
 (use-package org
-  :straight t  ; Pull Org from straight.el (latest from GitHub by default)
+  :ensure t  ; Pull Org from straight.el (latest from GitHub by default)
   :demand t    ; Load immediately to override built-in Org
   :init
   ;; Early settings before Org is loaded
@@ -105,9 +81,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package sqlite3
-  :straight t
+  :ensure t
   :defer t)
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                           Basic Emacs Information                        ;;
@@ -137,7 +112,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package desktop
-  :straight (:type built-in)
   :init
   (desktop-save-mode 1)
   :config
@@ -183,7 +157,6 @@
 
 ;; save pointer history
 (use-package saveplace
-  :straight t
   :ensure nil  ;; Emacs built-in
   :init
   (save-place-mode)
@@ -302,7 +275,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package vundo
-  :straight t
+  :ensure t
   :bind
   ("C-x u" . vundo)
     :config
@@ -368,7 +341,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package delight
-  :straight t
+  :ensure t
   :config
   (delight '((global-hl-line-mode nil "hl-line")
              (save-place-mode nil "saveplace")
@@ -447,7 +420,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package vertico
-  :straight t
+  :ensure t
   :init
   (vertico-mode)
   :custom
@@ -463,7 +436,7 @@
 
 ;; Consult
 (use-package consult
-  :straight t  ; Fresh install via straight.el
+  :ensure t  ; Fresh install via straight.el
   :bind (("C-c M-x"   . consult-mode-command)
          ("C-c h"     . consult-history)
          ("C-c k"     . consult-kmacro)
@@ -520,7 +493,7 @@
 
 (use-package embark-consult
   :after (embark consult)
-  :straight t)
+  :ensure t)
 
 ;; Marginalia
 (use-package marginalia
@@ -568,7 +541,7 @@
   )
 
 (use-package which-key
-  :straight nil
+  :ensure nil
   :config
   (setq which-key-idle-delay 0.1)
   (which-key-mode))
@@ -650,26 +623,24 @@
 ;;                                   Project                                 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; TODO does this work
 (use-package project
-  :straight (:type built-in))
-
-(use-package projectile
-  :init
-  (projectile-mode +1)
+  :ensure nil  ; Built-in, no external fetch needed
   :config
-  (setq projectile-project-search-path '(("~/Code" . 1)
-                                         ("~/.config/" . 1)))
-  :bind-keymap
-  ("s-p" . projectile-command-map)
-  ("C-c p" . projectile-command-map))
+  ;; Custom function to recognize specific directories as projects
+  (defun my-project-find-root (dir)
+    "Identify project roots in ~/Code and ~/.config/."
+    (let ((roots '("~/Code" "~/.config")))
+      (when (member (file-truename (expand-file-name dir))
+                    (mapcar #'file-truename (mapcar #'expand-file-name roots)))
+        (cons 'transient dir))))
+  (add-hook 'project-find-functions #'my-project-find-root))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Eglot (LSP) Setup                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package eglot
-  :straight nil
+  :ensure nil
   :hook ((prog-mode . (lambda ()
                         (unless (string-match-p "^\\*.*\\*$" (buffer-name))
                           (eglot-ensure)))))
@@ -682,7 +653,7 @@
 
 ;; consult-lsp
 (use-package consult-lsp
-  :straight t
+  :ensure t
   :after (eglot consult)
   :bind (:map eglot-mode-map
               ("C-c l a" . consult-lsp-code-actions)
@@ -758,7 +729,7 @@
 
 ;; Org-timeblock
 (use-package org-timeblock
-  :straight (org-timeblock :type git :host github :repo "ichernyshovvv/org-timeblock")
+  :vc (:url "https://github.com/ichernyshovvv/org-timeblock")
   :bind (("C-c w" . org-timeblock)))
 
 ;; Configure Org Agenda
@@ -1087,7 +1058,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package copilot
-  :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
+  :vc (:url "https://github.com/copilot-emacs/copilot.el.git" :files ("*.el"))
   :bind (:map copilot-completion-map
               ("<tab>" . copilot-accept-completion)
               ("TAB"   . copilot-accept-completion)
@@ -1108,7 +1079,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package aidermacs
-  :straight (:host github :repo "MatthewZMD/aidermacs" :files ("*.el"))
+  :vc (:url github :repo "MatthewZMD/aidermacs" :files ("*.el"))
   :config
   (setq aidermacs-default-model "anthropic/claude-3-7-sonnet-20250219")
   (global-set-key (kbd "C-c A") 'aidermacs-transient-menu)
@@ -1142,7 +1113,7 @@
 
 ;; Emacs-everywhere
 (use-package emacs-everywhere
-  :straight t
+  :ensure t
   :config
   (defun grim/emacs-everywhere-wayland-app-info ()
     "Return a dummy app info struct for Wayland."
@@ -1188,7 +1159,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package eww
-  :straight t
+  :ensure t
   :commands (eww-browse-url)
   :init
   ;; Define browse-url handlers for EWW and PDFs
@@ -1201,7 +1172,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package pdf-tools
-  :straight t  ;; Using straight.el instead of package.el
+  :ensure t  ;; Using straight.el instead of package.el
   :mode ("\\.pdf\\'" . pdf-view-mode)  ;; Automatically use pdf-view-mode for PDFs
   :init
   ;; Define the remote PDF function before pdf-tools loads
@@ -1228,7 +1199,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package erc
-  :straight t
+  :ensure t
   :defer t
   :config
   (defun my-erc-set-fill-column ()
@@ -1310,14 +1281,14 @@
               ("C-c E" . my-erc-connect)))
 
 (use-package erc-hl-nicks
-  :straight t
+  :ensure t
   :after erc
   :config
   (add-to-list 'erc-modules 'hl-nicks)
   (erc-update-modules))
 
 (use-package erc-image
-  :straight t
+  :ensure t
   :after erc
   :config
   (setq erc-image-inline-rescale 300)
@@ -1325,7 +1296,7 @@
   (erc-update-modules))
 
 (use-package erc-desktop-notifications
-  :straight (:type built-in)
+  :ensure t
   :after erc
   :config
   (add-to-list 'erc-modules 'notifications)
@@ -1337,7 +1308,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package elfeed-tube
-  :straight (elfeed-tube :type git :host github :repo "karthink/elfeed-tube")
+  :vc (:url "https://github.com/karthink/elfeed-tube")
   :after elfeed
   :config
   (elfeed-tube-setup)
@@ -1346,7 +1317,7 @@
               ("f" . elfeed-tube-mpv-follow-mode)))  ;; Follow mode for live control
 
 (use-package elfeed
-  :straight t
+  :ensure t
   :defer t
   :hook ((elfeed-search-mode-hook . (lambda ()
                                       (elfeed-update)  ;; Run update on opening
@@ -1419,7 +1390,7 @@
 (when (boundp 'treesit-language-source-alist)  ;; Emacs 29+ check
   ;; Optional package for automatically installing & configuring grammars:
   (use-package treesit-auto
-    :straight t
+    :ensure t
     :config
       (setq treesit-auto-install 'prompt)
   (treesit-auto-add-to-auto-mode-alist 'all)
@@ -1464,12 +1435,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package dired-preview
-  :straight t
+  :ensure t
   :init
   (dired-preview-global-mode 1))
 
 (use-package dired-git-info
-  :straight t
+  :ensure t
   :config
   (setq dgi-auto-hide-details-p nil)
   (with-eval-after-load 'dired
@@ -1501,7 +1472,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package calibredb
-  :straight t
+  :ensure t
   :defer t
   :config
   (setq calibredb-format-nerd-icons t)
@@ -1511,10 +1482,10 @@
   (setq calibredb-library-alist '(("~/.calibre-library" (name . "Calibre")))))
 
 (use-package esxml
-  :straight t)
+  :ensure t)
 
 (use-package nov
-  :straight t
+  :ensure t
   :after esxml
   :init
   (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
@@ -1851,7 +1822,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package 0x0
-  :straight t
+  :ensure t
   :bind (:map global-map
               ("C-c u" . '0x0-dwim)
               ("C-c U" . '0x0-upload-file)))
