@@ -651,7 +651,7 @@
   :after flyspell
   :hook (flyspell-mode . flyspell-popup-auto-correct-mode)
   :config
-  (setq flyspell-popup-auto-correct-delay 1.6)  ;; Delay before popup
+  (setq flyspell-popup-auto-correct-delay 2)  ;; Delay before popup
   (define-key flyspell-mode-map (kbd "TAB") #'flyspell-popup-correct))  ;; Optional manual trigger
 
 (use-package flyspell-correct
@@ -659,11 +659,11 @@
   :bind (:map flyspell-mode-map
               ("C-;" . flyspell-correct-wrapper)))
 
-(use-package flyspell-lazy
-  :after flyspell
-  :init
-  (flyspell-lazy-mode 1)
-  (add-to-list 'ispell-extra-args "--sug-mode=ultra"))
+;; (use-package flyspell-lazy
+;;   :after flyspell
+;;   :init
+;;   (flyspell-lazy-mode 1)
+;;   (add-to-list 'ispell-extra-args "--sug-mode=ultra"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                   Project                                 ;;
