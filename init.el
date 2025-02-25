@@ -1597,6 +1597,7 @@
 
 (use-package yasnippet-snippets
   :after yasnippet
+  :ensure t
   :config
   ;; Ensure snippets are loaded when this package is loaded
   (yas-reload-all))
