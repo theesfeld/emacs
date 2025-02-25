@@ -1690,6 +1690,38 @@
               ("C-c U" . '0x0-upload-file)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                     EXWM                                  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Only load EXWM in Xorg graphical environments
+(when (and (display-graphic-p)         ; Check if graphical environment
+           (getenv "DISPLAY")          ; Ensure Xorg via DISPLAY variable
+           (not (getenv "WAYLAND_DISPLAY"))) ; Exclude Wayland
+  (require 'exwm)
+  (require 'exwm-config)              ; Optional: loads default EXWM helpers
+
+  ;; Basic EXWM setup
+  (setq exwm-workspace-number 4)      ; Set number of workspaces
+  (exwm-enable)                       ; Start EXWM
+
+  ;; EXWM-specific keybindings
+  (setq exwm-input-global-keys
+        `((,(kbd "s-r") . exwm-reset) ; Reset EXWM layout
+          (,(kbd "s-&") . (lambda ()  ; Launch terminal (e.g., alacritty)
+                            (interactive)
+                            (start-process "" nil "alacritty")))
+          (,(kbd "s-<tab>") . exwm-workspace-switch))) ; Switch workspaces
+
+  ;; Optional: Simulation keys for X11 apps (e.g., pass C-c to apps)
+  (exwm-input-set-simulation-keys
+   '(([?\C-c] . ?\C-c)
+     ([?\C-v] . ?\C-v)))
+
+  ;; Optional: Improve EXWM startup logging
+  (setq exwm-debug-on t)              ; Enable debug to troubleshoot issues
+  (message "EXWM loaded successfully in Xorg session"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
