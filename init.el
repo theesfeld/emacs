@@ -47,6 +47,26 @@
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 
+;; Dracula theme
+ (use-package dracula-theme
+   :ensure t
+   :config
+   (load-theme 'dracula t))
+
+ (set-face-attribute 'default nil :height 120)
+ (set-face-attribute 'variable-pitch nil :height 130)
+
+ (set-face-attribute 'font-lock-comment-face nil
+                     :slant 'italic
+                     :weight 'light
+                     :distant-foreground "#5c6370"
+                     :foreground "#5c6370"
+                     :background "#282c34")
+
+ (set-face-attribute 'font-lock-keyword-face nil
+                     :weight 'black)
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  MELPA                                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -302,24 +322,6 @@
 ;;                               Visual Enhancements                        ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Dracula theme
- (use-package dracula-theme
-   :ensure t
-   :config
-   (load-theme 'dracula t))
-
- (set-face-attribute 'default nil :height 120)
- (set-face-attribute 'variable-pitch nil :height 130)
-
- (set-face-attribute 'font-lock-comment-face nil
-                     :slant 'italic
-                     :weight 'light
-                     :distant-foreground "#5c6370"
-                     :foreground "#5c6370"
-                     :background "#282c34")
-
- (set-face-attribute 'font-lock-keyword-face nil
-                     :weight 'black)
 
 ;; Indent bars
 (use-package indent-bars
