@@ -148,6 +148,8 @@
   (setq exec-path-from-shell-shell-name "/usr/bin/zsh")  ;; Explicitly use Zsh (Arch default path)
   (setq exec-path-from-shell-arguments '("-l"))          ;; -l makes it a login shell, sourcing .zshrc
   (exec-path-from-shell-initialize)                      ;; Run unconditionally
+  (add-to-list 'exec-path "~/.local/bin/" t)  ; Add to end of exec-path
+  (setenv "PATH" (concat (getenv "PATH") ":~/.local/bin/"))  ; Update PATH env var too
   (message "exec-path-from-shell ran with shell: %s" exec-path-from-shell-shell-name))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
