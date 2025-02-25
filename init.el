@@ -1058,7 +1058,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package copilot
-  :vc (:url "https://github.com/copilot-emacs/copilot.el.git" :files ("*.el"))
+  :vc (:url "https://github.com/copilot-emacs/copilot.el.git")
   :bind (:map copilot-completion-map
               ("<tab>" . copilot-accept-completion)
               ("TAB"   . copilot-accept-completion)
@@ -1079,7 +1079,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package aidermacs
-  :vc (:url github :repo "MatthewZMD/aidermacs" :files ("*.el"))
+  :vc (:url github :repo "MatthewZMD/aidermacs")
   :config
   (setq aidermacs-default-model "anthropic/claude-3-7-sonnet-20250219")
   (global-set-key (kbd "C-c A") 'aidermacs-transient-menu)
