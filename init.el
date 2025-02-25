@@ -648,7 +648,25 @@
 (use-package flyspell-correct
   :after flyspell
   :bind (:map flyspell-mode-map
-              ("C-;" . flyspell-correct-wrapper)))
+              ("C-;" . flyspell-correct-wrapper)  ;; Keep your original binding
+              ("TAB" . my-flyspell-correct-at-point))  ;; New TAB binding
+  :config
+  ;; Custom function to trigger correction only on flagged words
+  (defun my-flyspell-correct-at-point ()
+    "Correct the flagged word at point with TAB, if misspelled."
+    (interactive)
+    (if (flyspell-overlay-at-point)  ;; Check if cursor is on a flagged word
+        (flyspell-correct-at-point)  ;; Trigger correction
+      (message "No misspelling at point")))  ;; Do nothing otherwise
+
+  ;; Use Vertico as the interface (already in your config)
+  (setq flyspell-correct-interface #'flyspell-correct-vertico)
+
+  ;; Ensure suggestions are sorted and filtered with Orderless (already in your config)
+  (add-hook 'flyspell-correct-mode-hook
+            (lambda ()
+              (when (bound-and-true-p orderless-mode)
+                (setq-local completion-styles '(orderless basic))))))
 
 (use-package flyspell-lazy
   :after flyspell
