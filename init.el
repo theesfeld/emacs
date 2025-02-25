@@ -720,14 +720,14 @@
 
 ;; Define capture templates
 (setq org-capture-templates
-      '(("l" "Link Capture" entry
+      '(("L" "Link Capture" entry
          (file (lambda () (expand-file-name "url.org" org-directory)))
          "* %:description :web:%^g\n:PROPERTIES:\n:URL: %:link\n:ADDED: %U\n:END:\n"
          :immediate-finish t)
-        ("p" "Selection Capture" entry
+        ("P" "Selection Capture" entry
          (file (lambda () (expand-file-name "url.org" org-directory)))
          "* %:description :web:%^g\n:PROPERTIES:\n:URL: %:link\n:ADDED: %U\n:END:\n#+BEGIN_QUOTE\n%:initial\n#+END_QUOTE")
-        ("i" "Image Capture" entry
+        ("I" "Image Capture" entry
          (file (lambda () (expand-file-name "url.org" org-directory)))
          "* %:description :web:%^g\n:PROPERTIES:\n:URL: %:link\n:ADDED: %U\n:END:\n%(org-download-clipboard)"
          :immediate-finish t)))
