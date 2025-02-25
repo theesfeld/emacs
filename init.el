@@ -1,6 +1,4 @@
-;;; package --- summary
-;;; commentary:
-;;; code:
+;;; init.el -*- lexical-binding: t -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Early Initial Settings                       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -40,12 +38,28 @@
 (add-hook 'minibuffer-exit-hook #'my-restore-gc-after-minibuffer)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                  MELPA                                    ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
+;; Force a refresh and install missing packages
+(when (not package-archive-contents)
+  (package-refresh-contents))
+;; Install all packages marked with :ensure t
+(dolist (pkg package-selected-packages)
+  (unless (package-installed-p pkg)
+    (package-install pkg)))
+(setq use-package-always-ensure t)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Org Mode Setup                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Load Org-mode via straight.el before built-in Org is loaded
 (use-package org
-  :ensure t  ; Pull Org from straight.el (latest from GitHub by default)
+  :ensure t
   :demand t    ; Load immediately to override built-in Org
   :init
   ;; Early settings before Org is loaded
@@ -112,6 +126,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package desktop
+  :ensure nil
   :init
   (desktop-save-mode 1)
   :config
@@ -287,6 +302,7 @@
 
 ;; Dracula theme
 (use-package dracula-theme
+  :ensure t
   :config
   (load-theme 'dracula t))
 
@@ -398,6 +414,7 @@
 
 ;; Better completion styles
 (use-package orderless
+  :ensure t
   :custom
   (completion-styles '(orderless basic))
   (completion-category-defaults nil)
@@ -419,6 +436,13 @@
 ;;                              Vertico + Consult                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(use-package smartparens
+  :ensure smartparens  ;; install the package
+  :hook (prog-mode text-mode markdown-mode) ;; add `smartparens-mode` to these hooks
+  :config
+  ;; load default config
+  (require 'smartparens-config))
+
 (use-package vertico
   :ensure t
   :init
@@ -431,12 +455,13 @@
 
 ;; Persist minibuffer history over Emacs restarts
 (use-package savehist
+  :ensure nil
   :init
   (savehist-mode 1))
 
 ;; Consult
 (use-package consult
-  :ensure t  ; Fresh install via straight.el
+  :ensure t
   :bind (("C-c M-x"   . consult-mode-command)
          ("C-c h"     . consult-history)
          ("C-c k"     . consult-kmacro)
@@ -485,6 +510,7 @@
 
 ;; Embark
 (use-package embark
+  :ensure t
   :bind (("C-." . embark-act)
          ("C-;" . embark-dwim)
          ("C-h B" . embark-bindings))
@@ -492,8 +518,8 @@
   (setq prefix-help-command #'embark-prefix-help-command))
 
 (use-package embark-consult
-  :after (embark consult)
-  :ensure t)
+  :ensure t
+  :after (embark consult))
 
 ;; Marginalia
 (use-package marginalia
@@ -502,11 +528,13 @@
 
 ;; Nerd Icons support for completions
 (use-package nerd-icons
+  :ensure t
   :custom
   (nerd-icons-font-family "Symbols Nerd Font Mono"))
 
 (use-package nerd-icons-completion
   :after marginalia
+  :ensure t
   :config
   (nerd-icons-completion-mode)
   (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
@@ -539,6 +567,9 @@
   :config (global-diff-hl-mode +1)
   ;; disable on slow TRAMP connections with diff-hl-disable-on-remote to t
   )
+
+(use-package dash
+  :ensure t)
 
 (use-package which-key
   :ensure nil
@@ -573,11 +604,6 @@
   :config
   (setq avy-zap-forward-only t)
   (setq avy-keys '(?a ?o ?e ?u ?i ?d ?h ?t ?n ?s)))
-
-(use-package smartparens
-  :hook ((prog-mode text-mode markdown-mode) . smartparens-mode)
-  :config
-  (require 'smartparens-config))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                 Popup Setup
@@ -1234,8 +1260,17 @@
         erc-save-buffer-on-part t
         erc-log-write-after-insert t)
   ;; Enable ERC modules, including nickbar
-  (setq erc-modules (append erc-modules '(nickbar)))
+  (setq erc-modules (append erc-modules '(nickbar notifications)))
   (erc-update-modules)
+
+(defun my-erc-update-notifications-keywords (&rest _)
+    "Update notification keywords with current nick."
+    (when erc-session-user
+      (setq erc-notifications-keywords (list erc-session-user))))
+  (add-hook 'erc-nick-changed-functions #'my-erc-update-notifications-keywords)
+  ;; Initialize with a default or leave it nil until connected
+  (setq erc-notifications-keywords nil)
+
   ;; Required for Nickbar to update dynamically
   (setq speedbar-update-flag t)
   (erc-timestamp-mode 1)
@@ -1295,17 +1330,12 @@
   (add-to-list 'erc-modules 'image)
   (erc-update-modules))
 
-(use-package erc-desktop-notifications
-  :ensure t
-  :after erc
-  :config
-  (add-to-list 'erc-modules 'notifications)
-  (erc-update-modules)
-  (setq erc-notifications-keywords '("blackdream")))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Elfeed + Dashboard                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package aio
+  :ensure t)  ; Fetch from MELPA
 
 (use-package elfeed-tube
   :vc (:url "https://github.com/karthink/elfeed-tube")
@@ -1501,9 +1531,6 @@
 (use-package treemacs
   :init
   ;; Ensure that when you switch or open a project, Treemacs is displayed.
-  (with-eval-after-load 'projectile
-    (add-hook 'projectile-after-switch-project-hook
-              #'treemacs-display-current-project-exclusively))
   :config
   ;; Open Treemacs automatically when Emacs starts up, if you prefer:
   ;; (treemacs)
@@ -1558,7 +1585,7 @@
   ;; Explicitly set snippet directories
   (yas-snippet-dirs
    (list (expand-file-name "snippets/" user-emacs-directory)  ;; Personal snippets
-         (expand-file-name "straight/repos/yasnippet-snippets/snippets/" user-emacs-directory)))  ;; Pre-built snippets
+         (expand-file-name "yasnippet-snippets/snippets/" user-emacs-directory)))  ;; Pre-built snippets
   ;; Optional: Show snippet suggestions in completion frameworks like Corfu
   (yas-prompt-functions '(yas-completing-prompt yas-ido-prompt yas-no-prompt))
   :config
