@@ -714,6 +714,35 @@
   :bind (:map org-mode-map
               ("C-c n O" . org-download-clipboard)))
 
+;; capture stuff
+
+(require 'org-protocol)
+
+;; Define capture templates
+(setq org-capture-templates
+      '(("l" "Link Capture" entry
+         (file (lambda () (expand-file-name "url.org" org-directory)))
+         "* %:description :web:%^g\n:PROPERTIES:\n:URL: %:link\n:ADDED: %U\n:END:\n"
+         :immediate-finish t)
+        ("p" "Selection Capture" entry
+         (file (lambda () (expand-file-name "url.org" org-directory)))
+         "* %:description :web:%^g\n:PROPERTIES:\n:URL: %:link\n:ADDED: %U\n:END:\n#+BEGIN_QUOTE\n%:initial\n#+END_QUOTE")
+        ("i" "Image Capture" entry
+         (file (lambda () (expand-file-name "url.org" org-directory)))
+         "* %:description :web:%^g\n:PROPERTIES:\n:URL: %:link\n:ADDED: %U\n:END:\n%(org-download-clipboard)"
+         :immediate-finish t)))
+
+;; Add to agenda for searching
+(setq org-agenda-files (append org-agenda-files (list (expand-file-name "url.org" org-directory))))
+
+;; Add IDs for stable linking
+(add-hook 'org-capture-prepare-finalize-hook #'org-id-get-create)
+
+;; Ensure org-download saves to a subdirectory of org-directory
+(setq org-download-image-dir (expand-file-name "images" org-directory))
+
+
+
 ;; Org-timeblock
 (use-package org-timeblock
   :straight (org-timeblock :type git :host github :repo "ichernyshovvv/org-timeblock")
@@ -817,30 +846,6 @@
            :immediate-finish t
            :jump-to-captured nil
            :empty-lines 1
-           :unnarrowed t)
-          ("P" "Org-Protocol" entry
-           "%(org-protocol-capture-get-contents)"
-           :if-new (file+head
-                    (lambda ()
-                      (let* ((title (plist-get org-capture-plist :title))
-                             (slug (if title (org-roam--slugify title) "untitled"))
-                             (timestamp (format-time-string "%Y%m%d%H%M%S")))
-                        (format "links/%s-%s.org" slug timestamp)))
-                    "* %^{Title}\nSource: %u, %c\n #+BEGIN_QUOTE\n%i\n#+END_QUOTE\n\n\n%?")
-           :immediate-finish t
-           :jump-to-captured nil
-           :unnarrowed t)
-          ("L" "Org-Protocol Link" entry
-           "%(org-protocol-capture-get-contents)"
-           :if-new (file+head
-                    (lambda ()
-                      (let* ((title (plist-get org-capture-plist :title))
-                             (slug (if title (org-roam--slugify title) "untitled"))
-                             (timestamp (format-time-string "%Y%m%d%H%M%S")))
-                        (format "links/%s-%s.org" slug timestamp)))
-                    "* %? [[%:link][%:description]] \nCaptured On: %U")
-           :immediate-finish t
-           :jump-to-captured nil
            :unnarrowed t)
           ("c" "Contacts" plain "%?"
            :if-new (file+head
