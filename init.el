@@ -879,7 +879,7 @@
 ;; Keybindings
 (global-set-key (kbd "C-c C-s") 'org-schedule)          ;; Schedule item under cursor
 (global-set-key (kbd "C-c C-d") 'org-deadline)          ;; Set deadline for item
-(global-set-key (kbd "C-c t")   'org-toggle-checkbox)   ;; Toggle checkbox state
+;;(global-set-key (kbd "C-c t")   'org-toggle-checkbox)   ;; Toggle checkbox state
 (global-set-key (kbd "C-c n t") 'org-time-stamp)        ;; Insert timestamp
 (global-set-key (kbd "C-c n a") 'org-agenda-list)       ;; Show agenda list (all scheduled)
 (global-set-key (kbd "C-c n j") 'org-journal-new-entry)  ;; Quick journal entry (rebinds your C-c j)
