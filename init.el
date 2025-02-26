@@ -652,7 +652,7 @@
   :hook (flyspell-mode . flyspell-popup-auto-correct-mode)
   :config
   (setq flyspell-popup-auto-correct-delay 2)  ;; Delay before popup
-  (define-key flyspell-mode-map (kbd "TAB") #'flyspell-popup-correct))  ;; Optional manual trigger
+  (define-key flyspell-mode-map (kbd "C-c TAB") #'flyspell-popup-correct))
 
 (use-package flyspell-correct
   :after flyspell
@@ -724,15 +724,34 @@
                              (expand-file-name "url.org" org-directory)))  ; Include url.org for agenda
 (setq org-default-notes-file (expand-file-name "notes.org" org-directory))
 (setq org-id-link-to-org-use-id t)  ; Enable IDs for linking
-(setq org-startup-folded 'showall)
+(setq org-startup-folded 'overview)
 (setq org-log-done 'time)
 (setq org-tag-alist '(("@personal" . ?p) ("@work" . ?w)))
 
 (add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))
-(add-hook 'org-mode-hook #'visual-wrap-prefix-mode)
+;;(add-hook 'org-mode-hook #'visual-wrap-prefix-mode)
 (add-hook 'org-mode-hook #'flyspell-mode)
-(when (boundp 'treesit-language-source-alist)
-  (add-to-list 'major-mode-remap-alist '(org-mode . org-ts-mode)))
+;; Enable word wrap and disable line numbers in Org-mode
+(add-hook 'org-mode-hook (lambda ()
+                           (visual-line-mode 1)          ; Enable word wrapping
+                           (display-line-numbers-mode 0) ; Disable line numbers
+                           ))
+(add-hook 'org-mode-hook #'org-indent-mode)
+(setq org-hide-emphasis-markers t)
+(add-hook 'org-mode-hook (lambda () (org-toggle-pretty-entities)))
+(setq org-startup-with-inline-images t)
+
+(setq org-ellipsis " ▾")
+(setq org-return-follows-link t)
+(add-hook 'org-mode-hook (lambda () (setq-local tab-always-indent t)))
+
+(define-key org-mode-map (kbd "TAB") 'org-cycle)
+
+(setq org-todo-keywords
+      '((sequence "TODO(t)" "NEXT(n)" "WAITING(w@/!)" "|" "DONE(d!)" "CANCELED(c@)")))
+
+;;(when (boundp 'treesit-language-source-alist)
+;;  (add-to-list 'major-mode-remap-alist '(org-mode . org-ts-mode)))
 
 ;; Automatically kill file when aborting capture
 (defun my-org-capture-delete-file-after-kill (&rest _)
@@ -742,6 +761,10 @@
     (delete-file (buffer-file-name))
     (message "Deleted aborted capture file: %s" (buffer-file-name))))
 (advice-add 'org-capture-kill :after #'my-org-capture-delete-file-after-kill)
+
+(use-package adaptive-wrap
+  :ensure t
+  :hook (org-mode . adaptive-wrap-prefix-mode))
 
 ;; Org-auto-tangle
 (use-package org-auto-tangle
@@ -818,6 +841,10 @@
         (search category-keep)))
 (setq org-agenda-log-mode-items '(closed)
       org-agenda-start-with-log-mode t)
+
+(setq org-refile-targets '((org-agenda-files :maxlevel . 3)))
+(setq org-refile-use-outline-path t)
+(setq org-outline-path-complete-in-steps nil)
 
 ;; Org-super-agenda
 (use-package org-super-agenda
@@ -1095,10 +1122,16 @@
 (use-package eww
   :commands (eww-browse-url)
   :init
+  (defun my-open-with-mpv (url &rest args)
+    "Open URL with mpv."
+    (start-process "mpv" nil "mpv" url))
   ;; Define browse-url handlers for EWW and PDFs
   (setq browse-url-handlers
-        '(("\\.pdf\\'" . my-open-remote-pdf-in-emacs)
+        '(("[^/]*\\.\\(mp4\\|mkv\\|webm\\|avi\\|mov\\|flv\\|wmv\\|mpg\\|mpeg\\)\\([?#].*\\)?$" . my-open-with-mpv)
+          ("^https?://\\(www\\.youtube\\.com\\|youtu\\.be\\|vimeo\\.com\\)/" . my-open-with-mpv)
+          ("\\.pdf\\'" . my-open-remote-pdf-in-emacs)
           ("^https?://" . eww-browse-url))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     pdf                                   ;;
