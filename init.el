@@ -1,4 +1,4 @@
-;;; init.el -*- lexical-binding: t -*-
+q;;; init.el -*- lexical-binding: t -*-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Early Initial Settings                       ;;
@@ -437,6 +437,36 @@
 ;;             (corfu-mode)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                  IBUFFER                                  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(setq ibuffer-saved-filter-groups
+      '(("home"
+         ("Emacs" (and (filename . (concat "\\`" (regexp-quote (expand-file-name "~/.config/emacs/")) ".*"))
+              (visiting-file)))
+         ("Prog" (derived-mode . prog-mode))
+         ("Org" (or (file-extension . "org")
+                    (derived-mode . org-mode)
+                    (derived-mode . org-agenda-mode)))
+         ("PDF" (derived-mode . pdf-tools-mode))
+         ("Mail" (or (derived-mode . rmail-mode)
+                     (derived-mode . message-mode)))
+         ("Gnus" (or (derived-mode . gnus-mode)
+                     (saved . "gnus")))
+         ("Net" (or (derived-mode . eww-mode)
+                    (derived-mode . elfeed-mode)))
+         ("IRC" (derived-mode . erc-mode))
+         ("Dired" (derived-mode . dired-mode))
+         ("Proc" (process))
+         ("Stars" (starred-name)))))
+
+(add-hook 'ibuffer-mode-hook
+ (lambda ()
+  (ibuffer-switch-to-saved-filter-groups "home")))
+
+(global-set-key (kbd "C-x C-b") 'ibuffer)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Vertico + Consult                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -473,7 +503,7 @@
          ("C-c i"     . consult-info)
          ("C-x M-:"   . consult-complex-command)
          ("C-x b"     . consult-buffer)  ; Default consult-buffer
-         ("C-x C-b"   . consult-buffer)
+;         ("C-x C-b"   . consult-buffer)
          ("C-x 4 b"   . consult-buffer-other-window)
          ("C-x 5 b"   . consult-buffer-other-frame)
          ("C-x t b"   . consult-buffer-other-tab)
@@ -1132,6 +1162,17 @@
           ("\\.pdf\\'" . my-open-remote-pdf-in-emacs)
           ("^https?://" . eww-browse-url))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                mpv & emacs.tv                             ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package mpv
+  :ensure t
+  :defer t)
+
+(use-package emacstv
+  :defer t
+  :vc (:url "https://github.com/emacstv/emacstv.github.io"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     pdf                                   ;;
@@ -1335,7 +1376,8 @@
       '("https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fsachachua.com%2Fblog%2Ffeed%2Findex.xml&key=1&hash=48ac81675b0797fda5d8f4f189846563a5ed14d9&max=1000&links=preserve&exc="
         "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fddosecrets.com%2Farticle%2Flexipolleaks&key=1&hash=b9258f920d5b200034edd73868c42b1e68284695&max=1000&links=preserve&exc="
         "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fhnrss.org%2Fnewest&key=1&hash=62a3abd97ca026dbb64c82151d396f32e4c6a4fb&max=1000&links=preserve&exc="
-        "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Ffeeds.bbci.co.uk%2Fnews%2Frss.xml&key=1&hash=78370b961d44c8bff594b1b41a513762d6f34560&max=1000&links=preserve&exc=")))
+        "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Ffeeds.bbci.co.uk%2Fnews%2Frss.xml&key=1&hash=78370b961d44c8bff594b1b41a513762d6f34560&max=1000&links=preserve&exc="
+        "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fplanet.emacslife.com%2Fatom.xml&key=1&hash=f609b22f1328308f3361f85a9b50c9eda53bfb6d&max=1000&links=preserve&exc=1")))
 
 (use-package elfeed-dashboard
   :config
