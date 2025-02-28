@@ -1743,6 +1743,7 @@ nerd-icons-ibuffer-formats
   :demand t)
 
 (use-package auth-source-xoauth2
+  :ensure t
   :vc (:url "https://github.com/ccann/auth-source-xoauth2")
   :after oauth2
   :demand t
