@@ -1736,8 +1736,8 @@ nerd-icons-ibuffer-formats
 ;;                                   GNUS                                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; (use-package oauth2
-;;   :ensure t)
+(use-package oauth2
+  :ensure t)
 
 ;; (use-package auth-source-xoauth2
 ;;   :vc (:url "https://github.com/ccann/auth-source-xoauth2")
