@@ -1806,9 +1806,10 @@ nerd-icons-ibuffer-formats
   (add-hook 'gnus-summary-mode-hook
             (lambda ()
               (local-set-key (kbd "m") 'gnus-summary-mail-other-window)))
+
   (defun test-xoauth2-token ()
     (interactive)
-    (message "Token: %s" (auth-source-xoauth2--access-token "outlook365" "outlook.office365.com" "993" "tj.theesfeld@citywide.io"))))
+    (message "Token: %s" (auth-source-xoauth2--access-token "outlook365" "outlook.office365.com" "993" "tj.theesfeld@citywide.io")))
 
 (setq user-full-name "TJ Theesfeld"
       user-mail-address "tj.theesfeld@citywide.io")
@@ -1824,7 +1825,7 @@ nerd-icons-ibuffer-formats
 (setq auth-sources '(xoauth2))
 (setq auth-source-debug t)
 
-(setq browse-url-browser-function 'ignore)
+(setq browse-url-browser-function 'ignore))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                   0x0.st                                  ;;
