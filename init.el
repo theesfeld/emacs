@@ -1760,7 +1760,6 @@ nerd-icons-ibuffer-formats
                                                                      :redirect-uri "http://localhost")))))
   (setq auth-source-debug t))
 
-(require 'gnus)
   (setq gnus-nntp-server nil)
   (setq gnus-select-method '(nnimap ""))
   (setq gnus-secondary-select-methods
