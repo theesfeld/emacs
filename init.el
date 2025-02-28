@@ -1824,7 +1824,8 @@ nerd-icons-ibuffer-formats
 
 (setq auth-sources '(xoauth2))
 (setq auth-source-debug t)
-
+(setq gnus-draft-mode 'nnimap)
+(setq gnus-drafts-directory "outlook365:Drafts")
 (setq browse-url-browser-function 'ignore))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
