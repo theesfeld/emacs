@@ -1761,8 +1761,8 @@ nerd-icons-ibuffer-formats
   (setq auth-source-debug t))
 
 (use-package gnus
-  :ensure t
-  :defer t
+;  :ensure t
+;  :defer t
   :config
   (setq gnus-nntp-server nil)
   (setq gnus-select-method '(nnimap ""))
