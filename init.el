@@ -1773,7 +1773,6 @@ nerd-icons-ibuffer-formats
                   (nnimap-expunge t))
           (nnrss "feeds"
                  (nnrss-file "~/.config/emacs/gnus/rss-feeds.el"))))
-  ;; Must-have Gnus features and settings
   (setq gnus-verbose 10
         gnus-verbose-backends t
         gnus-summary-line-format "%U%R%z %d %I%(%[%4L: %-23,23f%]%) %s\n"
@@ -1787,36 +1786,29 @@ nerd-icons-ibuffer-formats
         gnus-check-new-newsgroups nil
         gnus-save-newsrc-file t
         gnus-read-newsrc-file t)
-  ;; Threading and sorting
   (setq gnus-thread-sort-functions
         '(gnus-thread-sort-by-most-recent-date
           gnus-thread-sort-by-number))
   (setq gnus-summary-thread-gathering-function 'gnus-gather-threads-by-references)
-  ;; Visual enhancements
   (setq gnus-treat-fill-long-lines t
         gnus-treat-display-smileys t
         gnus-treat-emphasize t)
-  ;; Startup
   (setq gnus-startup-file "~/.config/emacs/gnus/newsrc"
         gnus-save-killed-list nil
         gnus-use-dribble-file t)
-  ;; Keybindings
   (add-hook 'gnus-group-mode-hook
             (lambda ()
               (local-set-key (kbd "g") 'gnus-group-get-new-news)))
   (add-hook 'gnus-summary-mode-hook
             (lambda ()
               (local-set-key (kbd "m") 'gnus-summary-mail-other-window)))
-  ;; Manual token test function
   (defun test-xoauth2-token ()
     (interactive)
     (message "Token: %s" (auth-source-xoauth2--access-token "outlook365" "outlook.office365.com" "993" "tj.theesfeld@citywide.io"))))
 
-;; Basic identity
 (setq user-full-name "TJ Theesfeld"
       user-mail-address "tj.theesfeld@citywide.io")
 
-;; SMTP Configuration for Outlook 365
 (setq smtpmail-smtp-user "tj.theesfeld@citywide.io"
       smtpmail-smtp-server "smtp.office365.com"
       smtpmail-smtp-service 587
@@ -1825,11 +1817,9 @@ nerd-icons-ibuffer-formats
       send-mail-function 'smtpmail-send-it
       message-send-mail-function 'smtpmail-send-it)
 
-;; Auth-source configuration
 (setq auth-sources '(xoauth2))
 (setq auth-source-debug t)
 
-;; Disable automatic browser opening
 (setq browse-url-browser-function 'ignore)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
