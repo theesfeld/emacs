@@ -1,4 +1,4 @@
-q;;; init.el -*- lexical-binding: t -*-
+;;; init.el -*- lexical-binding: t -*-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Early Initial Settings                       ;;
@@ -441,9 +441,8 @@ q;;; init.el -*- lexical-binding: t -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (setq ibuffer-saved-filter-groups
-      '(("home"
-         ("Emacs" (and (filename . (concat "\\`" (regexp-quote (expand-file-name "~/.config/emacs/")) ".*"))
-              (visiting-file)))
+      `(("home"
+         ("Emacs" (filename . ,(concat "\\`" (regexp-quote (expand-file-name user-emacs-directory)) ".*")))
          ("Prog" (derived-mode . prog-mode))
          ("Org" (or (file-extension . "org")
                     (derived-mode . org-mode)
@@ -465,6 +464,17 @@ q;;; init.el -*- lexical-binding: t -*-
   (ibuffer-switch-to-saved-filter-groups "home")))
 
 (global-set-key (kbd "C-x C-b") 'ibuffer)
+
+(use-package nerd-icons-ibuffer
+  :ensure t
+  :hook (ibuffer-mode . nerd-icons-ibuffer-mode)
+  :config
+(setq nerd-icons-ibuffer-icon t)
+(setq nerd-icons-ibuffer-color-icon t)
+(setq nerd-icons-ibuffer-icon-size 1.0)
+(setq  nerd-icons-ibuffer-human-readable-size t)
+nerd-icons-ibuffer-formats
+(setq inhibit-compacting-font-caches t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Vertico + Consult                            ;;
@@ -1725,102 +1735,102 @@ q;;; init.el -*- lexical-binding: t -*-
 ;;                                   GNUS                                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; (use-package oauth2
-;;   :straight t
-;;   :demand t)
+(use-package oauth2
+  :ensure t
+  :demand t)
 
-;; (use-package auth-source-xoauth2
-;;   :straight (auth-source-xoauth2 :type git :host github :repo "ccann/auth-source-xoauth2")
-;;   :after oauth2
-;;   :demand t
-;;   :config
-;;   ;; Match creds to user AND host
-;;   (add-to-list 'auth-sources 'xoauth2 'append)
-;;   (setq auth-source-xoauth2-creds
-;;         `(("tj.theesfeld@citywide.io@outlook.office365.com" ,(lambda (host port user)
-;;                                                               (message "Fetching XOAUTH2 for %s:%s:%s" host port user)
-;;                                                               (list :client-id "08162f7c-0fd2-4200-a84a-f25a4db0b584"
-;;                                                                     :client-secret "TxRBilcHdC6WGBee]fs?QR:SJ8nI[g82"
-;;                                                                     :auth-url "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
-;;                                                                     :token-url "https://login.microsoftonline.com/common/oauth2/v2.0/token"
-;;                                                                     :scope "https://outlook.office365.com/IMAP.AccessAsUser.All offline_access"
-;;                                                                     :redirect-uri "urn:ietf:wg:oauth:2.0:oob")))))
-;;   (setq auth-source-debug t))
+(use-package auth-source-xoauth2
+  :ensure t
+  :vc (:url "https://github.com/ccann/auth-source-xoauth2")
+  :after oauth2
+  :demand t
+  :config
+  (add-to-list 'auth-sources 'xoauth2 'append)
+  (setq auth-source-xoauth2-creds
+        `(("tj.theesfeld@citywide.io@outlook.office365.com" ,(lambda (host port user)
+                                                               (message "Fetching XOAUTH2 for %s:%s:%s" host port user)
+                                                               (list :client-id "08162f7c-0fd2-4200-a84a-f25a4db0b584"
+                                                                     :client-secret "TxRBilcHdC6WGBee]fs?QR:SJ8nI[g82"
+                                                                     :auth-url "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
+                                                                     :token-url "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+                                                                     :scope "https://outlook.office.com/IMAP.AccessAsUser.All offline_access"
+                                                                     :redirect-uri "https://login.microsoftonline.com/common/oauth2/nativeclient")))))
+  (setq auth-source-debug t))
 
-;; (use-package gnus
-;;   :straight t
-;;   :defer t
-;;   :config
-;;   (setq gnus-select-method '(nnnil ""))
-;;   (setq gnus-secondary-select-methods
-;;         '((nnimap "outlook365"
-;;                   (nnimap-address "outlook.office365.com")
-;;                   (nnimap-server-port 993)
-;;                   (nnimap-stream ssl)
-;;                   (nnimap-authenticator xoauth2)
-;;                   (nnimap-user "tj.theesfeld@citywide.io")
-;;                   (nnimap-authinfo-function #'auth-source-xoauth2--get-authinfo)
-;;                   (nnimap-expunge t))
-;;           (nnrss "feeds"
-;;                  (nnrss-file "~/.config/emacs/gnus/rss-feeds.el"))))
-;;   ;; Must-have Gnus features and settings
-;;   (setq gnus-verbose 10
-;;         gnus-verbose-backends t
-;;         gnus-summary-line-format "%U%R%z %d %I%(%[%4L: %-23,23f%]%) %s\n"
-;;         gnus-group-line-format "%M%S%p%P%5y: %(%g%)%l\n"
-;;         gnus-asynchronous t
-;;         gnus-use-adaptive-scoring t
-;;         gnus-use-cache t
-;;         gnus-cache-directory "~/.config/emacs/gnus/cache/"
-;;         gnus-article-save-directory "~/.config/emacs/gnus/saved/"
-;;         gnus-read-active-file 'some
-;;         gnus-check-new-newsgroups nil
-;;         gnus-save-newsrc-file t
-;;         gnus-read-newsrc-file t)
-;;   ;; Threading and sorting
-;;   (setq gnus-thread-sort-functions
-;;         '(gnus-thread-sort-by-most-recent-date
-;;           gnus-thread-sort-by-number))
-;;   (setq gnus-summary-thread-gathering-function 'gnus-gather-threads-by-references)
-;;   ;; Visual enhancements
-;;   (setq gnus-treat-fill-long-lines t
-;;         gnus-treat-display-smileys t
-;;         gnus-treat-emphasize t)
-;;   ;; Startup
-;;   (setq gnus-startup-file "~/.config/emacs/gnus/newsrc"
-;;         gnus-save-killed-list nil
-;;         gnus-use-dribble-file t)
-;;   ;; Keybindings
-;;   (add-hook 'gnus-group-mode-hook
-;;             (lambda ()
-;;               (local-set-key (kbd "g") 'gnus-group-get-new-news)))
-;;   (add-hook 'gnus-summary-mode-hook
-;;             (lambda ()
-;;               (local-set-key (kbd "m") 'gnus-summary-mail-other-window)))
-;;   ;; Manual token test function
-;;   (defun test-xoauth2-token ()
-;;     (interactive)
-;;     (message "Token: %s" (auth-source-xoauth2--access-token "outlook365" "outlook.office365.com" "993" "tj.theesfeld@citywide.io"))))
+(use-package gnus
+  :ensure t
+  :defer t
+  :config
+  (setq gnus-select-method '(nnnil ""))
+  (setq gnus-secondary-select-methods
+        '((nnimap "outlook365"
+                  (nnimap-address "outlook.office365.com")
+                  (nnimap-server-port 993)
+                  (nnimap-stream ssl)
+                  (nnimap-authenticator xoauth2)
+                  (nnimap-user "tj.theesfeld@citywide.io")
+                  (nnimap-authinfo-function #'auth-source-xoauth2--get-authinfo)
+                  (nnimap-expunge t))
+          (nnrss "feeds"
+                 (nnrss-file "~/.config/emacs/gnus/rss-feeds.el"))))
+  ;; Must-have Gnus features and settings
+  (setq gnus-verbose 10
+        gnus-verbose-backends t
+        gnus-summary-line-format "%U%R%z %d %I%(%[%4L: %-23,23f%]%) %s\n"
+        gnus-group-line-format "%M%S%p%P%5y: %(%g%)%l\n"
+        gnus-asynchronous t
+        gnus-use-adaptive-scoring t
+        gnus-use-cache t
+        gnus-cache-directory "~/.config/emacs/gnus/cache/"
+        gnus-article-save-directory "~/.config/emacs/gnus/saved/"
+        gnus-read-active-file 'some
+        gnus-check-new-newsgroups nil
+        gnus-save-newsrc-file t
+        gnus-read-newsrc-file t)
+  ;; Threading and sorting
+  (setq gnus-thread-sort-functions
+        '(gnus-thread-sort-by-most-recent-date
+          gnus-thread-sort-by-number))
+  (setq gnus-summary-thread-gathering-function 'gnus-gather-threads-by-references)
+  ;; Visual enhancements
+  (setq gnus-treat-fill-long-lines t
+        gnus-treat-display-smileys t
+        gnus-treat-emphasize t)
+  ;; Startup
+  (setq gnus-startup-file "~/.config/emacs/gnus/newsrc"
+        gnus-save-killed-list nil
+        gnus-use-dribble-file t)
+  ;; Keybindings
+  (add-hook 'gnus-group-mode-hook
+            (lambda ()
+              (local-set-key (kbd "g") 'gnus-group-get-new-news)))
+  (add-hook 'gnus-summary-mode-hook
+            (lambda ()
+              (local-set-key (kbd "m") 'gnus-summary-mail-other-window)))
+  ;; Manual token test function
+  (defun test-xoauth2-token ()
+    (interactive)
+    (message "Token: %s" (auth-source-xoauth2--access-token "outlook365" "outlook.office365.com" "993" "tj.theesfeld@citywide.io"))))
 
-;; ;; Basic identity
-;; (setq user-full-name "TJ Theesfeld"
-;;       user-mail-address "tj.theesfeld@citywide.io")
+;; Basic identity
+(setq user-full-name "TJ Theesfeld"
+      user-mail-address "tj.theesfeld@citywide.io")
 
-;; ;; SMTP Configuration for Outlook 365
-;; (setq smtpmail-smtp-user "tj.theesfeld@citywide.io"
-;;       smtpmail-smtp-server "smtp.office365.com"
-;;       smtpmail-smtp-service 587
-;;       smtpmail-stream-type 'starttls
-;;       smtpmail-auth-supported '(xoauth2)
-;;       send-mail-function 'smtpmail-send-it
-;;       message-send-mail-function 'smtpmail-send-it)
+;; SMTP Configuration for Outlook 365
+(setq smtpmail-smtp-user "tj.theesfeld@citywide.io"
+      smtpmail-smtp-server "smtp.office365.com"
+      smtpmail-smtp-service 587
+      smtpmail-stream-type 'starttls
+      smtpmail-auth-supported '(xoauth2)
+      send-mail-function 'smtpmail-send-it
+      message-send-mail-function 'smtpmail-send-it)
 
-;; ;; Auth-source configuration
-;; (setq auth-sources '(xoauth2))
-;; (setq auth-source-debug t)
+;; Auth-source configuration
+(setq auth-sources '(xoauth2))
+(setq auth-source-debug t)
 
-;; ;; Disable automatic browser opening
-;; (setq browse-url-browser-function 'ignore)
+;; Disable automatic browser opening
+(setq browse-url-browser-function 'ignore)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                   0x0.st                                  ;;
