@@ -1775,8 +1775,8 @@ nerd-icons-ibuffer-formats
                   (nnimap-user "tj.theesfeld@citywide.io")
                   (nnimap-authinfo-function #'auth-source-xoauth2--get-authinfo)
                   (nnimap-expunge t))
-          ;; (nnrss "feeds"
-          ;;        (nnrss-file "~/.config/emacs/gnus/rss-feeds.el"))
+          (nnrss "feeds"
+                 (nnrss-file "~/.config/emacs/gnus/rss-feeds.el"))
           ))
   (setq gnus-verbose 10
         gnus-verbose-backends t
@@ -1823,11 +1823,11 @@ nerd-icons-ibuffer-formats
 (setq auth-source-debug t)
 (setq gnus-draft-mode 'nnimap)
 (setq gnus-drafts-directory "outlook365:Drafts")
-(setq browse-url-browser-function 'ignore))
+(setq browse-url-browser-function 'ignore)
 
   (defun test-xoauth2-token ()
     (interactive)
-    (message "Token: %s" (auth-source-xoauth2--access-token "outlook365" "outlook.office365.com" "993" "tj.theesfeld@citywide.io")))
+    (message "Token: %s" (auth-source-xoauth2--access-token "outlook365" "outlook.office365.com" "993" "tj.theesfeld@citywide.io"))))
 
 
 
