@@ -1756,11 +1756,15 @@ nerd-icons-ibuffer-formats
                                                                      :auth-url "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
                                                                      :token-url "https://login.microsoftonline.com/common/oauth2/v2.0/token"
                                                                      :scope "https://outlook.office.com/IMAP.AccessAsUser.All offline_access"
-                                                                     :redirect-uri "http://localhost"))))))
+                                                                     :redirect-uri "http://localhost")))))
   (setq auth-source-debug t))
 
+(use-package gnus
+
   (setq gnus-nntp-server nil)
+
   (setq gnus-select-method '(nnimap ""))
+
   (setq gnus-secondary-select-methods
         '((nnimap "outlook365"
                   (nnimap-address "outlook.office365.com")
@@ -1772,8 +1776,8 @@ nerd-icons-ibuffer-formats
                   (nnimap-expunge t))
           (nnrss "feeds"
                  (nnrss-file "~/.config/emacs/gnus/rss-feeds.el"))
-          ))
-  (setq gnus-verbose 10
+          )
+        gnus-verbose 10
         gnus-verbose-backends t
         gnus-summary-line-format "%U%R%z %d %I%(%[%4L: %-23,23f%]%) %s\n"
         gnus-group-line-format "%M%S%p%P%5y: %(%g%)%l\n"
@@ -1785,44 +1789,45 @@ nerd-icons-ibuffer-formats
         gnus-read-active-file 'some
         gnus-check-new-newsgroups nil
         gnus-save-newsrc-file nil
-        gnus-read-newsrc-file nil)
-  (setq gnus-thread-sort-functions
+        gnus-read-newsrc-file nil
+        gnus-thread-sort-functions
         '(gnus-thread-sort-by-most-recent-date
-          gnus-thread-sort-by-number))
-  (setq gnus-summary-thread-gathering-function 'gnus-gather-threads-by-references)
-  (setq gnus-treat-fill-long-lines t
+          gnus-thread-sort-by-number)
+        gnus-summary-thread-gathering-function 'gnus-gather-threads-by-references
+        gnus-treat-fill-long-lines t
         gnus-treat-display-smileys t
-        gnus-treat-emphasize t)
-  (setq
-   gnus-startup-file "~/.config/emacs/gnus/newsrc"
+        gnus-treat-emphasize t
+        gnus-startup-file "~/.config/emacs/gnus/newsrc"
         gnus-save-killed-list nil
         gnus-use-dribble-file t)
+
   (add-hook 'gnus-group-mode-hook
             (lambda ()
               (local-set-key (kbd "g") 'gnus-group-get-new-news)))
   (add-hook 'gnus-summary-mode-hook
             (lambda ()
               (local-set-key (kbd "m") 'gnus-summary-mail-other-window)))
-(setq user-full-name "TJ Theesfeld"
-      user-mail-address "tj.theesfeld@citywide.io")
 
-(setq smtpmail-smtp-user "tj.theesfeld@citywide.io"
-      smtpmail-smtp-server "smtp.office365.com"
-      smtpmail-smtp-service 587
-      smtpmail-stream-type 'starttls
-      smtpmail-auth-supported '(xoauth2)
-      send-mail-function 'smtpmail-send-it
-      message-send-mail-function 'smtpmail-send-it)
+  (setq user-full-name "TJ Theesfeld"
+        user-mail-address "tj.theesfeld@citywide.io")
 
-(setq auth-sources '(xoauth2))
-(setq auth-source-debug t)
-(setq gnus-draft-mode 'nnimap)
-(setq gnus-drafts-directory "outlook365:Drafts")
-(setq browse-url-browser-function 'ignore)
+  (setq smtpmail-smtp-user "tj.theesfeld@citywide.io"
+        smtpmail-smtp-server "smtp.office365.com"
+        smtpmail-smtp-service 587
+        smtpmail-stream-type 'starttls
+        smtpmail-auth-supported '(xoauth2)
+        send-mail-function 'smtpmail-send-it
+        message-send-mail-function 'smtpmail-send-it)
 
-  (defun test-xoauth2-token ()
-    (interactive)
-    (message "Token: %s" (auth-source-xoauth2--access-token "outlook365" "outlook.office365.com" "993" "tj.theesfeld@citywide.io")))
+  (setq auth-sources '(xoauth2))
+  (setq auth-source-debug t)
+  (setq gnus-draft-mode 'nnimap)
+  (setq gnus-drafts-directory "outlook365:Drafts")
+  (setq browse-url-browser-function 'ignore))
+
+(defun test-xoauth2-token ()
+  (interactive)
+  (message "Token: %s" (auth-source-xoauth2--access-token "outlook365" "outlook.office365.com" "993" "tj.theesfeld@citywide.io")))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
