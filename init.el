@@ -1787,8 +1787,8 @@ nerd-icons-ibuffer-formats
         gnus-article-save-directory "~/.config/emacs/gnus/saved/"
         gnus-read-active-file 'some
         gnus-check-new-newsgroups nil
-        gnus-save-newsrc-file t
-        gnus-read-newsrc-file t)
+        gnus-save-newsrc-file nil
+        gnus-read-newsrc-file nil)
   (setq gnus-thread-sort-functions
         '(gnus-thread-sort-by-most-recent-date
           gnus-thread-sort-by-number))
