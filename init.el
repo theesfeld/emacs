@@ -115,7 +115,8 @@
       ;; Visual ellipsis for truncated lines:
       truncate-string-ellipsis "…"
       scroll-margin 1
-      garbage-collection-messages nil)
+      garbage-collection-messages nil
+      plstore-cache-directory "~/.config/emacs/")
 
 (require 'auth-source)
 (setenv "TZ" "America/New_York")
