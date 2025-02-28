@@ -1760,10 +1760,7 @@ nerd-icons-ibuffer-formats
                                                                      :redirect-uri "http://localhost")))))
   (setq auth-source-debug t))
 
-(use-package gnus
-;  :ensure t
-;  :defer t
-  :config
+(require 'gnus)
   (setq gnus-nntp-server nil)
   (setq gnus-select-method '(nnimap ""))
   (setq gnus-secondary-select-methods
@@ -1827,7 +1824,7 @@ nerd-icons-ibuffer-formats
 
   (defun test-xoauth2-token ()
     (interactive)
-    (message "Token: %s" (auth-source-xoauth2--access-token "outlook365" "outlook.office365.com" "993" "tj.theesfeld@citywide.io"))))
+    (message "Token: %s" (auth-source-xoauth2--access-token "outlook365" "outlook.office365.com" "993" "tj.theesfeld@citywide.io")))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
