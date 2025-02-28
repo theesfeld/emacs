@@ -1771,8 +1771,9 @@ nerd-icons-ibuffer-formats
                   (nnimap-user "tj.theesfeld@citywide.io")
                   (nnimap-authinfo-function #'auth-source-xoauth2--get-authinfo)
                   (nnimap-expunge t))
-          (nnrss "feeds"
-                 (nnrss-file "~/.config/emacs/gnus/rss-feeds.el"))))
+          ;; (nnrss "feeds"
+          ;;        (nnrss-file "~/.config/emacs/gnus/rss-feeds.el"))
+          ))
   (setq gnus-verbose 10
         gnus-verbose-backends t
         gnus-summary-line-format "%U%R%z %d %I%(%[%4L: %-23,23f%]%) %s\n"
