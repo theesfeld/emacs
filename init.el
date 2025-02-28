@@ -1754,7 +1754,7 @@ nerd-icons-ibuffer-formats
                                                                      :token-url "https://login.microsoftonline.com/common/oauth2/v2.0/token"
                                                                      :scope "https://outlook.office.com/IMAP.AccessAsUser.All offline_access"
                                                                      :redirect-uri "http://localhost"))))))
-(use-package gnus
+(require 'gnus)
   (setq gnus-select-method '((nnimap "outlook365"
                                      (nnimap-address "outlook.office365.com")
                                      (nnimap-server-port 993)
