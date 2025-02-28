@@ -1739,13 +1739,12 @@ nerd-icons-ibuffer-formats
 (setq gnus-down-server-list '("news"))
 
 (use-package oauth2
-  :ensure t
-  :demand t)
+  :ensure t)
 
 (use-package auth-source-xoauth2
   :vc (:url "https://github.com/ccann/auth-source-xoauth2")
   :after oauth2
-  :demand t
+  :ensure t
   :config
   (add-to-list 'auth-sources 'xoauth2 'append)
   (setq auth-source-xoauth2-creds
@@ -1756,15 +1755,10 @@ nerd-icons-ibuffer-formats
                                                                      :auth-url "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
                                                                      :token-url "https://login.microsoftonline.com/common/oauth2/v2.0/token"
                                                                      :scope "https://outlook.office.com/IMAP.AccessAsUser.All offline_access"
-                                                                     :redirect-uri "http://localhost")))))
-  (setq auth-source-debug t))
-
+                                                                     :redirect-uri "http://localhost"))))))
 (use-package gnus
-
   (setq gnus-nntp-server nil)
-
   (setq gnus-select-method '(nnimap ""))
-
   (setq gnus-secondary-select-methods
         '((nnimap "outlook365"
                   (nnimap-address "outlook.office365.com")
@@ -1788,8 +1782,8 @@ nerd-icons-ibuffer-formats
         gnus-article-save-directory "~/.config/emacs/gnus/saved/"
         gnus-read-active-file 'some
         gnus-check-new-newsgroups nil
-        gnus-save-newsrc-file nil
-        gnus-read-newsrc-file nil
+        gnus-save-newsrc-file t
+        gnus-read-newsrc-file t
         gnus-thread-sort-functions
         '(gnus-thread-sort-by-most-recent-date
           gnus-thread-sort-by-number)
@@ -1799,7 +1793,7 @@ nerd-icons-ibuffer-formats
         gnus-treat-emphasize t
         gnus-startup-file "~/.config/emacs/gnus/newsrc"
         gnus-save-killed-list nil
-        gnus-use-dribble-file t
+        gnus-use-dribble-file nil
         smtpmail-smtp-user "tj.theesfeld@citywide.io"
         smtpmail-smtp-server "smtp.office365.com"
         smtpmail-smtp-service 587
@@ -1807,21 +1801,17 @@ nerd-icons-ibuffer-formats
         smtpmail-auth-supported '(xoauth2)
         send-mail-function 'smtpmail-send-it
         message-send-mail-function 'smtpmail-send-it)
-
   (setq auth-sources '(xoauth2))
   (setq auth-source-debug t)
   (setq gnus-draft-mode 'nnimap)
   (setq gnus-drafts-directory "outlook365:Drafts")
   (setq browse-url-browser-function 'ignore))
-
   (add-hook 'gnus-group-mode-hook
             (lambda ()
               (local-set-key (kbd "g") 'gnus-group-get-new-news)))
   (add-hook 'gnus-summary-mode-hook
             (lambda ()
               (local-set-key (kbd "m") 'gnus-summary-mail-other-window)))
-
-
 
 (defun test-xoauth2-token ()
   (interactive)
