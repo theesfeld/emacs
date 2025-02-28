@@ -1736,24 +1736,24 @@ nerd-icons-ibuffer-formats
 ;;                                   GNUS                                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package oauth2
-  :ensure t)
+;; (use-package oauth2
+;;   :ensure t)
 
-(use-package auth-source-xoauth2
-  :vc (:url "https://github.com/ccann/auth-source-xoauth2")
-  :after oauth2
-  :ensure t
-  :config
-  (add-to-list 'auth-sources 'xoauth2 'append)
-  (setq auth-source-xoauth2-creds
-        `(("tj.theesfeld@citywide.io@outlook.office365.com" ,(lambda (host port user)
-                                                               (message "Fetching XOAUTH2 for %s:%s:%s" host port user)
-                                                               (list :client-id "08162f7c-0fd2-4200-a84a-f25a4db0b584"
-                                                                     :client-secret "TxRBilcHdC6WGBee]fs?QR:SJ8nI[g82"
-                                                                     :auth-url "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
-                                                                     :token-url "https://login.microsoftonline.com/common/oauth2/v2.0/token"
-                                                                     :scope "https://outlook.office.com/IMAP.AccessAsUser.All offline_access"
-                                                                     :redirect-uri "http://localhost"))))))
+;; (use-package auth-source-xoauth2
+;;   :vc (:url "https://github.com/ccann/auth-source-xoauth2")
+;;   :after oauth2
+;;   :ensure t
+;;   :config
+;;   (add-to-list 'auth-sources 'xoauth2 'append)
+;;   (setq auth-source-xoauth2-creds
+;;         `(("tj.theesfeld@citywide.io@outlook.office365.com" ,(lambda (host port user)
+;;                                                                (message "Fetching XOAUTH2 for %s:%s:%s" host port user)
+;;                                                                (list :client-id "08162f7c-0fd2-4200-a84a-f25a4db0b584"
+;;                                                                      :client-secret "TxRBilcHdC6WGBee]fs?QR:SJ8nI[g82"
+;;                                                                      :auth-url "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
+;;                                                                      :token-url "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+;;                                                                      :scope "https://outlook.office.com/IMAP.AccessAsUser.All offline_access"
+;;                                                                      :redirect-uri "http://localhost"))))))
 (use-package gnus
   (setq gnus-select-method '((nnimap "outlook365"
                                      (nnimap-address "outlook.office365.com")
@@ -1800,12 +1800,12 @@ nerd-icons-ibuffer-formats
         gnus-drafts-directory "outlook365:Drafts"
         browse-url-browser-function 'ignore))
 
-(add-hook 'gnus-group-mode-hook
-          (lambda ()
-            (local-set-key (kbd "g") 'gnus-group-get-new-news)))
-(add-hook 'gnus-summary-mode-hook
-          (lambda ()
-            (local-set-key (kbd "m") 'gnus-summary-mail-other-window)))
+;; (add-hook 'gnus-group-mode-hook
+;;           (lambda ()
+;;             (local-set-key (kbd "g") 'gnus-group-get-new-news)))
+;; (add-hook 'gnus-summary-mode-hook
+;;           (lambda ()
+;;             (local-set-key (kbd "m") 'gnus-summary-mail-other-window)))
 
 ;; (defun test-xoauth2-token ()
 ;;   (interactive)
