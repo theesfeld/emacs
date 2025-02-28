@@ -1762,6 +1762,7 @@ nerd-icons-ibuffer-formats
   :ensure t
   :defer t
   :config
+  (setq gnus-nntp-server nil)
   (setq gnus-select-method '(nnnil ""))
   (setq gnus-secondary-select-methods
         '((nnimap "outlook365"
