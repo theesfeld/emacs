@@ -1755,18 +1755,16 @@ nerd-icons-ibuffer-formats
                                                                      :scope "https://outlook.office.com/IMAP.AccessAsUser.All offline_access"
                                                                      :redirect-uri "http://localhost"))))))
 (use-package gnus
-
   (setq gnus-select-method '((nnimap "outlook365"
-                  (nnimap-address "outlook.office365.com")
-                  (nnimap-server-port 993)
-                  (nnimap-stream ssl)
-                  (nnimap-authenticator xoauth2)
-                  (nnimap-user "tj.theesfeld@citywide.io")
-                  (nnimap-authinfo-function #'auth-source-xoauth2--get-authinfo)
-                  (nnimap-expunge t)))
+                                     (nnimap-address "outlook.office365.com")
+                                     (nnimap-server-port 993)
+                                     (nnimap-stream ssl)
+                                     (nnimap-authenticator xoauth2)
+                                     (nnimap-user "tj.theesfeld@citywide.io")
+                                     (nnimap-authinfo-function #'auth-source-xoauth2--get-authinfo)
+                                     (nnimap-expunge t)))
         gnus-secondary-select-methods '((nnrss "feeds"
-                 (nnrss-file "~/.config/emacs/gnus/rss-feeds.el"))
-          )
+                                               (nnrss-file "~/.config/emacs/gnus/rss-feeds.el")))
         gnus-verbose 10
         gnus-verbose-backends t
         gnus-summary-line-format "%U%R%z %d %I%(%[%4L: %-23,23f%]%) %s\n"
@@ -1780,8 +1778,7 @@ nerd-icons-ibuffer-formats
         gnus-check-new-newsgroups nil
         gnus-save-newsrc-file t
         gnus-read-newsrc-file t
-        gnus-thread-sort-functions
-        '(gnus-thread-sort-by-most-recent-date
+        gnus-thread-sort-functions '(gnus-thread-sort-by-most-recent-date
           gnus-thread-sort-by-number)
         gnus-summary-thread-gathering-function 'gnus-gather-threads-by-references
         gnus-treat-fill-long-lines t
@@ -1796,22 +1793,23 @@ nerd-icons-ibuffer-formats
         smtpmail-stream-type 'starttls
         smtpmail-auth-supported '(xoauth2)
         send-mail-function 'smtpmail-send-it
-        message-send-mail-function 'smtpmail-send-it)
-  (setq auth-sources '(xoauth2))
-  (setq auth-source-debug t)
-  (setq gnus-draft-mode 'nnimap)
-  (setq gnus-drafts-directory "outlook365:Drafts")
-  (setq browse-url-browser-function 'ignore))
-  (add-hook 'gnus-group-mode-hook
-            (lambda ()
-              (local-set-key (kbd "g") 'gnus-group-get-new-news)))
-  (add-hook 'gnus-summary-mode-hook
-            (lambda ()
-              (local-set-key (kbd "m") 'gnus-summary-mail-other-window)))
+        message-send-mail-function 'smtpmail-send-it
+        auth-sources '(xoauth2)
+        auth-source-debug t
+        gnus-draft-mode 'nnimap
+        gnus-drafts-directory "outlook365:Drafts"
+        browse-url-browser-function 'ignore))
 
-(defun test-xoauth2-token ()
-  (interactive)
-  (message "Token: %s" (auth-source-xoauth2--access-token "outlook365" "outlook.office365.com" "993" "tj.theesfeld@citywide.io")))
+(add-hook 'gnus-group-mode-hook
+          (lambda ()
+            (local-set-key (kbd "g") 'gnus-group-get-new-news)))
+(add-hook 'gnus-summary-mode-hook
+          (lambda ()
+            (local-set-key (kbd "m") 'gnus-summary-mail-other-window)))
+
+;; (defun test-xoauth2-token ()
+;;   (interactive)
+;;   (message "Token: %s" (auth-source-xoauth2--access-token "outlook365" "outlook.office365.com" "993" "tj.theesfeld@citywide.io")))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
