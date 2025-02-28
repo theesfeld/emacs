@@ -1739,8 +1739,7 @@ nerd-icons-ibuffer-formats
 (use-package oauth2
   :ensure t)
 
-(use-package auth-source-xoauth2
-  :vc (:url "https://github.com/ccrusius/auth-source-xoauth2")
+(use-package auth-source-xoauth2-plugin
   :after oauth2
   :ensure t
   :config
