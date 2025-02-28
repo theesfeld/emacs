@@ -1740,65 +1740,55 @@ nerd-icons-ibuffer-formats
 (use-package oauth2
   :ensure t)
 
-(use-package auth-source-xoauth2
+(use-package auth-source-xoauth2-plugin
   :after oauth2
-  :ensure t
-  :config
-  (add-to-list 'auth-sources 'xoauth2 'append)
-  (setq auth-source-xoauth2-creds
-        `(("tj.theesfeld@citywide.io@outlook.office365.com" ,(lambda (host port user)
-                                                               (message "Fetching XOAUTH2 for %s:%s:%s" host port user)
-                                                               (list :client-id "08162f7c-0fd2-4200-a84a-f25a4db0b584"
-                                                                     :client-secret "TxRBilcHdC6WGBee]fs?QR:SJ8nI[g82"
-                                                                     :auth-url "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
-                                                                     :token-url "https://login.microsoftonline.com/common/oauth2/v2.0/token"
-                                                                     :scope "https://outlook.office.com/IMAP.AccessAsUser.All offline_access"
-                                                                     :redirect-uri "http://localhost"))))))
+  :ensure t)
+
 (require 'gnus)
-  (setq gnus-select-method '((nnimap "outlook365"
-                                     (nnimap-address "outlook.office365.com")
-                                     (nnimap-server-port 993)
-                                     (nnimap-stream ssl)
-                                     (nnimap-authenticator xoauth2)
-                                     (nnimap-user "tj.theesfeld@citywide.io")
-                                     (nnimap-authinfo-function #'auth-source-xoauth2--get-authinfo)
-                                     (nnimap-expunge t)))
-        gnus-secondary-select-methods '((nnrss "feeds"
-                                               (nnrss-file "~/.config/emacs/gnus/rss-feeds.el")))
-        gnus-verbose 10
-        gnus-verbose-backends t
-        gnus-summary-line-format "%U%R%z %d %I%(%[%4L: %-23,23f%]%) %s\n"
-        gnus-group-line-format "%M%S%p%P%5y: %(%g%)%l\n"
-        gnus-asynchronous t
-        gnus-use-adaptive-scoring t
-        gnus-use-cache t
-        gnus-cache-directory "~/.config/emacs/gnus/cache/"
-        gnus-article-save-directory "~/.config/emacs/gnus/saved/"
-        gnus-read-active-file 'some
-        gnus-check-new-newsgroups nil
-        gnus-save-newsrc-file t
-        gnus-read-newsrc-file t
-        gnus-thread-sort-functions '(gnus-thread-sort-by-most-recent-date
-                                     gnus-thread-sort-by-number)
-        gnus-summary-thread-gathering-function 'gnus-gather-threads-by-references
-        gnus-treat-fill-long-lines t
-        gnus-treat-display-smileys t
-        gnus-treat-emphasize t
-        gnus-startup-file "~/.config/emacs/gnus/newsrc"
-        gnus-save-killed-list nil
-        gnus-use-dribble-file nil
-        smtpmail-smtp-user "tj.theesfeld@citywide.io"
-        smtpmail-smtp-server "smtp.office365.com"
-        smtpmail-smtp-service 587
-        smtpmail-stream-type 'starttls
-        smtpmail-auth-supported '(xoauth2)
-        send-mail-function 'smtpmail-send-it
-        message-send-mail-function 'smtpmail-send-it
-        auth-sources '(xoauth2)
-        auth-source-debug t
-        gnus-draft-mode 'nnimap
-        gnus-drafts-directory "outlook365:Drafts"
-        browse-url-browser-function 'ignore)
+(setq gnus-select-method
+      '((nnimap "outlook365"
+                (nnimap-address "outlook.office365.com")
+                (nnimap-server-port 993)
+                (nnimap-stream ssl)
+                (nnimap-authenticator xoauth2)
+                (nnimap-user "tj.theesfeld@citywide.io")
+                (nnimap-expunge t)))
+      gnus-secondary-select-methods '((nnrss "feeds"
+                                             (nnrss-file "~/.config/emacs/gnus/rss-feeds.el")))
+      gnus-verbose 10
+      gnus-verbose-backends t
+      gnus-summary-line-format "%U%R%z %d %I%(%[%4L: %-23,23f%]%) %s\n"
+      gnus-group-line-format "%M%S%p%P%5y: %(%g%)%l\n"
+      gnus-asynchronous t
+      gnus-use-adaptive-scoring t
+      gnus-use-cache t
+      gnus-cache-directory "~/.config/emacs/gnus/cache/"
+      gnus-article-save-directory "~/.config/emacs/gnus/saved/"
+      gnus-read-active-file 'some
+      gnus-check-new-newsgroups nil
+      gnus-save-newsrc-file t
+      gnus-read-newsrc-file t
+      gnus-thread-sort-functions '(gnus-thread-sort-by-most-recent-date
+                                   gnus-thread-sort-by-number)
+      gnus-summary-thread-gathering-function 'gnus-gather-threads-by-references
+      gnus-treat-fill-long-lines t
+      gnus-treat-display-smileys t
+      gnus-treat-emphasize t
+      gnus-startup-file "~/.config/emacs/gnus/newsrc"
+      gnus-save-killed-list nil
+      gnus-use-dribble-file nil
+      smtpmail-smtp-user "tj.theesfeld@citywide.io"
+      smtpmail-smtp-server "smtp.office365.com"
+      smtpmail-smtp-service 587
+      smtpmail-stream-type 'starttls
+      smtpmail-auth-supported '(xoauth2)
+      send-mail-function 'smtpmail-send-it
+      message-send-mail-function 'smtpmail-send-it
+      auth-sources '("~/.authinfo.gpg")
+      auth-source-debug t
+      gnus-draft-mode 'nnimap
+      gnus-drafts-directory "outlook365:Drafts"
+      browse-url-browser-function 'ignore)
 
 ;; (add-hook 'gnus-group-mode-hook
 ;;           (lambda ()
