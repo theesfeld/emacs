@@ -118,6 +118,7 @@
       garbage-collection-messages nil
       plstore-cache-directory "~/.config/emacs/")
 
+(setq epg-gpg-program "gpg2")
 (require 'auth-source)
 (setenv "TZ" "America/New_York")
 
@@ -1739,7 +1740,7 @@ nerd-icons-ibuffer-formats
 (use-package oauth2
   :ensure t)
 
-(use-package auth-source-xoauth2-plugin
+(use-package auth-source-xoauth2
   :after oauth2
   :ensure t
   :config
