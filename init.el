@@ -1779,7 +1779,7 @@ nerd-icons-ibuffer-formats
         gnus-save-newsrc-file t
         gnus-read-newsrc-file t
         gnus-thread-sort-functions '(gnus-thread-sort-by-most-recent-date
-          gnus-thread-sort-by-number)
+                                     gnus-thread-sort-by-number)
         gnus-summary-thread-gathering-function 'gnus-gather-threads-by-references
         gnus-treat-fill-long-lines t
         gnus-treat-display-smileys t
