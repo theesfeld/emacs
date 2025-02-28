@@ -1799,19 +1799,8 @@ nerd-icons-ibuffer-formats
         gnus-treat-emphasize t
         gnus-startup-file "~/.config/emacs/gnus/newsrc"
         gnus-save-killed-list nil
-        gnus-use-dribble-file t)
-
-  (add-hook 'gnus-group-mode-hook
-            (lambda ()
-              (local-set-key (kbd "g") 'gnus-group-get-new-news)))
-  (add-hook 'gnus-summary-mode-hook
-            (lambda ()
-              (local-set-key (kbd "m") 'gnus-summary-mail-other-window)))
-
-  (setq user-full-name "TJ Theesfeld"
-        user-mail-address "tj.theesfeld@citywide.io")
-
-  (setq smtpmail-smtp-user "tj.theesfeld@citywide.io"
+        gnus-use-dribble-file t
+        smtpmail-smtp-user "tj.theesfeld@citywide.io"
         smtpmail-smtp-server "smtp.office365.com"
         smtpmail-smtp-service 587
         smtpmail-stream-type 'starttls
@@ -1824,6 +1813,15 @@ nerd-icons-ibuffer-formats
   (setq gnus-draft-mode 'nnimap)
   (setq gnus-drafts-directory "outlook365:Drafts")
   (setq browse-url-browser-function 'ignore))
+
+  (add-hook 'gnus-group-mode-hook
+            (lambda ()
+              (local-set-key (kbd "g") 'gnus-group-get-new-news)))
+  (add-hook 'gnus-summary-mode-hook
+            (lambda ()
+              (local-set-key (kbd "m") 'gnus-summary-mail-other-window)))
+
+
 
 (defun test-xoauth2-token ()
   (interactive)
