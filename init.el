@@ -1823,7 +1823,7 @@ nerd-icons-ibuffer-formats
 (setq auth-source-debug t)
 (setq gnus-draft-mode 'nnimap)
 (setq gnus-drafts-directory "outlook365:Drafts")
-(setq browse-url-browser-function 'ignore))(setq gnus-down-server-list '("news"))
+(setq browse-url-browser-function 'ignore))
 
   (defun test-xoauth2-token ()
     (interactive)
