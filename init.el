@@ -1736,6 +1736,8 @@ nerd-icons-ibuffer-formats
 ;;                                   GNUS                                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(setq gnus-down-server-list '("news"))
+
 (use-package oauth2
   :ensure t
   :demand t)
