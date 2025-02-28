@@ -1755,7 +1755,7 @@ nerd-icons-ibuffer-formats
                                                                      :auth-url "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
                                                                      :token-url "https://login.microsoftonline.com/common/oauth2/v2.0/token"
                                                                      :scope "https://outlook.office.com/IMAP.AccessAsUser.All offline_access"
-                                                                     :redirect-uri "https://login.microsoftonline.com/common/oauth2/nativeclient")))))
+                                                                     :redirect-uri "http://localhost")))))
   (setq auth-source-debug t))
 
 (use-package gnus
@@ -1795,7 +1795,8 @@ nerd-icons-ibuffer-formats
   (setq gnus-treat-fill-long-lines t
         gnus-treat-display-smileys t
         gnus-treat-emphasize t)
-  (setq gnus-startup-file "~/.config/emacs/gnus/newsrc"
+  (setq
+   ;gnus-startup-file "~/.config/emacs/gnus/newsrc"
         gnus-save-killed-list nil
         gnus-use-dribble-file t)
   (add-hook 'gnus-group-mode-hook
