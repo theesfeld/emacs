@@ -1736,8 +1736,6 @@ nerd-icons-ibuffer-formats
 ;;                                   GNUS                                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(setq gnus-down-server-list '("news"))
-
 (use-package oauth2
   :ensure t)
 
@@ -1757,18 +1755,16 @@ nerd-icons-ibuffer-formats
                                                                      :scope "https://outlook.office.com/IMAP.AccessAsUser.All offline_access"
                                                                      :redirect-uri "http://localhost"))))))
 (use-package gnus
-  (setq gnus-nntp-server nil)
-  (setq gnus-select-method '(nnimap ""))
-  (setq gnus-secondary-select-methods
-        '((nnimap "outlook365"
+
+  (setq gnus-select-method '((nnimap "outlook365"
                   (nnimap-address "outlook.office365.com")
                   (nnimap-server-port 993)
                   (nnimap-stream ssl)
                   (nnimap-authenticator xoauth2)
                   (nnimap-user "tj.theesfeld@citywide.io")
                   (nnimap-authinfo-function #'auth-source-xoauth2--get-authinfo)
-                  (nnimap-expunge t))
-          (nnrss "feeds"
+                  (nnimap-expunge t)))
+        gnus-secondary-select-methods '((nnrss "feeds"
                  (nnrss-file "~/.config/emacs/gnus/rss-feeds.el"))
           )
         gnus-verbose 10
