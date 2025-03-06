@@ -84,6 +84,232 @@
 (setq use-package-always-ensure t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                     EXWM                                  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun my-exwm-autostart ()
+  "Start applications on EXWM initialization."
+  (interactive)
+  (start-process-shell-command "foot-server" nil "foot --server")
+  (run-at-time 10 nil (lambda ()
+                        (start-process-shell-command "udiskie" nil "udiskie -as 2>/tmp/udiskie.log")))
+  (run-at-time 10 nil (lambda ()
+                        (start-process-shell-command "blueman-applet" nil "blueman-applet")))
+  (run-at-time 10 nil (lambda ()
+                        (start-process-shell-command "nm-applet" nil "nm-applet")))
+  (run-at-time 10 nil (lambda ()
+                        (start-process-shell-command "mullvad-vpn" nil "mullvad-vpn"))))
+
+(defun my-exwm-get-monitor-info ()
+  "Get a list of connected monitors with their names and resolutions from xrandr."
+  (let ((xrandr-output (shell-command-to-string "xrandr --current | grep ' connected'")))
+    (mapcar (lambda (line)
+              (when (string-match "\\([^ ]+\\) connected.* \\([0-9]+x[0-9]+\\)+" line)
+                (list (match-string 1 line) (match-string 2 line))))
+            (split-string xrandr-output "\n" t))))
+
+(defun my-exwm-update-workspaces-and-frames ()
+  "Dynamically update workspaces and frames based on connected monitors."
+  (interactive)
+  (let* ((monitor-info (my-exwm-get-monitor-info))  ;; List of (name resolution) pairs
+         (monitor-names (mapcar #'car monitor-info))  ;; Just the monitor names
+         (prev-workspace-output-plist exwm-randr-workspace-output-plist)
+         (new-workspace-output-plist '())
+         (workspace-index 0)
+         (primary-monitor "eDP-1"))  ;; Laptop monitor as fallback
+    ;; Update workspace-to-monitor mapping
+    (dolist (monitor monitor-names)
+      (setq new-workspace-output-plist
+            (append new-workspace-output-plist (list workspace-index monitor)))
+      (setq workspace-index (1+ workspace-index)))
+    (setq exwm-randr-workspace-output-plist new-workspace-output-plist)
+    (setq exwm-workspace-number (length monitor-names))  ;; Adjust total workspaces
+
+    ;; Spawn frames on each monitor
+    (dolist (monitor-info monitor-info)
+      (let* ((monitor (car monitor-info))
+             (resolution (cadr monitor-info))
+             (ws-index (cl-position monitor monitor-names :test #'equal))
+             (existing-frame (seq-find (lambda (frame)
+                                         (equal (frame-parameter frame 'exwm-workspace)
+                                                (exwm-workspace--get ws-index)))
+                                       (frame-list))))
+        (unless existing-frame
+          (exwm-workspace-switch ws-index)
+          (let ((frame (make-frame `((exwm-workspace . ,ws-index)))))
+            (select-frame-set-input-focus frame)
+            (set-frame-parameter frame 'fullscreen 'fullboth)
+            (message "Created frame on %s (workspace %d)" monitor ws-index)))))
+
+    ;; Clean up frames for disconnected monitors
+    (dolist (frame (frame-list))
+      (let ((ws (frame-parameter frame 'exwm-workspace)))
+        (when (and ws (not (member (plist-get exwm-randr-workspace-output-plist
+                                              (* 2 (exwm-workspace--position ws)))
+                                   monitor-names)))
+          (unless (equal (plist-get exwm-randr-workspace-output-plist (* 2 (exwm-workspace--position ws)))
+                         primary-monitor)
+            (message "Deleting frame on disconnected monitor (workspace %d)" (exwm-workspace--position ws))
+            (delete-frame frame)))))
+
+    ;; Ensure at least one frame on eDP-1 if it’s connected
+    (when (member primary-monitor monitor-names)
+      (let ((primary-ws (cl-position primary-monitor monitor-names :test #'equal)))
+        (unless (seq-find (lambda (frame)
+                            (equal (frame-parameter frame 'exwm-workspace)
+                                   (exwm-workspace--get primary-ws)))
+                          (frame-list))
+          (exwm-workspace-switch primary-ws)
+          (let ((frame (make-frame `((exwm-workspace . ,primary-ws)))))
+            (select-frame-set-input-focus frame)
+            (set-frame-parameter frame 'fullscreen 'fullboth)
+            (message "Ensured frame on %s (workspace %d)" primary-monitor primary-ws)))))))
+
+;; EXWM configuration with use-package
+(use-package exwm
+  :if (and (display-graphic-p)
+           (getenv "DISPLAY")
+           (not (getenv "WAYLAND_DISPLAY")))
+  :ensure t
+  :demand t
+  :init
+  (setq exwm-debug-on t)
+  (when (getenv "WAYLAND_DISPLAY")
+    (message "EXWM requires X11, not Wayland. Aborting EXWM setup."))
+  (require 'exwm-randr)
+  (require 'exwm-systemtray)
+  :config
+  ;; EXWM CHANGE
+  (setq exwm-input-prefix-keys
+        '(?\C-x
+          ?\C-u
+          ?\C-h
+          ?\C-c
+          ?\M-x
+          ?\M-`
+          ?\M-&
+          ?\M-:
+          ?\C-\M-j
+          ?\C-\ ))
+
+  ;; Define a function to render system tray in mode-line
+  (defun my-exwm-systemtray-mode-line ()
+    "Return a string representation of the system tray for mode-line."
+    (when (and (boundp 'exwm-systemtray--list) exwm-systemtray--list)
+      (let ((tray-icons ""))
+        (dolist (entry exwm-systemtray--list)
+          (when (and entry (window-live-p (car entry)))
+            (setq tray-icons (concat tray-icons " [■] "))))
+        tray-icons)))
+
+  ;; Set standard GNU Emacs mode-line with system tray
+  (setq-default mode-line-format
+                '("%e" mode-line-front-space
+                  mode-line-mule-info mode-line-client mode-line-modified
+                  mode-line-remote mode-line-frame-identification
+                  mode-line-buffer-identification "   "
+                  mode-line-position
+                  (vc-mode vc-mode) "  "
+                  mode-line-modes
+                  (:eval (my-exwm-systemtray-mode-line))  ;; System tray in mode-line
+                  mode-line-misc-info mode-line-end-spaces))
+
+  ;; Screen change hook for dynamic monitor updates
+  (add-hook 'exwm-randr-screen-change-hook
+            (lambda ()
+              (let ((result (shell-command-to-string "xrandr --auto")))
+                (unless (string-empty-p result)
+                  (message "xrandr failed: %s" result)))
+              (my-exwm-update-workspaces-and-frames)))
+
+  ;; Initial setup hook
+  (add-hook 'exwm-init-hook
+            (lambda ()
+              (set-frame-parameter nil 'fullscreen 'fullboth)
+              (my-exwm-autostart)
+              (my-exwm-update-workspaces-and-frames)
+              ;; Ensure mode-line on initial frames
+              (dolist (frame (frame-list))
+                (set-frame-parameter frame 'mode-line-format mode-line-format))))
+
+  ;; Ensure mode-line on new frames
+  (add-hook 'after-make-frame-functions
+            (lambda (frame)
+              (with-selected-frame frame
+                (unless (frame-parameter frame 'mode-line-format)
+                  (set-frame-parameter frame 'mode-line-format mode-line-format)))))
+
+;; Define global EXWM keybindings
+  (setq exwm-input-global-keys
+        `(
+          ([?\s-r] . exwm-reset)
+          ([?\s-w] . exwm-workspace-switch)
+          ([?\s-&] . (lambda (cmd)
+                       (interactive (list (read-shell-command "$ ")))
+                       (start-process-shell-command cmd nil cmd)))
+          ([?\s-x] . exwm-exit)
+          ;; ([?\s-C-SPC ] . (lambda ()
+          ;;                 (interactive)
+          ;;                 (start-process-shell-command "rofi-calc" nil "rofi -show calc -mode calc -no-show-match -no-sort -calc-command \"echo -n '{result}' | wl-copy\" -terse")))
+          ([?\s-\r] . (lambda ()
+                        (interactive)
+                        (start-process-shell-command "footclient" nil "footclient")))
+          ([?\s-q] . exwm-window-kill)
+          ([?\s-e] . (lambda ()
+                       (interactive)
+                       (start-process-shell-command "yazi" nil "footclient -e yazi")))
+          ;; ([?\s-t] . exwm-floating-toggle)
+          ;; ([?\s-f] . exwm-fullscreen)
+          ;; ([?\s-SPC ] . (lambda ()
+          ;;               (interactive)
+          ;;               (start-process-shell-command "rofi-drun" nil "rofi -show drun --run-command \"{cmd}\" -font \"Berkeley Mono\"")))
+
+          ;; ([?\s-<left>] . (lambda () (interactive) (exwm-floating-move -50 0)))
+          ;; ([?\s-<right>] . (lambda () (interactive) (exwm-floating-move 50 0)))
+          ;; ([?\s-<down>] . (lambda () (interactive) (exwm-floating-move 0 50)))
+          ;; ([?\s-<up>] . (lambda () (interactive) (exwm-floating-move 0 -50)))
+
+          ;; ([?\s-C-<left>] . (lambda () (interactive) (exwm-floating-resize -25 0)))
+          ;; ([?\s-C-<right>] . (lambda () (interactive) (exwm-floating-resize 25 0)))
+          ;; ([?\s-C-<up>] . (lambda () (interactive) (exwm-floating-resize 0 -25)))
+          ;; ([?\s-C-<down>] . (lambda () (interactive) (exwm-floating-resize 0 25)))
+
+          ;; ([?\s-C-M-<left>] . windmove-left)
+          ;; ([?\s-C-M-<right>] . windmove-right)
+          ;; ([?\s-C-M-<up>] . windmove-up)
+          ;; ([?\s-C-M-<down>] . windmove-down)
+
+          ;; ([?\s-<mouse-1>] . exwm-floating-move)
+          ;; ([?\s-<mouse-3>] . exwm-resize)
+
+          ([XF86MonBrightnessUp] . (lambda () (interactive) (start-process-shell-command "brightnessctl-up" nil "brightnessctl -q s +1%")))
+          ([XF86MonBrightnessDown] . (lambda () (interactive) (start-process-shell-command "brightnessctl-down" nil "brightnessctl -q s 1%-")))
+          ([XF86AudioRaiseVolume] . (lambda () (interactive) (start-process-shell-command "pactl-up" nil "pactl set-sink-volume @DEFAULT_SINK@ +1%")))
+          ([XF86AudioLowerVolume] . (lambda () (interactive) (start-process-shell-command "pactl-down" nil "pactl set-sink-volume @DEFAULT_SINK@ -1%")))
+          ([XF86AudioMute] . (lambda () (interactive) (start-process-shell-command "wpctl-mute" nil "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle")))
+          ([XF86AudioPlay] . (lambda () (interactive) (start-process-shell-command "playerctl-play" nil "playerctl play-pause")))
+          ([XF86AudioPause] . (lambda () (interactive) (start-process-shell-command "playerctl-pause" nil "playerctl pause")))
+          ([XF86AudioNext] . (lambda () (interactive) (start-process-shell-command "playerctl-next" nil "playerctl next")))
+          ([XF86AudioPrev] . (lambda () (interactive) (start-process-shell-command "playerctl-prev" nil "playerctl previous")))
+          ([XF86AudioMicMute] . (lambda () (interactive) (start-process-shell-command "pactl-mic-mute" nil "pactl set-source-mute @DEFAULT_SOURCE@ toggle")))
+
+          ,@(mapcar (lambda (i)
+                      (let ((key (vector (intern (format "s-%d" i)))))
+                        `(,key . (lambda () (interactive) (exwm-workspace-switch-create ,i)))))
+                    (number-sequence 0 9))
+
+          ,@(mapcar (lambda (i)
+                      (let ((key (vector (intern (format "s-S-%d" i)))))
+                        `(,key . (lambda () (interactive) (exwm-workspace-move-window ,i)))))
+                    (number-sequence 0 9))))
+
+  ;; Enable EXWM components
+  (exwm-randr-mode 1)
+  (exwm-systemtray-mode 1)  ;; Still needed to initialize tray management
+  (exwm-enable))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -122,21 +348,21 @@
 (require 'auth-source)
 (setenv "TZ" "America/New_York")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                             Desktop Session Saving                       ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;;                             Desktop Session Saving                       ;;
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package desktop
-  :ensure nil
-  :init
-  (desktop-save-mode 1)
-  :config
-  (setq desktop-path (list user-emacs-directory)  ;; Save in ~/.emacs.d/
-        desktop-dirname user-emacs-directory
-        desktop-base-file-name ".emacs-desktop"
-        desktop-save t                     ;; Always save without prompting
-        desktop-restore-eager 10           ;; Restore 10 buffers immediately, rest lazily
-        desktop-auto-save-timeout 300))    ;; Auto-save every 5 minutes
+;; (use-package desktop
+;;   :ensure nil
+;;   :init
+;;   (desktop-save-mode 1)
+;;   :config
+;;   (setq desktop-path (list user-emacs-directory)  ;; Save in ~/.emacs.d/
+;;         desktop-dirname user-emacs-directory
+;;         desktop-base-file-name ".emacs-desktop"
+;;         desktop-save t                     ;; Always save without prompting
+;;         desktop-restore-eager 10           ;; Restore 10 buffers immediately, rest lazily
+;;         desktop-auto-save-timeout 300))    ;; Auto-save every 5 minutes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Shell Environment                          ;;
@@ -586,6 +812,13 @@ nerd-icons-ibuffer-formats
   (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                   Markdown                                ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;(use-package markdown
+;;  :ensure t)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Editing Helpers                              ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -758,13 +991,13 @@ nerd-icons-ibuffer-formats
 
 (require 'org)
 (require 'org-agenda)
-
+(eval-after-load "org"
+  '(require 'ox-md nil t))
 ;; Basic Org Settings
 (setq org-directory "~/.org/")
 (setq org-agenda-files (list (expand-file-name "agenda.org" org-directory)
-                             (expand-file-name "todos.org" org-directory)
+                             (expand-file-name "todo.org" org-directory)
                              (expand-file-name "url.org" org-directory)))  ; Include url.org for agenda
-(setq org-default-notes-file (expand-file-name "notes.org" org-directory))
 (setq org-id-link-to-org-use-id t)  ; Enable IDs for linking
 (setq org-startup-folded 'overview)
 (setq org-log-done 'time)
@@ -782,6 +1015,9 @@ nerd-icons-ibuffer-formats
 (setq org-hide-emphasis-markers t)
 (add-hook 'org-mode-hook (lambda () (org-toggle-pretty-entities)))
 (setq org-startup-with-inline-images t)
+;; Remap the change priority keys to use the UP or DOWN key
+(define-key org-mode-map (kbd "C-c <up>") 'org-priority-up)
+(define-key org-mode-map (kbd "C-c <down>") 'org-priority-down)
 
 (setq org-ellipsis " ▾")
 (setq org-return-follows-link t)
@@ -828,40 +1064,32 @@ nerd-icons-ibuffer-formats
 
 ;; Org-capture Templates (preserving your originals + new ones)
 (setq org-capture-templates
-      '(("L" "Link Capture" entry
-         (file (lambda () (expand-file-name "url.org" org-directory)))
-         "* %:description :web:%^g\n:PROPERTIES:\n:URL: %:link\n:ADDED: %U\n:END:\n"
-         :immediate-finish t)
-        ("P" "Selection Capture" entry
-         (file (lambda () (expand-file-name "url.org" org-directory)))
-         "* %:description :web:%^g\n:PROPERTIES:\n:URL: %:link\n:ADDED: %U\n:END:\n#+BEGIN_QUOTE\n%:initial\n#+END_QUOTE")
-        ("I" "Image Capture" entry
-         (file (lambda () (expand-file-name "url.org" org-directory)))
-         "* %:description :web:%^g\n:PROPERTIES:\n:URL: %:link\n:ADDED: %U\n:END:\n%(org-download-clipboard)"
-         :immediate-finish t)
-        ("n" "Note Capture" entry
-         (file (lambda () (expand-file-name "url.org" org-directory)))
-         "* %:description :web:%^g\n:PROPERTIES:\n:ADDED: %U\n:END:\n%:initial")
-        ("t" "TODO Capture" entry
-         (file (lambda () (expand-file-name "url.org" org-directory)))
-         "* TODO %:description :web:%^g\n:PROPERTIES:\n:ADDED: %U\n:END:\n%:initial")
-        ;; New templates for agenda/journal
+      '(
+        ("t" "General To-Do"
+         entry (file+headline (lambda () (expand-file-name "todo.org" org-directory)) "General Tasks")
+         "* TODO [#B] %?\n:Created: %T\n "
+         :empty-lines 0)
+
+        ("c" "Code To-Do"
+         entry (file+headline (lambda () (expand-file-name "todo.org" org-directory)) "Code Related Tasks")
+         "* TODO [#B] [#code] %?\n:Created: %T\n%i\n%a\nProposed Solution: "
+         :empty-lines 0)
+
         ("m" "Meeting" entry
          (file+headline (lambda () (expand-file-name "agenda.org" org-directory)) "Meetings")
          "* MEETING %^{Title} %^g\nSCHEDULED: %^{Date and Time}T\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:END:\n%?"
          :empty-lines 1)
-        ("s" "Scheduled Todo" entry
-         (file+headline (lambda () (expand-file-name "todos.org" org-directory)) "Tasks")
-         "* TODO %^{Title} %^g\nSCHEDULED: %^{Date}T\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:END:\n%?"
-         :empty-lines 1)
-        ("u" "Unscheduled Todo" entry
-         (file+headline (lambda () (expand-file-name "todos.org" org-directory)) "Tasks")
-         "* TODO %^{Title} %^g\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:END:\n%?"
-         :empty-lines 1)
+
         ("j" "Journal Entry" entry
          (function org-journal-new-entry)
          "* %<%H:%M> %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:END:\n"
-         :empty-lines 1)))
+         :empty-lines 1)
+
+        ("w" "Work Log Entry"
+         entry (file+datetree (lambda () (expand-file-name "work-log.org" org-directory)))
+         "* %?"
+         :empty-lines 0)
+        ))
 
 ;; Add IDs for stable linking
 (add-hook 'org-capture-prepare-finalize-hook #'org-id-get-create)
@@ -896,26 +1124,86 @@ nerd-icons-ibuffer-formats
   (org-super-agenda-mode 1)
   :bind (("C-c a" . org-agenda))
   :config
-  (setq org-super-agenda-groups
-        '((:name "Personal Scheduled"
-                 :and (:tag ("personal") :scheduled t))
-          (:name "Personal Unscheduled"
-                 :and (:tag ("personal") :not (:scheduled t)))
-          (:name "Work Scheduled"
-                 :and (:tag ("work") :scheduled t))
-          (:name "Work Unscheduled"
-                 :and (:tag ("work") :not (:scheduled t)))
-          (:name "General Scheduled"
-                 :and (:not (:tag ("personal" "work")) :scheduled t))
-          (:name "General Unscheduled"
-                 :and (:not (:tag ("personal" "work")) :not (:scheduled t)))
-          (:name "Overdue" :deadline past)
-          (:name "Completed Today" :and (:todo "DONE" :scheduled today))))
   (setq org-agenda-custom-commands
-        '(("A" "Super Agenda"
-           ((agenda "" ((org-agenda-span 'week)))
-            (alltodo ""))
-           ((org-super-agenda-groups org-super-agenda-groups))))))
+      '(
+        ;; James's Super View
+        ("A" "Super Agenda View"
+         (
+          (agenda ""
+                  (
+                   (org-agenda-remove-tags t)
+                   (org-agenda-span 7)
+                   )
+                  )
+
+          (alltodo ""
+                   (
+                    ;; Remove tags to make the view cleaner
+                    (org-agenda-remove-tags t)
+                    (org-agenda-prefix-format "  %t  %s")
+                    (org-agenda-overriding-header "CURRENT STATUS")
+
+                    ;; Define the super agenda groups (sorts by order)
+                    (org-super-agenda-groups
+                     '(
+                       ;; Filter where tag is CRITICAL
+                       (:name "Critical Tasks"
+                              :tag "CRITICAL"
+                              :order 0
+                              )
+                       ;; Filter where TODO state is IN-PROGRESS
+                       (:name "Currently Working"
+                              :todo "IN-PROGRESS"
+                              :order 1
+                              )
+                       ;; Filter where TODO state is PLANNING
+                       (:name "Planning Next Steps"
+                              :todo "PLANNING"
+                              :order 2
+                              )
+                       ;; Filter where TODO state is BLOCKED or where the tag is obstacle
+                       (:name "Problems & Blockers"
+                              :todo "BLOCKED"
+                              :tag "obstacle"
+                              :order 3
+                              )
+                       ;; Filter where tag is @write_future_ticket
+
+                       (:name "Research Required"
+                              :tag "@research"
+                              :order 7
+                              )
+                       ;; Filter where tag is meeting and priority is A (only want TODOs from meetings)
+                       (:name "Meeting Action Items"
+                              :and (:tag "meeting" :priority "A")
+                              :order 8
+                              )
+                       ;; Filter where state is TODO and the priority is A and the tag is not meeting
+                       (:name "Other Important Items"
+                              :and (:todo "TODO" :priority "A" :not (:tag "meeting"))
+                              :order 9
+                              )
+                       ;; Filter where state is TODO and priority is B
+                       (:name "General Backlog"
+                              :and (:todo "TODO" :priority "B")
+                              :order 10
+                              )
+                       ;; Filter where the priority is C or less (supports future lower priorities)
+                       (:name "Non Critical"
+                              :priority<= "C"
+                              :order 11
+                              )
+                       ;; Filter where TODO state is VERIFYING
+                       (:name "Currently Being Verified"
+                              :todo "VERIFYING"
+                              :order 20
+                              )
+                       (:name "General Unscheduled"
+                              :and (:not (:tag ("personal" "work")) :not (:scheduled t)))
+                       (:name "Overdue" :deadline past)
+                       (:name "Completed Today"
+                              :and (:todo "DONE" :scheduled today))
+                       )))))))))
 
 ;; Org-journal Setup
 (use-package org-journal
@@ -1733,74 +2021,205 @@ nerd-icons-ibuffer-formats
 ;;                       (:maildir "/gmail-zolikydev/[Gmail].Drafts"    :key ?d)
 ;;                       (:maildir "/gmail-zolikydev/[Gmail].Trash"     :key ?t))))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                   GNUS                                    ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; GNUS ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package oauth2
-  :ensure t)
+;; Load required packages
+;; (require 'auth-source)  ;; For reading authinfo.gpg
+;; (require 'nnimap)
+;; (require 'oauth2)
 
-(use-package auth-source-xoauth2-plugin
-  :after oauth2
-  :ensure t)
+;; (defvar nnimap-xoauth2-running nil
+;;   "Flag to prevent reentrant calls to nnimap-xoauth2.")
 
-(require 'gnus)
-(setq gnus-select-method
-      '((nnimap "outlook365"
-                (nnimap-address "outlook.office365.com")
-                (nnimap-server-port 993)
-                (nnimap-stream ssl)
-                (nnimap-authenticator xoauth2)
-                (nnimap-user "tj.theesfeld@citywide.io")
-                (nnimap-expunge t)))
-      gnus-secondary-select-methods '((nnrss "feeds"
-                                             (nnrss-file "~/.config/emacs/gnus/rss-feeds.el")))
-      gnus-verbose 10
-      gnus-verbose-backends t
-      gnus-summary-line-format "%U%R%z %d %I%(%[%4L: %-23,23f%]%) %s\n"
-      gnus-group-line-format "%M%S%p%P%5y: %(%g%)%l\n"
-      gnus-asynchronous t
-      gnus-use-adaptive-scoring t
-      gnus-use-cache t
-      gnus-cache-directory "~/.config/emacs/gnus/cache/"
-      gnus-article-save-directory "~/.config/emacs/gnus/saved/"
-      gnus-read-active-file 'some
-      gnus-check-new-newsgroups nil
-      gnus-save-newsrc-file t
-      gnus-read-newsrc-file t
-      gnus-thread-sort-functions '(gnus-thread-sort-by-most-recent-date
-                                   gnus-thread-sort-by-number)
-      gnus-summary-thread-gathering-function 'gnus-gather-threads-by-references
-      gnus-treat-fill-long-lines t
-      gnus-treat-display-smileys t
-      gnus-treat-emphasize t
-      gnus-startup-file "~/.config/emacs/gnus/newsrc"
-      gnus-save-killed-list nil
-      gnus-use-dribble-file nil
-      smtpmail-smtp-user "tj.theesfeld@citywide.io"
-      smtpmail-smtp-server "smtp.office365.com"
-      smtpmail-smtp-service 587
-      smtpmail-stream-type 'starttls
-      smtpmail-auth-supported '(xoauth2)
-      send-mail-function 'smtpmail-send-it
-      message-send-mail-function 'smtpmail-send-it
-      auth-sources '("~/.authinfo.gpg")
-      auth-source-debug t
-      gnus-draft-mode 'nnimap
-      gnus-drafts-directory "outlook365:Drafts"
-      browse-url-browser-function 'ignore)
+;; (defun nnimap-xoauth2 (username &optional password)
+;;   "Authenticate to IMAP with XOAUTH2, avoiding plstore."
+;;   (when nnimap-xoauth2-running
+;;     (message "nnimap-xoauth2 already running, skipping recursive call")
+;;     (return-from nnimap-xoauth2))
+;;   (let ((nnimap-xoauth2-running t))
+;;     (message "nnimap-xoauth2 called for %s" username)
+;;     (let* ((auth-info (car (auth-source-search :host "outlook.office365.com" :port 993 :user username :max 1)))
+;;            (auth-url (plist-get auth-info :xoauth2-auth-url))
+;;            (token-url (plist-get auth-info :xoauth2-token-url))
+;;            (scope (plist-get auth-info :xoauth2-scope))
+;;            (client-id (plist-get auth-info :xoauth2-client-id))
+;;            (client-secret (plist-get auth-info :xoauth2-client-secret))
+;;            (redirect-uri (plist-get auth-info :xoauth2-redirect-uri))
+;;            (token (oauth2-auth auth-url token-url scope client-id client-secret redirect-uri)))
+;;       (message "Raw token from oauth2-auth: %s" token)
+;;       (if (oauth2-token-p token)
+;;           (let ((access-token (oauth2-token-access-token token)))
+;;             (if access-token
+;;                 (progn
+;;                   (message "Extracted access token: %s" access-token)
+;;                   (message "Opening IMAP server outlook.office365.com")
+;;                   (nnimap-open-server "outlook.office365.com"
+;;                                       '((nnimap-address "outlook.office365.com")
+;;                                         (nnimap-server-port 993)
+;;                                         (nnimap-stream ssl)))
+;;                   (message "Sending XOAUTH2 token for %s" username)
+;;                   (nnimap-send-command "AUTHENTICATE XOAUTH2 %s"
+;;                                        (base64-encode-string
+;;                                         (format "user=%s\1auth=Bearer %s\1\1"
+;;                                                 username
+;;                                                 access-token))))
+;;               (message "No access token in token object: %s" token)
+;;               (error "No access token extracted")))
+;;         (message "Token retrieval failed or invalid token: %s" token)
+;;         (error "XOAUTH2 token retrieval failed")))))
 
+;; ;; Force XOAUTH2 for Gnus with guard
+;; (defadvice nnimap-open-server (before force-xoauth2 activate)
+;;   "Force XOAUTH2 authentication for outlook.office365.com."
+;;   (when (and (string= (ad-get-arg 0) "outlook.office365.com")
+;;              (not nnimap-xoauth2-running))
+;;     (message "Forcing XOAUTH2 for %s" (ad-get-arg 0))
+;;     (nnimap-xoauth2 "tj.theesfeld@citywide.io")))
+
+;; ;; Gnus config
+;; (setq oauth2-token-file "~/.config/emacs/gnus/oauth2.plstore")
+;; (setq gnus-select-method
+;;       '(nnimap "outlook.office365.com"
+;;                (nnimap-address "outlook.office365.com")
+;;                (nnimap-server-port 993)
+;;                (nnimap-stream ssl)
+;;                (nnimap-authenticator xoauth2)
+;;                (nnimap-user "tj.theesfeld@citywide.io")))
+
+;; (require 'gnus)
+
+;; ;; Auth-source settings
+;; (setq auth-sources '("~/.authinfo.gpg"))  ;; Only use authinfo.gpg
+;; (setq auth-source-do-cache t)             ;; Cache credentials
+;; (setq auth-source-cache-expiry nil)       ;; Never expire cache
+;; (setq auth-source-debug t)                ;; Debug auth-source
+;; (setq nnimap-record-commands t)  ;; Log IMAP commands
+;; (setq gnus-agent t)              ;; Enable agent for better logging
+;; ;; Gnus and nnimap debug settings
+;; (setq gnus-verbose 10)                    ;; High verbosity for Gnus
+;; (setq gnus-verbose-backends t)            ;; Debug backends
+;; (setq nnimap-verbose t)                   ;; Debug nnimap specifically
+;; (setq oauth2-debug t)
+;; (setq nnimap-record-commands t)
+;; ;; Gnus configuration
+;; (setq gnus-select-method
+;;       '(nnimap "outlook.office365.com"
+;;                (nnimap-address "outlook.office365.com")
+;;                (nnimap-server-port 993)
+;;                (nnimap-stream ssl)
+;;                (nnimap-authenticator xoauth2)  ;; Built-in XOAUTH2
+;;                (nnimap-user "tj.theesfeld@citywide.io")
+;;                (nnimap-expunge t)))
+
+;; (setq gnus-secondary-select-methods '((nnrss "feeds")))
+
+;; ;; Other Gnus settings
+;; (setq gnus-summary-line-format "%U%R%z %d %I%(%[%4L: %-23,23f%]%) %s\n"
+;;       gnus-group-line-format "%M%S%p%P%5y: %(%g%)%l\n"
+;;       gnus-asynchronous t
+;;       gnus-use-adaptive-scoring t
+;;       gnus-use-cache t
+;;       gnus-cache-directory "~/.config/emacs/gnus/cache/"
+;;       gnus-article-save-directory "~/.config/emacs/gnus/saved/"
+;;       gnus-read-active-file 'some
+;;       gnus-check-new-newsgroups nil
+;;       gnus-save-newsrc-file t
+;;       gnus-read-newsrc-file t
+;;       gnus-thread-sort-functions '(gnus-thread-sort-by-most-recent-date gnus-thread-sort-by-number)
+;;       gnus-summary-thread-gathering-function 'gnus-gather-threads-by-references
+;;       gnus-treat-fill-long-lines t
+;;       gnus-treat-display-smileys t
+;;       gnus-treat-emphasize t
+;;       gnus-startup-file "~/.config/emacs/gnus/newsrc"
+;;       gnus-save-killed-list nil
+;;       gnus-use-dribble-file nil)
+
+;; ;; SMTP configuration for sending mail
+;; (setq smtpmail-smtp-user "tj.theesfeld@citywide.io"
+;;       smtpmail-smtp-server "smtp.office365.com"
+;;       smtpmail-smtp-service 587
+;;       smtpmail-stream-type 'starttls
+;;       smtpmail-auth-supported '(xoauth2)
+;;       send-mail-function 'smtpmail-send-it
+;;       message-send-mail-function 'smtpmail-send-it)
+
+;; ;; Drafts
+;; (setq gnus-draft-mode 'nnimap
+;;       gnus-drafts-directory "nnimap+outlook.office365.com:Drafts"
+;;       browse-url-browser-function 'ignore)
+
+;; ;; OAuth2 token storage
+
+
+;; ;; Key bindings
 ;; (add-hook 'gnus-group-mode-hook
 ;;           (lambda ()
 ;;             (local-set-key (kbd "g") 'gnus-group-get-new-news)))
+
 ;; (add-hook 'gnus-summary-mode-hook
 ;;           (lambda ()
 ;;             (local-set-key (kbd "m") 'gnus-summary-mail-other-window)))
 
-;; (defun test-xoauth2-token ()
-;;   (interactive)
-;;   (message "Token: %s" (auth-source-xoauth2--access-token "outlook365" "outlook.office365.com" "993" "tj.theesfeld@citywide.io")))
+;; ;; Force clear auth cache before starting Gnus and ensure OAuth2 prompt
+;; (defun gnus-oauth2-reload-auth (&rest _)
+;;   "Force reload of auth-source and clear oauth2.plstore before starting Gnus."
+;;   (auth-source-forget-all-cached)
+;; ;;  (when (file-exists-p oauth2-token-file)
+;; ;;    (delete-file oauth2-token-file)))  ;; Remove this line later for token reuse
+;; )
+;; (advice-add 'gnus :before #'gnus-oauth2-reload-auth)
 
+;; ;; Debugging function for auth-source
+;; (defun test-auth-source-complete ()
+;;   "Test if auth-source can find complete credentials for Outlook365."
+;;   (interactive)
+;;   (message "Searching for auth info...")
+;;   (let* ((auth-info (car (auth-source-search :host "outlook.office365.com"
+;;                                              :port 993
+;;                                              :user "tj.theesfeld@citywide.io"
+;;                                              :max 1)))
+;;          (user (plist-get auth-info :user))
+;;          (host (plist-get auth-info :host))
+;;          (secret-fn (plist-get auth-info :secret))
+;;          (xoauth2-client-id (plist-get auth-info :xoauth2-client-id))
+;;          (xoauth2-client-secret (plist-get auth-info :xoauth2-client-secret)))
+;;     (message "Found auth info: %s" (if auth-info "Yes" "No"))
+;;     (when auth-info
+;;       (message "Host: %s, User: %s" host user)
+;;       (message "Has password/secret function: %s" (if secret-fn "Yes" "No"))
+;;       (message "Has client ID: %s" (if xoauth2-client-id "Yes" "No"))
+;;       (message "Has client secret: %s" (if xoauth2-client-secret "Yes" "No"))
+;;       (when secret-fn
+;;         (condition-case err
+;;             (let ((secret (funcall secret-fn)))
+;;               (message "Was able to retrieve secret: %s" (if secret "Yes" "No"))
+;;               (when (and secret (stringp secret))
+;;                 (message "Secret type: %s" (if (string= secret "xoauth2") "xoauth2" "other"))))
+;;           (error (message "Error retrieving secret: %s" (error-message-string err))))))))
+
+;; ;; Token fetch function
+;; (defun test-get-oauth2-token ()
+;;   "Test OAuth2 token retrieval for Outlook."
+;;   (interactive)
+;;   (auth-source-forget-all-cached)
+;;   (let* ((auth-info (car (auth-source-search :host "outlook.office365.com" :port 993 :user "tj.theesfeld@citywide.io" :max 1)))
+;;          (client-id (plist-get auth-info :xoauth2-client-id))
+;;          (client-secret (plist-get auth-info :xoauth2-client-secret))
+;;          (auth-url (plist-get auth-info :xoauth2-auth-url))
+;;          (token-url (plist-get auth-info :xoauth2-token-url))
+;;          (scope (plist-get auth-info :xoauth2-scope))
+;;          (redirect-uri (plist-get auth-info :xoauth2-redirect-uri)))
+;;     (if (and client-id client-secret auth-url token-url scope)
+;;         (progn
+;;           (message "Fetching token...")
+;;           (let ((token (oauth2-auth-and-store auth-url token-url scope client-id client-secret redirect-uri)))
+;;             (message "Token stored: %s" (if token "Yes" "No"))
+;;             (when token
+;;               (with-temp-file oauth2-token-file
+;;                 (insert (pp-to-string token))))))  ;; Force plain-text write
+;;       (message "Missing OAuth2 parameters"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                   0x0.st                                  ;;
@@ -1812,41 +2231,9 @@ nerd-icons-ibuffer-formats
               ("C-c u" . '0x0-dwim)
               ("C-c U" . '0x0-upload-file)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                     EXWM                                  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Only load EXWM in Xorg graphical environments
-(when (and (display-graphic-p)         ; Check if graphical environment
-           (getenv "DISPLAY")          ; Ensure Xorg via DISPLAY variable
-           (not (getenv "WAYLAND_DISPLAY"))) ; Exclude Wayland
-  (require 'exwm)
-  (require 'exwm-config)              ; Optional: loads default EXWM helpers
-
-  ;; Basic EXWM setup
-  (setq exwm-workspace-number 4)      ; Set number of workspaces
-  (exwm-enable)                       ; Start EXWM
-
-  ;; EXWM-specific keybindings
-  (setq exwm-input-global-keys
-        `((,(kbd "s-r") . exwm-reset) ; Reset EXWM layout
-          (,(kbd "s-&") . (lambda ()  ; Launch terminal (e.g., alacritty)
-                            (interactive)
-                            (start-process "" nil "alacritty")))
-          (,(kbd "s-<tab>") . exwm-workspace-switch))) ; Switch workspaces
-
-  ;; Optional: Simulation keys for X11 apps (e.g., pass C-c to apps)
-  (exwm-input-set-simulation-keys
-   '(([?\C-c] . ?\C-c)
-     ([?\C-v] . ?\C-v)))
-
-  ;; Optional: Improve EXWM startup logging
-  (setq exwm-debug-on t)              ; Enable debug to troubleshoot issues
-  (message "EXWM loaded successfully in Xorg session"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (provide 'init)
 ;;; init.el ends here
