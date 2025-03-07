@@ -2239,6 +2239,10 @@ nerd-icons-ibuffer-formats
   :ensure t
   :config
   (setq auto-virtualenv-verbose t)
+  (setq auto-virtualenv-global-dirs
+      '("~/.virtualenvs/" "~/.pyenv/versions/" "~/.envs/" "~/.conda/" "~/.conda/envs/"))
+(setq auto-virtualenv-python-project-files
+      '("requirements.txt" "Pipfile" "pyproject.toml" "setup.py" "manage.py" "tox.ini" ".flake8"))
   (auto-virtualenv-setup))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
