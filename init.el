@@ -55,7 +55,7 @@
  ;;   :config
  ;;   (load-theme 'dracula t))
 
-(load-theme 'modus-vivendi)
+(load-theme 'modus-vivendi-tritanopia)
 
  (set-face-attribute 'default nil :height 120)
  (set-face-attribute 'variable-pitch nil :height 130)
