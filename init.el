@@ -546,6 +546,12 @@
     :config
     (setq vundo-glyph-alist vundo-unicode-symbols))
 
+;; deadgrep/ ripgrep
+(use-package deadgrep
+  :ensure t
+  :init
+  (global-set-key (kbd "C-c e") #'deadgrep))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Visual Enhancements                        ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
