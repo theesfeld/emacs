@@ -605,21 +605,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Corfu: in-buffer completion
-;; (use-package corfu
-;;   :straight (:host github :repo "minad/corfu")
-;;   :custom
-;;   (corfu-auto t)
-;;   (corfu-cycle t)
-;;   (corfu-auto-prefix 2)
-;;   (corfu-auto-delay 1.2)
-;;   :init
-;;   (global-corfu-mode)
-;;   :config
-;;   (defun my-disable-corfu-in-erc ()
-;;     "Disable Corfu in erc-mode derived buffers."
-;;     (corfu-mode -1))
+(use-package corfu
+  :enable t
+  :custom
+  (corfu-auto t)
+  (corfu-cycle t)
+  (corfu-auto-prefix 2)
+  (corfu-auto-delay 1.2)
+  :init
+  (global-corfu-mode)
+  :config
+  (defun my-disable-corfu-in-erc ()
+    "Disable Corfu in erc-mode derived buffers."
+    (corfu-mode -1))
 
-;;   (add-hook 'erc-mode-hook #'my-disable-corfu-in-erc))
+  (add-hook 'erc-mode-hook #'my-disable-corfu-in-erc))
 
 ;; built-in completion-preview
 ;; Enable Completion Preview mode in code buffers
