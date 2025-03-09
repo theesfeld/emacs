@@ -47,11 +47,15 @@
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 
+;; THEME
+
 ;; Dracula theme
- (use-package dracula-theme
-   :ensure t
-   :config
-   (load-theme 'dracula t))
+ ;; (use-package dracula-theme
+ ;;   :ensure t
+ ;;   :config
+ ;;   (load-theme 'dracula t))
+
+(load-theme 'modus-vivendi)
 
  (set-face-attribute 'default nil :height 120)
  (set-face-attribute 'variable-pitch nil :height 130)
