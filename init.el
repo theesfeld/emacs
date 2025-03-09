@@ -606,7 +606,7 @@
 
 ;; Corfu: in-buffer completion
 (use-package corfu
-  :enable t
+  :ensure t
   :custom
   (corfu-auto t)
   (corfu-cycle t)
