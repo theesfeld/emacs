@@ -479,11 +479,6 @@
 (setq tab-width 2)
 (setq standard-indent 2)
 
-(use-package whitespace-cleanup-mode
-  :ensure t
-  :config
-  (global-whitespace-cleanup-mode 1))
-
 ;; Tidy up whitespace on save
 (add-hook 'before-save-hook #'whitespace-cleanup)
 
