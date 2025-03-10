@@ -83,12 +83,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     EXWM                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(use-package counsel
+  :ensure t)
+
 (when (eq window-system 'x)
   ;; Load required EXWM modules
   (require 'exwm)
   (require 'exwm-randr)
   (require 'exwm-systemtray)
-  (require 'counsel)  ;; Ensure counsel is loaded
+  (require 'counsel)
 
   ;; Basic EXWM settings
   (setq exwm-workspace-number 4
@@ -106,7 +109,7 @@
   (setq exwm-input-prefix-keys
         '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
 
-  ;; Global keybindings including media keys and counsel-linux-app
+  ;; Global keybindings including new s-RETURN for eshell
   (setq exwm-input-global-keys
         `(([?\s-r] . exwm-reset)
           ([?\s-w] . exwm-workspace-switch)
@@ -120,8 +123,27 @@
                        (start-process-shell-command "yazi" nil "footclient -e yazi")))
           ([?\s-\r] . (lambda ()
                         (interactive)
-                        (start-process-shell-command "footclient" nil "footclient")))
-          ([?\s-\ ] . my-exwm-app-launcher)  ;; counsel-linux-app with popup frame
+                        (let ((new-window (split-window-below)))
+                          (select-window new-window)
+                          (eshell)
+                          ;; Add hook to kill window when eshell exits
+                          (add-hook 'eshell-exit-hook
+                                    (lambda ()
+                                      (when (one-window-p)
+                                        (delete-window)))
+                                    nil t))))
+          ([?\s-\ ] . (lambda ()
+                        (interactive)
+                        (with-selected-frame (make-frame '((name . "app-launcher")
+                                                          (width . 75)
+                                                          (height . 11)
+                                                          (minibuffer . only)))
+                          (unwind-protect
+                              (progn
+                                (ivy-mode 1)  ;; Enable Ivy for this session
+                                (counsel-linux-app))
+                            (ivy-mode -1)  ;; Disable Ivy afterward
+                            (delete-frame)))))
           ;; Media keys
           ([XF86AudioRaiseVolume] . (lambda ()
                                       (interactive)
@@ -170,18 +192,6 @@
           ([?\C-v] . [next])
           ([?\C-d] . [delete])
           ([?\C-k] . [S-end delete])))
-
-  ;; Custom app launcher function with popup frame
-  (defun my-exwm-app-launcher ()
-    "Launch counsel-linux-app in a dedicated frame."
-    (interactive)
-    (with-selected-frame (make-frame '((name . "app-launcher")
-                                      (width . 75)
-                                      (height . 11)
-                                      (minibuffer . only)))
-      (unwind-protect
-          (counsel-linux-app)
-        (delete-frame))))
 
   ;; RandR/Multi-monitor setup with explicit positioning
   (defun my-exwm-update-displays ()
