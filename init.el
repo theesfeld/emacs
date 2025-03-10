@@ -106,7 +106,7 @@
                           (name (car words))
                           (primary (string-match "primary" line))
                           (res-pos (string-match "\\([0-9]+x[0-9]+\\)\\(\\+[0-9]+\\+[0-9]+\\)" line)))
-                     (list name 
+                     (list name
                            (when res-pos
                              (match-string 1 line))
                            primary
@@ -181,19 +181,19 @@
   (setq exwm-debug-on t)
   (when (getenv "WAYLAND_DISPLAY")
     (message "EXWM requires X11, not Wayland. Aborting EXWM setup."))
-  
+
   ;; Load required EXWM modules
   (require 'exwm-randr)
   (require 'exwm-systemtray)
-  
+
   ;; Basic EXWM settings
   (setq exwm-workspace-show-all-buffers t
         exwm-layout-show-all-buffers t
         exwm-manage-force-tiling t)
-  
+
   ;; Set initial workspace number (will be updated dynamically)
   (setq exwm-workspace-number 1)
-  
+
   ;; Configure RandR
   (setq exwm-randr-workspace-monitor-plist nil)
   :config
@@ -237,12 +237,12 @@
             (lambda ()
               ;; First ensure basic setup with xrandr
               (start-process-shell-command "xrandr" nil "xrandr --auto")
-              
+
               ;; Get monitor info and configure each monitor
               (let* ((monitor-info (my-exwm-get-monitor-info))
                      (primary-monitor (or (car (seq-find (lambda (m) (nth 2 m)) monitor-info))
                                         "eDP-1")))
-                
+
                 ;; Configure each monitor with xrandr
                 (dolist (monitor monitor-info)
                   (let* ((name (car monitor))
@@ -255,7 +255,7 @@
                                     (if resolution (concat "--mode " resolution) "--auto")
                                     (if position position ""))))
                     (start-process-shell-command "xrandr" nil cmd)))
-                
+
                 ;; Update EXWM workspaces and frames
                 (my-exwm-update-workspaces-and-frames))))
 
@@ -344,7 +344,6 @@
   (exwm-randr-mode 1)
   (exwm-systemtray-mode 1)  ;; Still needed to initialize tray management
   (exwm-enable))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
