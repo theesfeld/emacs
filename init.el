@@ -50,9 +50,9 @@
  (set-face-attribute 'default nil :height 120)
  (set-face-attribute 'variable-pitch nil :height 130)
 
-(load-theme 'modus-vivendi-tritanopia)
+(load-theme 'modus-vivendi)
 
- (set-face-attribute 'font-lock-comment-face nil
+(set-face-attribute 'font-lock-comment-face nil
                      :slant 'italic
                      :weight 'light
                      ;; :distant-foreground "#5c6370"
