@@ -1363,7 +1363,10 @@ nerd-icons-ibuffer-formats
   (global-set-key (kbd "C-c A") 'aidermacs-transient-menu)
   ; See the Configuration section below
   (setq aidermacs-auto-commits t)
-  (setq aidermacs-use-architect-mode t))
+
+  (setq aidermacs-use-architect-mode t)
+  (setq aidermacs-architect-model "o1-mini")
+  (setq aidermacs-editor-model "deepseek/deepseek-chat"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                Misc Packages                              ;;
