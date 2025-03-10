@@ -1508,7 +1508,7 @@ nerd-icons-ibuffer-formats
         erc-auto-query 'bury
         erc-prompt (lambda () (concat (propertize "ERC> " 'face '(:foreground "cyan" :weight bold))
                                      (buffer-name)))
-        erc-timestamp-format "[%H:%M] "
+        erc-timestamp-format "[%Y-%m-%d %H:%M] "
         erc-insert-timestamp-function 'erc-insert-timestamp-left
         erc-track-position-in-mode-line t
         erc-track-exclude-types '("JOIN" "PART" "QUIT" "NICK" "MODE")
