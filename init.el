@@ -818,7 +818,7 @@ nerd-icons-ibuffer-formats
   (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
 
 ;; slack
-(use-package emacs-slack
+(use-package slack
   :ensure t
   :defer t
   :bind (("C-c S K" . slack-stop)
@@ -864,14 +864,6 @@ nerd-icons-ibuffer-formats
   :commands (alert)
   :init
   (setq alert-default-style 'notifier))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                   Markdown                                ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package markdown
-  :ensure t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Editing Helpers                              ;;
