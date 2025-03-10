@@ -83,175 +83,192 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     EXWM                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(when (eq window-system 'x)
+  ;; Load required EXWM modules
+  (require 'exwm)
+  (require 'exwm-randr)
+  (require 'exwm-systemtray)
 
-;; Ensure EXWM and RandR modules are loaded
-(require 'exwm)
-(require 'exwm-randr)
-(require 'exwm-systemtray)
+  ;; Basic EXWM settings
+  (setq exwm-workspace-number 4
+        exwm-workspace-show-all-buffers t
+        exwm-layout-show-all-buffers t
+        exwm-manage-force-tiling t
+        mouse-autoselect-window t
+        focus-follows-mouse t)
 
-;; Initialize EXWM RandR
-(exwm-randr-mode 1)
+  ;; Keybinding setup
+  (setq exwm-input-prefix-keys
+        '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
 
-;; Initialize workspace-to-monitor mapping
-(setq exwm-randr-workspace-output-plist nil)
+  ;; Global keybindings including media keys
+  (setq exwm-input-global-keys
+        `(([?\s-r] . exwm-reset)
+          ([?\s-w] . exwm-workspace-switch)
+          ([?\s-&] . (lambda (cmd)
+                       (interactive (list (read-shell-command "$ ")))
+                       (start-process-shell-command cmd nil cmd)))
+          ([?\s-x] . exwm-exit)
+          ([?\s-q] . exwm-window-kill)
+          ([?\s-e] . (lambda ()
+                       (interactive)
+                       (start-process-shell-command "yazi" nil "footclient -e yazi")))
+          ([?\s-\r] . (lambda ()
+                        (interactive)
+                        (start-process-shell-command "footclient" nil "footclient")))
+          ([?\s-\ ] . (lambda ()
+                        (interactive)
+                        (start-process-shell-command "rofi" nil "rofi -show drun")))
+          ;; Media keys
+          ([XF86AudioRaiseVolume] . (lambda ()
+                                      (interactive)
+                                      (start-process-shell-command "pactl-up" nil "pactl set-sink-volume @DEFAULT_SINK@ +5%")))
+          ([XF86AudioLowerVolume] . (lambda ()
+                                      (interactive)
+                                      (start-process-shell-command "pactl-down" nil "pactl set-sink-volume @DEFAULT_SINK@ -5%")))
+          ([XF86AudioMute] . (lambda ()
+                               (interactive)
+                               (start-process-shell-command "pactl-mute" nil "pactl set-sink-mute @DEFAULT_SINK@ toggle")))
+          ([XF86AudioMicMute] . (lambda ()
+                                  (interactive)
+                                  (start-process-shell-command "pactl-mic-mute" nil "pactl set-source-mute @DEFAULT_SOURCE@ toggle")))
+          ([XF86MonBrightnessUp] . (lambda ()
+                                     (interactive)
+                                     (start-process-shell-command "brightnessctl-up" nil "brightnessctl set +10%")))
+          ([XF86MonBrightnessDown] . (lambda ()
+                                       (interactive)
+                                       (start-process-shell-command "brightnessctl-down" nil "brightnessctl set 10%-")))
+          ([XF86AudioPlay] . (lambda ()
+                               (interactive)
+                               (start-process-shell-command "playerctl-play" nil "playerctl play-pause")))
+          ([XF86AudioPause] . (lambda ()
+                                (interactive)
+                                (start-process-shell-command "playerctl-pause" nil "playerctl play-pause")))
+          ([XF86AudioNext] . (lambda ()
+                               (interactive)
+                               (start-process-shell-command "playerctl-next" nil "playerctl next")))
+          ([XF86AudioPrev] . (lambda ()
+                               (interactive)
+                               (start-process-shell-command "playerctl-prev" nil "playerctl previous")))
+          ,@(mapcar (lambda (i)
+                      (cons (vector (intern (format "s-%d" i)))
+                            (lambda () (interactive) (exwm-workspace-switch-create i))))
+                    (number-sequence 0 9))))
 
-;; Basic EXWM settings
-(setq exwm-workspace-show-all-buffers t
-      exwm-layout-show-all-buffers t
-      exwm-manage-force-tiling t
-      mouse-autoselect-window t
-      focus-follows-mouse t)
+  ;; Simulation keys for passing common Emacs bindings to applications
+  (setq exwm-input-simulation-keys
+        '(([?\C-b] . [left])
+          ([?\C-f] . [right])
+          ([?\C-p] . [up])
+          ([?\C-n] . [down])
+          ([?\C-a] . [home])
+          ([?\C-e] . [end])
+          ([?\M-v] . [prior])
+          ([?\C-v] . [next])
+          ([?\C-d] . [delete])
+          ([?\C-k] . [S-end delete])))
 
-;; Set initial workspace number (will be updated dynamically)
-(setq exwm-workspace-number 1)
+  ;; RandR/Multi-monitor setup with explicit positioning
+  (defun my-exwm-update-displays ()
+    "Update EXWM workspaces and frames for all connected displays with eDP-1 on far right."
+    (interactive)
+    (let* ((xrandr-output (shell-command-to-string "xrandr --current"))
+           (monitors (cl-loop for line in (split-string xrandr-output "\n")
+                            when (string-match "\\(.*\\) connected.*\\([0-9]+x[0-9]+\\+[-0-9]+\\+[-0-9]+\\)" line)
+                            collect (list (match-string 1 line)
+                                        (match-string 2 line))))
+           (monitor-count (length monitors))
+           (workspace-map '())
+           (x-position 0))
 
-;; Define a function to render system tray in mode-line
-(defun my-exwm-systemtray-mode-line ()
-  "Return a string representation of the system tray for mode-line."
-  (when (and (boundp 'exwm-systemtray--list) exwm-systemtray--list)
-    (let ((tray-icons ""))
-      (dolist (entry exwm-systemtray--list)
-        (when (and entry (window-live-p (car entry)))
-          (setq tray-icons (concat tray-icons " [■] "))))
-      tray-icons)))
+      ;; Sort monitors with eDP-1 last (far right)
+      (setq monitors (sort monitors
+                          (lambda (a b)
+                            (if (string= (car a) "eDP-1")
+                                nil
+                              (if (string= (car b) "eDP-1")
+                                  t
+                                (string< (car a) (car b)))))))
 
-;; Set standard GNU Emacs mode-line with system tray
-(setq-default mode-line-format
-              '("%e" mode-line-front-space
-                mode-line-mule-info mode-line-client mode-line-modified
-                mode-line-remote mode-line-frame-identification
-                mode-line-buffer-identification "   "
-                mode-line-position
-                (vc-mode vc-mode) "  "
-                mode-line-modes
-                (:eval (my-exwm-systemtray-mode-line))  ;; System tray in mode-line
-                mode-line-misc-info mode-line-end-spaces))
+      ;; Configure each monitor with explicit positioning
+      (dolist (monitor monitors)
+        (let* ((name (car monitor))
+               (geometry (cadr monitor))
+               (width (string-to-number (car (split-string geometry "x"))))
+               (ws-index (length workspace-map)))
+          (push ws-index workspace-map)
+          (push name workspace-map)
+          (start-process-shell-command "xrandr" nil
+                                     (format "xrandr --output %s --mode %s --pos %dx0 --auto"
+                                            name
+                                            (car (split-string geometry "+"))
+                                            x-position))
+          (setq x-position (+ x-position width))))
 
-;; Function to get monitor info
-(defun my-exwm-get-monitor-info ()
-  "Get a list of connected monitors with their names, resolutions, and positions."
-  (let ((xrandr-output (shell-command-to-string "xrandr --current")))
-    (cl-loop for line in (split-string xrandr-output "\n" t)
-             when (string-match " connected" line)
-             collect (let* ((words (split-string line " "))
-                          (name (car words))
-                          (primary (string-match "primary" line))
-                          (res-pos (string-match "\\([0-9]+x[0-9]+\\)\\(\\+[0-9]+\\+[0-9]+\\)" line)))
-                     (list name
-                           (when res-pos
-                             (match-string 1 line))
-                           primary
-                           (when res-pos
-                             (match-string 2 line)))))))
+      ;; Apply workspace mapping
+      (setq exwm-randr-workspace-output-plist (nreverse workspace-map))
+      (setq exwm-workspace-number (max 1 monitor-count))
 
-;; Function to update workspaces and frames based on connected monitors
-(defun my-exwm-update-workspaces-and-frames ()
-  "Dynamically update workspaces and frames based on connected monitors."
-  (interactive)
-  (let* ((monitor-info (my-exwm-get-monitor-info))  ;; List of (name resolution) pairs
-         (monitor-names (mapcar #'car monitor-info))  ;; Just the monitor names
-         (prev-workspace-output-plist exwm-randr-workspace-output-plist)
-         (new-workspace-output-plist '())
-         (workspace-index 0)
-         (primary-monitor "eDP-1"))  ;; Laptop monitor as fallback
-    ;; Update workspace-to-monitor mapping
-    (dolist (monitor monitor-names)
-      (setq new-workspace-output-plist
-            (append new-workspace-output-plist (list workspace-index monitor)))
-      (setq workspace-index (1+ workspace-index)))
-    (setq exwm-randr-workspace-output-plist new-workspace-output-plist)
-    (setq exwm-workspace-number (length monitor-names))  ;; Adjust total workspaces
+      ;; Create/update frames for each workspace
+      (dotimes (i exwm-workspace-number)
+        (let* ((monitor-name (plist-get exwm-randr-workspace-output-plist (* 2 i)))
+               (frame (or (seq-find (lambda (f)
+                                     (equal (frame-parameter f 'exwm-workspace) i))
+                                   (frame-list))
+                         (make-frame `((exwm-workspace . ,i)
+                                      (exwm-randr-monitor . ,monitor-name))))))
+          (select-frame frame)
+          (exwm-workspace-switch i)
+          (set-frame-parameter frame 'fullscreen 'fullboth)))))
 
-    ;; Spawn frames on each monitor
-    (dolist (monitor-info monitor-info)
-      (let* ((monitor (car monitor-info))
-             (resolution (cadr monitor-info))
-             (ws-index (cl-position monitor monitor-names :test #'equal))
-             (existing-frame (seq-find (lambda (frame)
-                                         (equal (frame-parameter frame 'exwm-workspace)
-                                                (exwm-workspace--get ws-index)))
-                                       (frame-list))))
-        (unless existing-frame
-          (exwm-workspace-switch ws-index)
-          (let ((frame (make-frame `((exwm-workspace . ,ws-index)))))
-            (select-frame-set-input-focus frame)
-            (set-frame-parameter frame 'fullscreen 'fullboth)
-            (message "Created frame on %s (workspace %d)" monitor ws-index)))))
+  ;; Autostart applications
+  (defun my-exwm-autostart ()
+    "Start applications on EXWM initialization."
+    (interactive)
+    (start-process "foot-server" nil "foot" "--server")
+    (run-at-time 5 nil (lambda ()
+                         (start-process "udiskie" nil "udiskie" "-as" "2>/tmp/udiskie.log")))
+    (run-at-time 5 nil (lambda ()
+                         (start-process "blueman-applet" nil "blueman-applet")))
+    (run-at-time 5 nil (lambda ()
+                         (start-process "nm-applet" nil "nm-applet")))
+    (run-at-time 5 nil (lambda ()
+                         (start-process "mullvad-vpn" nil "mullvad-vpn"))))
 
-    ;; Clean up frames for disconnected monitors
-    (dolist (frame (frame-list))
-      (let ((ws (frame-parameter frame 'exwm-workspace)))
-        (when (and ws (not (member (plist-get exwm-randr-workspace-output-plist
-                                              (* 2 (exwm-workspace--position ws)))
-                                   monitor-names)))
-          (unless (equal (plist-get exwm-randr-workspace-output-plist (* 2 (exwm-workspace--position ws)))
-                         primary-monitor)
-            (message "Deleting frame on disconnected monitor (workspace %d)" (exwm-workspace--position ws))
-            (delete-frame frame)))))
+  ;; System tray setup with improved visibility
+  (setq exwm-systemtray-height 16)  ;; Set explicit height
+  (defun my-exwm-systemtray-mode-line ()
+    "Return system tray representation for mode-line."
+    (when (and (boundp 'exwm-systemtray--list) exwm-systemtray--list)
+      (string-join (mapcar (lambda (_) " [■] ") exwm-systemtray--list))))
 
-    ;; Ensure at least one frame on eDP-1 if it’s connected
-    (when (member primary-monitor monitor-names)
-      (let ((primary-ws (cl-position primary-monitor monitor-names :test #'equal)))
-        (unless (seq-find (lambda (frame)
-                            (equal (frame-parameter frame 'exwm-workspace)
-                                   (exwm-workspace--get primary-ws)))
-                          (frame-list))
-          (exwm-workspace-switch primary-ws)
-          (let ((frame (make-frame `((exwm-workspace . ,primary-ws)))))
-            (select-frame-set-input-focus frame)
-            (set-frame-parameter frame 'fullscreen 'fullboth)
-            (message "Ensured frame on %s (workspace %d)" primary-monitor primary-ws)))))))
+  (setq-default mode-line-format
+                '("%e" mode-line-front-space
+                  mode-line-mule-info mode-line-client mode-line-modified
+                  mode-line-remote mode-line-frame-identification
+                  mode-line-buffer-identification "   "
+                  mode-line-position
+                  (vc-mode vc-mode) "  "
+                  mode-line-modes
+                  (:eval (my-exwm-systemtray-mode-line))
+                  mode-line-end-spaces))
 
-;; Screen change hook for dynamic monitor updates
-(add-hook 'exwm-randr-screen-change-hook
-          (lambda ()
-            ;; First ensure basic setup with xrandr
-            (start-process-shell-command "xrandr" nil "xrandr --auto")
+  ;; Hooks
+  (add-hook 'exwm-randr-screen-change-hook
+            (lambda ()
+              (start-process-shell-command "xrandr" nil "xrandr --auto")
+              (my-exwm-update-displays)))
 
-            ;; Get monitor info and configure each monitor
-            (let* ((monitor-info (my-exwm-get-monitor-info))
-                   (primary-monitor (or (car (seq-find (lambda (m) (nth 2 m)) monitor-info))
-                                      "eDP-1")))
+  (add-hook 'exwm-init-hook
+            (lambda ()
+              (my-exwm-autostart)
+              (my-exwm-update-displays)
+              (set-frame-parameter nil 'fullscreen 'fullboth)))
 
-              ;; Configure each monitor with xrandr
-              (dolist (monitor monitor-info)
-                (let* ((name (car monitor))
-                       (resolution (nth 1 monitor))
-                       (is-primary (nth 2 monitor))
-                       (position (nth 3 monitor))
-                       (cmd (format "xrandr --output %s %s %s %s"
-                                  name
-                                  (if is-primary "--primary" "")
-                                  (if resolution (concat "--mode " resolution) "--auto")
-                                  (if position position ""))))
-                  (start-process-shell-command "xrandr" nil cmd)))
-
-              ;; Update EXWM workspaces and frames
-              (my-exwm-update-workspaces-and-frames))))
-
-;; Initial setup hook
-(add-hook 'exwm-init-hook
-          (lambda ()
-            (set-frame-parameter nil 'fullscreen 'fullboth)
-            (my-exwm-autostart)
-            (my-exwm-update-workspaces-and-frames)
-            ;; Ensure mode-line on initial frames
-            (dolist (frame (frame-list))
-              (set-frame-parameter frame 'mode-line-format mode-line-format))))
-
-;; Ensure mode-line on new frames
-(add-hook 'after-make-frame-functions
-          (lambda (frame)
-            (with-selected-frame frame
-              (unless (frame-parameter frame 'mode-line-format)
-                (set-frame-parameter frame 'mode-line-format mode-line-format)))))
-
-;; Enable EXWM components
-(exwm-randr-mode 1)
-(exwm-systemtray-mode 1)  ;; Still needed to initialize tray management
-
-;; Enable EXWM
-(exwm-enable)
+  ;; Enable EXWM components with proper ordering
+  (exwm-systemtray-mode 1)
+  (exwm-randr-mode 1)
+  (exwm-enable))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
