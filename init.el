@@ -88,6 +88,7 @@
   (require 'exwm)
   (require 'exwm-randr)
   (require 'exwm-systemtray)
+  (require 'counsel)  ;; Ensure counsel is loaded
 
   ;; Basic EXWM settings
   (setq exwm-workspace-number 4
@@ -97,11 +98,15 @@
         mouse-autoselect-window t
         focus-follows-mouse t)
 
+  ;; Reverse scroll wheel for mouse and trackpad
+  (setq mouse-wheel-scroll-amount '(-5))  ;; Negative value reverses direction
+  (setq mouse-wheel-progressive-speed nil)  ;; Consistent scroll speed
+
   ;; Keybinding setup
   (setq exwm-input-prefix-keys
         '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
 
-  ;; Global keybindings including media keys
+  ;; Global keybindings including media keys and counsel-linux-app
   (setq exwm-input-global-keys
         `(([?\s-r] . exwm-reset)
           ([?\s-w] . exwm-workspace-switch)
@@ -116,9 +121,7 @@
           ([?\s-\r] . (lambda ()
                         (interactive)
                         (start-process-shell-command "footclient" nil "footclient")))
-          ([?\s-\ ] . (lambda ()
-                        (interactive)
-                        (start-process-shell-command "rofi" nil "rofi -show drun")))
+          ([?\s-\ ] . my-exwm-app-launcher)  ;; counsel-linux-app with popup frame
           ;; Media keys
           ([XF86AudioRaiseVolume] . (lambda ()
                                       (interactive)
@@ -167,6 +170,18 @@
           ([?\C-v] . [next])
           ([?\C-d] . [delete])
           ([?\C-k] . [S-end delete])))
+
+  ;; Custom app launcher function with popup frame
+  (defun my-exwm-app-launcher ()
+    "Launch counsel-linux-app in a dedicated frame."
+    (interactive)
+    (with-selected-frame (make-frame '((name . "app-launcher")
+                                      (width . 75)
+                                      (height . 11)
+                                      (minibuffer . only)))
+      (unwind-protect
+          (counsel-linux-app)
+        (delete-frame))))
 
   ;; RandR/Multi-monitor setup with explicit positioning
   (defun my-exwm-update-displays ()
@@ -221,7 +236,7 @@
           (exwm-workspace-switch i)
           (set-frame-parameter frame 'fullscreen 'fullboth)))))
 
-  ;; Autostart applications
+  ;; Autostart applications with 5-second delay
   (defun my-exwm-autostart ()
     "Start applications on EXWM initialization."
     (interactive)
