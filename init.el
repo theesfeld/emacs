@@ -1352,7 +1352,7 @@ nerd-icons-ibuffer-formats
 (use-package aidermacs
   :vc (:url "https://github.com/MatthewZMD/aidermacs")
   :config
-  ; (setq aidermacs-default-model "anthropic/claude-3-7-sonnet-20250219")
+  (setq aidermacs-default-model "anthropic/claude-3-7-sonnet-20250219")
   (global-set-key (kbd "C-c A") 'aidermacs-transient-menu)
   ; See the Configuration section below
   (setq aidermacs-auto-commits t)
