@@ -47,25 +47,18 @@
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 
-;; THEME
-
-;; Dracula theme
- ;; (use-package dracula-theme
- ;;   :ensure t
- ;;   :config
- ;;   (load-theme 'dracula t))
-
-(load-theme 'modus-vivendi-tritanopia)
-
  (set-face-attribute 'default nil :height 120)
  (set-face-attribute 'variable-pitch nil :height 130)
+
+(load-theme 'modus-vivendi-tritanopia)
 
  (set-face-attribute 'font-lock-comment-face nil
                      :slant 'italic
                      :weight 'light
-                     :distant-foreground "#5c6370"
-                     :foreground "#5c6370"
-                     :background "#282c34")
+                     ;; :distant-foreground "#5c6370"
+                     ;; :foreground "#5c6370"
+                     ;; :background "#282c34"
+                     )
 
  (set-face-attribute 'font-lock-keyword-face nil
                      :weight 'black)
@@ -1353,13 +1346,13 @@ nerd-icons-ibuffer-formats
   (add-hook 'prog-mode-hook 'copilot-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                           AIdermacs (Anthropic)                           ;;
+;;                           AEmacs (Anthropic)                           ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package aidermacs
   :vc (:url "https://github.com/MatthewZMD/aidermacs")
   :config
-  ;;(setq aidermacs-default-model "anthropic/claude-3-7-sonnet-20250219")
+  ; (setq aidermacs-default-model "anthropic/claude-3-7-sonnet-20250219")
   (global-set-key (kbd "C-c A") 'aidermacs-transient-menu)
   ; See the Configuration section below
   (setq aidermacs-auto-commits t)
