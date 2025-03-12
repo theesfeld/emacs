@@ -18,7 +18,6 @@
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(package-initialize)
 ;; Force a refresh and install missing packages
 (when (not package-archive-contents)
   (package-refresh-contents))
@@ -46,6 +45,114 @@
           (switch-to-buffer buffer)
         (call-interactively command)))))
 
+(defun my-elfeed-start-auto-update ()
+  "Start auto-updating Elfeed every 30 minutes if search buffer is visible."
+  (interactive)
+  (unless (bound-and-true-p my-elfeed-update-timer)
+    (setq my-elfeed-update-timer
+          (run-at-time t 1800
+                       (lambda ()
+                         (when (get-buffer-window "*elfeed-search*" t)
+                           (elfeed-update)
+                           (my-elfeed-update-title)))))))
+
+(defun my-elfeed-stop-auto-update ()
+  "Stop Elfeed auto-update timer."
+  (interactive)
+  (when (bound-and-true-p my-elfeed-update-timer)
+    (cancel-timer my-elfeed-update-timer)
+    (setq my-elfeed-update-timer nil)))
+
+(defun my-elfeed-update-title ()
+  "Update Elfeed search buffer title with new article count."
+  (interactive)
+  (with-current-buffer "*elfeed-search*"
+    (let ((new-count (length (elfeed-search-filter "unread"))))
+      (rename-buffer (format "*elfeed-search* (%d new)" new-count)))))
+
+(defun my-elfeed-quit-and-stop-timer ()
+  "Quit Elfeed and stop the auto-update timer."
+  (interactive)
+  (elfeed-search-quit-window)
+  (my-elfeed-stop-auto-update))
+
+(defun my-erc-update-notifications-keywords (&rest _)
+  "Update notification keywords with current nick."
+  (when erc-session-user
+    (setq erc-notifications-keywords (list erc-session-user))))
+
+(defun my-erc-set-fill-column ()
+  "Set ERC fill column based on display type."
+  (setq-local erc-fill-column
+              (if (display-graphic-p)
+                  (window-width)
+                (min 80 (window-width)))))
+
+(defun grim/emacs-everywhere-wayland-app-info ()
+  "Return a dummy app info struct for Wayland."
+  (make-emacs-everywhere-app
+   :id "wayland"
+   :class "wayland-app"
+   :title "Unknown"
+   :geometry '(0 0 800 600)))
+
+;; Basic screenshot function (Wayland example) - Untouched core with enhancements
+(defun grim/screenshot (&optional type)
+  "Export current frame as screenshot to clipboard using TYPE format (png/svg/pdf/postscript)."
+  (interactive (list
+                (intern (completing-read
+                         "Screenshot type: "
+                         '(png svg pdf postscript)))))
+  (let* ((extension (pcase type
+                      ('png        ".png")
+                      ('svg        ".svg")
+                      ('pdf        ".pdf")
+                      ('postscript ".ps")
+                      (_ (error "Unsupported screenshot type: %s" type))))
+         (filename (make-temp-file "Emacs-" nil extension))
+         (data     (x-export-frames nil type)))
+    (with-temp-file filename
+      (insert data))
+    (cond
+     ((executable-find "wl-copy")  ; Wayland
+      (with-temp-buffer
+        (insert-file-contents filename)
+        (call-process-region (point-min) (point-max)
+                             "wl-copy" nil nil nil "-t"
+                             (format "image/%s" (substring extension 1)))))
+     ((executable-find "xclip")  ; X11 fallback
+      (with-temp-buffer
+        (insert-file-contents filename)
+        (call-process-region (point-min) (point-max)
+                             "xclip" nil nil nil "-selection" "clipboard" "-t"
+                             (format "image/%s" (substring extension 1)))))
+     (t (message "No clipboard tool found (wl-copy/xclip)")))
+    (set-register ?s filename)
+    (when (or (executable-find "wl-copy") (executable-find "xclip"))
+      (alert (format "Screenshot (%s) copied to clipboard and saved to %s" type filename)
+             :title "Screenshot Taken"
+             :severity 'normal))))
+
+(defun my-org-capture-delete-file-after-kill (&rest _)
+  "Delete file if capture is aborted."
+  (when (and (buffer-file-name) (file-exists-p (buffer-file-name)))
+    (delete-file (buffer-file-name))
+    (message "Deleted aborted capture file: %s" (buffer-file-name))))
+
+(defun my-project-find-root (dir)
+  "Identify project roots in ~/Code and ~/.config/."
+  (let ((roots '("~/Code" "~/.config")))
+    (when (member (file-truename (expand-file-name dir))
+                  (mapcar #'file-truename (mapcar #'expand-file-name roots)))
+      (cons 'transient dir))))
+
+(declare-function pcomplete-erc-setup "erc-pcomplete")
+(declare-function completion-preview-insert "completion-preview")
+(declare-function completion-preview-next-candidate "completion-preview")
+(declare-function completion-preview-prev-candidate "completion-preview")
+(declare-function completion-preview--hide "completion-preview")
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  Counsel Setup                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -65,272 +172,272 @@
   ;;     (kill-new (shell-command-to-string "xclip -o -selection clipboard"))))
   ;; (run-at-time t 2 'my-clipboard-to-kill-ring))  ;; 2s interval
 )
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                     EXWM                                  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(when (eq window-system 'x)
-  ;; Load required EXWM modules first to ensure symbols are defined
-  (require 'exwm)
-  (require 'exwm-randr)
-  (require 'exwm-systemtray)
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;;                                     EXWM                                  ;;
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; (when (eq window-system 'x)
+;;   ;; Load required EXWM modules first to ensure symbols are defined
+;;   (require 'exwm)
+;;   (require 'exwm-randr)
+;;   (require 'exwm-systemtray)
 
-  ;; Basic EXWM settings
-  (setq exwm-workspace-show-all-buffers t
-        exwm-layout-show-all-buffers t
-        exwm-manage-force-tiling t
-        mouse-autoselect-window t
-        focus-follows-mouse t)
+;;   ;; Basic EXWM settings
+;;   (setq exwm-workspace-show-all-buffers t
+;;         exwm-layout-show-all-buffers t
+;;         exwm-manage-force-tiling t
+;;         mouse-autoselect-window t
+;;         focus-follows-mouse t)
 
-  ;; Natural scrolling attempt
-  (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))  ;; Positive for natural scroll
-  (setq mouse-wheel-progressive-speed t)               ;; Progressive speed enabled
+;;   ;; Natural scrolling attempt
+;;   (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))  ;; Positive for natural scroll
+;;   (setq mouse-wheel-progressive-speed t)               ;; Progressive speed enabled
 
-  ;; Clipboard integration with X11
-  (setq x-select-enable-clipboard t)
-  (setq x-select-enable-primary t)
-  (setq select-enable-clipboard t)
-  (global-set-key (kbd "M-w") 'kill-ring-save)  ;; M-w copies globally
-  (global-set-key (kbd "C-y") 'yank)            ;; C-y pastes globally
+;;   ;; Clipboard integration with X11
+;;   (setq x-select-enable-clipboard t)
+;;   (setq x-select-enable-primary t)
+;;   (setq select-enable-clipboard t)
+;;   (global-set-key (kbd "M-w") 'kill-ring-save)  ;; M-w copies globally
+;;   (global-set-key (kbd "C-y") 'yank)            ;; C-y pastes globally
 
-  ;; Mouse cursor size fix
-  (setq xterm-set-cursor-size nil)  ;; Prevent EXWM from overriding cursor size
-  (start-process-shell-command "xsetroot" nil "xsetroot -cursor_name left_ptr")  ;; Set standard cursor
+;;   ;; Mouse cursor size fix
+;;   (setq xterm-set-cursor-size nil)  ;; Prevent EXWM from overriding cursor size
+;;   (start-process-shell-command "xsetroot" nil "xsetroot -cursor_name left_ptr")  ;; Set standard cursor
 
-  ;; Keybinding setup
-  (setq exwm-input-prefix-keys
-        '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
+;;   ;; Keybinding setup
+;;   (setq exwm-input-prefix-keys
+;;         '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
 
-  ;; Global keybindings
-  (setq exwm-input-global-keys
-        `(([?\s-r] . exwm-reset)
-          ([?\s-w] . exwm-workspace-switch)
-          ([?\s-&] . (lambda (cmd)
-                       (interactive (list (read-shell-command "$ ")))
-                       (start-process-shell-command cmd nil cmd)))
-          ([?\s-x] . (lambda () (interactive) (save-buffers-kill-emacs)))  ;; Improved exit
-          ([?\s-e] . (lambda ()
-                       (interactive)
-                       (start-process-shell-command "yazi" nil "footclient -e yazi")))
-          ([?\s-\ ] . (lambda ()
-                        (interactive)
-                        (require 'counsel)
-                        (ivy-mode 1)  ;; Ensure Ivy is active for minibuffer
-                        (counsel-linux-app)))
-          ([?\s-v] . consult-yank-pop)
-          ([?\s-q] . (lambda ()
-                          (interactive)
-                            (kill-buffer-and-window)))  ;; s-Q to kill current window
-          ;; Media keys with volume/brightness popups
-          ([XF86AudioRaiseVolume] . (lambda ()
-                                      (interactive)
-                                      (start-process-shell-command "pactl-up" nil "pactl set-sink-volume @DEFAULT_SINK@ +5%")
-                                      (message "Volume: %s" (shell-command-to-string "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1"))))
-          ([XF86AudioLowerVolume] . (lambda ()
-                                      (interactive)
-                                      (start-process-shell-command "pactl-down" nil "pactl set-sink-volume @DEFAULT_SINK@ -5%")
-                                      (message "Volume: %s" (shell-command-to-string "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1"))))
-          ([XF86AudioMute] . (lambda ()
-                               (interactive)
-                               (start-process-shell-command "pactl-mute" nil "pactl set-sink-mute @DEFAULT_SINK@ toggle")
-                               (message "Volume: %s" (if (string-match "yes" (shell-command-to-string "pactl get-sink-mute @DEFAULT_SINK@"))
-                                                       "Muted"
-                                                     (shell-command-to-string "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1")))))
-          ([XF86AudioMicMute] . (lambda ()
-                                  (interactive)
-                                  (start-process-shell-command "pactl-mic-mute" nil "pactl set-source-mute @DEFAULT_SOURCE@ toggle")))
-          ([XF86MonBrightnessUp] . (lambda ()
-                                     (interactive)
-                                     (start-process-shell-command "brightnessctl-up" nil "brightnessctl set +10%")
-                                     (message "Brightness: %s" (shell-command-to-string "brightnessctl -m | cut -d, -f4"))))
-          ([XF86MonBrightnessDown] . (lambda ()
-                                       (interactive)
-                                       (start-process-shell-command "brightnessctl-down" nil "brightnessctl set 10%-")
-                                       (message "Brightness: %s" (shell-command-to-string "brightnessctl -m | cut -d, -f4"))))
-          ([XF86AudioPlay] . (lambda ()
-                               (interactive)
-                               (start-process-shell-command "playerctl-play" nil "playerctl play-pause")))
-          ([XF86AudioPause] . (lambda ()
-                                (interactive)
-                                (start-process-shell-command "playerctl-pause" nil "playerctl play-pause")))
-          ([XF86AudioNext] . (lambda ()
-                               (interactive)
-                               (start-process-shell-command "playerctl-next" nil "playerctl next")))
-          ([XF86AudioPrev] . (lambda ()
-                               (interactive)
-                               (start-process-shell-command "playerctl-prev" nil "playerctl previous")))
+;;   ;; Global keybindings
+;;   (setq exwm-input-global-keys
+;;         `(([?\s-r] . exwm-reset)
+;;           ([?\s-w] . exwm-workspace-switch)
+;;           ([?\s-&] . (lambda (cmd)
+;;                        (interactive (list (read-shell-command "$ ")))
+;;                        (start-process-shell-command cmd nil cmd)))
+;;           ([?\s-x] . (lambda () (interactive) (save-buffers-kill-emacs)))  ;; Improved exit
+;;           ([?\s-e] . (lambda ()
+;;                        (interactive)
+;;                        (start-process-shell-command "yazi" nil "footclient -e yazi")))
+;;           ([?\s-\ ] . (lambda ()
+;;                         (interactive)
+;;                         (require 'counsel)
+;;                         (ivy-mode 1)  ;; Ensure Ivy is active for minibuffer
+;;                         (counsel-linux-app)))
+;;           ([?\s-v] . consult-yank-pop)
+;;           ([?\s-q] . (lambda ()
+;;                           (interactive)
+;;                             (kill-buffer-and-window)))  ;; s-Q to kill current window
+;;           ;; Media keys with volume/brightness popups
+;;           ([XF86AudioRaiseVolume] . (lambda ()
+;;                                       (interactive)
+;;                                       (start-process-shell-command "pactl-up" nil "pactl set-sink-volume @DEFAULT_SINK@ +5%")
+;;                                       (message "Volume: %s" (shell-command-to-string "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1"))))
+;;           ([XF86AudioLowerVolume] . (lambda ()
+;;                                       (interactive)
+;;                                       (start-process-shell-command "pactl-down" nil "pactl set-sink-volume @DEFAULT_SINK@ -5%")
+;;                                       (message "Volume: %s" (shell-command-to-string "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1"))))
+;;           ([XF86AudioMute] . (lambda ()
+;;                                (interactive)
+;;                                (start-process-shell-command "pactl-mute" nil "pactl set-sink-mute @DEFAULT_SINK@ toggle")
+;;                                (message "Volume: %s" (if (string-match "yes" (shell-command-to-string "pactl get-sink-mute @DEFAULT_SINK@"))
+;;                                                        "Muted"
+;;                                                      (shell-command-to-string "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1")))))
+;;           ([XF86AudioMicMute] . (lambda ()
+;;                                   (interactive)
+;;                                   (start-process-shell-command "pactl-mic-mute" nil "pactl set-source-mute @DEFAULT_SOURCE@ toggle")))
+;;           ([XF86MonBrightnessUp] . (lambda ()
+;;                                      (interactive)
+;;                                      (start-process-shell-command "brightnessctl-up" nil "brightnessctl set +10%")
+;;                                      (message "Brightness: %s" (shell-command-to-string "brightnessctl -m | cut -d, -f4"))))
+;;           ([XF86MonBrightnessDown] . (lambda ()
+;;                                        (interactive)
+;;                                        (start-process-shell-command "brightnessctl-down" nil "brightnessctl set 10%-")
+;;                                        (message "Brightness: %s" (shell-command-to-string "brightnessctl -m | cut -d, -f4"))))
+;;           ([XF86AudioPlay] . (lambda ()
+;;                                (interactive)
+;;                                (start-process-shell-command "playerctl-play" nil "playerctl play-pause")))
+;;           ([XF86AudioPause] . (lambda ()
+;;                                 (interactive)
+;;                                 (start-process-shell-command "playerctl-pause" nil "playerctl play-pause")))
+;;           ([XF86AudioNext] . (lambda ()
+;;                                (interactive)
+;;                                (start-process-shell-command "playerctl-next" nil "playerctl next")))
+;;           ([XF86AudioPrev] . (lambda ()
+;;                                (interactive)
+;;                                (start-process-shell-command "playerctl-prev" nil "playerctl previous")))
 
-          ([?\s-1] . (lambda () (interactive) (exwm-workspace-switch-create 1)))
-          ([?\s-2] . (lambda () (interactive) (exwm-workspace-switch-create 2)))
-          ([?\s-3] . (lambda () (interactive) (exwm-workspace-switch-create 3)))
-          ([?\s-4] . (lambda () (interactive) (exwm-workspace-switch-create 4)))
-          ([?\s-5] . (lambda () (interactive) (exwm-workspace-switch-create 5)))
-          ([?\s-6] . (lambda () (interactive) (exwm-workspace-switch-create 6)))
-          ([?\s-7] . (lambda () (interactive) (exwm-workspace-switch-create 7)))
-          ([?\s-8] . (lambda () (interactive) (exwm-workspace-switch-create 8)))
-          ([?\s-9] . (lambda () (interactive) (exwm-workspace-switch-create 9)))
-          ([?\s-0] . (lambda () (interactive) (exwm-workspace-switch-create 0)))
-          ([?\M-\s-1] . (lambda () (interactive) (exwm-workspace-move-window 1)))
-          ([?\M-\s-2] . (lambda () (interactive) (exwm-workspace-move-window 2)))
-          ([?\M-\s-3] . (lambda () (interactive) (exwm-workspace-move-window 3)))
-          ([?\M-\s-4] . (lambda () (interactive) (exwm-workspace-move-window 4)))
-          ([?\M-\s-5] . (lambda () (interactive) (exwm-workspace-move-window 5)))
-          ([?\M-\s-6] . (lambda () (interactive) (exwm-workspace-move-window 6)))
-          ([?\M-\s-7] . (lambda () (interactive) (exwm-workspace-move-window 7)))
-          ([?\M-\s-8] . (lambda () (interactive) (exwm-workspace-move-window 8)))
-          ([?\M-\s-9] . (lambda () (interactive) (exwm-workspace-move-window 9)))
-          ([?\M-\s-0] . (lambda () (interactive) (exwm-workspace-move-window 0)))
-          ([s tab] . next-buffer)))
+;;           ([?\s-1] . (lambda () (interactive) (exwm-workspace-switch-create 1)))
+;;           ([?\s-2] . (lambda () (interactive) (exwm-workspace-switch-create 2)))
+;;           ([?\s-3] . (lambda () (interactive) (exwm-workspace-switch-create 3)))
+;;           ([?\s-4] . (lambda () (interactive) (exwm-workspace-switch-create 4)))
+;;           ([?\s-5] . (lambda () (interactive) (exwm-workspace-switch-create 5)))
+;;           ([?\s-6] . (lambda () (interactive) (exwm-workspace-switch-create 6)))
+;;           ([?\s-7] . (lambda () (interactive) (exwm-workspace-switch-create 7)))
+;;           ([?\s-8] . (lambda () (interactive) (exwm-workspace-switch-create 8)))
+;;           ([?\s-9] . (lambda () (interactive) (exwm-workspace-switch-create 9)))
+;;           ([?\s-0] . (lambda () (interactive) (exwm-workspace-switch-create 0)))
+;;           ([?\M-\s-1] . (lambda () (interactive) (exwm-workspace-move-window 1)))
+;;           ([?\M-\s-2] . (lambda () (interactive) (exwm-workspace-move-window 2)))
+;;           ([?\M-\s-3] . (lambda () (interactive) (exwm-workspace-move-window 3)))
+;;           ([?\M-\s-4] . (lambda () (interactive) (exwm-workspace-move-window 4)))
+;;           ([?\M-\s-5] . (lambda () (interactive) (exwm-workspace-move-window 5)))
+;;           ([?\M-\s-6] . (lambda () (interactive) (exwm-workspace-move-window 6)))
+;;           ([?\M-\s-7] . (lambda () (interactive) (exwm-workspace-move-window 7)))
+;;           ([?\M-\s-8] . (lambda () (interactive) (exwm-workspace-move-window 8)))
+;;           ([?\M-\s-9] . (lambda () (interactive) (exwm-workspace-move-window 9)))
+;;           ([?\M-\s-0] . (lambda () (interactive) (exwm-workspace-move-window 0)))
+;;           ([s tab] . next-buffer)))
 
-          ;; ([?\s-1] . exwm-workspace-switch-create 1)
-          ;; ([?\s-2] . exwm-workspace-switch-create 2)
-          ;; ([?\s-3] . exwm-workspace-switch-create 3)
-          ;; ([?\s-4] . exwm-workspace-switch-create 4)
-          ;; ([?\s-5] . exwm-workspace-switch-create 5)
-          ;; ([?\s-6] . exwm-workspace-switch-create 6)
-          ;; ([?\s-7] . exwm-workspace-switch-create 7)
-          ;; ([?\s-8] . exwm-workspace-switch-create 8)
-          ;; ([?\s-9] . exwm-workspace-switch-create 9)
-          ;; ([?\s-0] . exwm-workspace-switch-create 0)
-          ;; ([?\S-\s-1] . exwm-workspace-move-window 1)
-          ;; ([?\S-\s-2] . exwm-workspace-move-window 2)
-          ;; ([?\S-\s-3] . exwm-workspace-move-window 3)
-          ;; ([?\S-\s-4] . exwm-workspace-move-window 4)
-          ;; ([?\S-\s-5] . exwm-workspace-move-window 5)
-          ;; ([?\S-\s-6] . exwm-workspace-move-window 6)
-          ;; ([?\S-\s-7] . exwm-workspace-move-window 7)
-          ;; ([?\S-\s-8] . exwm-workspace-move-window 8)
-          ;; ([?\S-\s-9] . exwm-workspace-move-window 9)
-          ;; ([?\S-\s-0] . exwm-workspace-move-window 0)
+;;           ;; ([?\s-1] . exwm-workspace-switch-create 1)
+;;           ;; ([?\s-2] . exwm-workspace-switch-create 2)
+;;           ;; ([?\s-3] . exwm-workspace-switch-create 3)
+;;           ;; ([?\s-4] . exwm-workspace-switch-create 4)
+;;           ;; ([?\s-5] . exwm-workspace-switch-create 5)
+;;           ;; ([?\s-6] . exwm-workspace-switch-create 6)
+;;           ;; ([?\s-7] . exwm-workspace-switch-create 7)
+;;           ;; ([?\s-8] . exwm-workspace-switch-create 8)
+;;           ;; ([?\s-9] . exwm-workspace-switch-create 9)
+;;           ;; ([?\s-0] . exwm-workspace-switch-create 0)
+;;           ;; ([?\S-\s-1] . exwm-workspace-move-window 1)
+;;           ;; ([?\S-\s-2] . exwm-workspace-move-window 2)
+;;           ;; ([?\S-\s-3] . exwm-workspace-move-window 3)
+;;           ;; ([?\S-\s-4] . exwm-workspace-move-window 4)
+;;           ;; ([?\S-\s-5] . exwm-workspace-move-window 5)
+;;           ;; ([?\S-\s-6] . exwm-workspace-move-window 6)
+;;           ;; ([?\S-\s-7] . exwm-workspace-move-window 7)
+;;           ;; ([?\S-\s-8] . exwm-workspace-move-window 8)
+;;           ;; ([?\S-\s-9] . exwm-workspace-move-window 9)
+;;           ;; ([?\S-\s-0] . exwm-workspace-move-window 0)
 
-  ;; Simulation keys for passing common Emacs bindings to applications
-  (setq exwm-input-simulation-keys
-        '(([?\C-b] . [left])
-          ([?\C-f] . [right])
-          ([?\C-p] . [up])
-          ([?\C-n] . [down])
-          ([?\C-a] . [home])
-          ([?\C-e] . [end])
-          ([?\M-v] . [prior])
-          ([?\C-v] . [next])
-          ([?\C-d] . [delete])
-          ([?\C-k] . [S-end delete])
-          ([?\M-w] . [?\C-c])  ;; Map M-w to Ctrl+C for X apps
-          ([?\C-y] . [?\C-v])))  ;; Map C-y to Ctrl+V for X apps
+;;   ;; Simulation keys for passing common Emacs bindings to applications
+;;   (setq exwm-input-simulation-keys
+;;         '(([?\C-b] . [left])
+;;           ([?\C-f] . [right])
+;;           ([?\C-p] . [up])
+;;           ([?\C-n] . [down])
+;;           ([?\C-a] . [home])
+;;           ([?\C-e] . [end])
+;;           ([?\M-v] . [prior])
+;;           ([?\C-v] . [next])
+;;           ([?\C-d] . [delete])
+;;           ([?\C-k] . [S-end delete])
+;;           ([?\M-w] . [?\C-c])  ;; Map M-w to Ctrl+C for X apps
+;;           ([?\C-y] . [?\C-v])))  ;; Map C-y to Ctrl+V for X apps
 
-  ;; Multi-monitor setup with dynamic workspace count
-  (defun my-exwm-update-displays ()
-    "Update EXWM workspaces and frames based on connected monitors with eDP-1 on far right."
-    (interactive)
-    (let* ((xrandr-output (shell-command-to-string "xrandr --current"))
-           (monitors (cl-loop for line in (split-string xrandr-output "\n")
-                            when (string-match "\\(.*\\) connected.*\\([0-9]+x[0-9]+\\+[-0-9]+\\+[-0-9]+\\)" line)
-                            collect (list (match-string 1 line)
-                                        (match-string 2 line))))
-           (monitor-count (length monitors))
-           (x-position 0))
-      ;; Sort monitors with eDP-1 last
-      (setq monitors (sort monitors
-                          (lambda (a b)
-                            (if (string= (car a) "eDP-1")
-                                nil
-                              (if (string= (car b) "eDP-1")
-                                  t
-                                (string< (car a) (car b)))))))
-      ;; Configure monitors and create workspace mapping
-      (setq exwm-randr-workspace-monitor-plist nil)
-      (dotimes (i monitor-count)
-        (let* ((monitor (nth i monitors))
-               (name (car monitor))
-               (geometry (cadr monitor))
-               (width (string-to-number (car (split-string geometry "x")))))
-          (start-process-shell-command "xrandr" nil
-                                     (format "xrandr --output %s --mode %s --pos %dx0 --auto"
-                                            name
-                                            (car (split-string geometry "+"))
-                                            x-position))
-          (setq exwm-randr-workspace-monitor-plist
-                (plist-put exwm-randr-workspace-monitor-plist i name))
-          (setq x-position (+ x-position width))))
-      ;; Set workspace number to match monitor count
-      (setq exwm-workspace-number monitor-count)
-      ;; Remove excess workspaces
-      (when (> (length exwm-workspace--list) monitor-count)
-        (dolist (frame (nthcdr monitor-count exwm-workspace--list))
-          (delete-frame frame)))
-      ;; Ensure frames exist for each workspace
-      (dotimes (i exwm-workspace-number)
-        (unless (nth i exwm-workspace--list)
-          (exwm-workspace--add-frame-as-workspace (make-frame)))
-        (let ((frame (nth i exwm-workspace--list)))
-          (set-frame-parameter frame 'exwm-randr-monitor
-                              (plist-get exwm-randr-workspace-monitor-plist i))
-          (exwm-workspace-switch i)
-          (set-frame-parameter frame 'fullscreen 'fullboth)))))
+;;   ;; Multi-monitor setup with dynamic workspace count
+;;   (defun my-exwm-update-displays ()
+;;     "Update EXWM workspaces and frames based on connected monitors with eDP-1 on far right."
+;;     (interactive)
+;;     (let* ((xrandr-output (shell-command-to-string "xrandr --current"))
+;;            (monitors (cl-loop for line in (split-string xrandr-output "\n")
+;;                             when (string-match "\\(.*\\) connected.*\\([0-9]+x[0-9]+\\+[-0-9]+\\+[-0-9]+\\)" line)
+;;                             collect (list (match-string 1 line)
+;;                                         (match-string 2 line))))
+;;            (monitor-count (length monitors))
+;;            (x-position 0))
+;;       ;; Sort monitors with eDP-1 last
+;;       (setq monitors (sort monitors
+;;                           (lambda (a b)
+;;                             (if (string= (car a) "eDP-1")
+;;                                 nil
+;;                               (if (string= (car b) "eDP-1")
+;;                                   t
+;;                                 (string< (car a) (car b)))))))
+;;       ;; Configure monitors and create workspace mapping
+;;       (setq exwm-randr-workspace-monitor-plist nil)
+;;       (dotimes (i monitor-count)
+;;         (let* ((monitor (nth i monitors))
+;;                (name (car monitor))
+;;                (geometry (cadr monitor))
+;;                (width (string-to-number (car (split-string geometry "x")))))
+;;           (start-process-shell-command "xrandr" nil
+;;                                      (format "xrandr --output %s --mode %s --pos %dx0 --auto"
+;;                                             name
+;;                                             (car (split-string geometry "+"))
+;;                                             x-position))
+;;           (setq exwm-randr-workspace-monitor-plist
+;;                 (plist-put exwm-randr-workspace-monitor-plist i name))
+;;           (setq x-position (+ x-position width))))
+;;       ;; Set workspace number to match monitor count
+;;       (setq exwm-workspace-number monitor-count)
+;;       ;; Remove excess workspaces
+;;       (when (> (length exwm-workspace--list) monitor-count)
+;;         (dolist (frame (nthcdr monitor-count exwm-workspace--list))
+;;           (delete-frame frame)))
+;;       ;; Ensure frames exist for each workspace
+;;       (dotimes (i exwm-workspace-number)
+;;         (unless (nth i exwm-workspace--list)
+;;           (exwm-workspace--add-frame-as-workspace (make-frame)))
+;;         (let ((frame (nth i exwm-workspace--list)))
+;;           (set-frame-parameter frame 'exwm-randr-monitor
+;;                               (plist-get exwm-randr-workspace-monitor-plist i))
+;;           (exwm-workspace-switch i)
+;;           (set-frame-parameter frame 'fullscreen 'fullboth)))))
 
-  ;; Autostart applications with 5-second delay
-  (defun my-exwm-autostart ()
-    "Start applications on EXWM initialization."
-    (interactive)
-    (run-at-time 5 nil (lambda ()
-                         (start-process "udiskie" nil "udiskie" "-as" "2>/tmp/udiskie.log")))
-    (run-at-time 5 nil (lambda ()
-                         (start-process "blueman-applet" nil "blueman-applet")))
-    (run-at-time 5 nil (lambda ()
-                         (start-process "nm-applet" nil "nm-applet")))
-    (run-at-time 5 nil (lambda ()
-                         (start-process "mullvad-vpn" nil "mullvad-vpn"))))
+;;   ;; Autostart applications with 5-second delay
+;;   (defun my-exwm-autostart ()
+;;     "Start applications on EXWM initialization."
+;;     (interactive)
+;;     (run-at-time 5 nil (lambda ()
+;;                          (start-process "udiskie" nil "udiskie" "-as" "2>/tmp/udiskie.log")))
+;;     (run-at-time 5 nil (lambda ()
+;;                          (start-process "blueman-applet" nil "blueman-applet")))
+;;     (run-at-time 5 nil (lambda ()
+;;                          (start-process "nm-applet" nil "nm-applet")))
+;;     (run-at-time 5 nil (lambda ()
+;;                          (start-process "mullvad-vpn" nil "mullvad-vpn"))))
 
 
-  ;; MODELINE
-  (use-package exwm-modeline
-    :ensure t
-    :after (exwm)
-    :init (add-hook 'exwm-init-hook #'exwm-modeline-mode))
+;;   ;; MODELINE
+;;   (use-package exwm-modeline
+;;     :ensure t
+;;     :after (exwm)
+;;     :init (add-hook 'exwm-init-hook #'exwm-modeline-mode))
 
-  (setq exwm-systemtray-height 16)
-  (setq-default mode-line-format
-                `("%e" mode-line-front-space
-                  mode-line-mule-info mode-line-client mode-line-modified
-                  mode-line-remote mode-line-frame-identification
-                  mode-line-buffer-identification "   "
-                  mode-line-position
-                  (vc-mode vc-mode) "  "
-                  mode-line-modes
-                  mode-line-format-right-align
+;;   (setq exwm-systemtray-height 16)
+;;   (setq-default mode-line-format
+;;                 `("%e" mode-line-front-space
+;;                   mode-line-mule-info mode-line-client mode-line-modified
+;;                   mode-line-remote mode-line-frame-identification
+;;                   mode-line-buffer-identification "   "
+;;                   mode-line-position
+;;                   (vc-mode vc-mode) "  "
+;;                   mode-line-modes
+;;                   mode-line-format-right-align
 
-                  ,(format-time-string "%Y-%m-%d %H:%M ")))
+;;                   ,(format-time-string "%Y-%m-%d %H:%M ")))
 
-  ;; Better buffer naming for X applications
-  (add-hook 'exwm-update-class-hook
-            (lambda ()
-              (exwm-workspace-rename-buffer (concat exwm-class-name ": " exwm-title))))
-  (add-hook 'exwm-update-title-hook
-            (lambda ()
-              (exwm-workspace-rename-buffer (concat exwm-class-name ": " exwm-title))))
+;;   ;; Better buffer naming for X applications
+;;   (add-hook 'exwm-update-class-hook
+;;             (lambda ()
+;;               (exwm-workspace-rename-buffer (concat exwm-class-name ": " exwm-title))))
+;;   (add-hook 'exwm-update-title-hook
+;;             (lambda ()
+;;               (exwm-workspace-rename-buffer (concat exwm-class-name ": " exwm-title))))
 
-  ;; Hooks
-  (add-hook 'exwm-randr-screen-change-hook
-            (lambda ()
-              (start-process-shell-command "xrandr" nil "xrandr --auto")
-              (my-exwm-update-displays)))
+;;   ;; Hooks
+;;   (add-hook 'exwm-randr-screen-change-hook
+;;             (lambda ()
+;;               (start-process-shell-command "xrandr" nil "xrandr --auto")
+;;               (my-exwm-update-displays)))
 
-  (add-hook 'exwm-init-hook
-            (lambda ()
-              (my-exwm-autostart)
-              (my-exwm-update-displays)
-              (set-frame-parameter nil 'fullscreen 'fullboth)))
+;;   (add-hook 'exwm-init-hook
+;;             (lambda ()
+;;               (my-exwm-autostart)
+;;               (my-exwm-update-displays)
+;;               (set-frame-parameter nil 'fullscreen 'fullboth)))
 
-  ;; Ensure new applications open on current workspace
-  (add-hook 'exwm-manage-finish-hook
-            (lambda ()
-              (when (and (boundp 'exwm-workspace-current-index)
-                         (integerp exwm-workspace-current-index))
-                (exwm-workspace-move-window exwm-workspace-current-index))))
+;;   ;; Ensure new applications open on current workspace
+;;   (add-hook 'exwm-manage-finish-hook
+;;             (lambda ()
+;;               (when (and (boundp 'exwm-workspace-current-index)
+;;                          (integerp exwm-workspace-current-index))
+;;                 (exwm-workspace-move-window exwm-workspace-current-index))))
 
-  ;; Enable EXWM components with updated syntax
-  (exwm-systemtray-mode 1)
-  (exwm-randr-mode 1)
-  (exwm-enable))
+;;   ;; Enable EXWM components with updated syntax
+;;   (exwm-systemtray-mode 1)
+;;   (exwm-randr-mode 1)
+;;   (exwm-enable))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
@@ -451,7 +558,8 @@
 
   :bind
   (("C-x k" . kill-current-buffer)
-   ("C-x K" . kill-buffer)))
+   ("C-x K" . kill-buffer)
+   ("s-s" . #'grim/screenshot)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Shell Environment                          ;;
@@ -530,7 +638,7 @@
          ("q" . my-ediff-quit)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                             Backup and Auto-Save                         ;;
+;;                              Backup and Auto-Save                         ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Keep backups in a dedicated directory with timestamps
@@ -1017,15 +1125,8 @@ If QUIET is non-nil, suppress messages."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package project
-  :ensure nil  ; Built-in, no external fetch needed
+  :ensure nil
   :config
-  ;; Custom function to recognize specific directories as projects
-  (defun my-project-find-root (dir)
-    "Identify project roots in ~/Code and ~/.config/."
-    (let ((roots '("~/Code" "~/.config")))
-      (when (member (file-truename (expand-file-name dir))
-                    (mapcar #'file-truename (mapcar #'expand-file-name roots)))
-        (cons 'transient dir))))
   (add-hook 'project-find-functions #'my-project-find-root))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1075,11 +1176,6 @@ If QUIET is non-nil, suppress messages."
 (defvar my-org-journal-map (make-sparse-keymap)
   "Sub-keymap for Org-journal-related commands.")
 (define-key my-org-prefix-map (kbd "j") my-org-journal-map)
-
-;; Ensure required packages are installed
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(package-initialize)
 
 ;; Core Org Setup
 (use-package org
@@ -1194,6 +1290,7 @@ If QUIET is non-nil, suppress messages."
                             (:name "Overdue" :deadline past)
                             (:name "Completed Today" :and (:todo "DONE" :scheduled today)))))))))))
 
+
 ;; Org-capture
 (use-package org-capture
   :ensure nil  ; Bundled with org
@@ -1217,18 +1314,21 @@ If QUIET is non-nil, suppress messages."
           ("w" "Work Log Entry" entry
            (file+datetree (lambda () (expand-file-name "work-log.org" org-directory)))
            "* %?" :empty-lines 0)))
-  (defun my-org-capture-delete-file-after-kill (&rest _)
-    "Delete file if capture is aborted."
-    (when (and (buffer-file-name) (file-exists-p (buffer-file-name)))
-      (delete-file (buffer-file-name))
-      (message "Deleted aborted capture file: %s" (buffer-file-name))))
-  (advice-add 'org-capture-kill :after #'my-org-capture-delete-file-after-kill))
+  (advice-add 'org-capture-kill :after #'my-org-capture-delete-file-after-kill)
+  (add-hook 'org-capture-after-finalize-hook
+            (lambda ()
+              (when (get-buffer-window "*Capture*")
+                (delete-window (get-buffer-window "*Capture*")))))
+  (defun my-debug-org-capture-finalize ()
+    "Debug org-capture-finalize."
+    (interactive)
+    (message "org-capture-finalize called")
+    (org-capture-finalize))
+  (define-key org-capture-mode-map (kbd "C-c C-c") 'my-debug-org-capture-finalize))
 
 ;; Org-journal
 (use-package org-journal
   :ensure t
-  :bind (:map my-org-prefix-map
-         ("j" . 'my-org-journal-map))  ; C-c o j to create new entry
   :bind (:map my-org-journal-map
          ("j" . org-journal-new-entry)  ; C-c o j j to create new entry
          ("s" . my-org-journal-search)) ; C-c o j s to search journal
@@ -1247,7 +1347,7 @@ If QUIET is non-nil, suppress messages."
            (full-path (expand-file-name month-file year-dir)))
       (unless (file-exists-p year-dir)
         (make-directory year-dir t))
-      full-path))  ; Return the path for org-capture
+      full-path))  ; Return the path for org-capture Aviator Sunglassesorg-capture
   (defun org-journal-find-location ()
     "Find or create the current day's heading in the journal file."
     (let ((today (format-time-string org-journal-date-format)))
@@ -1402,58 +1502,11 @@ If QUIET is non-nil, suppress messages."
 ;; Emacs-everywhere with Wayland tweaks and binding
 (use-package emacs-everywhere
   :ensure t
-  :bind (("C-c e" . emacs-everywhere))  ; Quick trigger
   :config
-  (defun grim/emacs-everywhere-wayland-app-info ()
-    "Return a dummy app info struct for Wayland."
-    (make-emacs-everywhere-app
-     :id "wayland"
-     :class "wayland-app"
-     :title "Unknown"
-     :geometry '(0 0 800 600)))
   (setq emacs-everywhere-app-info-function #'grim/emacs-everywhere-wayland-app-info
         emacs-everywhere-copy-command '("wl-copy")
         emacs-everywhere-paste-command '("wl-paste"))
-  (add-hook 'emacs-everywhere-init-hook #'whitespace-cleanup))  ; Auto-format
-
-;; Basic screenshot function (Wayland example) - Untouched core with enhancements
-(defun grim/screenshot (&optional type)
-  "Export current frame as screenshot to clipboard using TYPE format (png/svg/pdf/postscript)."
-  (interactive (list
-                (intern (completing-read
-                         "Screenshot type: "
-                         '(png svg pdf postscript)))))
-  (let* ((extension (pcase type
-                      ('png        ".png")
-                      ('svg        ".svg")
-                      ('pdf        ".pdf")
-                      ('postscript ".ps")
-                      (_ (error "Unsupported screenshot type: %s" type))))
-         (filename (make-temp-file "Emacs-" nil extension))
-         (data     (x-export-frames nil type)))
-    (with-temp-file filename
-      (insert data))
-    (cond
-     ((executable-find "wl-copy")  ; Wayland
-      (with-temp-buffer
-        (insert-file-contents filename)
-        (call-process-region (point-min) (point-max)
-                             "wl-copy" nil nil nil "-t"
-                             (format "image/%s" (substring extension 1)))))
-     ((executable-find "xclip")  ; X11 fallback
-      (with-temp-buffer
-        (insert-file-contents filename)
-        (call-process-region (point-min) (point-max)
-                             "xclip" nil nil nil "-selection" "clipboard" "-t"
-                             (format "image/%s" (substring extension 1)))))
-     (t (message "No clipboard tool found (wl-copy/xclip)")))
-    (set-register ?s filename)
-    (when (or (executable-find "wl-copy") (executable-find "xclip"))
-      (alert (format "Screenshot (%s) copied to clipboard and saved to %s" type filename)
-             :title "Screenshot Taken"
-             :severity 'normal))))
-
-(global-set-key (kbd "s-s") #'grim/screenshot)
+  (add-hook 'emacs-everywhere-init-hook #'whitespace-cleanup))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     eww                                   ;;
@@ -1505,17 +1558,17 @@ If QUIET is non-nil, suppress messages."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              ERC (IRC Client)                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+(declare-function pcomplete-erc-setup "erc-pcomplete")
 (use-package erc
   :defer t
   :config
-  (defun my-erc-set-fill-column ()
-    "Set ERC fill column based on display type."
-    (setq-local erc-fill-column
-                (if (display-graphic-p)
-                    (window-width)  ; GUI: Use full window width
-                  (min 80 (window-width)))))  ; Terminal: Cap at 80
   (add-hook 'erc-mode-hook #'my-erc-set-fill-column)
+  (setq erc-track-remove-disconnected-buffers t
+        ;; ... other settings ...
+        erc-notifications-keywords nil)  ; Keep this
+  (setq erc-modules '(networks notifications))
+  (erc-update-modules)
+  (add-hook 'erc-nick-changed-functions #'my-erc-update-notifications-keywords)
   (setq erc-track-remove-disconnected-buffers t
         erc-hide-list '("PART" "QUIT" "JOIN")
         erc-interpret-mirc-color t
@@ -1544,11 +1597,7 @@ If QUIET is non-nil, suppress messages."
   (setq erc-modules '(networks notifications))  ; Add 'networks' explicitly
   (erc-update-modules)
 
-  (defun my-erc-update-notifications-keywords (&rest _)
-    "Update notification keywords with current nick."
-    (when erc-session-user
-      (setq erc-notifications-keywords (list erc-session-user))))
-  (add-hook 'erc-nick-changed-functions #'my-erc-update-notifications-keywords)
+    (add-hook 'erc-nick-changed-functions #'my-erc-update-notifications-keywords)
   ;; Initialize with a default or leave it nil until connected
   (setq erc-notifications-keywords nil)
 
@@ -1628,58 +1677,23 @@ If QUIET is non-nil, suppress messages."
   :ensure t
   :defer t
   :hook ((elfeed-search-mode-hook . (lambda ()
-                                      (elfeed-update)  ;; Run update on opening
-                                      (my-elfeed-start-auto-update)))  ;; Start timer
+                                      (elfeed-update)
+                                      (my-elfeed-start-auto-update)))
          (elfeed-show-mode . (lambda () (setq shr-external-browser 'eww-browse-url))))
   :bind (:map elfeed-search-mode-map
-              ("q" . my-elfeed-quit-and-stop-timer)  ;; Custom quit to stop timer
+              ("q" . my-elfeed-quit-and-stop-timer)
               :map elfeed-show-mode-map
               ("RET" . shr-browse-url)
-              ("v"   . elfeed-tube-mpv))
-  :init
-  ;; Timer variable for auto-update
-  (defvar my-elfeed-update-timer nil
-    "Timer for Elfeed auto-updates.")
-  ;; Function to start auto-update
-  (defun my-elfeed-start-auto-update ()
-    "Start auto-updating Elfeed every 30 minutes if search buffer is visible."
-    (interactive)
-    (unless my-elfeed-update-timer
-      (setq my-elfeed-update-timer
-            (run-at-time t 1800  ;; 1800 seconds = 30 minutes
-                         (lambda ()
-                           (when (get-buffer-window "*elfeed-search*" t)
-                             (elfeed-update)
-                             (my-elfeed-update-title)))))))
-  ;; Function to stop auto-update
-  (defun my-elfeed-stop-auto-update ()
-    "Stop Elfeed auto-update timer."
-    (interactive)
-    (when my-elfeed-update-timer
-      (cancel-timer my-elfeed-update-timer)
-      (setq my-elfeed-update-timer nil)))
-  ;; Custom quit function
-  (defun my-elfeed-quit-and-stop-timer ()
-    "Quit Elfeed and stop the auto-update timer."
-    (interactive)
-    (elfeed-search-quit-window)
-    (my-elfeed-stop-auto-update))
-  ;; Function to update buffer title with new articles
-  (defun my-elfeed-update-title ()
-    "Update Elfeed search buffer title with new article count."
-    (interactive)
-    (with-current-buffer "*elfeed-search*"
-      (let ((new-count (length (elfeed-search-filter "unread"))))
-        (rename-buffer (format "*elfeed-search* (%d new)" new-count)))))
+              ("v" . elfeed-tube-mpv))
   :config
   (setq shr-external-browser 'eww-browse-url)
-
-(setq elfeed-feeds
-      '("https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fsachachua.com%2Fblog%2Ffeed%2Findex.xml&key=1&hash=48ac81675b0797fda5d8f4f189846563a5ed14d9&max=1000&links=preserve&exc="
-        "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fddosecrets.com%2Farticle%2Flexipolleaks&key=1&hash=b9258f920d5b200034edd73868c42b1e68284695&max=1000&links=preserve&exc="
-        "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fhnrss.org%2Fnewest&key=1&hash=62a3abd97ca026dbb64c82151d396f32e4c6a4fb&max=1000&links=preserve&exc="
-        "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Ffeeds.bbci.co.uk%2Fnews%2Frss.xml&key=1&hash=78370b961d44c8bff594b1b41a513762d6f34560&max=1000&links=preserve&exc="
-        "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fplanet.emacslife.com%2Fatom.xml&key=1&hash=f609b22f1328308f3361f85a9b50c9eda53bfb6d&max=1000&links=preserve&exc=1")))
+  (defvar my-elfeed-update-timer nil "Timer for Elfeed auto-updates.")  ; Keep this here
+  (setq elfeed-feeds
+        '("https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fsachachua.com%2Fblog%2Ffeed%2Findex.xml&key=1&hash=48ac81675b0797fda5d8f4f189846563a5ed14d9&max=1000&links=preserve&exc="
+          "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fddosecrets.com%2Farticle%2Flexipolleaks&key=1&hash=b9258f920d5b200034edd73868c42b1e68284695&max=1000&links=preserve&exc="
+          "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fhnrss.org%2Fnewest&key=1&hash=62a3abd97ca026dbb64c82151d396f32e4c6a4fb&max=1000&links=preserve&exc="
+          "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Ffeeds.bbci.co.uk%2Fnews%2Frss.xml&key=1&hash=78370b961d44c8bff594b1b41a513762d6f34560&max=1000&links=preserve&exc="
+          "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fplanet.emacslife.com%2Fatom.xml&key=1&hash=f609b22f1328308f3361f85a9b50c9eda53bfb6d&max=1000&links=preserve&exc=1")))
 
 (use-package elfeed-dashboard
   :config
