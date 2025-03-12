@@ -1509,6 +1509,50 @@ If QUIET is non-nil, suppress messages."
   (add-hook 'emacs-everywhere-init-hook #'whitespace-cleanup))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                           Dashboard                                  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package dashboard
+  :ensure t
+  :init
+  ;; Run on initial daemon startup
+  (dashboard-setup-startup-hook)
+  ;; Custom function to show dashboard in new frames
+  (defun my-dashboard-open-in-frame (frame)
+    "Open dashboard in FRAME if it's a new, empty frame from emacsclient."
+    (with-selected-frame frame
+      (when (and (frame-parameter frame 'client)  ; From emacsclient
+                 (not (frame-parameter frame 'window-system))  ; Not a file-opened frame
+                 (eq (length (frame-list)) 2))  ; Only one frame + new one
+        (switch-to-buffer (dashboard-generate-buffer)))))
+  :custom
+  (dashboard-startup-banner 'logo)  ; Emacs logo (or set a path to a custom image)
+  (dashboard-center-content t)  ; Clean, centered layout
+  (dashboard-items '((recents  . 10)  ; Recent files
+                     (bookmarks . 5)  ; Bookmarks
+                     (projects  . 5)  ; Projectile projects
+                     (agenda    . 5)))  ; Org agenda
+  (dashboard-set-heading-icons t)  ; Nerd icons for headers
+  (dashboard-set-file-icons t)  ; Icons for files
+  :config
+  ;; Style it up
+  (set-face-attribute 'dashboard-text-banner nil :foreground "#88c0d0")  ; Cyan from modus-vivendi
+  (setq dashboard-footer-messages '("Pimpin' Emacs since 2025, bro!"))
+  ;; Hook into new frames from emacsclient
+  (add-hook 'after-make-frame-functions #'my-dashboard-open-in-frame)
+  ;; Ensure dashboard buffer persists
+  (setq initial-buffer-choice (lambda () (dashboard-generate-buffer)))
+  ;; Integrate with your existing setup
+  (add-hook 'dashboard-mode-hook
+            (lambda ()
+              (setq-local cursor-type nil)  ; Hide cursor for cleanliness
+              (hl-line-mode -1)))  ; No highlight line
+  :bind (:map dashboard-mode-map
+              ("q" . kill-this-buffer)  ; Quick exit
+              ("n" . dashboard-next-line)
+              ("p" . dashboard-previous-line)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     eww                                   ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
