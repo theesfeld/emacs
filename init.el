@@ -1228,7 +1228,7 @@ If QUIET is non-nil, suppress messages."
 (use-package org-journal
   :ensure t
   :bind (:map my-org-prefix-map
-         ("j" . my-org-journal-map))  ; C-c o j to create new entry
+         ("j" . 'my-org-journal-map))  ; C-c o j to create new entry
   :bind (:map my-org-journal-map
          ("j" . org-journal-new-entry)  ; C-c o j j to create new entry
          ("s" . my-org-journal-search)) ; C-c o j s to search journal
