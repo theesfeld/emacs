@@ -1463,39 +1463,12 @@ If QUIET is non-nil, suppress messages."
   :commands (eww eww-browse-url)  ; Add 'eww' for manual use
  ;; :bind (("C-c w" . eww))         ; Easy access to EWW
   :init
-  (defun my-open-with-mpv (url &rest _args)
-    "Open URL with mpv, with error checking."
-    (interactive "sURL: ")        ; Allow manual invocation
-    (if (executable-find "mpv")
-        (progn
-          (message "Opening %s in mpv..." url)
-          (if (featurep 'mpv)
-              (mpv-start url)        ; Use mpv.el if loaded
-            (start-process "mpv" nil "mpv" url)))
-      (user-error "mpv not found; install it to play %s" url)))
   (setq browse-url-handlers
-        '(("\\.\\(mp4\\|mkv\\|webm\\|avi\\|mov\\|flv\\|wmv\\|mpg\\|mpeg\\)\\'" . my-open-with-mpv)
-          ("^https?://\\(www\\.\\)?\\(youtube\\.com\\|youtu\\.be\\|vimeo\\.com\\)/" . my-open-with-mpv)
-          ("\\.pdf\\'" . my-open-remote-pdf-in-emacs)
+        '(("\\.pdf\\'" . my-open-remote-pdf-in-emacs)
           ("^https?://" . eww-browse-url)))
   :config
   (setq eww-auto-rename-buffer 'title)  ; Nicer buffer names
   (add-hook 'eww-mode-hook (lambda () (display-line-numbers-mode -1))))  ; No line numbers
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                mpv & emacs.tv                             ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package mpv
-  :ensure t
-  :defer t
-  :bind (:map mpv-mode-map
-         ("SPC" . mpv-pause)              ; Space to toggle pause
-         ("f"   . mpv-seek-forward)       ; Seek forward
-         ("b"   . mpv-seek-backward))     ; Seek backward
-  :config
-  (setq mpv-default-options '("--no-terminal" "--keep-open"))  ; Sane defaults
-  (add-hook 'mpv-mode-hook (lambda () (display-line-numbers-mode -1))))  ; No line numbers
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     pdf                                   ;;
