@@ -842,6 +842,66 @@ nerd-icons-ibuffer-formats
                   (hl-line-mode -1)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                    helm                                   ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; Helm - Epic Completion Framework
+(use-package helm
+  :ensure t
+  :demand t  ; Load immediately for instant gratification
+  :init
+  (require 'helm-config)
+  (helm-mode 1)  ; Enable globally
+  :custom
+  (helm-split-window-inside-p t)          ; Keep popups inside the current window
+  (helm-move-to-line-cycle-in-source t)   ; Cycle through candidates seamlessly
+  (helm-ff-search-library-in-sexp t)      ; Search libraries in Lisp files
+  (helm-scroll-amount 8)                  ; Smooth scrolling
+  (helm-idle-delay 0.1)                   ; Lightning-fast response
+  (helm-input-idle-delay 0)               ; No delay on input
+  (helm-candidate-number-limit 100)       ; Show plenty of candidates
+  (helm-display-header-line nil)          ; Clean look, no redundant header
+  (helm-autoresize-max-height 40)         ; Limit popup size
+  (helm-autoresize-min-height 20)         ; Ensure visibility
+  :config
+  ;; Integrate with Nerd Icons for visual flair
+  (with-eval-after-load 'nerd-icons
+    (setq helm-ff-icon-fn
+          (lambda (file)
+            (nerd-icons-icon-for-file file :height 1.0))))
+  ;; Theme it up
+  (set-face-attribute 'helm-source-header nil
+                      :background "#2e3440"  ; Dark Nordic base
+                      :foreground "#88c0d0"  ; Icy blue
+                      :height 1.2
+                      :weight 'bold)
+  (set-face-attribute 'helm-selection nil
+                      :background "#5e81ac"  ; Soft blue highlight
+                      :foreground nil)
+  ;; Replace default bindings with Helm awesomeness
+  (global-set-key (kbd "C-x C-f") 'helm-find-files)  ; Popup file finder
+  (global-set-key (kbd "C-x C-d") 'helm-browse-project)  ; Project-aware dir popup
+  (global-set-key (kbd "M-x") 'helm-M-x)             ; Command runner
+  (global-set-key (kbd "C-x b") 'helm-mini)          ; Buffer switcher
+  (global-set-key (kbd "C-c h") 'helm-command-prefix) ; Helm prefix
+  :bind (:map helm-map
+              ("<tab>" . helm-execute-persistent-action)  ; Tab to select
+              ("C-z" . helm-select-action)               ; Extra action menu
+              ("C-j" . helm-next-line)                   ; Smooth navigation
+              ("C-k" . helm-previous-line)))
+
+(use-package helm-descbinds
+  :ensure t
+  :after helm
+  :bind ("C-h b" . helm-descbinds))  ; Describe bindings with style
+
+(use-package helm-projectile
+  :ensure t
+  :after (helm projectile)
+  :config
+  (helm-projectile-on))  ; Integrate with Projectile
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Vertico + Consult                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
