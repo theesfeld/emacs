@@ -809,37 +809,55 @@ nerd-icons-ibuffer-formats
 (setq inhibit-compacting-font-caches t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                    eat                                    ;;
+;;                                    vterm                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package eat
-  :ensure t  ;; Automatically install from NonGNU ELPA
-  :commands (eat)  ;; Autoload the main `eat` command
-  :bind (("C-c T" . (lambda () (interactive) (my/toggle-buffer "*eat*" 'eat))))
-  :init
-  ;; Add NonGNU ELPA if not already configured
-  (unless (assoc "nongnu" package-archives)
-    (add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/nongnu/") t))
-
+;;; Vterm - Terminal Beast Mode
+(use-package vterm
+  :ensure t
+  :commands (vterm vterm-other-window)
+  :custom
+  (vterm-shell "/usr/bin/zsh")             ; Your preferred shell
+  (vterm-max-scrollback 10000)             ; Massive scrollback
+  (vterm-buffer-name-string "vterm-%s")    ; Clean buffer naming
+  (vterm-kill-buffer-on-exit t)            ; No zombie buffers
+  (vterm-module-cmake-args "-DUSE_SYSTEM_LIBVTERM=YES")  ; Faster builds if libvterm is installed
   :config
-  ;; Set shell to zsh
-  (setq eat-shell "/sbin/zsh")  ;; Your preferred shell
-  ;; Compile terminfo if needed
-  (unless (file-exists-p (expand-file-name "eat/terminfo" user-emacs-directory))
-    (eat-compile-terminfo))
-  ;; Adjust input modes
-  (setq eat-semi-char-non-bound-keys
-        '((?\C-c . nil) (?\C-x . nil) (?\C-g . nil) (?\C-h . nil) (?\M-x . nil)))
-
-  :hook
-  ;; Enable Eat in Eshell
-  (eshell-load . eat-eshell-mode)
-  (eshell-load . eat-eshell-visual-command-mode)
-  ;; Disable line numbers and highlighting in eat buffers
-  (eat-mode . (lambda ()
-                (when (string= (buffer-name) "*eat*")
-                  (display-line-numbers-mode -1)  ; Disable line numbers
-                  (hl-line-mode -1)))))
+  ;; Custom toggle function styled like your eat/calc setup
+  (defun my/vterm-toggle ()
+    "Toggle vterm buffer with flair, running vterm if it doesn’t exist."
+    (interactive)
+    (my/toggle-buffer "*vterm*" 'vterm))
+  ;; Cyberpunk aesthetics
+  (set-face-attribute 'vterm-color-black nil :foreground "#3b4252" :background "#2e3440")
+  (set-face-attribute 'vterm-color-red nil :foreground "#bf616a")
+  (set-face-attribute 'vterm-color-green nil :foreground "#a3be8c")
+  (set-face-attribute 'vterm-color-yellow nil :foreground "#ebcb8b")
+  (set-face-attribute 'vterm-color-blue nil :foreground "#81a1c1")
+  (set-face-attribute 'vterm-color-magenta nil :foreground "#b48ead")
+  (set-face-attribute 'vterm-color-cyan nil :foreground "#88c0d0")
+  (set-face-attribute 'vterm-color-white nil :foreground "#e5e9f0")
+  ;; Copy/paste enhancements
+  (defun vterm-copy-to-clipboard ()
+    "Copy current selection to clipboard."
+    (interactive)
+    (when (region-active-p)
+      (vterm-copy (buffer-substring-no-properties (region-beginning) (region-end)))
+      (deactivate-mark)
+      (message "Copied to clipboard")))
+  ;; Integration with your workflow
+  (add-hook 'vterm-mode-hook
+            (lambda ()
+              (display-line-numbers-mode -1)  ; No clutter
+              (hl-line-mode -1)               ; Clean look
+              (setq-local cursor-type 'box)   ; Solid cursor
+              (text-scale-amount 1.1)))       ; Slightly larger text
+  :bind (("C-c v" . my/vterm-toggle)         ; Toggle vterm
+         :map vterm-mode-map
+         ("C-c C-c" . vterm-send-C-c)        ; Interrupt gracefully
+         ("C-y" . vterm-yank)                ; Paste like a pro
+         ("C-w" . vterm-copy-to-clipboard)   ; Copy selection
+         ("M-:" . vterm-send-string)))       ; Send commands
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    helm                                   ;;
@@ -850,8 +868,7 @@ nerd-icons-ibuffer-formats
   :ensure t
   :demand t  ; Load immediately for instant gratification
   :init
-  (require 'helm-config)
-  (helm-mode 1)  ; Enable globally
+  (helm-mode 1)  ; Enable Helm globally right away
   :custom
   (helm-split-window-inside-p t)          ; Keep popups inside the current window
   (helm-move-to-line-cycle-in-source t)   ; Cycle through candidates seamlessly
@@ -888,7 +905,10 @@ nerd-icons-ibuffer-formats
               ("<tab>" . helm-execute-persistent-action)  ; Tab to select
               ("C-z" . helm-select-action)               ; Extra action menu
               ("C-j" . helm-next-line)                   ; Smooth navigation
-              ("C-k" . helm-previous-line)))
+              ("C-k" . helm-previous-line))
+  :hook
+  ;; Ensure Helm mode persists across sessions
+  (after-init . helm-mode))
 
 (use-package helm-descbinds
   :ensure t
