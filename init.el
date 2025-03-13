@@ -1159,14 +1159,11 @@ If QUIET is non-nil, suppress messages."
 (use-package org
   :ensure nil  ; Built-in package
   :init
-  ;; Define variables early
   (setq org-directory "~/org/")
   (setq org-journal-dir (expand-file-name "journal/" org-directory))
-  ;; Define prefix maps before use
   (defvar my-org-prefix-map (make-sparse-keymap) "Prefix map for Org-mode commands.")
   (defvar my-org-agenda-map (make-sparse-keymap) "Prefix map for Org-agenda commands.")
   (defvar my-org-journal-map (make-sparse-keymap) "Prefix map for Org-journal commands.")
-  ;; Set up sub-prefixes
   (define-key my-org-prefix-map (kbd "a") my-org-agenda-map)
   (define-key my-org-prefix-map (kbd "j") my-org-journal-map)
   :bind-keymap
@@ -1191,6 +1188,9 @@ If QUIET is non-nil, suppress messages."
   (org-clock-persistence-insinuate)
   (add-hook 'org-capture-prepare-finalize-hook #'org-id-get-create)
   (define-key my-org-prefix-map (kbd "r") #'my-org-refile-to-todos)
+  ;; Explicitly set org-agenda-files
+  (setq org-agenda-files (append (directory-files-recursively org-journal-dir "[0-1][0-9]-[0-9]\\{4\\}\\.org")
+                                 (list (expand-file-name "todos.org" org-directory))))
   (with-eval-after-load 'which-key
     (which-key-add-key-based-replacements
      "C-c o" "org-mode"
@@ -1356,7 +1356,7 @@ If QUIET is non-nil, suppress messages."
     (let ((default-directory org-journal-dir))
       (call-interactively #'deadgrep)))
   (defun my-org-auto-refile-from-journal ()
-    "Automatically refile TODOs and scheduled/deadlined items from journal to todos.org."
+    "Refile only TODO entries from journal to todos.org."
     (interactive)
     (let ((journal-dir org-journal-dir)
           (target-file (expand-file-name "todos.org" org-directory)))
@@ -1365,10 +1365,8 @@ If QUIET is non-nil, suppress messages."
           (org-with-wide-buffer
            (goto-char (point-min))
            (while (re-search-forward org-heading-regexp nil t)
-             (let ((todo-state (org-get-todo-state))
-                   (scheduled (org-get-scheduled-time (point)))
-                   (deadline (org-get-deadline-time (point))))
-               (when (or todo-state scheduled deadline)
+             (let ((todo-state (org-get-todo-state)))
+               (when todo-state  ; Only refile if it’s a TODO
                  (org-refile nil nil (list "Tasks" target-file nil nil) t))))
            (save-buffer)))))
   (add-hook 'org-capture-after-finalize-hook #'my-org-auto-refile-from-journal)
@@ -1432,16 +1430,6 @@ If QUIET is non-nil, suppress messages."
     (org-capture nil "j")
     (insert (cadr (split-string data "://")))
     (org-capture-finalize t)))
-
-;; Org-timeblock
-(use-package org-timeblock
-  :ensure t
-  :vc (:url "https://github.com/ichernyshovvv/org-timeblock" :rev :newest)
-  :init
-  (unless (fboundp 'compat-macs)
-    (use-package compat :ensure t))
-  :bind (:map my-org-prefix-map
-         ("w" . org-timeblock)))
 
 ;; Org-modern
 (use-package org-modern
