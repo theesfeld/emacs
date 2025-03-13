@@ -1374,6 +1374,22 @@ If QUIET is non-nil, suppress messages."
               (insert (format "[[file:%s]]" filename))
               (org-capture-finalize t)))))
 
+  (use-package org-attach
+  :ensure nil
+  :after org
+  :config
+  (setq org-attach-dir-relative t)
+  (setq org-attach-use-inheritance t)
+  (setq org-attach-id-dir (expand-file-name "attachments" org-journal-dir))
+  (defun my-org-attach-to-journal ()
+    "Attach a file to the current journal entry."
+    (interactive)
+    (org-capture nil "j")
+    (call-interactively #'org-attach-attach)
+    (org-capture-finalize t))
+  :bind (:map org-mode-map
+         ("C-c o a" . my-org-attach-to-journal)))
+  
   ;; Org-protocol for external inputs
   (use-package org-protocol
     :ensure nil
