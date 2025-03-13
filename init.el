@@ -1297,7 +1297,7 @@ If QUIET is non-nil, suppress messages."
                             (:name "Currently Being Verified" :todo "VERIFYING" :order 20)
                             (:name "General Unscheduled" :and (:not (:tag ("personal" "work")) :not (:scheduled t)))
                             (:name "Overdue" :deadline past)
-                            (:name "Completed Today" :and (:todo "DONE" :scheduled today)))))))))
+                            (:name "Completed Today" :and (:todo "DONE" :scheduled today)))))))))))
 
 ;; Org-journal
 (use-package org-journal
@@ -1360,7 +1360,7 @@ If QUIET is non-nil, suppress messages."
                (org-refile nil nil (list "Tasks" target-file nil nil) t)))
            (save-buffer)))))
   (add-hook 'org-capture-after-finalize-hook #'my-org-auto-refile-from-journal)
-  (run-at-time t 3600 #'my-org-auto-refile-from-journal))
+  (run-at-time t 3600 #'my-org-auto-refile-from-journal)))
 
 ;; Org-download
 (use-package org-download
