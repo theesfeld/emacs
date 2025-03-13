@@ -152,26 +152,6 @@
 (declare-function completion-preview-prev-candidate "completion-preview")
 (declare-function completion-preview--hide "completion-preview")
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                  Counsel Setup                            ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Ensure counsel and consult are available
-;; (use-package counsel :ensure t)  ;; Uncomment if not already in your package setup
-(use-package consult
-  :ensure t
-  :config
-  ;; Automatically save clipboard to kill-ring
-  (setq kill-ring-max 200)
-  ;; (defun my-clipboard-to-kill-ring ()
-  ;;   "Add clipboard content to kill-ring if different from last entry."
-  ;;   (interactive)
-  ;;   (when (and (executable-find "xclip")
-  ;;              (not (string= (current-kill 0 t)
-  ;;                           (shell-command-to-string "xclip -o -selection clipboard"))))
-  ;;     (kill-new (shell-command-to-string "xclip -o -selection clipboard"))))
-  ;; (run-at-time t 2 'my-clipboard-to-kill-ring))  ;; 2s interval
-)
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;;                                     EXWM                                  ;;
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -835,7 +815,7 @@ nerd-icons-ibuffer-formats
 (use-package eat
   :ensure t  ;; Automatically install from NonGNU ELPA
   :commands (eat)  ;; Autoload the main `eat` command
-  :bind (("C-c t" . (lambda () (interactive) (my/toggle-buffer "*eat*" 'eat))))  ;; Bind C-c t to toggle function
+  :bind (("C-c T" . (lambda () (interactive) (my/toggle-buffer "*eat*" 'eat))))
   :init
   ;; Add NonGNU ELPA if not already configured
   (unless (assoc "nongnu" package-archives)
@@ -945,6 +925,8 @@ nerd-icons-ibuffer-formats
          ("M-s k"     . consult-keep-lines)
          ("M-s u"     . consult-focus-lines)
          ("M-s e"     . consult-isearch-history)
+         ;; New: s-<tab> for buffer scrolling
+         ("s-<tab>"   . my-consult-buffer-scroll)
          :map isearch-mode-map
          ("M-e"       . consult-isearch-history)
          ("M-s e"     . consult-isearch-history)
@@ -953,7 +935,35 @@ nerd-icons-ibuffer-formats
   (consult-customize
    consult-buffer
    :sort t
-   :history 'buffer-name-history))
+   :history 'buffer-name-history)
+
+  ;; Custom function for s-<tab> buffer scrolling with posframe
+  (defun my-consult-buffer-scroll ()
+    "Scroll through open buffers in a posframe popup, styled like Dired preview."
+    (interactive)
+    (let ((vertico-posframe-parameters
+           `((left-fringe . 8)
+             (right-fringe . 8)
+             (background-color . "#2e3440") ; Match your vertico-posframe
+             (min-width . 50)
+             (min-height . 10)))
+          (vertico-posframe-show-delay 0.3)) ; Match dired-preview delay
+      (consult-buffer)))
+
+  ;; Enhance buffer display with Nerd Icons
+  (with-eval-after-load 'nerd-icons
+    (defun my-consult-buffer-format (buffer)
+      "Add Nerd Icon to BUFFER name for consult-buffer."
+      (let ((icon (nerd-icons-icon-for-buffer buffer)))
+        (concat icon " " (buffer-name buffer))))
+    (advice-add 'consult-buffer :filter-return
+                (lambda (buffers)
+                  (mapcar #'my-consult-buffer-format buffers))))
+
+  ;; Add s-<tab> and S-s-<tab> cycling in Vertico popup
+  (with-eval-after-load 'vertico
+    (bind-key "s-<tab>" 'vertico-next vertico-map)
+    (bind-key "S-s-<tab>" 'vertico-previous vertico-map)))
 
 ;; Embark with Avy integration
 (use-package embark
@@ -1187,14 +1197,14 @@ If QUIET is non-nil, suppress messages."
          (org-mode . flyspell-mode)              ; Spell checking
          (org-mode . org-toggle-pretty-entities) ; Pretty symbols
          (org-mode . adaptive-wrap-prefix-mode)) ; Better wrapping
-  :bind (:map my-org-prefix-map
+  :bind ( ("C-c t" . org-cycle)
+         :map my-org-prefix-map
          ("s" . org-schedule)
          ("d" . org-deadline)
          ("t" . org-time-stamp)
          ("l" . org-store-link)
          ("r" . my-org-refile-to-todos)
          :map org-mode-map
-         ("TAB" . org-cycle)
          ("C-c <up>" . org-priority-up)
          ("C-c <down>" . org-priority-down)
          ("C-c o x r" . org-clock-report)
@@ -1509,6 +1519,116 @@ If QUIET is non-nil, suppress messages."
   (add-hook 'emacs-everywhere-init-hook #'whitespace-cleanup))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                  Dired                                    ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package dired
+  :ensure nil  ; Built-in, no need to install
+  :bind (("C-x C-d" . dired)  ; Quick access to Dired
+         :map dired-mode-map
+         ("RET" . dired-find-alternate-file)  ; Replace buffer instead of opening new
+         ("<backspace>" . dired-up-directory) ; Intuitive up-directory
+         ("C-c C-e" . wdired-change-to-wdired-mode) ; Editable Dired
+         ("C-c g" . dired-git-info-mode) ; Toggle git info
+         ("C-c t" . dired-toggle-read-only) ; Quick toggle read-only
+         ("M-!" . dired-smart-shell-command)) ; Enhanced shell command
+  :hook ((dired-mode . dired-hide-details-mode) ; Start with details hidden
+         (dired-mode . nerd-icons-dired-mode) ; Icon goodness
+         (dired-mode . dired-preview-mode) ; Auto-preview always on
+         (dired-mode . hl-line-mode)) ; Highlight current line
+  :custom
+  (dired-listing-switches "-lah --group-directories-first") ; Human-readable, dirs first
+  (dired-dwim-target t) ; Smart target directory guessing
+  (dired-recursive-copies 'always) ; Recursive copies without asking
+  (dired-recursive-deletes 'always) ; Recursive deletes without asking
+  (dired-auto-revert-buffer t) ; Auto-refresh on revisit
+  (dired-hide-details-hide-symlink-targets nil) ; Show symlink targets
+  (dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open"))) ; Custom file openers
+  (dired-use-ls-dired t) ; Use ls emulation for better compatibility
+  :config
+  ;; Add colors to Dired
+  (use-package diredfl
+    :ensure t
+    :config
+    (diredfl-global-mode 1))
+
+  ;; Nerd Icons for Dired
+  (use-package nerd-icons-dired
+    :ensure t
+    :after nerd-icons
+    :config
+    (setq nerd-icons-dired-v-adjust -0.1) ; Fine-tune icon alignment
+    (set-face-attribute 'nerd-icons-dired-dir-face nil :foreground "#81a1c1")) ; Nordic blue dirs
+
+  ;; Dired Preview (always on, no toggle)
+  (use-package dired-preview
+    :ensure t
+    :custom
+    (dired-preview-delay 0) ; Faster preview popup
+    (dired-preview-max-size (* 10 1024 1024)) ; 10MB max for previews
+    :config
+    ;; Enable globally so it’s always on, no need for per-buffer toggle
+    (dired-preview-global-mode 1))
+
+  ;; Dired Git Info (polished)
+  (use-package dired-git-info
+    :ensure t
+    :custom
+    (dgi-auto-hide-details-p nil) ; Keep details visible with git info
+    :config
+    (setq dired-git-info-format " (%s)")) ; Customize format if desired
+
+  ;; Dired Subtree for tree-like navigation
+  (use-package dired-subtree
+    :ensure t
+    :bind (:map dired-mode-map
+                ("<tab>" . dired-subtree-toggle) ; Expand/collapse subdirs
+                ("<C-tab>" . dired-subtree-cycle)) ; Cycle through subdirs
+    :config
+    (setq dired-subtree-use-backgrounds nil) ; Cleaner look with your theme
+    (set-face-attribute 'dired-subtree-depth-1-face nil :background "#3b4252")) ; Subtle depth
+
+  ;; Async operations for speed
+  (use-package dired-async
+    :ensure nil ; Part of dired-aux
+    :after dired
+    :config
+    (dired-async-mode 1))
+
+  ;; Integrate with Treemacs for project awareness
+  (with-eval-after-load 'treemacs
+    (add-hook 'treemacs-select-hook
+              (lambda ()
+                (when (treemacs-current-workspace)
+                  (dired (treemacs-get-local-project-root))))))
+
+  ;; Custom function: Open in external app with C-c o
+  (defun dired-open-externally ()
+    "Open file under cursor with xdg-open."
+    (interactive)
+    (let ((file (dired-get-file-for-visit)))
+      (start-process "dired-open" nil "xdg-open" file)))
+  (define-key dired-mode-map (kbd "C-c o") 'dired-open-externally)
+
+  ;; Custom function: Quick copy file path
+  (defun dired-copy-file-path ()
+    "Copy the full path of the file under cursor to kill ring."
+    (interactive)
+    (let ((path (dired-get-file-for-visit)))
+      (kill-new path)
+      (message "Copied path: %s" path)))
+  (define-key dired-mode-map (kbd "C-c w") 'dired-copy-file-path)
+
+  ;; Custom function: Quick filter with Consult
+  (defun dired-consult-filter ()
+    "Filter Dired buffer using Consult narrowing."
+    (interactive)
+    (consult-focus-lines
+     (lambda (file)
+       (string-match-p (regexp-quote (consult--read "Filter: ")) file))))
+  (define-key dired-mode-map (kbd "C-c f") 'dired-consult-filter))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     eww                                   ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1720,18 +1840,6 @@ If QUIET is non-nil, suppress messages."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                So-long-mode                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; `so-long-mode` is built into Emacs 29+. It automatically detects
-;; extremely long lines (think minified code or large log files)
-;; and switches Emacs into a more performant mode, preventing
-;; slow rendering or freezing.
-;;
-;; Usage:
-;;  - Enable globally:  (global-so-long-mode 1)
-;;  - Once enabled, Emacs will automatically enter `so-long-mode`
-;;    for buffers with extremely long lines. This typically disables
-;;    certain expensive UI features and speeds up editing.
-;;  - If you do NOT want it global, you can hook it into specific modes
-;;    or only enable it manually with M-x so-long-mode.
 
 (global-so-long-mode 1)
 
@@ -1754,20 +1862,6 @@ If QUIET is non-nil, suppress messages."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                           Electric-quote-mode                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Built into Emacs 29+, `electric-quote-mode` automatically transforms
-;; certain ASCII quotes, dashes, and ellipses into their typographically
-;; preferred characters. For example, typing "..." becomes …,
-;; typing " - " can become – (en dash), and so forth.
-;;
-;; Usage:
-;;  - Enable globally:    (electric-quote-mode 1)
-;;  - Or just in text:    (add-hook 'text-mode-hook #'electric-quote-mode)
-;;  - Customize behavior: M-x customize-group RET electric-quote RET
-;;    (e.g., set `electric-quote-context-sensitive` to t)
-;;
-;; This is especially handy for prose, Org-mode notes, etc.
-;; If you prefer raw ASCII punctuation (e.g., in code), disable or
-;; keep it confined to your writing modes.
 
 (setq electric-quote-context-sensitive t)
 (electric-quote-mode 1)
@@ -2242,6 +2336,14 @@ If QUIET is non-nil, suppress messages."
   :bind (:map global-map
               ("C-c u" . '0x0-dwim)
               ("C-c U" . '0x0-upload-file)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                   calc                                    ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+ (use-package calc
+   :ensure nil  ;; calc is built-in, no need to install
+   :bind (("C-c c" . (lambda () (interactive) (my/toggle-buffer "*Calculator*" 'calc)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                 python venv                               ;;
