@@ -1438,7 +1438,7 @@ If QUIET is non-nil, suppress messages."
   ;; Org-auto-tangle
   (use-package org-auto-tangle
     :ensure t
-    :hook (org-mode . org-auto-tangle-mode)))
+    :hook (org-mode . org-auto-tangle-mode))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                   Magit/Forge                            ;;
