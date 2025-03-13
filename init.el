@@ -809,117 +809,20 @@ nerd-icons-ibuffer-formats
 (setq inhibit-compacting-font-caches t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                    vterm                                  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;; Vterm - Terminal Beast Mode
-(use-package vterm
-  :ensure t
-  :commands (vterm vterm-other-window)
-  :custom
-  (vterm-shell "/usr/bin/zsh")             ; Your preferred shell
-  (vterm-max-scrollback 10000)             ; Massive scrollback
-  (vterm-buffer-name-string "vterm-%s")    ; Clean buffer naming
-  (vterm-kill-buffer-on-exit t)            ; No zombie buffers
-  (vterm-module-cmake-args "-DUSE_SYSTEM_LIBVTERM=YES")  ; Faster builds if libvterm is installed
-  :config
-  ;; Custom toggle function styled like your eat/calc setup
-  (defun my/vterm-toggle ()
-    "Toggle vterm buffer with flair, running vterm if it doesn’t exist."
-    (interactive)
-    (my/toggle-buffer "*vterm*" 'vterm))
-  ;; Cyberpunk aesthetics
-  (set-face-attribute 'vterm-color-black nil :foreground "#3b4252" :background "#2e3440")
-  (set-face-attribute 'vterm-color-red nil :foreground "#bf616a")
-  (set-face-attribute 'vterm-color-green nil :foreground "#a3be8c")
-  (set-face-attribute 'vterm-color-yellow nil :foreground "#ebcb8b")
-  (set-face-attribute 'vterm-color-blue nil :foreground "#81a1c1")
-  (set-face-attribute 'vterm-color-magenta nil :foreground "#b48ead")
-  (set-face-attribute 'vterm-color-cyan nil :foreground "#88c0d0")
-  (set-face-attribute 'vterm-color-white nil :foreground "#e5e9f0")
-  ;; Copy/paste enhancements
-  (defun vterm-copy-to-clipboard ()
-    "Copy current selection to clipboard."
-    (interactive)
-    (when (region-active-p)
-      (vterm-copy (buffer-substring-no-properties (region-beginning) (region-end)))
-      (deactivate-mark)
-      (message "Copied to clipboard")))
-  ;; Integration with your workflow
-  (add-hook 'vterm-mode-hook
-            (lambda ()
-              (display-line-numbers-mode -1)  ; No clutter
-              (hl-line-mode -1)               ; Clean look
-              (setq-local cursor-type 'box)   ; Solid cursor
-              (text-scale-amount 1.1)))       ; Slightly larger text
-  :bind (("C-c v" . my/vterm-toggle)         ; Toggle vterm
-         :map vterm-mode-map
-         ("C-c C-c" . vterm-send-C-c)        ; Interrupt gracefully
-         ("C-y" . vterm-yank)                ; Paste like a pro
-         ("C-w" . vterm-copy-to-clipboard)   ; Copy selection
-         ("M-:" . vterm-send-string)))       ; Send commands
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    helm                                   ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; Helm - Epic Completion Framework
+;;; Helm - Bare Minimum for Aidermacs
 (use-package helm
   :ensure t
-  :demand t  ; Load immediately for instant gratification
+  :defer t  ; Load only when aidermacs needs it
   :init
-  (helm-mode 1)  ; Enable Helm globally right away
-  :custom
-  (helm-split-window-inside-p t)          ; Keep popups inside the current window
-  (helm-move-to-line-cycle-in-source t)   ; Cycle through candidates seamlessly
-  (helm-ff-search-library-in-sexp t)      ; Search libraries in Lisp files
-  (helm-scroll-amount 8)                  ; Smooth scrolling
-  (helm-idle-delay 0.1)                   ; Lightning-fast response
-  (helm-input-idle-delay 0)               ; No delay on input
-  (helm-candidate-number-limit 100)       ; Show plenty of candidates
-  (helm-display-header-line nil)          ; Clean look, no redundant header
-  (helm-autoresize-max-height 40)         ; Limit popup size
-  (helm-autoresize-min-height 20)         ; Ensure visibility
+  (setq helm-mode nil)  ; Disable Helm globally
   :config
-  ;; Integrate with Nerd Icons for visual flair
-  (with-eval-after-load 'nerd-icons
-    (setq helm-ff-icon-fn
-          (lambda (file)
-            (nerd-icons-icon-for-file file :height 1.0))))
-  ;; Theme it up
-  (set-face-attribute 'helm-source-header nil
-                      :background "#2e3440"  ; Dark Nordic base
-                      :foreground "#88c0d0"  ; Icy blue
-                      :height 1.2
-                      :weight 'bold)
-  (set-face-attribute 'helm-selection nil
-                      :background "#5e81ac"  ; Soft blue highlight
-                      :foreground nil)
-  ;; Replace default bindings with Helm awesomeness
-  (global-set-key (kbd "C-x C-f") 'helm-find-files)  ; Popup file finder
-  (global-set-key (kbd "C-x C-d") 'helm-browse-project)  ; Project-aware dir popup
-  (global-set-key (kbd "M-x") 'helm-M-x)             ; Command runner
-  (global-set-key (kbd "C-x b") 'helm-mini)          ; Buffer switcher
-  (global-set-key (kbd "C-c h") 'helm-command-prefix) ; Helm prefix
-  :bind (:map helm-map
-              ("<tab>" . helm-execute-persistent-action)  ; Tab to select
-              ("C-z" . helm-select-action)               ; Extra action menu
-              ("C-j" . helm-next-line)                   ; Smooth navigation
-              ("C-k" . helm-previous-line))
-  :hook
-  ;; Ensure Helm mode persists across sessions
-  (after-init . helm-mode))
-
-(use-package helm-descbinds
-  :ensure t
-  :after helm
-  :bind ("C-h b" . helm-descbinds))  ; Describe bindings with style
-
-(use-package helm-projectile
-  :ensure t
-  :after (helm projectile)
-  :config
-  (helm-projectile-on))  ; Integrate with Projectile
+  ;; No bindings, no interference
+  (global-unset-key (kbd "C-x C-f"))  ; Ensure Vertico owns this
+  (global-unset-key (kbd "M-x"))
+  (global-unset-key (kbd "C-x b")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Vertico + Consult                            ;;
@@ -2418,12 +2321,32 @@ If QUIET is non-nil, suppress messages."
               ("C-c U" . '0x0-upload-file)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                   eat                                     ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package eat
+  :ensure t ;; Automatically install it, because who has time for manual bullshit?
+  :defer t  ;; Lazy-load this beast, we’re not savages
+  :commands (eat) ;; Autoload the main entry point
+  :bind (("C-`" . (lambda () (interactive) (my/toggle-buffer "*eat*" 'eat)))
+         :map eat-mode-map
+         ("C-c C-k" . eat-kill-process) ;; Extra flair for killing the process
+         ("C-c C-r" . eat-reset)) ;; Reset the terminal like a boss
+ :custom
+  (eat-kill-buffer-on-exit t) ;; Clean up after yourself, you animal
+  (eat-enable-auto-scrolling t) ;; Scroll like it’s 2025
+  (eat-term-name "xterm-256color") ;; Full color glory
+  :config
+  ;; Add some fucking awesome tweaks
+  (add-hook 'eat-mode-hook #'turn-on-auto-fill)) ;; Keep shit tidy
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                   calc                                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
  (use-package calc
    :ensure nil  ;; calc is built-in, no need to install
-   :bind (("C-c c" . (lambda () (interactive) (my/toggle-buffer "*Calculator*" 'calc)))))
+   :bind (("C-c c" . 'calc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                 python venv                               ;;
