@@ -1155,17 +1155,18 @@ If QUIET is non-nil, suppress messages."
 ;;                             Org Mode Setup                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                             Org Mode Setup                                  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; Core Org configuration
 (use-package org
   :ensure nil  ; Built-in package
   :init
-  (setq org-directory "~/org/")
-  (setq org-journal-dir (expand-file-name "journal/" org-directory))
+  (setq org-directory "~/.org/")
   (defvar my-org-prefix-map (make-sparse-keymap) "Prefix map for Org-mode commands.")
   (defvar my-org-agenda-map (make-sparse-keymap) "Prefix map for Org-agenda commands.")
-  (defvar my-org-journal-map (make-sparse-keymap) "Prefix map for Org-journal commands.")
   (define-key my-org-prefix-map (kbd "a") my-org-agenda-map)
-  (define-key my-org-prefix-map (kbd "j") my-org-journal-map)
   :bind-keymap
   ("C-c o" . my-org-prefix-map)
   :bind
@@ -1190,13 +1191,11 @@ If QUIET is non-nil, suppress messages."
   (add-hook 'org-capture-prepare-finalize-hook #'org-id-get-create)
   (define-key my-org-prefix-map (kbd "r") #'my-org-refile-to-todos)
   ;; Explicitly set org-agenda-files
-  (setq org-agenda-files (append (directory-files-recursively org-journal-dir "[0-1][0-9]-[0-9]\\{4\\}\\.org")
-                                 (list (expand-file-name "todos.org" org-directory))))
+  (setq org-agenda-files (list (expand-file-name "todos.org" org-directory)))
   (with-eval-after-load 'which-key
     (which-key-add-key-based-replacements
      "C-c o" "org-mode"
-     "C-c o a" "org-agenda"
-     "C-c o j" "org-journal")))
+     "C-c o a" "org-agenda")))
 
 ;; Org-agenda sub-config
 (use-package org-agenda
@@ -1255,58 +1254,6 @@ If QUIET is non-nil, suppress messages."
           (switch-to-buffer agenda-buffer)
           (vertico-posframe-show agenda-buffer))))))
 
-;; Utility functions for counting
-(defun my-org-count-meetings-today ()
-  "Count meetings scheduled for today."
-  (let ((count 0))
-    (dolist (file org-agenda-files)
-      (with-current-buffer (find-file-noselect file)
-        (org-with-wide-buffer
-         (goto-char (point-min))
-         (while (re-search-forward "^\\*+ .*SCHEDULED:.*\\[<[0-9-]* \\(Mon\\|Tue\\|Wed\\|Thu\\|Fri\\|Sat\\|Sun\\) [^]]*\\]" nil t)
-           (when (string= (format-time-string "%Y-%m-%d") (org-get-scheduled-time (point)))
-             (when (string-match "MEETING" (org-get-heading t t t t))
-               (setq count (1+ count))))))))
-    count))
-
-(defun my-org-count-tasks-created-today ()
-  "Count tasks created today."
-  (let ((count 0))
-    (dolist (file org-agenda-files)
-      (with-current-buffer (find-file-noselect file)
-        (org-with-wide-buffer
-         (goto-char (point-min))
-         (while (re-search-forward ":Created: \\[<[0-9-]* \\(Mon\\|Tue\\|Wed\\|Thu\\|Fri\\|Sat\\|Sun\\) [^]]*\\]" nil t)
-           (when (string= (format-time-string "%Y-%m-%d") (org-entry-get (point) "Created"))
-             (setq count (1+ count)))))))
-    count))
-
-(defun my-org-count-tasks-closed-today ()
-  "Count tasks closed today."
-  (let ((count 0))
-    (dolist (file org-agenda-files)
-      (with-current-buffer (find-file-noselect file)
-        (org-with-wide-buffer
-         (goto-char (point-min))
-         (while (re-search-forward "CLOSED: \\[<[0-9-]* \\(Mon\\|Tue\\|Wed\\|Thu\\|Fri\\|Sat\\|Sun\\) [^]]*\\]" nil t)
-           (when (string= (format-time-string "%Y-%m-%d") (org-entry-get (point) "CLOSED"))
-             (setq count (1+ count)))))))
-    count))
-
-(defun my-org-count-overdue-tasks ()
-  "Count overdue tasks."
-  (let ((count 0))
-    (dolist (file org-agenda-files)
-      (with-current-buffer (find-file-noselect file)
-        (org-with-wide-buffer
-         (goto-char (point-min))
-         (while (re-search-forward org-deadline-regexp nil t)
-           (let ((deadline (org-get-deadline-time (point))))
-             (when (and deadline (time-less-p deadline (current-time))
-                        (not (org-entry-is-done-p)))
-               (setq count (1+ count))))))))
-    count))
-
 ;; Org-capture sub-config
 (use-package org-capture
   :ensure nil
@@ -1316,26 +1263,15 @@ If QUIET is non-nil, suppress messages."
          ("n" . my-org-capture-note-quick))
   :config
   (setq org-capture-templates
-        `(("j" "Journal Entry" entry
-           (file+function ,(lambda () (expand-file-name (format-time-string "%Y/%m-%Y.org") org-journal-dir))
-                          org-journal-find-location)
-           "* %<%H:%M> %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:END:\n" :empty-lines 1)
-          ("t" "General To-Do" entry
-           (file+function ,(lambda () (expand-file-name (format-time-string "%Y/%m-%Y.org") org-journal-dir))
-                          org-journal-find-location)
-           "* TODO [#B] %?\n:Created: %T\n" :empty-lines 0)
-          ("c" "Code To-Do" entry
-           (file+function ,(lambda () (expand-file-name (format-time-string "%Y/%m-%Y.org") org-journal-dir))
-                          org-journal-find-location)
-           "* TODO [#B] [#code] %?\n:Created: %T\n%i\n%a\nProposed Solution: " :empty-lines 0)
+        `(("t" "Todo" entry
+           (file+headline ,(expand-file-name "todos.org" org-directory) "Tasks")
+           "* TODO %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\n")
           ("m" "Meeting" entry
-           (file+function ,(lambda () (expand-file-name (format-time-string "%Y/%m-%Y.org") org-journal-dir))
-                          org-journal-find-location)
-           "* MEETING %^{Title} %^g\nSCHEDULED: %^{Date and Time}T\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:END:\n%?" :empty-lines 1)
-          ("n" "Quick Note" entry
-           (file+function ,(lambda () (expand-file-name (format-time-string "%Y/%m-%Y.org") org-journal-dir))
-                          org-journal-find-location)
-           "* %<%H:%M> %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:END:\n" :empty-lines 1)))
+           (file+headline ,(expand-file-name "todos.org" org-directory) "Meetings")
+           "* MEETING %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\nSCHEDULED: %^T\n%a")
+          ("n" "Note" entry
+           (file+headline ,(expand-file-name "notes.org" org-directory) "Notes")
+           "* %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\n%a")))
   (advice-add 'org-capture-kill :after #'my-org-capture-delete-file-after-kill)
   (add-hook 'org-capture-after-finalize-hook
             (lambda ()
@@ -1466,71 +1402,6 @@ If QUIET is non-nil, suppress messages."
             (todo "" ((org-agenda-overriding-header "")
                       (org-super-agenda-groups org-super-agenda-groups))))))))
 
-;; Org-journal
-(use-package org-journal
-  :ensure t
-  :bind (:map my-org-journal-map
-         ("j" . my-org-journal-new-entry)
-         ("s" . my-org-journal-search))
-  :config
-  (setq org-journal-file-type 'monthly)
-  (setq org-journal-file-format "%m-%Y.org")
-  (setq org-journal-date-format "%Y-%m-%d, %A")
-  (setq org-journal-file-pattern "[0-1][0-9]-[0-9]\\{4\\}\\.org")
-  (setq org-journal-enable-agenda-integration t)
-  (defun org-journal-find-file ()
-    "Find or create the journal file for the current month in a yearly folder."
-    (let* ((year (format-time-string "%Y"))
-           (month-file (format-time-string "%m-%Y.org"))
-           (year-dir (expand-file-name year org-journal-dir))
-           (full-path (expand-file-name month-file year-dir)))
-      (unless (file-exists-p year-dir)
-        (make-directory year-dir t))
-      full-path))
-  (defun org-journal-find-location ()
-    "Find or create the current day's heading in the journal file."
-    (let ((today (format-time-string org-journal-date-format)))
-      (goto-char (point-min))
-      (unless (re-search-forward (concat "^\\* " (regexp-quote today)) nil t)
-        (goto-char (point-max))
-        (unless (bolp) (insert "\n"))
-        (insert "* " today "\n"))
-      (goto-char (point-max))))
-  (defun my-org-journal-new-entry ()
-    "Open journal for today and allow easy closing with refiling."
-    (interactive)
-    (let ((buf (find-file-noselect (org-journal-find-file))))
-      (switch-to-buffer-other-window buf)
-      (org-journal-find-location)
-      (org-show-entry))
-    (local-set-key (kbd "C-c C-c")
-                   (lambda () (interactive)
-                     (save-buffer)
-                     (my-org-auto-refile-from-journal)
-                     (delete-window))))
-  (defun my-org-journal-search ()
-    "Search journal files using deadgrep."
-    (interactive)
-    (require 'deadgrep)
-    (let ((default-directory org-journal-dir))
-      (call-interactively #'deadgrep)))
-  (defun my-org-auto-refile-from-journal ()
-    "Refile only TODO entries from journal to todos.org."
-    (interactive)
-    (let ((journal-dir org-journal-dir)
-          (target-file (expand-file-name "todos.org" org-directory)))
-      (dolist (file (directory-files-recursively journal-dir org-journal-file-pattern))
-        (with-current-buffer (find-file-noselect file)
-          (org-with-wide-buffer
-           (goto-char (point-min))
-           (while (re-search-forward org-heading-regexp nil t)
-             (let ((todo-state (org-get-todo-state)))
-               (when todo-state  ; Only refile if it’s a TODO
-                 (org-refile nil nil (list "Tasks" target-file nil nil) t))))
-           (save-buffer)))))
-  (add-hook 'org-capture-after-finalize-hook #'my-org-auto-refile-from-journal)
-  (run-at-time t 3600 #'my-org-auto-refile-from-journal)))
-
 ;; Org-download
 (use-package org-download
   :ensure t
@@ -1538,13 +1409,13 @@ If QUIET is non-nil, suppress messages."
   :bind (:map my-org-prefix-map
          ("O" . org-download-clipboard))
   :config
-  (setq org-download-image-dir (expand-file-name "images" org-journal-dir))
+  (setq org-download-image-dir (expand-file-name "images" org-directory))
   (setq org-download-method
         (lambda (link)
           "Save downloaded files to daily journal entry."
           (let ((filename (org-download--fullname link)))
             (org-download--insert-image filename)
-            (org-capture nil "j")
+            (org-capture nil "n")
             (insert (format "[[file:%s]]" filename))
             (org-capture-finalize t)))))
 
@@ -1553,41 +1424,16 @@ If QUIET is non-nil, suppress messages."
   :ensure nil
   :after org
   :bind (:map my-org-prefix-map
-         ("t" . my-org-attach-to-journal))
+         ("t" . my-org-attach-to-todos))
   :config
   (setq org-attach-dir-relative t)
   (setq org-attach-use-inheritance t)
-  (setq org-attach-id-dir (expand-file-name "attachments" org-journal-dir))
-  (defun my-org-attach-to-journal ()
-    "Attach a file to the current journal entry."
+  (setq org-attach-id-dir (expand-file-name "attachments" org-directory))
+  (defun my-org-attach-to-todos ()
+    "Attach a file to the current todo entry."
     (interactive)
-    (org-capture nil "j")
+    (org-capture nil "t")
     (call-interactively #'org-attach-attach)
-    (org-capture-finalize t)))
-
-;; Org-protocol
-(use-package org-protocol
-  :ensure nil
-  :demand t
-  :config
-  (setq org-protocol-default-template-key "j")
-  (add-to-list 'org-protocol-protocol-alist
-               '("store-link-to-journal"
-                 :protocol "store-link"
-                 :function my-org-protocol-store-link))
-  (add-to-list 'org-protocol-protocol-alist
-               '("capture-to-journal"
-                 :protocol "capture"
-                 :function my-org-protocol-capture-to-journal))
-  (defun my-org-protocol-store-link (data)
-    "Store a link in the journal."
-    (org-capture nil "j")
-    (insert (org-link-make-string (cadr (split-string data "://")) "External Link"))
-    (org-capture-finalize t))
-  (defun my-org-protocol-capture-to-journal (data)
-    "Capture arbitrary data to journal."
-    (org-capture nil "j")
-    (insert (cadr (split-string data "://")))
     (org-capture-finalize t)))
 
 ;; Org-modern
