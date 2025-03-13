@@ -1227,7 +1227,7 @@ If QUIET is non-nil, suppress messages."
            (save-buffer)))))
   ;; Run auto-refile after capture and periodically
   (add-hook 'org-capture-after-finalize-hook #'my-org-auto-refile-from-journal)
-  (run-at-time t 3600 #'my-org-auto-refile-from-journal))  ; Every hour
+  (run-at-time t 3600 #'my-org-auto-refile-from-journal)))  ; Every hour
 
   ;; Org-agenda sub-config
   (use-package org-agenda
@@ -1389,7 +1389,7 @@ If QUIET is non-nil, suppress messages."
     (org-capture-finalize t))
   :bind (:map org-mode-map
          ("C-c o a" . my-org-attach-to-journal)))
-  
+
   ;; Org-protocol for external inputs
   (use-package org-protocol
     :ensure nil
