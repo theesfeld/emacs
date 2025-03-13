@@ -1261,7 +1261,7 @@ If QUIET is non-nil, suppress messages."
                               (:name "Currently Being Verified" :todo "VERIFYING" :order 20)
                               (:name "General Unscheduled" :and (:not (:tag ("personal" "work")) :not (:scheduled t)))
                               (:name "Overdue" :deadline past)
-                              (:name "Completed Today" :and (:todo "DONE" :scheduled today))))))))))
+                              (:name "Completed Today" :and (:todo "DONE" :scheduled today)))))))))
 
   ;; Org-capture with journal focus
   (use-package org-capture
