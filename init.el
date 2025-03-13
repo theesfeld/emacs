@@ -1161,16 +1161,16 @@ If QUIET is non-nil, suppress messages."
   :init
   ;; Define variables early
   (setq org-directory "~/org/")
-  (setq org-journal-dir (expand-file-name "journal/" org-directory))  ; Define here to avoid void variable error
+  (setq org-journal-dir (expand-file-name "journal/" org-directory))
   ;; Define prefix maps before use
   (defvar my-org-prefix-map (make-sparse-keymap) "Prefix map for Org-mode commands.")
   (defvar my-org-agenda-map (make-sparse-keymap) "Prefix map for Org-agenda commands.")
   (defvar my-org-journal-map (make-sparse-keymap) "Prefix map for Org-journal commands.")
   ;; Set up sub-prefixes
-  (define-key my-org-prefix-map (kbd "a") '("org-agenda" . my-org-agenda-map))
-  (define-key my-org-prefix-map (kbd "j") '("org-journal" . my-org-journal-map))
+  (define-key my-org-prefix-map (kbd "a") my-org-agenda-map)
+  (define-key my-org-prefix-map (kbd "j") my-org-journal-map)
   :bind-keymap
-  ("C-c o" . my-org-prefix-map)  ; Bind the prefix map to C-c o
+  ("C-c o" . my-org-prefix-map)
   :bind
   (:map my-org-prefix-map
         ("o" . (lambda () (interactive)
@@ -1181,7 +1181,6 @@ If QUIET is non-nil, suppress messages."
                    (org-agenda nil "a")
                    (call-interactively #'org-agenda-day-view)))))
   :config
-  ;; Basic Org settings
   (setq org-startup-indented t
         org-startup-folded t
         org-return-follows-link t
@@ -1190,18 +1189,15 @@ If QUIET is non-nil, suppress messages."
         org-todo-keywords '((sequence "TODO(t)" "NEXT(n)" "WAITING(w@/!)" "|" "DONE(d!)" "CANCELED(c@)")))
   (setq org-clock-persist 'history)
   (org-clock-persistence-insinuate)
-  ;; Add IDs for stable linking
   (add-hook 'org-capture-prepare-finalize-hook #'org-id-get-create)
-  ;; Bindings for my-org-prefix-map
   (define-key my-org-prefix-map (kbd "r") #'my-org-refile-to-todos)
-  ;; Add which-key descriptions
   (with-eval-after-load 'which-key
     (which-key-add-key-based-replacements
-     "C-c o" "org-mode"      ; Label for the main prefix
-     "C-c o a" "org-agenda"  ; Label for agenda sub-prefix
-     "C-c o j" "org-journal")))  ; Label for journal sub-prefix
+     "C-c o" "org-mode"
+     "C-c o a" "org-agenda"
+     "C-c o j" "org-journal")))
 
-;; Org-agenda sub-config (nested because it’s a built-in part of org)
+;; Org-agenda sub-config
 (use-package org-agenda
   :ensure nil
   :after org
@@ -1223,7 +1219,7 @@ If QUIET is non-nil, suppress messages."
         org-refile-use-outline-path t
         org-outline-path-complete-in-steps nil))
 
-;; Org-capture sub-config (nested because it’s a built-in part of org)
+;; Org-capture sub-config
 (use-package org-capture
   :ensure nil
   :after org
@@ -1247,14 +1243,18 @@ If QUIET is non-nil, suppress messages."
           ("m" "Meeting" entry
            (file+function ,(lambda () (expand-file-name (format-time-string "%Y/%m-%Y.org") org-journal-dir))
                           org-journal-find-location)
-           "* MEETING %^{Title} %^g\nSCHEDULED: %^{Date and Time}T\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:END:\n%?" :empty-lines 1)))
+           "* MEETING %^{Title} %^g\nSCHEDULED: %^{Date and Time}T\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:END:\n%?" :empty-lines 1)
+          ("n" "Quick Note" entry
+           (file+function ,(lambda () (expand-file-name (format-time-string "%Y/%m-%Y.org") org-journal-dir))
+                          org-journal-find-location)
+           "* %<%H:%M> %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:END:\n" :empty-lines 1)))
   (advice-add 'org-capture-kill :after #'my-org-capture-delete-file-after-kill)
   (add-hook 'org-capture-after-finalize-hook
             (lambda ()
               (when (get-buffer-window "*Capture*")
                 (delete-window (get-buffer-window "*Capture*"))))))
 
-;; Utility functions (standalone, not tied to a specific package)
+;; Utility functions
 (defun my-org-refile-to-todos ()
   "Refile current heading to todos.org under 'Tasks'."
   (interactive)
@@ -1338,14 +1338,17 @@ If QUIET is non-nil, suppress messages."
         (insert "* " today "\n"))
       (goto-char (point-max))))
   (defun my-org-journal-new-entry ()
-    "Open journal for today and allow easy closing."
+    "Open journal for today and allow easy closing with refiling."
     (interactive)
     (let ((buf (find-file-noselect (org-journal-find-file))))
       (switch-to-buffer-other-window buf)
       (org-journal-find-location)
       (org-show-entry))
-    (local-set-key (kbd "C-c C-q")
-                   (lambda () (interactive) (kill-buffer-and-window))))
+    (local-set-key (kbd "C-c C-c")
+                   (lambda () (interactive)
+                     (save-buffer)
+                     (my-org-auto-refile-from-journal)
+                     (delete-window))))
   (defun my-org-journal-search ()
     "Search journal files using deadgrep."
     (interactive)
@@ -1392,7 +1395,7 @@ If QUIET is non-nil, suppress messages."
   :ensure nil
   :after org
   :bind (:map my-org-prefix-map
-         ("t" . my-org-attach-to-journal))  ; Changed from "a" to "t" to avoid conflict with org-agenda
+         ("t" . my-org-attach-to-journal))
   :config
   (setq org-attach-dir-relative t)
   (setq org-attach-use-inheritance t)
@@ -1432,7 +1435,10 @@ If QUIET is non-nil, suppress messages."
 ;; Org-timeblock
 (use-package org-timeblock
   :ensure t
-  :vc (:url "https://github.com/ichernyshovvv/org-timeblock")
+  :vc (:url "https://github.com/ichernyshovvv/org-timeblock" :rev :newest)
+  :init
+  (unless (fboundp 'compat-macs)
+    (use-package compat :ensure t))
   :bind (:map my-org-prefix-map
          ("w" . org-timeblock)))
 
