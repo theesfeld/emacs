@@ -1158,22 +1158,22 @@ If QUIET is non-nil, suppress messages."
 (use-package org
   :ensure nil  ; Built-in package
   :bind (:map global-map
-         ("C-c o" . (lambda () (interactive) (progn
-                                              (when (get-buffer-window "*Org Agenda*")
-                                                (delete-window (get-buffer-window "*Org Agenda*")))
-                                              (org-switch-to-buffer-other-window "*Org Agenda*")
-                                              (org-agenda nil "a")
-                                              (call-interactively #'org-agenda-day-view))))
-         :map my-org-prefix-map
-         ("r" . my-org-refile-to-todos)
-         :prefix-map (my-org-prefix-map . "C-c o")
-         :prefix-map (my-org-agenda-map . "C-c o a")
-         :prefix-map (my-org-journal-map . "C-c o j"))
+         ("C-c o" . (lambda () (interactive)
+                      (progn
+                        (when (get-buffer-window "*Org Agenda*")
+                          (delete-window (get-buffer-window "*Org Agenda*")))
+                        (org-switch-to-buffer-other-window "*Org Agenda*")
+                        (org-agenda nil "a")
+                        (call-interactively #'org-agenda-day-view))))
+  :bind-keymap ("C-c o" . my-org-prefix-map)
   :init
   ;; Define prefix maps before use
   (defvar my-org-prefix-map (make-sparse-keymap) "Prefix map for Org-mode commands.")
   (defvar my-org-agenda-map (make-sparse-keymap) "Prefix map for Org-agenda commands.")
   (defvar my-org-journal-map (make-sparse-keymap) "Prefix map for Org-journal commands.")
+  ;; Define sub-prefixes
+  (define-key my-org-prefix-map (kbd "a") my-org-agenda-map)
+  (define-key my-org-prefix-map (kbd "j") my-org-journal-map)
   ;; Set org-directory early
   (setq org-directory "~/org/")
   :config
@@ -1209,25 +1209,8 @@ If QUIET is non-nil, suppress messages."
     (org-agenda nil "a")
     (org-agenda-goto (org-clock-is-active)))
 
-  ;; Auto-refiling function
-  (defun my-org-auto-refile-from-journal ()
-    "Automatically refile TODOs and scheduled items from journal to todos.org."
-    (interactive)
-    (let ((journal-dir org-journal-dir)
-          (target-file (expand-file-name "todos.org" org-directory)))
-      (dolist (file (directory-files-recursively journal-dir org-journal-file-pattern))
-        (with-current-buffer (find-file-noselect file)
-          (org-with-wide-buffer
-           (goto-char (point-min))
-           (while (re-search-forward org-heading-regexp nil t)
-             (when (or (org-entry-is-todo-p)
-                       (org-get-scheduled-time (point))
-                       (org-get-deadline-time (point)))
-               (org-refile nil nil (list "Tasks" target-file nil nil) t)))
-           (save-buffer)))))
-  ;; Run auto-refile after capture and periodically
-  (add-hook 'org-capture-after-finalize-hook #'my-org-auto-refile-from-journal)
-  (run-at-time t 3600 #'my-org-auto-refile-from-journal)))  ; Every hour
+  ;; Bindings for my-org-prefix-map
+  (define-key my-org-prefix-map (kbd "r") #'my-org-refile-to-todos)
 
   ;; Org-agenda sub-config
   (use-package org-agenda
@@ -1287,6 +1270,8 @@ If QUIET is non-nil, suppress messages."
            ("c" . org-capture)
            ("n" . my-org-capture-note-quick))
     :config
+    ;; Move org-journal-dir here to ensure it’s defined early
+    (setq org-journal-dir (expand-file-name "journal/" org-directory))
     (setq org-capture-templates
           `(("j" "Journal Entry" entry
              (file+function ,(lambda () (expand-file-name (format-time-string "%Y/%m-%Y.org") org-journal-dir))
@@ -1317,7 +1302,6 @@ If QUIET is non-nil, suppress messages."
            ("j" . my-org-journal-new-entry)
            ("s" . my-org-journal-search))
     :config
-    (setq org-journal-dir (expand-file-name "journal/" org-directory))
     (setq org-journal-file-type 'monthly)
     (setq org-journal-file-format "%m-%Y.org")
     (setq org-journal-date-format "%Y-%m-%d, %A")
@@ -1355,14 +1339,32 @@ If QUIET is non-nil, suppress messages."
       (interactive)
       (require 'deadgrep)
       (let ((default-directory org-journal-dir))
-        (call-interactively #'deadgrep))))
+        (call-interactively #'deadgrep)))
+    ;; Auto-refiling function (moved here to use org-journal-dir)
+    (defun my-org-auto-refile-from-journal ()
+      "Automatically refile TODOs and scheduled items from journal to todos.org."
+      (interactive)
+      (let ((journal-dir org-journal-dir)
+            (target-file (expand-file-name "todos.org" org-directory)))
+        (dolist (file (directory-files-recursively journal-dir org-journal-file-pattern))
+          (with-current-buffer (find-file-noselect file)
+            (org-with-wide-buffer
+             (goto-char (point-min))
+             (while (re-search-forward org-heading-regexp nil t)
+               (when (or (org-entry-is-todo-p)
+                         (org-get-scheduled-time (point))
+                         (org-get-deadline-time (point)))
+                 (org-refile nil nil (list "Tasks" target-file nil nil) t)))
+             (save-buffer)))))
+    (add-hook 'org-capture-after-finalize-hook #'my-org-auto-refile-from-journal)
+    (run-at-time t 3600 #'my-org-auto-refile-from-journal))  ; Every hour
 
   ;; Org-download for images/snippets
   (use-package org-download
     :ensure t
     :hook (dired-mode . org-download-enable)
-    :bind (:map org-mode-map
-           ("C-c o O" . org-download-clipboard))
+    :bind (:map my-org-prefix-map
+           ("O" . org-download-clipboard))
     :config
     (setq org-download-image-dir (expand-file-name "images" org-journal-dir))
     (setq org-download-method
@@ -1374,21 +1376,22 @@ If QUIET is non-nil, suppress messages."
               (insert (format "[[file:%s]]" filename))
               (org-capture-finalize t)))))
 
+  ;; Org-attach for file attachments
   (use-package org-attach
-  :ensure nil
-  :after org
-  :config
-  (setq org-attach-dir-relative t)
-  (setq org-attach-use-inheritance t)
-  (setq org-attach-id-dir (expand-file-name "attachments" org-journal-dir))
-  (defun my-org-attach-to-journal ()
-    "Attach a file to the current journal entry."
-    (interactive)
-    (org-capture nil "j")
-    (call-interactively #'org-attach-attach)
-    (org-capture-finalize t))
-  :bind (:map org-mode-map
-         ("C-c o a" . my-org-attach-to-journal)))
+    :ensure nil
+    :after org
+    :bind (:map my-org-prefix-map
+           ("a" . my-org-attach-to-journal))
+    :config
+    (setq org-attach-dir-relative t)
+    (setq org-attach-use-inheritance t)
+    (setq org-attach-id-dir (expand-file-name "attachments" org-journal-dir))
+    (defun my-org-attach-to-journal ()
+      "Attach a file to the current journal entry."
+      (interactive)
+      (org-capture nil "j")
+      (call-interactively #'org-attach-attach)
+      (org-capture-finalize t)))
 
   ;; Org-protocol for external inputs
   (use-package org-protocol
