@@ -1356,7 +1356,7 @@ If QUIET is non-nil, suppress messages."
     (let ((default-directory org-journal-dir))
       (call-interactively #'deadgrep)))
   (defun my-org-auto-refile-from-journal ()
-    "Automatically refile TODOs and scheduled items from journal to todos.org."
+    "Automatically refile TODOs and scheduled/deadlined items from journal to todos.org."
     (interactive)
     (let ((journal-dir org-journal-dir)
           (target-file (expand-file-name "todos.org" org-directory)))
@@ -1365,10 +1365,11 @@ If QUIET is non-nil, suppress messages."
           (org-with-wide-buffer
            (goto-char (point-min))
            (while (re-search-forward org-heading-regexp nil t)
-             (when (or (org-entry-is-todo-p)
-                       (org-get-scheduled-time (point))
-                       (org-get-deadline-time (point)))
-               (org-refile nil nil (list "Tasks" target-file nil nil) t)))
+             (let ((todo-state (org-get-todo-state))
+                   (scheduled (org-get-scheduled-time (point)))
+                   (deadline (org-get-deadline-time (point))))
+               (when (or todo-state scheduled deadline)
+                 (org-refile nil nil (list "Tasks" target-file nil nil) t))))
            (save-buffer)))))
   (add-hook 'org-capture-after-finalize-hook #'my-org-auto-refile-from-journal)
   (run-at-time t 3600 #'my-org-auto-refile-from-journal)))
