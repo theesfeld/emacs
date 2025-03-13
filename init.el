@@ -1158,25 +1158,28 @@ If QUIET is non-nil, suppress messages."
 ;; Core Org configuration
 (use-package org
   :ensure nil  ; Built-in package
-  :bind (:map global-map
-         ("C-c o" . (lambda () (interactive)
-                      (progn
-                        (when (get-buffer-window "*Org Agenda*")
-                          (delete-window (get-buffer-window "*Org Agenda*")))
-                        (org-switch-to-buffer-other-window "*Org Agenda*")
-                        (org-agenda nil "a")
-                        (call-interactively #'org-agenda-day-view))))
-  :bind-keymap ("C-c o" . my-org-prefix-map)
   :init
+  ;; Define variables early
+  (setq org-directory "~/org/")
+  (setq org-journal-dir (expand-file-name "journal/" org-directory))  ; Define here to avoid void variable error
   ;; Define prefix maps before use
   (defvar my-org-prefix-map (make-sparse-keymap) "Prefix map for Org-mode commands.")
   (defvar my-org-agenda-map (make-sparse-keymap) "Prefix map for Org-agenda commands.")
   (defvar my-org-journal-map (make-sparse-keymap) "Prefix map for Org-journal commands.")
-  ;; Define sub-prefixes
-  (define-key my-org-prefix-map (kbd "a") my-org-agenda-map)
-  (define-key my-org-prefix-map (kbd "j") my-org-journal-map)
-  ;; Set org-directory early
-  (setq org-directory "~/org/")
+  ;; Set up sub-prefixes
+  (define-key my-org-prefix-map (kbd "a") '("org-agenda" . my-org-agenda-map))
+  (define-key my-org-prefix-map (kbd "j") '("org-journal" . my-org-journal-map))
+  :bind-keymap
+  ("C-c o" . my-org-prefix-map)  ; Bind the prefix map to C-c o
+  :bind
+  (:map my-org-prefix-map
+        ("o" . (lambda () (interactive)
+                 (progn
+                   (when (get-buffer-window "*Org Agenda*")
+                     (delete-window (get-buffer-window "*Org Agenda*")))
+                   (org-switch-to-buffer-other-window "*Org Agenda*")
+                   (org-agenda nil "a")
+                   (call-interactively #'org-agenda-day-view)))))
   :config
   ;; Basic Org settings
   (setq org-startup-indented t
@@ -1190,7 +1193,13 @@ If QUIET is non-nil, suppress messages."
   ;; Add IDs for stable linking
   (add-hook 'org-capture-prepare-finalize-hook #'org-id-get-create)
   ;; Bindings for my-org-prefix-map
-  (define-key my-org-prefix-map (kbd "r") #'my-org-refile-to-todos)))
+  (define-key my-org-prefix-map (kbd "r") #'my-org-refile-to-todos)
+  ;; Add which-key descriptions
+  (with-eval-after-load 'which-key
+    (which-key-add-key-based-replacements
+     "C-c o" "org-mode"      ; Label for the main prefix
+     "C-c o a" "org-agenda"  ; Label for agenda sub-prefix
+     "C-c o j" "org-journal")))  ; Label for journal sub-prefix
 
 ;; Org-agenda sub-config (nested because it’s a built-in part of org)
 (use-package org-agenda
@@ -1222,7 +1231,6 @@ If QUIET is non-nil, suppress messages."
          ("c" . org-capture)
          ("n" . my-org-capture-note-quick))
   :config
-  (setq org-journal-dir (expand-file-name "journal/" org-directory))
   (setq org-capture-templates
         `(("j" "Journal Entry" entry
            (file+function ,(lambda () (expand-file-name (format-time-string "%Y/%m-%Y.org") org-journal-dir))
@@ -1384,7 +1392,7 @@ If QUIET is non-nil, suppress messages."
   :ensure nil
   :after org
   :bind (:map my-org-prefix-map
-         ("a" . my-org-attach-to-journal))
+         ("t" . my-org-attach-to-journal))  ; Changed from "a" to "t" to avoid conflict with org-agenda
   :config
   (setq org-attach-dir-relative t)
   (setq org-attach-use-inheritance t)
