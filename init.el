@@ -1183,6 +1183,7 @@ If QUIET is non-nil, suppress messages."
         org-return-follows-link t
         org-hide-emphasis-markers t
         org-startup-with-inline-images t
+        org-log-done 'time
         org-todo-keywords '((sequence "TODO(t)" "NEXT(n)" "WAITING(w@/!)" "|" "DONE(d!)" "CANCELED(c@)")))
   (setq org-clock-persist 'history)
   (org-clock-persistence-insinuate)
@@ -1204,7 +1205,8 @@ If QUIET is non-nil, suppress messages."
   :bind (:map my-org-agenda-map
          ("a" . org-agenda)
          ("t" . my-org-agenda-today)
-         ("c" . my-org-agenda-goto-current-clock))
+         ("c" . my-org-agenda-goto-current-clock)
+         ("v" . my-org-agenda-vertico-popup))  ; New Vertico popup binding
   :config
   (setq org-agenda-start-on-weekday 1
         org-agenda-span 'week
@@ -1213,11 +1215,97 @@ If QUIET is non-nil, suppress messages."
                                       (todo priority-down category-keep)
                                       (tags priority-down category-keep)
                                       (search category-keep))
-        org-agenda-log-mode-items '(closed)
+        org-agenda-log-mode-items '(closed clocked)  ; Show closed and clocked tasks
         org-agenda-start-with-log-mode t
         org-refile-targets '((org-agenda-files :maxlevel . 3))
         org-refile-use-outline-path t
-        org-outline-path-complete-in-steps nil))
+        org-outline-path-complete-in-steps nil
+        org-agenda-prefix-format
+        '((agenda . " %i %-12:c%?-12t% s [%e] ")  ; Effort estimate added
+          (todo . " %i %-12:c")
+          (tags . " %i %-12:c")
+          (search . " %i %-12:c"))
+        org-agenda-custom-commands
+        '(("v" "Vertico Agenda Popup" my-org-agenda-vertico-popup)))  ; Custom command for popup
+
+  ;; Custom Vertico popup function
+  (defun my-org-agenda-vertico-popup ()
+    "Display a rich Org Agenda in a Vertico posframe popup."
+    (interactive)
+    (let ((vertico-posframe-parameters
+           `((left-fringe . 8)
+             (right-fringe . 8)
+             (background-color . "#2e3440")  ; Dark Nordic base
+             (min-width . 80)
+             (min-height . 30)))
+          (vertico-posframe-show-delay 0.1))
+      (org-agenda nil "A")  ; Trigger the super agenda
+      (let ((agenda-buffer (get-buffer "*Org Agenda*")))
+        (when agenda-buffer
+          (with-current-buffer agenda-buffer
+            (setq buffer-read-only nil)
+            (goto-char (point-min))
+            (insert (propertize "📅 Agenda Dashboard\n" 'face '(:height 150 :weight bold :foreground "#88c0d0")))
+            (insert (format "📈 Meetings Today: %d | Tasks Created: %d | Tasks Closed: %d | Overdue: %d\n\n"
+                            (my-org-count-meetings-today)
+                            (my-org-count-tasks-created-today)
+                            (my-org-count-tasks-closed-today)
+                            (my-org-count-overdue-tasks)))
+            (setq buffer-read-only t))
+          (switch-to-buffer agenda-buffer)
+          (vertico-posframe-show agenda-buffer))))))
+
+;; Utility functions for counting
+(defun my-org-count-meetings-today ()
+  "Count meetings scheduled for today."
+  (let ((count 0))
+    (dolist (file org-agenda-files)
+      (with-current-buffer (find-file-noselect file)
+        (org-with-wide-buffer
+         (goto-char (point-min))
+         (while (re-search-forward "^\\*+ .*SCHEDULED:.*\\[<[0-9-]* \\(Mon\\|Tue\\|Wed\\|Thu\\|Fri\\|Sat\\|Sun\\) [^]]*\\]" nil t)
+           (when (string= (format-time-string "%Y-%m-%d") (org-get-scheduled-time (point)))
+             (when (string-match "MEETING" (org-get-heading t t t t))
+               (setq count (1+ count))))))))
+    count))
+
+(defun my-org-count-tasks-created-today ()
+  "Count tasks created today."
+  (let ((count 0))
+    (dolist (file org-agenda-files)
+      (with-current-buffer (find-file-noselect file)
+        (org-with-wide-buffer
+         (goto-char (point-min))
+         (while (re-search-forward ":Created: \\[<[0-9-]* \\(Mon\\|Tue\\|Wed\\|Thu\\|Fri\\|Sat\\|Sun\\) [^]]*\\]" nil t)
+           (when (string= (format-time-string "%Y-%m-%d") (org-entry-get (point) "Created"))
+             (setq count (1+ count)))))))
+    count))
+
+(defun my-org-count-tasks-closed-today ()
+  "Count tasks closed today."
+  (let ((count 0))
+    (dolist (file org-agenda-files)
+      (with-current-buffer (find-file-noselect file)
+        (org-with-wide-buffer
+         (goto-char (point-min))
+         (while (re-search-forward "CLOSED: \\[<[0-9-]* \\(Mon\\|Tue\\|Wed\\|Thu\\|Fri\\|Sat\\|Sun\\) [^]]*\\]" nil t)
+           (when (string= (format-time-string "%Y-%m-%d") (org-entry-get (point) "CLOSED"))
+             (setq count (1+ count)))))))
+    count))
+
+(defun my-org-count-overdue-tasks ()
+  "Count overdue tasks."
+  (let ((count 0))
+    (dolist (file org-agenda-files)
+      (with-current-buffer (find-file-noselect file)
+        (org-with-wide-buffer
+         (goto-char (point-min))
+         (while (re-search-forward org-deadline-regexp nil t)
+           (let ((deadline (org-get-deadline-time (point))))
+             (when (and deadline (time-less-p deadline (current-time))
+                        (not (org-entry-is-done-p)))
+               (setq count (1+ count))))))))
+    count))
 
 ;; Org-capture sub-config
 (use-package org-capture
@@ -1285,27 +1373,98 @@ If QUIET is non-nil, suppress messages."
   :bind (:map my-org-prefix-map
          ("A" . (lambda () (interactive) (org-agenda nil "A"))))
   :config
+  (setq org-super-agenda-header-map (make-sparse-keymap))  ; Disable default bindings
+  (defun my-transformer-today (item)
+    "Transform agenda items for Today's Schedule."
+    (propertize item 'face '(:foreground "#88c0d0")))
+  (defun my-transformer-overdue (item)
+    "Transform agenda items for Overdue."
+    (propertize item 'face '(:foreground "#bf616a" :weight bold)))
+  (defun my-transformer-created (item)
+    "Transform agenda items for Created Today."
+    (propertize item 'face '(:foreground "#a3be8c")))
+  (defun my-transformer-closed (item)
+    "Transform agenda items for Closed Today."
+    (propertize item 'face '(:foreground "#b48ead" :strike-through t)))
+  (defun my-transformer-critical (item)
+    "Transform agenda items for Critical Tasks."
+    (propertize item 'face '(:foreground "#d08770" :weight bold)))
+  (defun my-transformer-meetings (item)
+    "Transform agenda items for Meetings Today."
+    (propertize item 'face '(:foreground "#ebcb8b")))
+  (defun my-transformer-blocked (item)
+    "Transform agenda items for Blocked."
+    (propertize item 'face '(:foreground "#d08770")))
+  (defun my-transformer-next (item)
+    "Transform agenda items for Next Actions."
+    (propertize item 'face '(:foreground "#81a1c1")))
+  (defun my-transformer-research (item)
+    "Transform agenda items for Research."
+    (propertize item 'face '(:foreground "#5e81ac")))
+  (defun my-transformer-backlog (item)
+    "Transform agenda items for Backlog."
+    (propertize item 'face '(:foreground "#8fbcbb")))
+  (defun my-transformer-low (item)
+    "Transform agenda items for Low Priority."
+    (propertize item 'face '(:foreground "#4c566a")))
+
+  (setq org-super-agenda-groups
+        `((:name "📅 Today’s Schedule"
+                 :time-grid t
+                 :date today
+                 :order 1
+                 :transformer my-transformer-today)
+          (:name "🔴 Overdue"
+                 :deadline past
+                 :order 2
+                 :transformer my-transformer-overdue)
+          (:name "🆕 Created Today"
+                 :and (:property "Created" :regexp ,(format-time-string "%Y-%m-%d"))
+                 :order 3
+                 :transformer my-transformer-created)
+          (:name "✅ Closed Today"
+                 :and (:todo "DONE" :property "CLOSED" :regexp ,(format-time-string "%Y-%m-%d"))
+                 :order 4
+                 :transformer my-transformer-closed)
+          (:name "🏃 Critical Tasks"
+                 :tag "CRITICAL"
+                 :priority "A"
+                 :order 5
+                 :transformer my-transformer-critical)
+          (:name "💼 Meetings Today"
+                 :and (:tag "meeting" :scheduled today)
+                 :order 6
+                 :transformer my-transformer-meetings)
+          (:name "🚧 Blocked"
+                 :todo "WAITING"
+                 :order 7
+                 :transformer my-transformer-blocked)
+          (:name "📝 Next Actions"
+                 :todo "NEXT"
+                 :order 8
+                 :transformer my-transformer-next)
+          (:name "🔍 Research"
+                 :tag "@research"
+                 :order 9
+                 :transformer my-transformer-research)
+          (:name "📋 Backlog"
+                 :todo "TODO"
+                 :order 10
+                 :transformer my-transformer-backlog)
+          (:name "🗑️ Low Priority"
+                 :priority<= "C"
+                 :order 11
+                 :transformer my-transformer-low)
+          (:discard (:anything t))))
+
   (setq org-agenda-custom-commands
-        '(("A" "Super Agenda View"
-           ((agenda "" ((org-agenda-remove-tags t)
-                        (org-agenda-span 7)))
-            (alltodo "" ((org-agenda-remove-tags t)
-                         (org-agenda-prefix-format "  %t  %s")
-                         (org-agenda-overriding-header "CURRENT STATUS")
-                         (org-super-agenda-groups
-                          '((:name "Critical Tasks" :tag "CRITICAL" :order 0)
-                            (:name "Currently Working" :todo "IN-PROGRESS" :order 1)
-                            (:name "Planning Next Steps" :todo "PLANNING" :order 2)
-                            (:name "Problems & Blockers" :todo "BLOCKED" :tag "obstacle" :order 3)
-                            (:name "Research Required" :tag "@research" :order 7)
-                            (:name "Meeting Action Items" :and (:tag "meeting" :priority "A") :order 8)
-                            (:name "Other Important Items" :and (:todo "TODO" :priority "A" :not (:tag "meeting")) :order 9)
-                            (:name "General Backlog" :and (:todo "TODO" :priority "B") :order 10)
-                            (:name "Non Critical" :priority<= "C" :order 11)
-                            (:name "Currently Being Verified" :todo "VERIFYING" :order 20)
-                            (:name "General Unscheduled" :and (:not (:tag ("personal" "work")) :not (:scheduled t)))
-                            (:name "Overdue" :deadline past)
-                            (:name "Completed Today" :and (:todo "DONE" :scheduled today)))))))))))
+        '(("A" "Super Agenda Dashboard"
+           ((agenda "" ((org-agenda-span 1)  ; Focus on today
+                        (org-agenda-remove-tags nil)  ; Keep tags visible
+                        (org-agenda-overriding-header "")
+                        (org-super-agenda-groups org-super-agenda-groups)))
+            (todo "" ((org-agenda-overriding-header "")
+                      (org-super-agenda-groups org-super-agenda-groups))))))))
 
 ;; Org-journal
 (use-package org-journal
