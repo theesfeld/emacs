@@ -1190,7 +1190,7 @@ If QUIET is non-nil, suppress messages."
   ;; Add IDs for stable linking
   (add-hook 'org-capture-prepare-finalize-hook #'org-id-get-create)
   ;; Bindings for my-org-prefix-map
-  (define-key my-org-prefix-map (kbd "r") #'my-org-refile-to-todos))
+  (define-key my-org-prefix-map (kbd "r") #'my-org-refile-to-todos)))
 
 ;; Org-agenda sub-config (nested because it’s a built-in part of org)
 (use-package org-agenda
