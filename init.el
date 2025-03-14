@@ -498,6 +498,9 @@
   (set-face-attribute 'default nil :height 120)
   (set-face-attribute 'variable-pitch nil :height 130)
   (load-theme 'modus-vivendi t)
+  (setq modus-themes-bold-constructs t)
+  (setq modus-themes-italic-constructs t)
+
   (when (find-font (font-spec :name "Berkeley Mono"))
     (set-face-attribute 'default nil :font "Berkeley Mono" :height 130))
   (when (find-font (font-spec :name "Berkeley Mono Variable"))
@@ -689,19 +692,8 @@
   :config
   (set-face-attribute 'highlight-thing nil
                       :background "#5e81ac"  ; Soft blue from Modus
-                      :foreground nil
                       :weight 'normal)
   :hook (prog-mode . highlight-thing-mode))
-
-;; Beacon - Flash cursor position on jumps
-(use-package beacon
-  :ensure t
-  :custom
-  ;;(beacon-color "#bf616a")  ; Reddish from Modus for flash
-  (beacon-blink-when-point-moves-vertically 1)  ; Flash on vertical movement
-  (beacon-blink-duration 0.3)  ; Short flash
-  :config
-  (beacon-mode 1))
 
 ;; Indent bars
 (use-package indent-bars
@@ -815,14 +807,9 @@ nerd-icons-ibuffer-formats
 ;;; Helm - Bare Minimum for Aidermacs
 (use-package helm
   :ensure t
-  :defer t  ; Load only when aidermacs needs it
+  :defer t
   :init
-  (setq helm-mode nil)  ; Disable Helm globally
-  :config
-  ;; No bindings, no interference
-  (global-unset-key (kbd "C-x C-f"))  ; Ensure Vertico owns this
-  (global-unset-key (kbd "M-x"))
-  (global-unset-key (kbd "C-x b")))
+  (setq helm-mode nil))  ; Disable Helm globally
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Vertico + Consult                            ;;
@@ -1129,9 +1116,12 @@ If QUIET is non-nil, suppress messages."
 (use-package eglot
   :ensure nil
   :hook ((prog-mode . (lambda ()
-                        (unless (string-match-p "^\\*.*\\*$" (buffer-name))
+                        (unless (or (string-match-p "^\\*.*\\*$" (buffer-name))
+                                    (string= (buffer-file-name) (expand-file-name "init.el" user-emacs-directory)))
                           (eglot-ensure)))))
   :config
+  (add-to-list 'eglot-server-programs
+               '(emacs-lisp-mode . nil)) ; No LSP server for Emacs Lisp
   (add-hook 'eglot-managed-mode-hook
             (lambda ()
               (add-hook 'before-save-hook #'eglot-format-buffer -10 t)
@@ -1454,10 +1444,12 @@ If QUIET is non-nil, suppress messages."
 ;; Prefer remote upstream for magit
 (setq magit-prefer-remote-upstream t)
 
-(use-package magit :defer t)
-(use-package forge :defer t)
-
-(keymap-global-set "C-c g"  'magit)
+(use-package magit
+  :defer t
+  :bind ("C-c g" . magit-status))  ; Use magit-status explicitly
+(use-package forge
+  :defer t
+  :after magit)  ; Load after magit when needed
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Grep Ignorance                              ;;
@@ -1682,6 +1674,7 @@ If QUIET is non-nil, suppress messages."
 
 (use-package pdf-tools
   :ensure t
+  :defer t
   :mode ("\\.pdf\\'" . pdf-view-mode)
   :init
   (defun my-open-remote-pdf-in-emacs (url &rest _args)
@@ -1707,6 +1700,131 @@ If QUIET is non-nil, suppress messages."
             (lambda ()
               (display-line-numbers-mode -1)
               (hl-line-mode -1))))  ; Match your eat config
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                  DENOTE                                   ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package denote
+  :ensure t
+  :hook
+  ( ;; If you use Markdown or plain text files, then you want to make
+   ;; the Denote links clickable (Org renders links as buttons right
+   ;; away)
+   (text-mode . denote-fontify-links-mode-maybe)
+   ;; Apply colours to Denote names in Dired.  This applies to all
+   ;; directories.  Check `denote-dired-directories' for the specific
+   ;; directories you may prefer instead.  Then, instead of
+   ;; `denote-dired-mode', use `denote-dired-mode-in-directories'.
+   (dired-mode . denote-dired-mode))
+  :bind
+  ;; Denote DOES NOT define any key bindings.  This is for the user to
+  ;; decide.  For example:
+  ( :map global-map
+    ("C-c n n" . denote)
+    ("C-c n d" . denote-sort-dired)
+    ("C-c n s" . denote-search)
+    ;; If you intend to use Denote with a variety of file types, it is
+    ;; easier to bind the link-related commands to the `global-map', as
+    ;; shown here.  Otherwise follow the same pattern for `org-mode-map',
+    ;; `markdown-mode-map', and/or `text-mode-map'.
+    ("C-c n l" . denote-link)
+    ("C-c n L" . denote-add-links)
+    ("C-c n b" . denote-backlinks)
+    ;; Note that `denote-rename-file' can work from any context, not just
+    ;; Dired bufffers.  That is why we bind it here to the `global-map'.
+    ("C-c n r" . denote-rename-file)
+    ("C-c n R" . denote-rename-file-using-front-matter)
+
+    ;; Key bindings specifically for Dired.
+    :map dired-mode-map
+    ("C-c C-d C-i" . denote-dired-link-marked-notes)
+    ("C-c C-d C-r" . denote-dired-rename-files)
+    ("C-c C-d C-k" . denote-dired-rename-marked-files-with-keywords)
+    ("C-c C-d C-R" . denote-dired-rename-marked-files-using-front-matter))
+
+  :config
+  ;; Remember to check the doc string of each of those variables.
+  (setq denote-directory (expand-file-name "~/notes"))
+  (setq denote-save-buffers nil)
+  (setq denote-known-keywords '("emacs" "research"))
+  (setq denote-infer-keywords t)
+  (setq denote-sort-keywords t)
+  (setq denote-prompts '(title keywords))
+  (setq denote-excluded-directories-regexp nil)
+  (setq denote-excluded-keywords-regexp nil)
+  (setq denote-rename-confirmations '(rewrite-front-matter modify-file-name))
+
+  ;; Pick dates, where relevant, with Org's advanced interface:
+  (setq denote-date-prompt-use-org-read-date t)
+
+  ;; By default, we do not show the context of links.  We just display
+  ;; file names.  This provides a more informative view.
+  (setq denote-backlinks-show-context t)
+
+  ;; Automatically rename Denote buffers using the `denote-rename-buffer-format'.
+  (denote-rename-buffer-mode 1))
+
+;; (use-package denote-org
+;;   :ensure t
+;;   :command
+;;   ;; I list the commands here so that you can discover them more
+;;   ;; easily.  You might want to bind the most frequently used ones to
+;;   ;; the `org-mode-map'.
+;;   ( denote-org-link-to-heading
+;;     denote-org-backlinks-for-heading
+
+;;     denote-org-extract-org-subtree
+
+;;     denote-org-convert-links-to-file-type
+;;     denote-org-convert-links-to-denote-type
+
+;;     denote-org-dblock-insert-files
+;;     denote-org-dblock-insert-links
+;;     denote-org-dblock-insert-backlinks
+;;     denote-org-dblock-insert-missing-links
+;;     denote-org-dblock-insert-files-as-headings))
+
+;; (use-package denote-sequence
+;;   :ensure t
+;;   :bind
+;;   ( :map global-map
+;;     ;; Here we make "C-c n s" a prefix for all "[n]otes with [s]equence".
+;;     ;; This is just for demonstration purposes: use the key bindings
+;;     ;; that work for you.  Also check the commands:
+;;     ;;
+;;     ;; - `denote-sequence-new-parent'
+;;     ;; - `denote-sequence-new-sibling'
+;;     ;; - `denote-sequence-new-child'
+;;     ;; - `denote-sequence-new-child-of-current'
+;;     ;; - `denote-sequence-new-sibling-of-current'
+;;     ("C-c n s s" . denote-sequence)
+;;     ("C-c n s f" . denote-sequence-find)
+;;     ("C-c n s l" . denote-sequence-link)
+;;     ("C-c n s d" . denote-sequence-dired)
+;;     ("C-c n s r" . denote-sequence-reparent)
+;;     ("C-c n s c" . denote-sequence-convert))
+;;   :config
+;;   ;; The default sequence scheme is `numeric'.
+;;   (setq denote-sequence-scheme 'alphanumeric))
+
+;; (use-package denote-journal
+;;   :ensure t
+;;   ;; Bind those to some key for your convenience.
+;;   :commands ( denote-journal-new-entry
+;;               denote-journal-new-or-existing-entry
+;;               denote-journal-link-or-create-entry )
+;;   :config
+;;   ;; Use the "journal" subdirectory of the `denote-directory'.  Set this
+;;   ;; to nil to use the `denote-directory' instead.
+;;   (setq denote-journal-directory
+;;         (expand-file-name "journal" denote-directory))
+;;   ;; Default keyword for new journal entries. It can also be a list of
+;;   ;; strings.
+;;   (setq denote-journal-keyword "journal")
+;;   ;; Read the doc string of `denote-journal-title-format'.
+;;   (setq denote-journal-title-format 'day-date-month-year))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              ERC (IRC Client)                             ;;
@@ -1836,7 +1954,8 @@ If QUIET is non-nil, suppress messages."
           "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fddosecrets.com%2Farticle%2Flexipolleaks&key=1&hash=b9258f920d5b200034edd73868c42b1e68284695&max=1000&links=preserve&exc="
           "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fhnrss.org%2Fnewest&key=1&hash=62a3abd97ca026dbb64c82151d396f32e4c6a4fb&max=1000&links=preserve&exc="
           "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Ffeeds.bbci.co.uk%2Fnews%2Frss.xml&key=1&hash=78370b961d44c8bff594b1b41a513762d6f34560&max=1000&links=preserve&exc="
-          "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fplanet.emacslife.com%2Fatom.xml&key=1&hash=f609b22f1328308f3361f85a9b50c9eda53bfb6d&max=1000&links=preserve&exc=1")))
+          "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fplanet.emacslife.com%2Fatom.xml&key=1&hash=f609b22f1328308f3361f85a9b50c9eda53bfb6d&max=1000&links=preserve&exc=1"
+          https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fprotesilaos.com%2Fmaster.xml&key=1&hash=65030ef2769b29d6826c9b832948397d0ae9bfa9&max=1000&links=preserve&exc=1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                          Tree-sitter-based Modes                          ;;
@@ -1875,7 +1994,7 @@ If QUIET is non-nil, suppress messages."
   :config
   (setq dgi-auto-hide-details-p nil)
   (with-eval-after-load 'dired
-  (define-key dired-mode-map ")" 'dired-git-info-mode)))
+    (define-key dired-mode-map ")" 'dired-git-info-mode)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                           Electric-quote-mode                             ;;
@@ -1949,7 +2068,12 @@ If QUIET is non-nil, suppress messages."
 (use-package flymake
   :ensure nil
   :hook ((prog-mode . flymake-mode)
-         (emacs-lisp-mode . flymake-mode))  ; Explicitly enable for Elisp
+         (emacs-lisp-mode . flymake-mode))
+  :init
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (with-current-buffer "*scratch*"
+                (flymake-mode -1))))
   :config
   (setq flymake-fringe-indicator-position 'right-fringe)
   (setq flymake-no-changes-timeout 1)  ; Faster feedback after typing
@@ -1979,6 +2103,7 @@ If QUIET is non-nil, suppress messages."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package yasnippet
+  :ensure t
   :init
   ;; Enable globally at startup
   (yas-global-mode 1)
@@ -1986,22 +2111,22 @@ If QUIET is non-nil, suppress messages."
   ;; Explicitly set snippet directories
   (yas-snippet-dirs
    (list (expand-file-name "snippets/" user-emacs-directory)  ;; Personal snippets
-         (expand-file-name "yasnippet-snippets/snippets/" user-emacs-directory)))  ;; Pre-built snippets
-  ;; Optional: Show snippet suggestions in completion frameworks like Corfu
+         (expand-file-name "snippets/" (file-name-directory (find-library-name "yasnippet-snippets")))))
   (yas-prompt-functions '(yas-completing-prompt yas-ido-prompt yas-no-prompt))
   :config
-  ;; Reload snippets after configuration to ensure they're picked up
-  (yas-reload-all)
-  ;; Optional: Bind a key to insert snippets manually
+  (add-hook 'after-init-hook #'yas-reload-all)
   :bind (:map yas-minor-mode-map
               ("C-c y" . yas-insert-snippet)))
 
 (use-package yasnippet-snippets
-  :after yasnippet
   :ensure t
+  :after yasnippet
   :config
-  ;; Ensure snippets are loaded when this package is loaded
-  (yas-reload-all))
+  ;; No need to call yas-reload-all here; handled in yasnippet block
+  ;; Verify installation by checking the snippets directory
+  (let ((snippets-dir (expand-file-name "snippets/" (file-name-directory (find-library-name "yasnippet-snippets")))))
+    (unless (file-directory-p snippets-dir)
+      (warn "yasnippet-snippets directory %s not found; reinstall the package" snippets-dir))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                elisp coding                               ;;
@@ -2056,18 +2181,26 @@ If QUIET is non-nil, suppress messages."
    :bind (("C-c c" . 'calc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                 python venv                               ;;
+;;                             Fix Emacsclient                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package auto-virtualenv
-  :ensure t
-  :config
-  (setq auto-virtualenv-verbose t)
-  (setq auto-virtualenv-global-dirs
-      '("~/.virtualenvs/" "~/.pyenv/versions/" "~/.envs/" "~/.conda/" "~/.conda/envs/"))
-(setq auto-virtualenv-python-project-files
-      '("requirements.txt" "Pipfile" "pyproject.toml" "setup.py" "manage.py" "tox.ini" ".flake8"))
-  (auto-virtualenv-setup))
+(defun my-after-make-frame-setup (&optional frame)
+  "Initialize UI settings for new frames, including daemon clients."
+  (with-selected-frame (or frame (selected-frame))
+    (when (display-graphic-p)  ; Only for graphical frames
+      (vertico-mode 1)         ; Ensure Vertico is active
+      (vertico-posframe-mode 1) ; Enable posframe for popups
+      ;; Add other GUI-specific modes or settings here
+      (menu-bar-mode -1)
+      (tool-bar-mode -1)
+      (scroll-bar-mode -1))))
+
+;; Run setup for the initial frame if not in daemon mode
+(unless (daemonp)
+  (my-after-make-frame-setup))
+
+;; Hook for new frames created by emacsclient
+(add-hook 'after-make-frame-functions #'my-after-make-frame-setup)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
