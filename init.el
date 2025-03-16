@@ -1977,66 +1977,69 @@
  ;; Automatically rename Denote buffers using the `denote-rename-buffer-format'.
  (denote-rename-buffer-mode 1))
 
-;; (use-package denote-org
-;;   :ensure t
-;;   :command
-;;   ;; I list the commands here so that you can discover them more
-;;   ;; easily.  You might want to bind the most frequently used ones to
-;;   ;; the `org-mode-map'.
-;;   ( denote-org-link-to-heading
-;;     denote-org-backlinks-for-heading
+(use-package
+ denote-org
+ :ensure t
+ ;; :command
+ ;; ;; I list the commands here so that you can discover them more
+ ;; ;; easily.  You might want to bind the most frequently used ones to
+ ;; ;; the `org-mode-map'.
+ ;; ( denote-org-link-to-heading
+ ;;   denote-org-backlinks-for-heading
 
-;;     denote-org-extract-org-subtree
+ ;;   denote-org-extract-org-subtree
 
-;;     denote-org-convert-links-to-file-type
-;;     denote-org-convert-links-to-denote-type
+ ;;   denote-org-convert-links-to-file-type
+ ;;   denote-org-convert-links-to-denote-type
 
-;;     denote-org-dblock-insert-files
-;;     denote-org-dblock-insert-links
-;;     denote-org-dblock-insert-backlinks
-;;     denote-org-dblock-insert-missing-links
-;;     denote-org-dblock-insert-files-as-headings))
+ ;;   denote-org-dblock-insert-files
+ ;;   denote-org-dblock-insert-links
+ ;;   denote-org-dblock-insert-backlinks
+ ;;   denote-org-dblock-insert-missing-links
+ ;;   denote-org-dblock-insert-files-as-headings))
+ )
+(use-package
+ denote-sequence
+ :ensure t
+ :bind
+ (:map
+  global-map
+  ;; Here we make "C-c n s" a prefix for all "[n]otes with [s]equence".
+  ;; This is just for demonstration purposes: use the key bindings
+  ;; that work for you.  Also check the commands:
+  ;;
+  ;; - `denote-sequence-new-parent'
+  ;; - `denote-sequence-new-sibling'
+  ;; - `denote-sequence-new-child'
+  ;; - `denote-sequence-new-child-of-current'
+  ;; - `denote-sequence-new-sibling-of-current'
+  ("C-c n s s" . denote-sequence)
+  ("C-c n s f" . denote-sequence-find)
+  ("C-c n s l" . denote-sequence-link)
+  ("C-c n s d" . denote-sequence-dired)
+  ("C-c n s r" . denote-sequence-reparent)
+  ("C-c n s c" . denote-sequence-convert))
+ :config
+ ;; The default sequence scheme is `numeric'.
+ (setq denote-sequence-scheme 'alphanumeric))
 
-;; (use-package denote-sequence
-;;   :ensure t
-;;   :bind
-;;   ( :map global-map
-;;     ;; Here we make "C-c n s" a prefix for all "[n]otes with [s]equence".
-;;     ;; This is just for demonstration purposes: use the key bindings
-;;     ;; that work for you.  Also check the commands:
-;;     ;;
-;;     ;; - `denote-sequence-new-parent'
-;;     ;; - `denote-sequence-new-sibling'
-;;     ;; - `denote-sequence-new-child'
-;;     ;; - `denote-sequence-new-child-of-current'
-;;     ;; - `denote-sequence-new-sibling-of-current'
-;;     ("C-c n s s" . denote-sequence)
-;;     ("C-c n s f" . denote-sequence-find)
-;;     ("C-c n s l" . denote-sequence-link)
-;;     ("C-c n s d" . denote-sequence-dired)
-;;     ("C-c n s r" . denote-sequence-reparent)
-;;     ("C-c n s c" . denote-sequence-convert))
-;;   :config
-;;   ;; The default sequence scheme is `numeric'.
-;;   (setq denote-sequence-scheme 'alphanumeric))
-
-;; (use-package denote-journal
-;;   :ensure t
-;;   ;; Bind those to some key for your convenience.
-;;   :commands ( denote-journal-new-entry
-;;               denote-journal-new-or-existing-entry
-;;               denote-journal-link-or-create-entry )
-;;   :config
-;;   ;; Use the "journal" subdirectory of the `denote-directory'.  Set this
-;;   ;; to nil to use the `denote-directory' instead.
-;;   (setq denote-journal-directory
-;;         (expand-file-name "journal" denote-directory))
-;;   ;; Default keyword for new journal entries. It can also be a list of
-;;   ;; strings.
-;;   (setq denote-journal-keyword "journal")
-;;   ;; Read the doc string of `denote-journal-title-format'.
-;;   (setq denote-journal-title-format 'day-date-month-year))
-
+(use-package
+ denote-journal
+ :ensure t
+ ;; Bind those to some key for your convenience.
+ ;; :commands ( denote-journal-new-entry
+ ;;             denote-journal-new-or-existing-entry
+ ;;             denote-journal-link-or-create-entry )
+ :config
+ ;; Use the "journal" subdirectory of the `denote-directory'.  Set this
+ ;; to nil to use the `denote-directory' instead.
+ (setq denote-journal-directory
+       (expand-file-name "journal" denote-directory))
+ ;; Default keyword for new journal entries. It can also be a list of
+ ;; strings.
+ (setq denote-journal-keyword "journal")
+ ;; Read the doc string of `denote-journal-title-format'.
+ (setq denote-journal-title-format 'day-date-month-year))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              ERC (IRC Client)                             ;;
