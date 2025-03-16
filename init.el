@@ -35,6 +35,17 @@
 ;;                                CUSTOM FUNCTIONS                           ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defun my-org-download-images-from-capture ()
+  (when (string-match-p ":website:" (buffer-string))
+    (goto-char (point-min))
+    (while (re-search-forward "\\[\\[\\(http[^][]+\\)\\]\\[.*\\]\\]"
+                              nil
+                              t)
+      (org-download-image (match-string 1)))))
+(add-hook
+ 'org-capture-after-finalize-hook
+ #'my-org-download-images-from-capture)
+
 (defun my/toggle-buffer (buffer-name command)
   "Toggle a buffer with BUFFER-NAME, running COMMAND if it doesn't exist."
   (interactive)
@@ -165,6 +176,20 @@
 (declare-function completion-preview-prev-candidate
                   "completion-preview")
 (declare-function completion-preview--hide "completion-preview")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                     ICONS                                 ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package
+ all-the-icons
+ :ensure t
+ :if (display-graphic-p) ; Only load in GUI mode
+ :config
+ (setq all-the-icons-scale-factor 1.1) ; Similar to your nerd-icons setting
+ ;; Install fonts if not already present (run once manually if needed)
+ (unless (find-font (font-spec :name "all-the-icons"))
+   (all-the-icons-install-fonts t)))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;;                                     EXWM                                  ;;
@@ -485,7 +510,7 @@
  (set-keyboard-coding-system 'utf-8)
  (set-language-environment "UTF-8")
  (save-place-mode 1)
-
+ (require 'all-the-icons)
  :config
  ;; Global Emacs Settings
  (setq-default
@@ -864,16 +889,13 @@
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 
 (use-package
- nerd-icons-ibuffer
+ all-the-icons-ibuffer
  :ensure t
- :hook (ibuffer-mode . nerd-icons-ibuffer-mode)
+ :after all-the-icons
+ :hook (ibuffer-mode . all-the-icons-ibuffer-mode)
  :config
- (setq nerd-icons-ibuffer-icon t)
- (setq nerd-icons-ibuffer-color-icon t)
- (setq nerd-icons-ibuffer-icon-size 1.0)
- (setq nerd-icons-ibuffer-human-readable-size t)
- nerd-icons-ibuffer-formats
- (setq inhibit-compacting-font-caches t))
+ (setq all-the-icons-ibuffer-icon-size 1.0)
+ (setq all-the-icons-ibuffer-human-readable-size t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    helm                                   ;;
@@ -1001,10 +1023,10 @@
      (consult-buffer)))
 
  ;; Enhance buffer display with Nerd Icons
- (with-eval-after-load 'nerd-icons
+ (with-eval-after-load 'all-the-icons
    (defun my-consult-buffer-format (buffer)
-     "Add Nerd Icon to BUFFER name for consult-buffer."
-     (let ((icon (nerd-icons-icon-for-buffer buffer)))
+     "Add all-the-icons to BUFFER name for consult-buffer."
+     (let ((icon (all-the-icons-icon-for-buffer buffer)))
        (concat icon " " (buffer-name buffer))))
    (advice-add
     'consult-buffer
@@ -1038,20 +1060,13 @@
 ;; Marginalia
 (use-package marginalia :init (marginalia-mode))
 
-;; Nerd Icons support
 (use-package
- nerd-icons
+ all-the-icons-completion
  :ensure t
- :custom (nerd-icons-font-family "Symbols Nerd Font Mono")
- (nerd-icons-scale-factor 1.1)) ; Slight upscale for visibility
-
-(use-package
- nerd-icons-completion
- :ensure t
- :after marginalia
- :config (nerd-icons-completion-mode)
+ :after (all-the-icons marginalia)
+ :config (all-the-icons-completion-mode)
  (add-hook
-  'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
+  'marginalia-mode-hook #'all-the-icons-completion-marginalia-setup))
 
 ;; Alerts
 (use-package
@@ -1235,6 +1250,7 @@
  org
  :ensure nil ; Built-in package
  :init
+ (require 'org-protocol)
  (setq org-directory "~/.org/")
  (defvar my-org-prefix-map (make-sparse-keymap)
    "Prefix map for Org-mode commands.")
@@ -1374,7 +1390,12 @@
     ("n" "Note" entry
      (file+headline
       ,(expand-file-name "notes.org" org-directory) "Notes")
-     "* %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\n%a")))
+     "* %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\n%a")
+    ("w" "Web Capture" entry
+     (file+headline
+      ,(expand-file-name "web.org" org-directory) "Web")
+     "%:initial"
+     :immediate-finish t)))
  (advice-add
   'org-capture-kill
   :after #'my-org-capture-delete-file-after-kill)
@@ -1608,7 +1629,7 @@
  forge
  :defer t
  :after magit) ; Load after magit when needed
-
+(use-package magit-todos :ensure t :after magit)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Grep Ignorance                              ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1751,7 +1772,7 @@
   ("M-!" . dired-smart-shell-command)) ; Enhanced shell command
  :hook
  ((dired-mode . dired-hide-details-mode) ; Start with details hidden
-  (dired-mode . nerd-icons-dired-mode) ; Icon goodness
+  (dired-mode . all-the-icons-dired-mode) ; Icon goodness
   (dired-mode . dired-preview-mode) ; Auto-preview always on
   (dired-mode . hl-line-mode)) ; Highlight current line
  :custom
@@ -1769,13 +1790,14 @@
 
  ;; Nerd Icons for Dired
  (use-package
-  nerd-icons-dired
+  all-the-icons-dired
   :ensure t
-  :after nerd-icons
+  :after (all-the-icons dired)
+  :hook (dired-mode . all-the-icons-dired-mode)
   :config
-  (setq nerd-icons-dired-v-adjust -0.1) ; Fine-tune icon alignment
-  (set-face-attribute 'nerd-icons-dired-dir-face nil
-                      :foreground "#81a1c1")) ; Nordic blue dirs
+  (setq all-the-icons-dired-monochrome nil) ; Keep colors
+  (set-face-attribute 'all-the-icons-dired-dir-face nil
+                      :foreground "#81a1c1"))
 
  ;; Dired Preview (always on, no toggle)
  (use-package
@@ -1998,30 +2020,6 @@
  ;;   denote-org-dblock-insert-missing-links
  ;;   denote-org-dblock-insert-files-as-headings))
  )
-(use-package
- denote-sequence
- :ensure t
- :bind
- (:map
-  global-map
-  ;; Here we make "C-c n s" a prefix for all "[n]otes with [s]equence".
-  ;; This is just for demonstration purposes: use the key bindings
-  ;; that work for you.  Also check the commands:
-  ;;
-  ;; - `denote-sequence-new-parent'
-  ;; - `denote-sequence-new-sibling'
-  ;; - `denote-sequence-new-child'
-  ;; - `denote-sequence-new-child-of-current'
-  ;; - `denote-sequence-new-sibling-of-current'
-  ("C-c n s s" . denote-sequence)
-  ("C-c n s f" . denote-sequence-find)
-  ("C-c n s l" . denote-sequence-link)
-  ("C-c n s d" . denote-sequence-dired)
-  ("C-c n s r" . denote-sequence-reparent)
-  ("C-c n s c" . denote-sequence-convert))
- :config
- ;; The default sequence scheme is `numeric'.
- (setq denote-sequence-scheme 'alphanumeric))
 
 (use-package
  denote-journal
@@ -2166,7 +2164,7 @@
  (erc-update-modules))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                             Elfeed + Dashboard                            ;;
+;;                                     Elfeed                                ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
@@ -2258,7 +2256,7 @@
  :ensure t
  :defer t
  :config
- (setq calibredb-format-nerd-icons t)
+ (setq calibredb-format-all-the-icons t)
  (setq calibredb-format-character-icons t)
  (setq calibredb-root-dir "~/.calibre-library")
  (setq calibredb-db-dir
