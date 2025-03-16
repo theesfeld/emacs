@@ -449,7 +449,6 @@
        'git
        nil
        "Auto-commit init.el changes"))))
-
 (add-hook 'after-save-hook #'my-auto-commit-init-el)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
