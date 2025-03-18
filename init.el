@@ -1667,9 +1667,6 @@
   copilot-log-max 10000
   copilot-max-char 250000)
  ;; Indentation alist
- (add-to-list 'copilot-indentation-alist '(prog-mode 2))
- (add-to-list 'copilot-indentation-alist '(org-mode 2))
- (add-to-list 'copilot-indentation-alist '(text-mode 2))
  (add-hook 'prog-mode-hook 'copilot-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2143,42 +2140,6 @@
  (setq erc-image-inline-rescale 300)
  (add-to-list 'erc-modules 'image)
  (erc-update-modules))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                     Elfeed                                ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package
- aio
- :ensure t) ; Fetch from MELPA
-
-(use-package
- elfeed
- :ensure t
- :defer t
- :hook
- ((elfeed-search-mode-hook
-   .
-   (lambda ()
-     (elfeed-update)
-     (my-elfeed-start-auto-update)))
-  (elfeed-show-mode
-   . (lambda () (setq shr-external-browser 'eww-browse-url))))
- :bind
- (:map
-  elfeed-search-mode-map ("q" . my-elfeed-quit-and-stop-timer)
-  :map elfeed-show-mode-map ("RET" . shr-browse-url))
- :config (setq shr-external-browser 'eww-browse-url)
- (defvar my-elfeed-update-timer nil
-   "Timer for Elfeed auto-updates.") ; Keep this here
- (setq
-  elfeed-feeds
-  '("https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fsachachua.com%2Fblog%2Ffeed%2Findex.xml&key=1&hash=48ac81675b0797fda5d8f4f189846563a5ed14d9&max=1000&links=preserve&exc="
-    "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fddosecrets.com%2Farticle%2Flexipolleaks&key=1&hash=b9258f920d5b200034edd73868c42b1e68284695&max=1000&links=preserve&exc="
-    "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fhnrss.org%2Fnewest&key=1&hash=62a3abd97ca026dbb64c82151d396f32e4c6a4fb&max=1000&links=preserve&exc="
-    "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Ffeeds.bbci.co.uk%2Fnews%2Frss.xml&key=1&hash=78370b961d44c8bff594b1b41a513762d6f34560&max=1000&links=preserve&exc="
-    "https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fplanet.emacslife.com%2Fatom.xml&key=1&hash=f609b22f1328308f3361f85a9b50c9eda53bfb6d&max=1000&links=preserve&exc=1"
-    https://rss.samhain.su/makefulltextfeed.php?url=https%3A%2F%2Fprotesilaos.com%2Fmaster.xml&key=1&hash=65030ef2769b29d6826c9b832948397d0ae9bfa9&max=1000&links=preserve&exc=1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                          Tree-sitter-based Modes                          ;;
