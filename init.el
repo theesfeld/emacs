@@ -2453,10 +2453,6 @@
 ;;                                  Gnus Setup                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; These must be at the top of init.el
-(defvar gnus-home-directory (expand-file-name "gnus" user-emacs-directory)
-(defvar gnus-startup-file (expand-file-name ".gnus.el" gnus-home-directory))
-
 (use-package
  gnus
  :ensure nil
