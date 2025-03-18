@@ -14,6 +14,13 @@
 (when (file-exists-p custom-file)
   (load custom-file))
 
+(defvar gnus-home-directory
+  (expand-file-name "gnus" user-emacs-directory)
+  "Gnus home directory.")
+(defvar gnus-startup-file
+  (expand-file-name ".gnus.el" gnus-home-directory)
+  "Gnus startup file.")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  MELPA                                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -538,6 +545,12 @@
   save-place-file (expand-file-name ".saveplace" user-emacs-directory))
  (fset 'yes-or-no-p 'y-or-n-p)
  (require 'auth-source)
+ (require 'epa-file)
+ (epa-file-enable)
+
+ ;; (setq epa-file-cache-passphrase-for-symmetric-encryption t)
+ ;; (setq epa-file-inhibit-auto-save t)
+
  ;; UI Settings
  (menu-bar-mode -1)
  (tool-bar-mode -1)
@@ -1293,6 +1306,11 @@
  ;; Explicitly set org-agenda-files
  (setq org-agenda-files
        (list (expand-file-name "todos.org" org-directory)))
+ (setq my-outlook-org-file
+       (expand-file-name "outlook.org" org-directory))
+ (unless (member my-outlook-org-file org-agenda-files)
+   (setq org-agenda-files
+         (append org-agenda-files (list my-outlook-org-file))))
  (with-eval-after-load 'which-key
    (which-key-add-key-based-replacements
     "C-c o" "org-mode" "C-c o a" "org-agenda")))
@@ -1307,8 +1325,8 @@
   my-org-agenda-map
   ("a" . org-agenda)
   ("t" . my-org-agenda-today)
-  ("c" . my-org-agenda-goto-current-clock)
-  ("v" . my-org-agenda-vertico-popup)) ; New Vertico popup binding
+  ("c" . my-org-agenda-goto-current-clock))
+
  :config
  (setq
   org-agenda-start-on-weekday 1
@@ -1328,44 +1346,7 @@
   '((agenda . " %i %-12:c%?-12t% s [%e] ") ; Effort estimate added
     (todo . " %i %-12:c")
     (tags . " %i %-12:c")
-    (search . " %i %-12:c"))
-  org-agenda-custom-commands
-  '(("v" "Vertico Agenda Popup" my-org-agenda-vertico-popup))) ; Custom command for popup
-
- ;; Custom Vertico popup function
- (defun my-org-agenda-vertico-popup ()
-   "Display a rich Org Agenda in a Vertico posframe popup."
-   (interactive)
-   (let ((vertico-posframe-parameters
-          `((left-fringe . 8)
-            (right-fringe . 8)
-            (background-color . "#2e3440") ; Dark Nordic base
-            (min-width . 80) (min-height . 30)))
-         (vertico-posframe-show-delay 0.1))
-     (org-agenda nil "A") ; Trigger the super agenda
-     (let ((agenda-buffer (get-buffer "*Org Agenda*")))
-       (when agenda-buffer
-         (with-current-buffer agenda-buffer
-           (setq buffer-read-only nil)
-           (goto-char (point-min))
-           (insert
-            (propertize "📅 Agenda Dashboard\n"
-                        'face
-                        '(:height
-                          150
-                          :weight bold
-                          :foreground "#88c0d0")))
-           (insert
-            (format
-             "📈 Meetings Today: %d | Tasks Created: %d | Tasks Closed: %d | Overdue: %d\n\n"
-             (my-org-count-meetings-today)
-             (my-org-count-tasks-created-today)
-             (my-org-count-tasks-closed-today)
-             (my-org-count-overdue-tasks)))
-           (setq buffer-read-only t))
-         (switch-to-buffer agenda-buffer)
-         (vertico-posframe-show agenda-buffer))))))
-
+    (search . " %i %-12:c"))))
 ;; Org-capture sub-config
 (use-package
  org-capture
@@ -1432,133 +1413,133 @@
   (org-agenda-goto (org-clock-is-active)))
 
 ;; Org-super-agenda
-(use-package
- org-super-agenda
- :ensure t
- :after org-agenda
- :init (org-super-agenda-mode 1)
- :bind
- (:map
-  my-org-prefix-map
-  ("A" .
-   (lambda ()
-     (interactive)
-     (org-agenda nil "A"))))
- :config
- (setq org-super-agenda-header-map (make-sparse-keymap)) ; Disable default bindings
- (defun my-transformer-today (item)
-   "Transform agenda items for Today's Schedule."
-   (propertize item 'face '(:foreground "#88c0d0")))
- (defun my-transformer-overdue (item)
-   "Transform agenda items for Overdue."
-   (propertize item 'face '(:foreground "#bf616a" :weight bold)))
- (defun my-transformer-created (item)
-   "Transform agenda items for Created Today."
-   (propertize item 'face '(:foreground "#a3be8c")))
- (defun my-transformer-closed (item)
-   "Transform agenda items for Closed Today."
-   (propertize item 'face '(:foreground "#b48ead" :strike-through t)))
- (defun my-transformer-critical (item)
-   "Transform agenda items for Critical Tasks."
-   (propertize item 'face '(:foreground "#d08770" :weight bold)))
- (defun my-transformer-meetings (item)
-   "Transform agenda items for Meetings Today."
-   (propertize item 'face '(:foreground "#ebcb8b")))
- (defun my-transformer-blocked (item)
-   "Transform agenda items for Blocked."
-   (propertize item 'face '(:foreground "#d08770")))
- (defun my-transformer-next (item)
-   "Transform agenda items for Next Actions."
-   (propertize item 'face '(:foreground "#81a1c1")))
- (defun my-transformer-research (item)
-   "Transform agenda items for Research."
-   (propertize item 'face '(:foreground "#5e81ac")))
- (defun my-transformer-backlog (item)
-   "Transform agenda items for Backlog."
-   (propertize item 'face '(:foreground "#8fbcbb")))
- (defun my-transformer-low (item)
-   "Transform agenda items for Low Priority."
-   (propertize item 'face '(:foreground "#4c566a")))
+;; (use-package
+;;  org-super-agenda
+;;  :ensure t
+;;  :after org-agenda
+;;  :init (org-super-agenda-mode 1)
+;;  :bind
+;;  (:map
+;;   my-org-prefix-map
+;;   ("A" .
+;;    (lambda ()
+;;      (interactive)
+;;      (org-agenda nil "A"))))
+;;  :config
+;;  (setq org-super-agenda-header-map (make-sparse-keymap)) ; Disable default bindings
+;;  (defun my-transformer-today (item)
+;;    "Transform agenda items for Today's Schedule."
+;;    (propertize item 'face '(:foreground "#88c0d0")))
+;;  (defun my-transformer-overdue (item)
+;;    "Transform agenda items for Overdue."
+;;    (propertize item 'face '(:foreground "#bf616a" :weight bold)))
+;;  (defun my-transformer-created (item)
+;;    "Transform agenda items for Created Today."
+;;    (propertize item 'face '(:foreground "#a3be8c")))
+;;  (defun my-transformer-closed (item)
+;;    "Transform agenda items for Closed Today."
+;;    (propertize item 'face '(:foreground "#b48ead" :strike-through t)))
+;;  (defun my-transformer-critical (item)
+;;    "Transform agenda items for Critical Tasks."
+;;    (propertize item 'face '(:foreground "#d08770" :weight bold)))
+;;  (defun my-transformer-meetings (item)
+;;    "Transform agenda items for Meetings Today."
+;;    (propertize item 'face '(:foreground "#ebcb8b")))
+;;  (defun my-transformer-blocked (item)
+;;    "Transform agenda items for Blocked."
+;;    (propertize item 'face '(:foreground "#d08770")))
+;;  (defun my-transformer-next (item)
+;;    "Transform agenda items for Next Actions."
+;;    (propertize item 'face '(:foreground "#81a1c1")))
+;;  (defun my-transformer-research (item)
+;;    "Transform agenda items for Research."
+;;    (propertize item 'face '(:foreground "#5e81ac")))
+;;  (defun my-transformer-backlog (item)
+;;    "Transform agenda items for Backlog."
+;;    (propertize item 'face '(:foreground "#8fbcbb")))
+;;  (defun my-transformer-low (item)
+;;    "Transform agenda items for Low Priority."
+;;    (propertize item 'face '(:foreground "#4c566a")))
 
- (setq org-super-agenda-groups
-       `((:name
-          "📅 Today’s Schedule"
-          :time-grid t
-          :date today
-          :order 1
-          :transformer my-transformer-today)
-         (:name
-          "🔴 Overdue"
-          :deadline past
-          :order 2
-          :transformer my-transformer-overdue)
-         (:name
-          "🆕 Created Today"
-          :and
-          (:property
-           "Created"
-           :regexp ,(format-time-string "%Y-%m-%d"))
-          :order 3
-          :transformer my-transformer-created)
-         (:name
-          "✅ Closed Today"
-          :and
-          (:todo
-           "DONE"
-           :property "CLOSED"
-           :regexp ,(format-time-string "%Y-%m-%d"))
-          :order 4
-          :transformer my-transformer-closed)
-         (:name
-          "🏃 Critical Tasks"
-          :tag "CRITICAL"
-          :priority "A"
-          :order 5
-          :transformer my-transformer-critical)
-         (:name
-          "💼 Meetings Today"
-          :and (:tag "meeting" :scheduled today)
-          :order 6
-          :transformer my-transformer-meetings)
-         (:name
-          "🚧 Blocked"
-          :todo "WAITING"
-          :order 7
-          :transformer my-transformer-blocked)
-         (:name
-          "📝 Next Actions"
-          :todo "NEXT"
-          :order 8
-          :transformer my-transformer-next)
-         (:name
-          "🔍 Research"
-          :tag "@research"
-          :order 9
-          :transformer my-transformer-research)
-         (:name
-          "📋 Backlog"
-          :todo "TODO"
-          :order 10
-          :transformer my-transformer-backlog)
-         (:name
-          "🗑️ Low Priority"
-          :priority<= "C"
-          :order 11
-          :transformer my-transformer-low)
-         (:discard (:anything t))))
+;;  (setq org-super-agenda-groups
+;;        `((:name
+;;           "📅 Today’s Schedule"
+;;           :time-grid t
+;;           :date today
+;;           :order 1
+;;           :transformer my-transformer-today)
+;;          (:name
+;;           "🔴 Overdue"
+;;           :deadline past
+;;           :order 2
+;;           :transformer my-transformer-overdue)
+;;          (:name
+;;           "🆕 Created Today"
+;;           :and
+;;           (:property
+;;            "Created"
+;;            :regexp ,(format-time-string "%Y-%m-%d"))
+;;           :order 3
+;;           :transformer my-transformer-created)
+;;          (:name
+;;           "✅ Closed Today"
+;;           :and
+;;           (:todo
+;;            "DONE"
+;;            :property "CLOSED"
+;;            :regexp ,(format-time-string "%Y-%m-%d"))
+;;           :order 4
+;;           :transformer my-transformer-closed)
+;;          (:name
+;;           "🏃 Critical Tasks"
+;;           :tag "CRITICAL"
+;;           :priority "A"
+;;           :order 5
+;;           :transformer my-transformer-critical)
+;;          (:name
+;;           "💼 Meetings Today"
+;;           :and (:tag "meeting" :scheduled today)
+;;           :order 6
+;;           :transformer my-transformer-meetings)
+;;          (:name
+;;           "🚧 Blocked"
+;;           :todo "WAITING"
+;;           :order 7
+;;           :transformer my-transformer-blocked)
+;;          (:name
+;;           "📝 Next Actions"
+;;           :todo "NEXT"
+;;           :order 8
+;;           :transformer my-transformer-next)
+;;          (:name
+;;           "🔍 Research"
+;;           :tag "@research"
+;;           :order 9
+;;           :transformer my-transformer-research)
+;;          (:name
+;;           "📋 Backlog"
+;;           :todo "TODO"
+;;           :order 10
+;;           :transformer my-transformer-backlog)
+;;          (:name
+;;           "🗑️ Low Priority"
+;;           :priority<= "C"
+;;           :order 11
+;;           :transformer my-transformer-low)
+;;          (:discard (:anything t))))
 
- (setq org-agenda-custom-commands
-       '(("A" "Super Agenda Dashboard"
-          ((agenda
-            ""
-            ((org-agenda-span 1) ; Focus on today
-             (org-agenda-remove-tags nil) ; Keep tags visible
-             (org-agenda-overriding-header "")
-             (org-super-agenda-groups org-super-agenda-groups)))
-           (todo
-            ""
-            ((org-agenda-overriding-header "")
-             (org-super-agenda-groups org-super-agenda-groups))))))))
+;; (setq org-agenda-custom-commands
+;;       '(("A" "Super Agenda Dashboard"
+;;          ((agenda
+;;            ""
+;;            ((org-agenda-span 1) ; Focus on today
+;;             (org-agenda-remove-tags nil) ; Keep tags visible
+;;             (org-agenda-overriding-header "")
+;;             (org-super-agenda-groups org-super-agenda-groups)))
+;;           (todo
+;;            ""
+;;            ((org-agenda-overriding-header "")
+;;             (org-super-agenda-groups org-super-agenda-groups))))))))
 
 ;; Org-download
 (use-package
@@ -1624,7 +1605,7 @@
 (use-package
  magit
  :defer t
- :bind ("C-c g" . magit-status)) ; Use magit-status explicitly
+ :bind ("C-c G" . magit-status)) ; Use magit-status explicitly
 (use-package
  forge
  :defer t
@@ -2467,6 +2448,222 @@
  :config
  ;; Add some fucking awesome tweaks
  (add-hook 'eat-mode-hook #'turn-on-auto-fill)) ;; Keep shit tidy
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                  Gnus Setup                               ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; These must be at the top of init.el
+(defvar gnus-home-directory (expand-file-name "gnus" user-emacs-directory)
+(defvar gnus-startup-file (expand-file-name ".gnus.el" gnus-home-directory))
+
+(use-package
+ gnus
+ :ensure nil
+ :defer t
+ :commands (gnus gnus-group-list-all-groups)
+ :init
+ (defvar my-gnus-prefix-map (make-sparse-keymap)
+   "Prefix map for Gnus-related commands.")
+ (global-set-key (kbd "C-c g") my-gnus-prefix-map)
+ (with-eval-after-load 'which-key
+   (which-key-add-key-based-replacements "C-c g" "gnus"))
+
+ (setq gnus-select-method
+       '(nnimap
+         "mailbox.org"
+         (nnimap-address "imap.mailbox.org")
+         (nnimap-server-port 993)
+         (nnimap-stream ssl)
+         (nnimap-authinfo-file "~/.authinfo.gpg")
+         (nnimap-expunge 'never)))
+
+ ;; SMTP Configuration
+ (setq smtpmail-smtp-server "smtp.mailbox.org")
+ (setq smtpmail-smtp-service 465) ; Try 587 if 465 fails
+ (setq smtpmail-stream 'ssl) ; Use 'starttls for 587
+ (setq smtpmail-smtp-user "william@theesfeld.net")
+ (setq smtpmail-auth-credentials "~/.authinfo.gpg")
+ (setq send-mail-function 'smtpmail-send-it)
+ (setq message-send-mail-function 'smtpmail-send-it)
+ (setq smtpmail-debug-info t)
+ (setq smtpmail-debug-verbose t)
+ (setq smtpmail-starttls-timeout 10)
+ (setq network-security-level 'medium) ; Less strict TLS
+ (setq gnutls-log-level 2) ; Detailed TLS logs
+ (setq gnutls-verify-error nil) ; Don’t fail on minor cert issues
+ (setq gnutls-min-prime-bits 1024) ; Lower for compatibility
+ (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3") ; Prefer TLS 1.2
+ :hook
+ ((gnus-group-mode
+   .
+   (lambda ()
+     (require 'gnus-topic)
+     (gnus-topic-mode)
+     (display-line-numbers-mode -1)))
+  (gnus-summary-mode . (lambda () (display-line-numbers-mode -1)))
+  (gnus-article-mode
+   .
+   (lambda ()
+     (visual-line-mode 1)
+     (display-line-numbers-mode -1))))
+ :custom
+ (gnus-use-full-window nil)
+ (gnus-always-read-dribble-file t)
+ (gnus-large-newsgroup 1000)
+ (gnus-thread-sort-functions
+  '(gnus-thread-sort-by-date gnus-thread-sort-by-number))
+ (gnus-summary-line-format "%U%R%z %d %I%(%[%-23,23f%]%) %s\n")
+ (gnus-group-line-format "%M%S%p%P%5y: %(%g%) %d\n")
+ (gnus-sum-thread-tree-root "├─▶ ")
+ (gnus-sum-thread-tree-single-indent "  ")
+ (gnus-sum-thread-tree-vertical "│   ")
+ (gnus-sum-thread-tree-leaf-with-child "├─▶ ")
+ (gnus-sum-thread-tree-single-leaf "└─▶ ")
+ (gnus-check-new-newsgroups t)
+ (gnus-activate-level 2)
+ (gnus-level-subscribed 2)
+ (gnus-level-unsubscribed 3)
+ :config
+ (setq gnus-dribble-directory gnus-home-directory)
+ (setq gnus-cache-directory
+       (expand-file-name "cache" gnus-home-directory))
+ (setq gnus-article-save-directory
+       (expand-file-name "articles" gnus-home-directory))
+ (setq gnus-kill-files-directory
+       (expand-file-name "kills" gnus-home-directory))
+
+ (setq gnus-posting-styles
+       '((".*"
+          (name "TJ")
+          (address "william@theesfeld.net")
+          (signature "Cheers,\nTJ"))
+         ("INBOX/SAMHAIN.*"
+          (address "grim@samhain.su")
+          (signature "Regards,\nGrim"))
+         ("INBOX/MAILBOX.*"
+          (address "theesfeld@mailbox.org")
+          (signature "Best,\nWilliam Theesfeld"))))
+
+ (setq gnus-parameters
+       '(("nnimap\\+mailbox\\.org:.*"
+          (display . all)
+          (visible . t)
+          (subscribed . t))
+         ("nnrss:.*"
+          (display . all)
+          (visible . t)
+          (subscribed . t)
+          (level 2))
+         ("nnimap\\+mailbox\\.org:INBOX/THEESFELD"
+          (posting-style (address "william@theesfeld.net")))
+         ("nnimap\\+mailbox\\.org:INBOX/SAMHAIN"
+          (posting-style (address "grim@samhain.su")))
+         ("nnimap\\+mailbox\\.org:INBOX/THEESFELD/CATCHALL"
+          (posting-style (address "william@theesfeld.net")))
+         ("nnimap\\+mailbox\\.org:INBOX/SAMHAIN/CATCHALL"
+          (posting-style (address "grim@samhain.su")))
+         ("nnimap\\+mailbox\\.org:INBOX/MAILBOX"
+          (posting-style (address "theesfeld@mailbox.org")))))
+
+ ;; RSS Integration
+ (defun my-gnus-load-rss-feeds ()
+   "Load, subscribe, and fetch RSS feeds from rss.org."
+   (interactive)
+   (let ((rss-file (expand-file-name "rss.org" org-directory)))
+     (if (file-exists-p rss-file)
+         (with-temp-buffer
+           (insert-file-contents rss-file)
+           (goto-char (point-min))
+           (while (re-search-forward "^\\*+ .*\\(http[s]?://.*\\)$"
+                                     nil
+                                     t)
+             (let* ((url (match-string 1))
+                    (group-name (concat "nnrss:" url)))
+               (message "Adding and subscribing RSS feed: %s" url)
+               (add-to-list
+                'gnus-secondary-select-methods `(nnrss ,url)
+                t)
+               (gnus-subscribe-group group-name)
+               (gnus-group-change-level group-name 2)))
+           (gnus-group-get-new-news)
+           (gnus-group-list-groups))
+       (message "RSS file %s not found" rss-file))))
+
+ ;; Styling
+ (setq gnus-group-highlight '(((> unread 0) . bold) (t . default)))
+ (set-face-attribute 'gnus-group-mail-3 nil
+                     :foreground "#88c0d0"
+                     :weight 'normal)
+ (set-face-attribute 'gnus-group-mail-3-empty nil
+                     :foreground "#4c566a"
+                     :weight 'normal)
+ (set-face-attribute 'gnus-summary-normal-unread nil
+                     :foreground "#ebcb8b"
+                     :weight 'bold)
+ (set-face-attribute 'gnus-summary-normal-read nil
+                     :foreground "#d8dee9"
+                     :weight 'normal)
+ (set-face-attribute 'gnus-header-content nil
+                     :foreground "#b48ead"
+                     :family
+                     (if (find-font
+                          (font-spec :name "Berkeley Mono Variable"))
+                         "Berkeley Mono Variable"
+                       nil)
+                     :height 140)
+
+ (defun my-gnus-refresh-groups ()
+   "Refresh and display all groups."
+   (interactive)
+   (gnus-group-get-new-news)
+   (gnus-group-list-groups))
+
+ (defun my-gnus-toggle ()
+   "Toggle Gnus group buffer."
+   (interactive)
+   (my/toggle-buffer "*Group*" 'gnus))
+
+ :bind
+ (:map
+  my-gnus-prefix-map
+  ("g" . my-gnus-toggle)
+  ("m" . gnus-msg-mail)
+  ("r" . gnus-summary-reply)
+  ("R" . gnus-summary-wide-reply)
+  ("f" . gnus-summary-mail-forward)
+  ("l" . my-gnus-refresh-groups)
+  ("R" . my-gnus-load-rss-feeds)))
+
+(use-package
+ gnus-desktop-notify
+ :ensure t
+ :after gnus
+ :config
+ (gnus-desktop-notify-mode)
+ (setq gnus-desktop-notify-function 'gnus-desktop-notify-exec)
+ (setq gnus-desktop-notify-exec-program "notify-send"))
+
+(use-package
+ gnus-art
+ :ensure nil
+ :after gnus
+ :config
+ (setq gnus-visible-headers
+       '("^From:" "^To:" "^Cc:" "^Subject:" "^Date:" "^Message-ID:"))
+ (setq gnus-treat-body-boundary t) (setq mm-text-html-renderer 'shr))
+
+(use-package
+ message
+ :ensure nil
+ :after gnus
+ :hook (message-mode . flyspell-mode)
+ :config
+ (setq message-kill-buffer-on-exit t)
+ (setq message-default-charset 'utf-8)
+ (setq message-citation-line-function
+       'message-insert-formatted-citation-line)
+ (setq message-citation-line-format "On %a, %b %d %Y, %f wrote:\n"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                   calc                                    ;;
