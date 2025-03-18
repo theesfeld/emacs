@@ -1259,162 +1259,136 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Core Org configuration
-(use-package
- org
- :ensure nil ; Built-in package
- :init (require 'org-protocol)
- :bind (("C-c o" . my-org-prefix-map)) ; Single keymap for all Org commands
- :config
- ;; General Org settings
- (setq
-  org-directory "~/.org/"
-  org-startup-indented t
-  org-startup-folded t
-  org-return-follows-link t
-  org-hide-emphasis-markers t
-  org-startup-with-inline-images t
-  org-log-done 'time
-  org-todo-keywords
-  '((sequence
-     "TODO(t)"
-     "NEXT(n)"
-     "WAITING(w@/!)"
-     "|"
-     "DONE(d!)"
-     "CANCELED(c@)"))
-  org-clock-persist 'history
-  org-refile-targets '((org-agenda-files :maxlevel . 3))
-  org-refile-use-outline-path t
-  org-outline-path-complete-in-steps nil)
+(use-package org
+  :ensure nil ; Built-in package
+  :init
+  (require 'org-protocol)
+  :bind (("C-c o" . my-org-prefix-map)) ; Single keymap for all Org commands
+  :config
+  ;; General Org settings
+  (setq org-directory "~/.org/"
+        org-startup-indented t
+        org-startup-folded t
+        org-return-follows-link t
+        org-hide-emphasis-markers t
+        org-startup-with-inline-images t
+        org-log-done 'time
+        org-todo-keywords '((sequence "TODO(t)" "NEXT(n)" "WAITING(w@/!)" "|" "DONE(d!)" "CANCELED(c@)"))
+        org-clock-persist 'history
+        org-refile-targets '((org-agenda-files :maxlevel . 3))
+        org-refile-use-outline-path t
+        org-outline-path-complete-in-steps nil)
 
- ;; Agenda files
- (setq org-agenda-files
-       (list
-        (expand-file-name "todos.org" org-directory)
-        (expand-file-name "outlook.org" org-directory)))
+  ;; Agenda files
+  (setq org-agenda-files (list (expand-file-name "todos.org" org-directory)
+                               (expand-file-name "outlook.org" org-directory)))
 
- ;; Clock persistence
- (org-clock-persistence-insinuate)
+  ;; Clock persistence
+  (org-clock-persistence-insinuate)
 
- ;; Ensure IDs are created for captured items
- (add-hook 'org-capture-prepare-finalize-hook #'org-id-get-create)
+  ;; Ensure IDs are created for captured items
+  (add-hook 'org-capture-prepare-finalize-hook #'org-id-get-create)
 
- ;; Define prefix keymap for Org commands
- (defvar my-org-prefix-map (make-sparse-keymap))
- (define-key my-org-prefix-map (kbd "o") #'my-org-open-agenda)
- (define-key my-org-prefix-map (kbd "c") #'org-capture)
- (define-key my-org-prefix-map (kbd "r") #'my-org-refile-to-todos)
- (define-key my-org-prefix-map (kbd "O") #'org-download-clipboard)
- (define-key my-org-prefix-map (kbd "t") #'my-org-attach-to-todos)
- (define-key my-org-prefix-map (kbd "n") #'my-org-capture-note-quick)
- (define-key my-org-prefix-map (kbd "d") #'my-denote-capture-note) ; Denote integration
+  ;; Define prefix keymap for Org commands
+  (defvar my-org-prefix-map (make-sparse-keymap)
+    "Prefix keymap for Org Mode commands.")
+  (define-key my-org-prefix-map (kbd "o") #'my-org-open-agenda)
+  (define-key my-org-prefix-map (kbd "c") #'org-capture)
+  (define-key my-org-prefix-map (kbd "r") #'my-org-refile-to-todos)
+  (define-key my-org-prefix-map (kbd "O") #'org-download-clipboard)
+  (define-key my-org-prefix-map (kbd "t") #'my-org-attach-to-todos)
+  (define-key my-org-prefix-map (kbd "n") #'my-org-capture-note-quick)
+  (define-key my-org-prefix-map (kbd "d") #'my-denote-capture-note) ; Denote integration
 
- ;; Agenda keymap
- (defvar my-org-agenda-map (make-sparse-keymap))
- (define-key my-org-prefix-map (kbd "a") my-org-agenda-map)
- (define-key my-org-agenda-map (kbd "a") #'org-agenda)
- (define-key my-org-agenda-map (kbd "t") #'my-org-agenda-today)
- (define-key
-  my-org-agenda-map (kbd "c") #'my-org-agenda-goto-current-clock)
+  ;; Agenda keymap
+  (defvar my-org-agenda-map (make-sparse-keymap)
+  (define-key my-org-prefix-map (kbd "a") my-org-agenda-map)
+  (define-key my-org-agenda-map (kbd "a") #'org-agenda)
+  (define-key my-org-agenda-map (kbd "t") #'my-org-agenda-today)
+  (define-key my-org-agenda-map (kbd "c") #'my-org-agenda-goto-current-clock)
 
- ;; Which-key integration
- (with-eval-after-load 'which-key
-   (which-key-add-key-based-replacements
-    "C-c o" "org-mode" "C-c o a" "org-agenda" "C-c o d" "denote")))
+  ;; Which-key integration
+  (with-eval-after-load 'which-key
+    (which-key-add-key-based-replacements
+      "C-c o" "org-mode"
+      "C-c o a" "org-agenda"
+      "C-c o d" "denote")))
 
 ;; Org-agenda configuration
-(use-package
- org-agenda
- :ensure nil
- :after org
- :config
- (setq
-  org-agenda-start-on-weekday 1
-  org-agenda-span 'week
-  org-agenda-include-diary t
-  org-agenda-sorting-strategy
-  '((agenda habit-down time-up priority-down tag-up)
-    (todo priority-down category-keep)
-    (tags priority-down category-keep)
-    (search category-keep))
-  org-agenda-log-mode-items '(closed clocked)
-  org-agenda-start-with-log-mode t
-  org-agenda-prefix-format
-  '((agenda . " %i %-12:c%?-12t% s [%e] ")
-    (todo . " %i %-12:c")
-    (tags . " %i %-12:c")
-    (search . " %i %-12:c"))))
+(use-package org-agenda
+  :ensure nil
+  :after org
+  :config
+  (setq org-agenda-start-on-weekday 1
+        org-agenda-span 'week
+        org-agenda-include-diary t
+        org-agenda-sorting-strategy '((agenda habit-down time-up priority-down tag-up)
+                                     (todo priority-down category-keep)
+                                     (tags priority-down category-keep)
+                                     (search category-keep))
+        org-agenda-log-mode-items '(closed clocked)
+        org-agenda-start-with-log-mode t
+        org-agenda-prefix-format '((agenda . " %i %-12:c%?-12t% s [%e] ")
+                                  (todo . " %i %-12:c")
+                                  (tags . " %i %-12:c")
+                                  (search . " %i %-12:c"))))
 
 ;; Org-capture configuration
-(use-package
- org-capture
- :ensure nil
- :after org
- :config
- (setq
-  org-capture-templates
-  `(("t" "Todo" entry
-     (file+headline
-      ,(expand-file-name "todos.org" org-directory) "Tasks")
-     "* TODO %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\n")
-    ("m" "Meeting" entry
-     (file+headline
-      ,(expand-file-name "todos.org" org-directory) "Meetings")
-     "* MEETING %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\nSCHEDULED: %^T\n%a")
-    ("n" "Note" entry
-     (file+headline
-      ,(expand-file-name "notes.org" org-directory) "Notes")
-     "* %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\n%a")
-    ("w" "Web Capture" entry
-     (file+headline
-      ,(expand-file-name "web.org" org-directory) "Web")
-     "%:initial"
-     :immediate-finish t)))
+(use-package org-capture
+  :ensure nil
+  :after org
+  :config
+  (setq org-capture-templates
+        `(("t" "Todo" entry
+           (file+headline ,(expand-file-name "todos.org" org-directory) "Tasks")
+           "* TODO %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\n")
+          ("m" "Meeting" entry
+           (file+headline ,(expand-file-name "todos.org" org-directory) "Meetings")
+           "* MEETING %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\nSCHEDULED: %^T\n%a")
+          ("n" "Note" entry
+           (file+headline ,(expand-file-name "notes.org" org-directory) "Notes")
+           "* %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\n%a")
+          ("w" "Web Capture" entry
+           (file+headline ,(expand-file-name "web.org" org-directory) "Web")
+           "%:initial"
+           :immediate-finish t)))
 
- ;; Close capture window after finalizing
- (add-hook
-  'org-capture-after-finalize-hook
-  (lambda ()
-    (when (get-buffer-window "*Capture*")
-      (delete-window (get-buffer-window "*Capture*"))))))
+  ;; Close capture window after finalizing
+  (add-hook 'org-capture-after-finalize-hook
+            (lambda ()
+              (when (get-buffer-window "*Capture*")
+                (delete-window (get-buffer-window "*Capture*"))))))
 
 ;; Org-download configuration
-(use-package
- org-download
- :ensure t
- :hook (dired-mode . org-download-enable)
- :config
- (setq org-download-image-dir
-       (expand-file-name "images" org-directory)))
+(use-package org-download
+  :ensure t
+  :hook (dired-mode . org-download-enable)
+  :config
+  (setq org-download-image-dir (expand-file-name "images" org-directory)))
 
 ;; Org-attach configuration
-(use-package
- org-attach
- :ensure nil
- :after org
- :config
- (setq
-  org-attach-dir-relative t
-  org-attach-use-inheritance t
-  org-attach-id-dir (expand-file-name "attachments" org-directory)))
+(use-package org-attach
+  :ensure nil
+  :after org
+  :config
+  (setq org-attach-dir-relative t
+        org-attach-use-inheritance t
+        org-attach-id-dir (expand-file-name "attachments" org-directory)))
 
 ;; Org-modern configuration
-(use-package
- org-modern
- :ensure t
- :hook (org-mode . org-modern-mode)
- :config
- (setq
-  org-modern-table-vertical 2
-  org-modern-table-horizontal 2
-  org-modern-star '("●" "○" "✸" "✿")
-  org-modern-list '((43 . "•") (45 . "–") (42 . "•"))))
+(use-package org-modern
+  :ensure t
+  :hook (org-mode . org-modern-mode)
+  :config
+  (setq org-modern-table-vertical 2
+        org-modern-table-horizontal 2
+        org-modern-star '("●" "○" "✸" "✿")
+        org-modern-list '((43 . "•") (45 . "–") (42 . "•"))))
 
 ;; Org-auto-tangle configuration
-(use-package
- org-auto-tangle
- :ensure t
- :hook (org-mode . org-auto-tangle-mode))
+(use-package org-auto-tangle
+  :ensure t
+  :hook (org-mode . org-auto-tangle-mode))
 
 ;; Denote integration
 (defun my-denote-capture-note ()
@@ -1422,20 +1396,14 @@
   (interactive)
   (let ((denote-file (denote-create-note)))
     (org-capture nil "n")
-    (insert
-     (format "[[file:%s][%s]]"
-             denote-file
-             (file-name-base denote-file)))
+    (insert (format "[[file:%s][%s]]" denote-file (file-name-base denote-file)))
     (org-capture-finalize t)))
 
 ;; Utility functions
 (defun my-org-refile-to-todos ()
   "Refile current heading to todos.org under 'Tasks'."
   (interactive)
-  (org-refile
-   nil nil
-   (list
-    "Tasks" (expand-file-name "todos.org" org-directory) nil nil)))
+  (org-refile nil nil (list "Tasks" (expand-file-name "todos.org" org-directory) nil nil)))
 
 (defun my-org-agenda-today ()
   "Show agenda for today only."
