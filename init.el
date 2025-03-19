@@ -642,9 +642,15 @@
  exec-path-from-shell
  :ensure t ;; Ensure it’s installed
  :config
- (setq exec-path-from-shell-shell-name "/usr/bin/zsh") ;; Explicitly use Zsh (Arch default path)
+ (setq exec-path-from-shell-shell-name "/usr/bin/zsh") ;; Explicitly use Zsh
  (setq exec-path-from-shell-arguments '("-l")) ;; -l makes it a login shell, sourcing .zshrc
  (exec-path-from-shell-initialize) ;; Run unconditionally
+ ;; Explicitly add ~/.local/bin to exec-path and PATH
+ (let ((local-bin (expand-file-name "~/.local/bin")))
+   (unless (member local-bin exec-path)
+     (add-to-list 'exec-path local-bin t) ;; Add to end of exec-path
+     (setenv "PATH" (concat local-bin ":" (getenv "PATH"))) ;; Add to PATH
+     (message "Added %s to exec-path and PATH" local-bin)))
  (message "exec-path-from-shell ran with shell: %s"
           exec-path-from-shell-shell-name))
 
@@ -1258,12 +1264,20 @@
 ;;                             Org Mode Setup                                ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Define the prefix keymap globally and early
+(defvar my-org-prefix-map (make-sparse-keymap)
+  "Prefix keymap for Org Mode commands.")
+;; Ensure it’s recognized as a keymap
+(define-prefix-command 'my-org-prefix-map)
+
+;; Set the global binding immediately
+(global-set-key (kbd "C-c o") 'my-org-prefix-map)
+
 ;; Core Org configuration
 (use-package
  org
  :ensure nil ; Built-in package
  :init (require 'org-protocol)
- :bind (("C-c o" . my-org-prefix-map)) ; Single keymap for all Org commands
  :config
  ;; General Org settings
  (setq
@@ -1299,9 +1313,7 @@
  ;; Ensure IDs are created for captured items
  (add-hook 'org-capture-prepare-finalize-hook #'org-id-get-create)
 
- ;; Define prefix keymap for Org commands
- (defvar my-org-prefix-map (make-sparse-keymap)
-   "Prefix keymap for Org Mode commands.")
+ ;; Define key bindings for my-org-prefix-map
  (define-key my-org-prefix-map (kbd "o") #'my-org-open-agenda)
  (define-key my-org-prefix-map (kbd "c") #'org-capture)
  (define-key my-org-prefix-map (kbd "r") #'my-org-refile-to-todos)
@@ -1552,13 +1564,12 @@
 
 (use-package
  aidermacs
- :vc (:url "https://github.com/MatthewZMD/aidermacs")
+ :ensure t
  :config
  (setq aidermacs-default-model "anthropic/claude-3-7-sonnet-20250219")
  (global-set-key (kbd "C-c A") 'aidermacs-transient-menu)
  ; See the Configuration section below
  (setq aidermacs-auto-commits t)
-
  (setq aidermacs-use-architect-mode t)
  (setq aidermacs-architect-model "o1-mini")
  (setq aidermacs-editor-model "deepseek/deepseek-chat"))
@@ -1615,103 +1626,84 @@
 
 (use-package
  dired
- :ensure nil ; Built-in, no need to install
+ :ensure nil
  :bind
- (("C-x C-d" . dired) ; Quick access to Dired
-  :map dired-mode-map
-  ("RET" . dired-find-alternate-file) ; Replace buffer instead of opening new
-  ("<backspace>" . dired-up-directory) ; Intuitive up-directory
-  ("C-c C-e" . wdired-change-to-wdired-mode) ; Editable Dired
-  ("C-c g" . dired-git-info-mode) ; Toggle git info
-  ("C-c t" . dired-toggle-read-only) ; Quick toggle read-only
-  ("M-!" . dired-smart-shell-command)) ; Enhanced shell command
+ (("C-x C-d" . dired)
+  :map
+  dired-mode-map
+  ("RET" . dired-find-alternate-file)
+  ("<backspace>" . dired-up-directory)
+  ("C-c C-e" . wdired-change-to-wdired-mode)
+  ("C-c g" . dired-git-info-mode)
+  ("C-c t" . dired-toggle-read-only)
+  ("M-!" . dired-smart-shell-command))
  :hook
- ((dired-mode . dired-hide-details-mode) ; Start with details hidden
-  (dired-mode . all-the-icons-dired-mode) ; Icon goodness
-  (dired-mode . dired-preview-mode) ; Auto-preview always on
-  (dired-mode . hl-line-mode)) ; Highlight current line
+ ((dired-mode . dired-hide-details-mode)
+  (dired-mode . all-the-icons-dired-mode)
+  (dired-mode . dired-preview-mode)
+  (dired-mode . hl-line-mode))
  :custom
- (dired-listing-switches "-lah --group-directories-first") ; Human-readable, dirs first
- (dired-dwim-target t) ; Smart target directory guessing
- (dired-recursive-copies 'always) ; Recursive copies without asking
- (dired-recursive-deletes 'always) ; Recursive deletes without asking
- (dired-auto-revert-buffer t) ; Auto-refresh on revisit
- (dired-hide-details-hide-symlink-targets nil) ; Show symlink targets
- (dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open"))) ; Custom file openers
- (dired-use-ls-dired t) ; Use ls emulation for better compatibility
+ (dired-listing-switches "-lah --group-directories-first")
+ (dired-dwim-target t)
+ (dired-recursive-copies 'always)
+ (dired-recursive-deletes 'always)
+ (dired-auto-revert-buffer t)
+ (dired-hide-details-hide-symlink-targets nil)
+ (dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open")))
+ (dired-use-ls-dired t)
  :config
- ;; Add colors to Dired
+ (put 'dired-find-alternate-file 'disabled nil)
  (use-package diredfl :ensure t :config (diredfl-global-mode 1))
-
- ;; Nerd Icons for Dired
  (use-package
   all-the-icons-dired
   :ensure t
   :after (all-the-icons dired)
   :hook (dired-mode . all-the-icons-dired-mode)
-  :config
-  (setq all-the-icons-dired-monochrome nil) ; Keep colors
+  :config (setq all-the-icons-dired-monochrome nil)
   (set-face-attribute 'all-the-icons-dired-dir-face nil
                       :foreground "#81a1c1"))
-
- ;; Dired Preview (always on, no toggle)
  (use-package
   dired-preview
   :ensure t
   :custom
-  (dired-preview-delay 0) ; Faster preview popup
-  (dired-preview-max-size (* 10 1024 1024)) ; 10MB max for previews
-  :config
-  ;; Enable globally so it’s always on, no need for per-buffer toggle
-  (dired-preview-global-mode 1))
-
- ;; Dired Git Info (polished)
+  (dired-preview-delay 0)
+  (dired-preview-max-size (* 10 1024 1024))
+  :config (dired-preview-global-mode 1))
  (use-package
   dired-git-info
   :ensure t
-  :custom
-  (dgi-auto-hide-details-p nil) ; Keep details visible with git info
+  :custom (dgi-auto-hide-details-p nil)
   :config
-  (setq dired-git-info-format " (%s)")) ; Customize format if desired
-
- ;; Dired Subtree for tree-like navigation
+  (setq dired-git-info-format " (%s)")
+  (define-key dired-mode-map ")" 'dired-git-info-mode))
  (use-package
   dired-subtree
   :ensure t
   :bind
   (:map
    dired-mode-map
-   ("<tab>" . dired-subtree-toggle) ; Expand/collapse subdirs
-   ("<C-tab>" . dired-subtree-cycle)) ; Cycle through subdirs
-  :config
-  (setq dired-subtree-use-backgrounds nil) ; Cleaner look with your theme
+   ("<tab>" . dired-subtree-toggle)
+   ("<C-tab>" . dired-subtree-cycle))
+  :config (setq dired-subtree-use-backgrounds nil)
   (set-face-attribute 'dired-subtree-depth-1-face nil
-                      :background "#3b4252")) ; Subtle depth
-
- ;; Async operations for speed
+                      :background "#3b4252"))
  (use-package
   dired-async
-  :ensure nil ; Part of dired-aux
+  :ensure nil
   :after dired
   :config (dired-async-mode 1))
-
- ;; Integrate with Treemacs for project awareness
  (with-eval-after-load 'treemacs
    (add-hook
     'treemacs-select-hook
     (lambda ()
       (when (treemacs-current-workspace)
         (dired (treemacs-get-local-project-root))))))
-
- ;; Custom function: Open in external app with C-c o
  (defun dired-open-externally ()
    "Open file under cursor with xdg-open."
    (interactive)
    (let ((file (dired-get-file-for-visit)))
      (start-process "dired-open" nil "xdg-open" file)))
  (define-key dired-mode-map (kbd "C-c o") 'dired-open-externally)
-
- ;; Custom function: Quick copy file path
  (defun dired-copy-file-path ()
    "Copy the full path of the file under cursor to kill ring."
    (interactive)
@@ -1719,8 +1711,6 @@
      (kill-new path)
      (message "Copied path: %s" path)))
  (define-key dired-mode-map (kbd "C-c w") 'dired-copy-file-path)
-
- ;; Custom function: Quick filter with Consult
  (defun dired-consult-filter ()
    "Filter Dired buffer using Consult narrowing."
    (interactive)
@@ -2044,22 +2034,6 @@
 (global-so-long-mode 1)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                 dired                                     ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package
- dired-preview
- :ensure t
- :init (dired-preview-global-mode 1))
-
-(use-package
- dired-git-info
- :ensure t
- :config (setq dgi-auto-hide-details-p nil)
- (with-eval-after-load 'dired
-   (define-key dired-mode-map ")" 'dired-git-info-mode)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                           Electric-quote-mode                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -2315,7 +2289,7 @@
  ;; SMTP Configuration
  (setq smtpmail-smtp-server "smtp.mailbox.org")
  (setq smtpmail-smtp-service 465) ; Try 587 if 465 fails
- (setq smtpmail-stream 'ssl) ; Use 'starttls for 587
+ (setq smtpmail-stream 'SSL) ; Use 'starttls for 587
  (setq smtpmail-smtp-user "william@theesfeld.net")
  (setq smtpmail-auth-credentials "~/.authinfo.gpg")
  (setq send-mail-function 'smtpmail-send-it)
@@ -2327,7 +2301,7 @@
  (setq gnutls-log-level 2) ; Detailed TLS logs
  (setq gnutls-verify-error nil) ; Don’t fail on minor cert issues
  (setq gnutls-min-prime-bits 1024) ; Lower for compatibility
- (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3") ; Prefer TLS 1.2
+ (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.2") ; Prefer TLS 1.2
  :hook
  ((gnus-group-mode
    .
@@ -2529,6 +2503,17 @@
 
 ;; Hook for new frames created by emacsclient
 (add-hook 'after-make-frame-functions #'my-after-make-frame-setup)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                 LaTeX templates                           ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Load all .el files from ~/.config/emacs/latex/templates/ and subdirectories
+(let ((templates-dir "~/.config/emacs/latex/templates/"))
+  (when (file-exists-p templates-dir)
+    (dolist (file
+             (directory-files-recursively templates-dir "\\.el$"))
+      (load-file file))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
