@@ -1,5 +1,3 @@
-;;; package --- summary
-;;; Commentary:
 ;;; init.el -*- lexical-binding: t -*-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -26,16 +24,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'package)
-(add-to-list
- 'package-archives '("melpa" . "https://melpa.org/packages/")
- t)
-;; Force a refresh and install missing packages
-(when (not package-archive-contents)
-  (package-refresh-contents))
-;; Install all packages marked with :ensure t
-(dolist (pkg package-selected-packages)
-  (unless (package-installed-p pkg)
-    (package-install pkg)))
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)  ; Ensure package system is ready
+(unless package-archive-contents
+  (package-refresh-contents))  ; Always refresh on first load
 (setq use-package-always-ensure t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1435,28 +1427,6 @@
         grep-find-ignored-files)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                         Copilot for AI Suggestions                       ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package
- copilot
- :vc (:url "https://github.com/copilot-emacs/copilot.el.git")
- :bind
- (:map
-  copilot-completion-map
-  ("<tab>" . copilot-accept-completion)
-  ("TAB" . copilot-accept-completion)
-  ("C-TAB" . copilot-accept-completion-by-word)
-  ("C-<tab>" . copilot-accept-completion-by-word))
- :config
- (setq
-  copilot-idle-delay 1.0
-  copilot-log-max 10000
-  copilot-max-char 250000)
- ;; Indentation alist
- (add-hook 'prog-mode-hook 'copilot-mode))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                           AEmacs (Anthropic)                           ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1969,40 +1939,6 @@
  (setq nov-verbose t)) ;; Temporary for debugging
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                Treemacs Setup
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package
- treemacs
- :init
- ;; Ensure that when you switch or open a project, Treemacs is displayed.
- :config
- ;; Open Treemacs automatically when Emacs starts up, if you prefer:
- ;; (treemacs)
-
- ;; Follow the current file in Treemacs automatically
- (treemacs-follow-mode t)
-
- ;; Optionally show git status colors asynchronously
- (treemacs-git-mode 'deferred)
-
- ;; You can tweak other Treemacs settings here:
- (setq
-  treemacs-width 35
-  treemacs-collapse-dirs 3
-  treemacs-file-event-delay 2000
-  treemacs-follow-after-init t
-  treemacs-is-never-other-window t
-  treemacs-recenter-after-project-jump 'always))
-
-(use-package
- treemacs-projectile
- :after (treemacs projectile)
- :config
- ;; If you want a keybinding to quickly open Treemacs:
- (global-set-key (kbd "C-c T") #'treemacs))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                 Flymake Setup
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -2091,7 +2027,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- helpful
+  helpful
+  :ensure t
  :bind
  ([remap describe-function] . helpful-callable)
  ([remap describe-variable] . helpful-variable)
@@ -2099,7 +2036,8 @@
  ([remap describe-key] . helpful-key))
 
 (use-package
- elisp-demos
+  elisp-demos
+ :ensure t
  :config
  (advice-add
   'helpful-update
@@ -2107,7 +2045,7 @@
 
 (use-package
  elisp-autofmt
- :ensure nil
+ :ensure t
  :commands (elisp-autofmt-mode elisp-autofmt-buffer)
  :hook (emacs-lisp-mode . elisp-autofmt-mode)
  :config
@@ -2192,14 +2130,6 @@
  (setq smtpmail-auth-credentials "~/.authinfo.gpg")
  (setq send-mail-function 'smtpmail-send-it)
  (setq message-send-mail-function 'smtpmail-send-it)
- (setq smtpmail-debug-info t)
- (setq smtpmail-debug-verbose t)
- (setq smtpmail-starttls-timeout 10)
- (setq network-security-level 'medium) ; Less strict TLS
- (setq gnutls-log-level 2) ; Detailed TLS logs
- (setq gnutls-verify-error nil) ; Don’t fail on minor cert issues
- (setq gnutls-min-prime-bits 1024) ; Lower for compatibility
- (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.2") ; Prefer TLS 1.2
  :hook
  ((gnus-group-mode
    .
@@ -2388,7 +2318,6 @@
   "Initialize UI settings for new frames, including daemon clients."
   (with-selected-frame (or frame (selected-frame))
     (when (display-graphic-p) ; Only for graphical frames
-      (vertico-mode 1)
       (menu-bar-mode -1)
       (tool-bar-mode -1)
       (scroll-bar-mode -1))))
