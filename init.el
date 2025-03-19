@@ -2074,7 +2074,7 @@
 ;;                                  Gnus Setup                                ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Load RSS feeds from rss.org immediately after org-directory is set
+;; Load RSS feeds from rss.org
 (message "Starting RSS feed load for Gnus")
 (let ((rss-file (expand-file-name "rss.org" org-directory)))
   (when (file-exists-p rss-file)
@@ -2136,7 +2136,7 @@
  (setq message-send-mail-function 'smtpmail-send-it)
 
  :hook
- ;; Ensure RSS subscriptions persist and are active
+ ;; Ensure RSS subscriptions persist and are fetched
  (gnus-started-hook
   .
   (lambda ()
@@ -2144,9 +2144,11 @@
       (when (eq (car method) 'nnrss)
         (let ((group
                (gnus-group-prefixed-name (cadr method) '(nnrss ""))))
-          (message "Subscribing RSS group: %s" group)
-          (gnus-group-change-level group 2)
-          (gnus-subscribe-group group))))
+          (message "Activating RSS group: %s" group)
+          (gnus-group-change-level group 2 nil '(nnrss ""))
+          (gnus-activate-group group t) ;; Force fetch RSS
+          (unless (gnus-group-subscribed-p group)
+            (gnus-subscribe-group group)))))
     (gnus-save-newsrc-file)))
 
  (gnus-group-mode
@@ -2164,20 +2166,20 @@
 
  :custom
  ;; Core settings
- (gnus-use-full-window nil) ;; Allow splitting windows
- (gnus-always-read-dribble-file t) ;; Restore state
- (gnus-large-newsgroup 1000) ;; Threshold for "large" groups
- (gnus-check-new-newsgroups 'ask-server) ;; Actively check for new groups
- (gnus-activate-level 2) ;; Activate subscribed groups
- (gnus-level-subscribed 2) ;; Subscription level
- (gnus-level-unsubscribed 3) ;; Unsubscribed level
+ (gnus-use-full-window nil)
+ (gnus-always-read-dribble-file t)
+ (gnus-large-newsgroup 1000)
+ (gnus-check-new-newsgroups t) ;; Always check for new groups
+ (gnus-activate-level 2)
+ (gnus-level-subscribed 2)
+ (gnus-level-unsubscribed 3)
 
  ;; Sorting and formatting
  (gnus-thread-sort-functions
   '(gnus-thread-sort-by-date gnus-thread-sort-by-number))
- (gnus-group-line-format
-  "%M%S%p%P%5y: %(%-40,40g%) %5,5ur %d\n") ;; Highlight unread counts
- (gnus-summary-line-format "%U%R%z %d %I%(%[%-23,23f%]%) %s\n")
+ (gnus-group-line-format "%M%S%p%P%5y: %(%-40,40g%) %5,5ur %d\n")
+ (gnus-summary-line-format
+  "%U%R%z %d %I%(%[%-23,23f%]%) %s\n") ;; Removed %Ur
  (gnus-sum-thread-tree-root "├─▶ ")
  (gnus-sum-thread-tree-single-indent "  ")
  (gnus-sum-thread-tree-vertical "│   ")
@@ -2218,21 +2220,21 @@
          ("nnimap\\+mailbox\\.org:INBOX/MAILBOX"
           (posting-style (address "theesfeld@mailbox.org")))))
 
- ;; Modern styling with modus-vivendi colors
+ ;; Styling with modus-vivendi colors
  (set-face-attribute 'gnus-group-mail-3 nil
-                     :foreground "#00bcff" ;; Blue for active groups
+                     :foreground "#00bcff"
                      :weight 'bold)
  (set-face-attribute 'gnus-group-mail-3-empty nil
-                     :foreground "#666699" ;; Muted purple for empty
+                     :foreground "#666699"
                      :weight 'normal)
  (set-face-attribute 'gnus-summary-normal-unread nil
-                     :foreground "#ffcc66" ;; Yellow for unread
+                     :foreground "#ffcc66"
                      :weight 'bold)
  (set-face-attribute 'gnus-summary-normal-read nil
-                     :foreground "#cccccc" ;; Gray for read
+                     :foreground "#cccccc"
                      :weight 'normal)
  (set-face-attribute 'gnus-header-name nil
-                     :foreground "#ff66ff" ;; Magenta for headers
+                     :foreground "#ff66ff"
                      :weight 'bold
                      :family
                      (if (find-font
@@ -2240,10 +2242,9 @@
                          "Berkeley Mono Variable"
                        nil)
                      :height 140)
- (set-face-attribute
-  'gnus-header-content nil
-  :foreground "#99ccff" ;; Light blue for header content
-  :weight 'normal)
+ (set-face-attribute 'gnus-header-content nil
+                     :foreground "#99ccff"
+                     :weight 'normal)
 
  :bind
  (:map
@@ -2271,7 +2272,7 @@
  :config
  (setq gnus-visible-headers
        '("^From:" "^To:" "^Cc:" "^Subject:" "^Date:" "^Message-ID:"))
- (setq gnus-treat-body-boundary 'head) ;; Cleaner article display
+ (setq gnus-treat-body-boundary 'head)
  (setq mm-text-html-renderer 'shr))
 
 (use-package
