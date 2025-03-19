@@ -948,7 +948,6 @@
   ("C-M-b" . sp-backward-sexp) ; Jump to prev sexp
   ("C-M-u" . sp-backward-up-sexp))) ; Up a level
 
-;; Vertico with posframe for GUI flair
 (use-package
  vertico
  :ensure t
@@ -960,121 +959,20 @@
   ("DEL" . vertico-directory-delete-char)
   ("M-DEL" . vertico-directory-delete-word)))
 
-(use-package
- vertico-posframe
- :ensure t
- :after vertico
- :if (display-graphic-p) ; Only in GUI
- :config (vertico-posframe-mode 1)
- (setq vertico-posframe-parameters
-       '((left-fringe . 8)
-         (right-fringe . 8)
-         (background-color . "#2e3440")))) ; Dark base from modus-vivendi
+(with-eval-after-load 'all-the-icons
+  (defun my-consult-buffer-format (buffer)
+    "Add all-the-icons to BUFFER name for consult-buffer."
+    (let ((icon (all-the-icons-icon-for-buffer buffer)))
+      (concat icon " " (buffer-name buffer))))
+  (advice-add
+   'consult-buffer
+   :filter-return
+   (lambda (buffers) (mapcar #'my-consult-buffer-format buffers))))
 
-;; Persist minibuffer history
-(use-package savehist :ensure nil :init (savehist-mode 1))
-
-;; Consult with extra commands
-(use-package
- consult
- :ensure t
- :bind
- (("C-c M-x" . consult-mode-command)
-  ("C-c h" . consult-history)
-  ("C-c k" . consult-kmacro)
-  ("C-c m" . consult-man)
-  ("C-c i" . consult-info)
-  ("C-x M-:" . consult-complex-command)
-  ("C-x b" . consult-buffer)
-  ("C-x 4 b" . consult-buffer-other-window)
-  ("C-x 5 b" . consult-buffer-other-frame)
-  ("C-x t b" . consult-buffer-other-tab)
-  ("C-x r b" . consult-bookmark)
-  ("C-x p b" . consult-project-buffer)
-  ("M-#" . consult-register-load)
-  ("M-'" . consult-register-store)
-  ("C-M-#" . consult-register)
-  ("M-y" . consult-yank-pop)
-  ("M-g e" . consult-compile-error)
-  ("M-g f" . consult-flymake) ; New: Flymake errors
-  ("M-g g" . consult-goto-line)
-  ("M-g M-g" . consult-goto-line)
-  ("M-g o" . consult-outline)
-  ("M-g h" . consult-org-heading) ; New: Org headings
-  ("M-g m" . consult-mark)
-  ("M-g k" . consult-global-mark)
-  ("M-g i" . consult-imenu)
-  ("M-g I" . consult-imenu-multi)
-  ("M-s d" . consult-find)
-  ("M-s c" . consult-locate)
-  ("M-s g" . consult-grep)
-  ("M-s G" . consult-git-grep)
-  ("M-s r" . consult-ripgrep)
-  ("M-s l" . consult-line)
-  ("M-s L" . consult-line-multi)
-  ("M-s k" . consult-keep-lines)
-  ("M-s u" . consult-focus-lines)
-  ("M-s e" . consult-isearch-history)
-  ;; New: s-<tab> for buffer scrolling
-  ("s-<tab>" . my-consult-buffer-scroll)
-  :map
-  isearch-mode-map
-  ("M-e" . consult-isearch-history)
-  ("M-s e" . consult-isearch-history)
-  ("M-s l" . consult-line))
- :config
- (consult-customize
-  consult-buffer
-  :sort t
-  :history 'buffer-name-history)
-
- ;; Custom function for s-<tab> buffer scrolling with posframe
- (defun my-consult-buffer-scroll ()
-   "Scroll through open buffers in a posframe popup, styled like Dired preview."
-   (interactive)
-   (let
-       ((vertico-posframe-parameters
-         `((left-fringe . 8)
-           (right-fringe . 8)
-           (background-color . "#2e3440") ; Match your vertico-posframe
-           (min-width . 50) (min-height . 10)))
-        (vertico-posframe-show-delay 0.3)) ; Match dired-preview delay
-     (consult-buffer)))
-
- ;; Enhance buffer display with Nerd Icons
- (with-eval-after-load 'all-the-icons
-   (defun my-consult-buffer-format (buffer)
-     "Add all-the-icons to BUFFER name for consult-buffer."
-     (let ((icon (all-the-icons-icon-for-buffer buffer)))
-       (concat icon " " (buffer-name buffer))))
-   (advice-add
-    'consult-buffer
-    :filter-return
-    (lambda (buffers) (mapcar #'my-consult-buffer-format buffers))))
-
- ;; Add s-<tab> and S-s-<tab> cycling in Vertico popup
- (with-eval-after-load 'vertico
-   (bind-key "s-<tab>" 'vertico-next vertico-map)
-   (bind-key "S-s-<tab>" 'vertico-previous vertico-map)))
-
-;; Embark with Avy integration
-(use-package
- embark
- :ensure t
- :bind
- (("C-." . embark-act)
-  ("C-;" . embark-dwim)
-  ("C-h B" . embark-bindings))
- :init (setq prefix-help-command #'embark-prefix-help-command)
- :config
- (defun embark-avy-jump (pt)
-   "Jump to PT with avy and trigger embark-act."
-   (save-excursion
-     (goto-char pt)
-     (embark-act)))
- (add-to-list 'embark-target-finders 'avy--generic-jump))
-
-(use-package embark-consult :ensure t :after (embark consult))
+;; Add s-<tab> and S-s-<tab> cycling in Vertico popup
+(with-eval-after-load 'vertico
+  (bind-key "s-<tab>" 'vertico-next vertico-map)
+  (bind-key "S-s-<tab>" 'vertico-previous vertico-map))
 
 ;; Marginalia
 (use-package marginalia :init (marginalia-mode))
@@ -2490,9 +2388,7 @@
   "Initialize UI settings for new frames, including daemon clients."
   (with-selected-frame (or frame (selected-frame))
     (when (display-graphic-p) ; Only for graphical frames
-      (vertico-mode 1) ; Ensure Vertico is active
-      (vertico-posframe-mode 1) ; Enable posframe for popups
-      ;; Add other GUI-specific modes or settings here
+      (vertico-mode 1)
       (menu-bar-mode -1)
       (tool-bar-mode -1)
       (scroll-bar-mode -1))))
