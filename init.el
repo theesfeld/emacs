@@ -2074,15 +2074,6 @@
 ;;                                  Gnus Setup                                ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Clear all Gnus state files for a fresh start
-(dolist (file (directory-files "~/.config/emacs/gnus/" t "\\.eld\\'"))
-  (when (file-exists-p file)
-    (delete-file file)))
-(when (file-exists-p "~/.newsrc")
-  (delete-file "~/.newsrc"))
-(when (file-exists-p "~/.newsrc.eld")
-  (delete-file "~/.newsrc.eld"))
-
 (use-package
  gnus
  :ensure nil
