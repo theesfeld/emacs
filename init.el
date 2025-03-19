@@ -2074,218 +2074,181 @@
 ;;                                  Gnus Setup                                ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Load RSS feeds from rss.org
-(message "Starting RSS feed load for Gnus")
-(let ((rss-file (expand-file-name "rss.org" org-directory)))
-  (when (file-exists-p rss-file)
-    (message "Loading RSS feeds from %s" rss-file)
-    (with-temp-buffer
-      (insert-file-contents rss-file)
-      (goto-char (point-min))
-      (while (re-search-forward "^\\*+ .*\\(http[s]?://.*\\)$" nil t)
-        (let ((url (match-string 1)))
-          (message "Adding RSS feed: %s" url)
-          (add-to-list 'gnus-secondary-select-methods `(nnrss ,url)
-                       t))))
-    (message "Loaded RSS feeds from %s" rss-file))
-  (unless (file-exists-p rss-file)
-    (message "RSS file %s not found" rss-file)))
+;; Clear all Gnus state files for a fresh start
+(dolist (file (directory-files "~/.config/emacs/gnus/" t "\\.eld\\'"))
+  (when (file-exists-p file)
+    (delete-file file)))
+(when (file-exists-p "~/.newsrc")
+  (delete-file "~/.newsrc"))
+(when (file-exists-p "~/.newsrc.eld")
+  (delete-file "~/.newsrc.eld"))
 
 (use-package
  gnus
  :ensure nil
- :defer t
- :commands (gnus gnus-group-list-all-groups)
+ :commands (gnus gnus-unplugged)
  :init
- ;; Prefix map for keybindings
- (defvar my-gnus-prefix-map (make-sparse-keymap)
-   "Prefix map for Gnus-related commands.")
- (global-set-key (kbd "C-c g") my-gnus-prefix-map)
- (with-eval-after-load 'which-key
-   (which-key-add-key-based-replacements "C-c g" "gnus"))
-
- (defun my-gnus-toggle ()
-   "Toggle Gnus group buffer."
-   (interactive)
-   (if (get-buffer "*Group*")
-       (switch-to-buffer "*Group*")
-     (gnus)))
-
- (defun my-gnus-refresh-groups ()
-   "Refresh and display all groups with unread counts."
-   (interactive)
-   (gnus-group-get-new-news)
-   (gnus-group-list-all-groups))
-
  (setq gnus-select-method
        '(nnimap
          "mailbox.org"
          (nnimap-address "imap.mailbox.org")
          (nnimap-server-port 993)
          (nnimap-stream ssl)
-         (nnimap-authinfo-file "~/.authinfo.gpg")
-         (nnimap-expunge 'never)))
+         (nnimap-authinfo-file "~/.authinfo.gpg")))
 
- ;; SMTP Configuration
- (setq smtpmail-smtp-server "smtp.mailbox.org")
- (setq smtpmail-smtp-service 587)
- (setq smtpmail-stream 'starttls)
- (setq smtpmail-smtp-user "theesfeld@mailbox.org")
- (setq smtpmail-auth-credentials "~/.authinfo.gpg")
- (setq send-mail-function 'smtpmail-send-it)
- (setq message-send-mail-function 'smtpmail-send-it)
+ (setq gnus-secondary-select-methods nil) ;; Add RSS manually with G R
+
+ ;; SMTP setup
+ (setq
+  smtpmail-smtp-server "smtp.mailbox.org"
+  smtpmail-smtp-service 587
+  smtpmail-stream 'starttls
+  smtpmail-smtp-user "theesfeld@mailbox.org"
+  smtpmail-auth-credentials "~/.authinfo.gpg"
+  send-mail-function 'smtpmail-send-it
+  message-send-mail-function 'smtpmail-send-it)
+
+ ;; Keybindings
+ (defvar my-gnus-map (make-sparse-keymap))
+ (global-set-key (kbd "C-c g") my-gnus-map)
+ (define-key my-gnus-map (kbd "g") 'gnus)
+ (define-key my-gnus-map (kbd "u") 'gnus-unplugged)
 
  :hook
- ;; Ensure RSS subscriptions persist and are fetched
- (gnus-started-hook
-  .
-  (lambda ()
-    (dolist (method gnus-secondary-select-methods)
-      (when (eq (car method) 'nnrss)
-        (let ((group
-               (gnus-group-prefixed-name (cadr method) '(nnrss ""))))
-          (message "Activating RSS group: %s" group)
-          (gnus-group-change-level group 2 nil '(nnrss ""))
-          (gnus-activate-group group t) ;; Force fetch RSS
-          (unless (gnus-group-subscribed-p group)
-            (gnus-subscribe-group group)))))
-    (gnus-save-newsrc-file)))
-
  (gnus-group-mode
   .
   (lambda ()
-    (require 'gnus-topic)
-    (gnus-topic-mode)
-    (display-line-numbers-mode -1)))
- (gnus-summary-mode . (lambda () (display-line-numbers-mode -1)))
- (gnus-article-mode
+    (when (require 'gnus-topic nil t)
+      (gnus-topic-mode)
+      (message "Gnus topic mode enabled"))
+    (unless (featurep 'gnus-topic)
+      (message "Gnus topic mode not available"))))
+ (gnus-started-hook
   .
   (lambda ()
-    (visual-line-mode 1)
-    (display-line-numbers-mode -1)))
+    (dolist
+        (group (gnus-group-list-all-groups 6)) ;; Get all groups up to level 6
+      (when (string-match-p "^nnimap\\+mailbox\\.org:" group)
+        (if (string-match-p "Junk$" group)
+            (progn
+              (message "Setting %s to level 6" group)
+              (gnus-group-change-level group 6))
+          (message "Subscribing %s to level 2" group)
+          (gnus-group-change-level group 2)
+          (gnus-activate-group group t)
+          (unless (gnus-group-subscribed-p group)
+            (gnus-subscribe-group group)))))
+    (gnus-group-get-new-news)
+    (gnus-group-list-groups 2))) ;; Show only subscribed (level 2)
 
  :custom
- ;; Core settings
+ (gnus-home-directory "~/.config/emacs/gnus/")
+ (gnus-startup-file "~/.config/emacs/gnus/.newsrc")
+ (gnus-use-dribble-file nil)
+ (gnus-cache-directory "~/.config/emacs/gnus/cache/")
+ (gnus-cache-active-file "~/.config/emacs/gnus/cache/active")
  (gnus-use-full-window nil)
- (gnus-always-read-dribble-file t)
- (gnus-large-newsgroup 1000)
- (gnus-check-new-newsgroups t) ;; Always check for new groups
- (gnus-activate-level 2)
- (gnus-level-subscribed 2)
- (gnus-level-unsubscribed 3)
+ (gnus-always-read-dribble-file nil)
+ (gnus-check-new-newsgroups 'always)
+ (gnus-asynchronous t)
+ (gnus-use-cache t)
+ (gnus-use-header-prefetch t)
+ (gnus-generate-tree-function 'gnus-generate-horizontal-tree)
+ (gnus-tree-minimize-window nil)
+ (gnus-group-line-format "%M%S%p%P%5y:%B%(%g%)\n")
+ (gnus-group-sort-function
+  '(gnus-group-sort-by-alphabet gnus-group-sort-by-rank))
+ (gnus-summary-line-format "%U%R %B %s\n")
+ (gnus-summary-make-false-root 'adopt)
+ (gnus-sum-thread-tree-root "├▶")
+ (gnus-sum-thread-tree-false-root " ◇ ")
+ (gnus-sum-thread-tree-single-indent "")
+ (gnus-sum-thread-tree-vertical "│")
+ (gnus-sum-thread-tree-leaf-with-child "├▶")
+ (gnus-sum-thread-tree-indent "  ")
+ (gnus-sum-thread-tree-single-leaf "└▶")
+ (gnus-summary-display-arrow t)
 
- ;; Sorting and formatting
- (gnus-thread-sort-functions
-  '(gnus-thread-sort-by-date gnus-thread-sort-by-number))
- (gnus-group-line-format "%M%S%p%P%5y: %(%-40,40g%) %5,5ur %d\n")
- (gnus-summary-line-format
-  "%U%R%z %d %I%(%[%-23,23f%]%) %s\n") ;; Removed %Ur
- (gnus-sum-thread-tree-root "├─▶ ")
- (gnus-sum-thread-tree-single-indent "  ")
- (gnus-sum-thread-tree-vertical "│   ")
- (gnus-sum-thread-tree-leaf-with-child "├─▶ ")
- (gnus-sum-thread-tree-single-leaf "└─▶ ")
+ :custom-face
+ (gnus-group-mail-3 ((t (:foreground "#00bcff" :weight bold))))
+ (gnus-group-mail-3-empty ((t (:foreground "#666699"))))
+ (gnus-summary-normal-unread
+  ((t (:foreground "#ffcc66" :weight bold))))
+ (gnus-summary-normal-read ((t (:foreground "#a0a0a0"))))
+ (gnus-header-name ((t (:foreground "#ff66ff" :weight bold))))
+ (gnus-header-content ((t (:foreground "#88c0d0"))))
 
  :config
- ;; Directories
- (setq gnus-dribble-directory gnus-home-directory)
- (setq gnus-cache-directory
-       (expand-file-name "cache" gnus-home-directory))
- (setq gnus-article-save-directory
-       (expand-file-name "articles" gnus-home-directory))
- (setq gnus-kill-files-directory
-       (expand-file-name "kills" gnus-home-directory))
-
- ;; Posting styles
+ (make-directory gnus-cache-directory t)
  (setq gnus-posting-styles
        '((".*"
-          (name "TJ")
-          (address "william@theesfeld.net")
-          (signature "Cheers,\nTJ"))
+          (address "theesfeld@mailbox.org")
+          (signature "Best,\nWilliam"))
          ("INBOX/SAMHAIN.*"
           (address "grim@samhain.su")
           (signature "Regards,\nGrim"))
-         ("INBOX/MAILBOX.*"
-          (address "theesfeld@mailbox.org")
-          (signature "Best,\nWilliam Theesfeld"))))
-
- ;; Group parameters
+         ("INBOX/THEESFELD.*"
+          (address "william@theesfeld.net")
+          (signature "Cheers,\nTJ"))))
  (setq gnus-parameters
-       '(("nnimap\\+mailbox\\.org:.*" (display . all) (visible . t))
-         ("nnrss:.*" (display . all) (visible . t) (level 2))
-         ("nnimap\\+mailbox\\.org:INBOX/THEESFELD"
-          (posting-style (address "william@theesfeld.net")))
-         ("nnimap\\+mailbox\\.org:INBOX/SAMHAIN"
-          (posting-style (address "grim@samhain.su")))
-         ("nnimap\\+mailbox\\.org:INBOX/MAILBOX"
-          (posting-style (address "theesfeld@mailbox.org")))))
+       '(("nnimap\\+mailbox\\.org:.*"
+          (display . all)
+          (visible . t)
+          (level 2))
+         ("nnimap\\+mailbox\\.org:Junk"
+          (display . nil)
+          (visible . nil)
+          (level 6))
+         ("nnrss:.*" (display . all) (visible . t) (level 2))))
+ (setq gnus-article-browse-delete-temp 'ask)
+ (setq gnus-expert-user t)
+ (setq gnus-show-threads t)
+ (setq gnus-fetch-old-headers nil)
+ (setq gnus-build-sparse-threads 'some)
+ (setq gnus-summary-thread-gathering-function
+       'gnus-gather-threads-by-subject)
+ (setq gnus-thread-sort-functions '(gnus-thread-sort-by-date))
 
- ;; Styling with modus-vivendi colors
- (set-face-attribute 'gnus-group-mail-3 nil
-                     :foreground "#00bcff"
-                     :weight 'bold)
- (set-face-attribute 'gnus-group-mail-3-empty nil
-                     :foreground "#666699"
-                     :weight 'normal)
- (set-face-attribute 'gnus-summary-normal-unread nil
-                     :foreground "#ffcc66"
-                     :weight 'bold)
- (set-face-attribute 'gnus-summary-normal-read nil
-                     :foreground "#cccccc"
-                     :weight 'normal)
- (set-face-attribute 'gnus-header-name nil
-                     :foreground "#ff66ff"
-                     :weight 'bold
-                     :family
-                     (if (find-font
-                          (font-spec :name "Berkeley Mono Variable"))
-                         "Berkeley Mono Variable"
-                       nil)
-                     :height 140)
- (set-face-attribute 'gnus-header-content nil
-                     :foreground "#99ccff"
-                     :weight 'normal)
-
- :bind
- (:map
-  my-gnus-prefix-map
-  ("g" . my-gnus-toggle)
-  ("m" . gnus-msg-mail)
-  ("r" . gnus-summary-reply)
-  ("R" . gnus-summary-wide-reply)
-  ("f" . gnus-summary-mail-forward)
-  ("l" . my-gnus-refresh-groups)))
-
-(use-package
- gnus-desktop-notify
- :ensure t
- :after gnus
- :config
- (gnus-desktop-notify-mode)
- (setq gnus-desktop-notify-function 'gnus-desktop-notify-exec)
- (setq gnus-desktop-notify-exec-program "notify-send"))
+ ;; Custom quit function
+ (defun my-gnus-group-quit ()
+   "Quit Gnus and ensure a valid buffer is selected."
+   (interactive)
+   (gnus-group-quit)
+   (when (get-buffer "*scratch*")
+     (switch-to-buffer "*scratch*"))
+   (unless (get-buffer-window "*scratch*")
+     (switch-to-buffer (other-buffer))))
+ (define-key gnus-group-mode-map (kbd "q") 'my-gnus-group-quit))
 
 (use-package
  gnus-art
  :ensure nil
  :after gnus
  :config
+ (setq gnus-inhibit-images nil)
+ (setq gnus-blocked-images nil)
+ (setq gnus-article-mode-line-format "Gnus: %S")
  (setq gnus-visible-headers
-       '("^From:" "^To:" "^Cc:" "^Subject:" "^Date:" "^Message-ID:"))
- (setq gnus-treat-body-boundary 'head)
- (setq mm-text-html-renderer 'shr))
+       '("^From:"
+         "^Subject:"
+         "^To:"
+         "^Cc:"
+         "^Date:"
+         "^Newsgroups:"
+         "^Followup-To:"))
+ (setq gnus-article-sort-functions '(gnus-article-sort-by-date)))
 
 (use-package
  message
  :ensure nil
  :after gnus
- :hook (message-mode . flyspell-mode)
  :config
- (setq message-kill-buffer-on-exit t)
- (setq message-default-charset 'utf-8)
+ (setq message-citation-line-format "On %a, %b %d %Y, %N wrote:\n")
  (setq message-citation-line-function
        'message-insert-formatted-citation-line)
- (setq message-citation-line-format "On %a, %b %d %Y, %f wrote:\n"))
+ (setq message-kill-buffer-on-exit t)
+ (setq message-wide-reply-confirm-recipients t)
+ (setq message-default-charset 'utf-8))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                   calc                                    ;;
