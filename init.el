@@ -480,6 +480,7 @@
  (require 'all-the-icons)
  :config
  ;; Global Emacs Settings
+ (global-visual-line-mode 1)
  (setq-default
   default-directory '~
   kill-ring-max 5000
@@ -516,6 +517,7 @@
  (tool-bar-mode -1)
  (scroll-bar-mode -1)
  (set-face-attribute 'default nil :height 120)
+
  (set-face-attribute 'variable-pitch nil :height 130)
  (load-theme 'modus-vivendi t)
  (setq modus-themes-bold-constructs t)
