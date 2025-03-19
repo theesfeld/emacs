@@ -24,10 +24,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(package-initialize)  ; Ensure package system is ready
+(add-to-list
+ 'package-archives '("melpa" . "https://melpa.org/packages/")
+ t)
+(package-initialize) ; Ensure package system is ready
 (unless package-archive-contents
-  (package-refresh-contents))  ; Always refresh on first load
+  (package-refresh-contents)) ; Always refresh on first load
 (setq use-package-always-ensure t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -38,12 +40,10 @@
   (when (string-match-p ":website:" (buffer-string))
     (goto-char (point-min))
     (while (re-search-forward "\\[\\[\\(http[^][]+\\)\\]\\[.*\\]\\]"
-                              nil
-                              t)
-      (org-download-image (match-string 1)))))
-(add-hook
- 'org-capture-after-finalize-hook
- #'my-org-download-images-from-capture)
+                              (org-download-image (match-string 1)))))
+  (add-hook
+   'org-capture-after-finalize-hook
+   #'my-org-download-images-from-capture))
 
 (defun my/toggle-buffer (buffer-name command)
   "Toggle a buffer with BUFFER-NAME, running COMMAND if it doesn't exist."
@@ -58,38 +58,6 @@
       (if buffer
           (switch-to-buffer buffer)
         (call-interactively command)))))
-
-(defun my-elfeed-start-auto-update ()
-  "Start auto-updating Elfeed every 30 minutes if search buffer is visible."
-  (interactive)
-  (unless (bound-and-true-p my-elfeed-update-timer)
-    (setq my-elfeed-update-timer
-          (run-at-time
-           t 1800
-           (lambda ()
-             (when (get-buffer-window "*elfeed-search*" t)
-               (elfeed-update)
-               (my-elfeed-update-title)))))))
-
-(defun my-elfeed-stop-auto-update ()
-  "Stop Elfeed auto-update timer."
-  (interactive)
-  (when (bound-and-true-p my-elfeed-update-timer)
-    (cancel-timer my-elfeed-update-timer)
-    (setq my-elfeed-update-timer nil)))
-
-(defun my-elfeed-update-title ()
-  "Update Elfeed search buffer title with new article count."
-  (interactive)
-  (with-current-buffer "*elfeed-search*"
-    (let ((new-count (length (elfeed-search-filter "unread"))))
-      (rename-buffer (format "*elfeed-search* (%d new)" new-count)))))
-
-(defun my-elfeed-quit-and-stop-timer ()
-  "Quit Elfeed and stop the auto-update timer."
-  (interactive)
-  (elfeed-search-quit-window)
-  (my-elfeed-stop-auto-update))
 
 (defun my-erc-update-notifications-keywords (&rest _)
   "Update notification keywords with current nick."
@@ -874,28 +842,19 @@
               (derived-mode . org-mode)
               (derived-mode . org-agenda-mode)))
          ("PDF" (derived-mode . pdf-tools-mode))
-         ("Mail" (or (derived-mode . rmail-mode)
-              (derived-mode . message-mode)))
          ("Gnus" (or (derived-mode . gnus-mode) (saved . "gnus")))
          ("Net"
           (or (derived-mode . eww-mode) (derived-mode . elfeed-mode)))
          ("IRC" (derived-mode . erc-mode))
          ("Dired" (derived-mode . dired-mode))
          ("Proc" (process))
-         ("Firefox" (and (mode . exwm-mode) ;; EXWM-managed windows
-               (predicate
-                .
-                (string-match-p
-                 "firefox"
-                 (downcase
-                  (or (buffer-local-value
-                       'exwm-class-name (current-buffer))
-                      ""))))))
          ("Stars" (starred-name)))))
 
 (add-hook
  'ibuffer-mode-hook
- (lambda () (ibuffer-switch-to-saved-filter-groups "home")))
+ (lambda ()
+   (ibuffer-switch-to-saved-filter-groups "home")
+   (display-line-numbers-mode -1)))
 
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 
@@ -2027,8 +1986,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
-  helpful
-  :ensure t
+ helpful
+ :ensure t
  :bind
  ([remap describe-function] . helpful-callable)
  ([remap describe-variable] . helpful-variable)
@@ -2036,7 +1995,7 @@
  ([remap describe-key] . helpful-key))
 
 (use-package
-  elisp-demos
+ elisp-demos
  :ensure t
  :config
  (advice-add
@@ -2070,8 +2029,22 @@
 (use-package
  0x0
  :ensure t
+ :init (setq 0x0-server "https://0x0.st") (setq 0x0-use-curl t)
+ :bind (:map global-map ("C-c 0" . my-0x0-prefix-map))
  :bind
- (:map global-map ("C-c u" . '0x0-dwim) ("C-c U" . '0x0-upload-file)))
+ (:map
+  my-0x0-prefix-map
+  ("f" . 0x0-upload-file)
+  ("s" . 0x0-shorten-uri)
+  ("t" . 0x0-upload-text)
+  ("d" . 0x0-dwim)
+  ("p" . 0x0-popup))
+ :config
+ (defvar my-0x0-prefix-map (make-sparse-keymap)
+   "Prefix keymap for 0x0 commands.")
+ (define-prefix-command 'my-0x0-prefix-map)
+ (with-eval-after-load 'which-key
+   (which-key-add-key-based-replacements "C-c 0" "0x0-upload")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                   eat                                     ;;
@@ -2101,17 +2074,47 @@
 ;;                                  Gnus Setup                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Load RSS feeds from rss.org immediately after org-directory is set
+(message "Starting RSS feed load for Gnus")
+(let ((rss-file (expand-file-name "rss.org" org-directory)))
+  (message "Checking RSS file at %s" rss-file)
+  (if (file-exists-p rss-file)
+      (with-temp-buffer
+        (insert-file-contents rss-file)
+        (goto-char (point-min))
+        (while (re-search-forward "^\\*+ .*\\(http[s]?://.*\\)$"
+                                  nil
+                                  t)
+          (let ((url (match-string 1)))
+            (message "Adding RSS feed: %s" url)
+            (add-to-list 'gnus-secondary-select-methods `(nnrss ,url)
+                         t)))
+        (message "Loaded RSS feeds from %s" rss-file))
+    (message "RSS file %s not found" rss-file)))
+
 (use-package
  gnus
  :ensure nil
  :defer t
  :commands (gnus gnus-group-list-all-groups)
  :init
+ ;; Define prefix map and functions early
  (defvar my-gnus-prefix-map (make-sparse-keymap)
    "Prefix map for Gnus-related commands.")
  (global-set-key (kbd "C-c g") my-gnus-prefix-map)
  (with-eval-after-load 'which-key
    (which-key-add-key-based-replacements "C-c g" "gnus"))
+
+ (defun my-gnus-toggle ()
+   "Toggle Gnus group buffer."
+   (interactive)
+   (my/toggle-buffer "*Group*" 'gnus))
+
+ (defun my-gnus-refresh-groups ()
+   "Refresh and display all groups."
+   (interactive)
+   (gnus-group-get-new-news)
+   (gnus-group-list-all-groups))
 
  (setq gnus-select-method
        '(nnimap
@@ -2124,12 +2127,26 @@
 
  ;; SMTP Configuration
  (setq smtpmail-smtp-server "smtp.mailbox.org")
- (setq smtpmail-smtp-service 465) ; Try 587 if 465 fails
- (setq smtpmail-stream 'SSL) ; Use 'starttls for 587
- (setq smtpmail-smtp-user "william@theesfeld.net")
+ (setq smtpmail-smtp-service 587)
+ (setq smtpmail-stream 'starttls)
+ (setq smtpmail-smtp-user "theesfeld@mailbox.org")
  (setq smtpmail-auth-credentials "~/.authinfo.gpg")
  (setq send-mail-function 'smtpmail-send-it)
  (setq message-send-mail-function 'smtpmail-send-it)
+
+ ;; Force RSS subscription on startup
+ (add-hook
+  'gnus-started-hook
+  (lambda ()
+    (dolist (method gnus-secondary-select-methods)
+      (when (eq (car method) 'nnrss)
+        (let ((group (concat "nnrss:" (cadr method))))
+          (message "Subscribing RSS group: %s" group)
+          (gnus-subscribe-group group)
+          (gnus-group-change-level group 2))))
+    (gnus-save-newsrc-file)
+    (message "Gnus startup complete, saved newsrc")))
+
  :hook
  ((gnus-group-mode
    .
@@ -2143,6 +2160,7 @@
    (lambda ()
      (visual-line-mode 1)
      (display-line-numbers-mode -1))))
+
  :custom
  (gnus-use-full-window nil)
  (gnus-always-read-dribble-file t)
@@ -2160,6 +2178,7 @@
  (gnus-activate-level 2)
  (gnus-level-subscribed 2)
  (gnus-level-unsubscribed 3)
+
  :config
  (setq gnus-dribble-directory gnus-home-directory)
  (setq gnus-cache-directory
@@ -2202,30 +2221,6 @@
          ("nnimap\\+mailbox\\.org:INBOX/MAILBOX"
           (posting-style (address "theesfeld@mailbox.org")))))
 
- ;; RSS Integration
- (defun my-gnus-load-rss-feeds ()
-   "Load, subscribe, and fetch RSS feeds from rss.org."
-   (interactive)
-   (let ((rss-file (expand-file-name "rss.org" org-directory)))
-     (if (file-exists-p rss-file)
-         (with-temp-buffer
-           (insert-file-contents rss-file)
-           (goto-char (point-min))
-           (while (re-search-forward "^\\*+ .*\\(http[s]?://.*\\)$"
-                                     nil
-                                     t)
-             (let* ((url (match-string 1))
-                    (group-name (concat "nnrss:" url)))
-               (message "Adding and subscribing RSS feed: %s" url)
-               (add-to-list
-                'gnus-secondary-select-methods `(nnrss ,url)
-                t)
-               (gnus-subscribe-group group-name)
-               (gnus-group-change-level group-name 2)))
-           (gnus-group-get-new-news)
-           (gnus-group-list-groups))
-       (message "RSS file %s not found" rss-file))))
-
  ;; Styling
  (setq gnus-group-highlight '(((> unread 0) . bold) (t . default)))
  (set-face-attribute 'gnus-group-mail-3 nil
@@ -2240,7 +2235,7 @@
  (set-face-attribute 'gnus-summary-normal-read nil
                      :foreground "#d8dee9"
                      :weight 'normal)
- (set-face-attribute 'gnus-header-content nil
+ (set-face-attribute 'gnus-header-name nil
                      :foreground "#b48ead"
                      :family
                      (if (find-font
@@ -2248,17 +2243,6 @@
                          "Berkeley Mono Variable"
                        nil)
                      :height 140)
-
- (defun my-gnus-refresh-groups ()
-   "Refresh and display all groups."
-   (interactive)
-   (gnus-group-get-new-news)
-   (gnus-group-list-groups))
-
- (defun my-gnus-toggle ()
-   "Toggle Gnus group buffer."
-   (interactive)
-   (my/toggle-buffer "*Group*" 'gnus))
 
  :bind
  (:map
@@ -2268,8 +2252,7 @@
   ("r" . gnus-summary-reply)
   ("R" . gnus-summary-wide-reply)
   ("f" . gnus-summary-mail-forward)
-  ("l" . my-gnus-refresh-groups)
-  ("R" . my-gnus-load-rss-feeds)))
+  ("l" . my-gnus-refresh-groups)))
 
 (use-package
  gnus-desktop-notify
@@ -2300,6 +2283,7 @@
  (setq message-citation-line-function
        'message-insert-formatted-citation-line)
  (setq message-citation-line-format "On %a, %b %d %Y, %f wrote:\n"))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                   calc                                    ;;
