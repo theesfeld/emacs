@@ -2049,32 +2049,45 @@
    (which-key-add-key-based-replacements "C-c 0" "0x0-upload")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                   eat                                     ;;
+;;                                   eshell                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- eat
- :ensure t ;; Automatically install it, because who has time for manual bullshit?
- :defer t ;; Lazy-load this beast, we’re not savages
- :commands (eat) ;; Autoload the main entry point
- :bind
- (("C-`" .
-   (lambda ()
-     (interactive)
-     (my/toggle-buffer "*eat*" 'eat)))
-  :map eat-mode-map
-  ("C-c C-k" . eat-kill-process) ;; Extra flair for killing the process
-  ("C-c C-r" . eat-reset)) ;; Reset the terminal like a boss
- :custom
- (eat-kill-buffer-on-exit t) ;; Clean up after yourself, you animal
- (eat-term-name "xterm-256color") ;; Full color glory
- :hooks
- (eat-mode-hook
-  .
-  (lambda ()
-    (turn-on-auto-fill)
-    (display-line-numbers-mode -1))) ;; Auto-fill on, line numbers off
- )
+ eshell
+ :ensure nil ;; Built into Emacs, no need to install
+ :bind (("C-`" . eshell)) ;; Quick access, same as your eat binding
+ :init
+ ;; Pre-config settings
+ (setq
+  eshell-scroll-to-bottom-on-input 'all ;; Jump to prompt on input
+  eshell-error-if-no-glob t ;; Fail if globbing doesn’t match
+  eshell-hist-ignoredups t ;; No duplicate history entries
+  eshell-save-history-on-exit t ;; Persist history
+  eshell-prefer-lisp-functions nil ;; Use external commands by default
+  eshell-destroy-buffer-when-process-dies t) ;; Clean up dead buffers
+ :config
+ ;; Post-load tweaks
+ (setq eshell-prompt-function
+       (lambda () (concat (abbreviate-file-name (eshell/pwd)) " $ ")))
+ (setq eshell-prompt-regexp "^[^#$\n]*[#$] ") ;; Match the prompt for navigation
+ ;; Disable line numbers in eshell
+ (add-hook
+  'eshell-mode-hook (lambda () (display-line-numbers-mode -1)))
+ ;; Visual commands (run in term-mode for better rendering)
+ (add-to-list 'eshell-visual-commands "htop")
+ (add-to-list 'eshell-visual-commands "ssh")
+ (add-to-list 'eshell-visual-commands "tail")
+ ;; Aliases for convenience
+ (eshell/alias "ff" "find-file $1") ;; Open file in Emacs
+ (eshell/alias "ll" "ls -lh") ;; Mimic dir listing
+ (eshell/alias "clear" "eshell/clear") ;; Clear buffer
+ ;; Custom clear function
+ (defun eshell/clear ()
+   "Clear the eshell buffer."
+   (interactive)
+   (let ((inhibit-read-only t))
+     (erase-buffer)
+     (eshell-send-input))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  Gnus Setup                                ;;
