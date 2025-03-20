@@ -1903,8 +1903,12 @@
 ;;                           Electric-quote-mode                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(setq electric-quote-context-sensitive t)
-(electric-quote-mode 1)
+(use-package
+ electric
+ :ensure nil
+ :config
+ (setq electric-quote-context-sensitive t)
+ (electric-quote-mode 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                           calibre / nov.el                                ;;
