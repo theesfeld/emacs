@@ -2040,18 +2040,18 @@
  elisp-autofmt
  :ensure t
  :commands (elisp-autofmt-mode elisp-autofmt-buffer)
- :hook (emacs-lisp-mode . elisp-autofmt-mode)
+ :hook
+ ((emacs-lisp-mode . elisp-autofmt-mode)
+  (before-save
+   .
+   (lambda ()
+     (when (eq major-mode 'emacs-lisp-mode)
+       (elisp-autofmt-buffer-background)))))
  :config
  (defun elisp-autofmt-buffer-background ()
    "Format buffer in background without moving cursor."
    (interactive)
    (save-excursion (elisp-autofmt-buffer)))
- :init
- (add-hook
-  'before-save-hook
-  (lambda ()
-    (when (eq major-mode 'emacs-lisp-mode)
-      (elisp-autofmt-buffer-background))))
  :bind
  (:map
   emacs-lisp-mode-map ("C-c f" . elisp-autofmt-buffer-background)))
