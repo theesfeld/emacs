@@ -1005,8 +1005,7 @@
  ;; Optional: Customize cache directory
  (setq xkcd-cache-dir "~/.config/emacs/xkcd/")
  ;; Hook to set cursor-type to a non-blinking state in xkcd buffers
- (add-hook
-  'xkcd-mode-hook (lambda () (setq-local cursor-type '(bar . 0)))))
+ :hook (xkcd-mode . (lambda () (setq-local cursor-type '(bar . 0)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                 Popup Setup
