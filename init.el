@@ -2068,9 +2068,13 @@
  :custom
  (eat-kill-buffer-on-exit t) ;; Clean up after yourself, you animal
  (eat-term-name "xterm-256color") ;; Full color glory
- :config
- ;; Add some fucking awesome tweaks
- (add-hook 'eat-mode-hook #'turn-on-auto-fill)) ;; Keep shit tidy
+ :hooks
+ (eat-mode-hook
+  .
+  (lambda ()
+    (turn-on-auto-fill)
+    (display-line-numbers-mode -1))) ;; Auto-fill on, line numbers off
+ )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  Gnus Setup                                ;;
