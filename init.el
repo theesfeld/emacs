@@ -1765,20 +1765,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              ERC (IRC Client)                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(declare-function pcomplete-erc-setup "erc-pcomplete")
+
 (use-package
  erc
+ :ensure nil
  :defer t
  :config
- (add-hook 'erc-mode-hook #'my-erc-set-fill-column)
- (setq
-  erc-track-remove-disconnected-buffers t
-  ;; ... other settings ...
-  erc-notifications-keywords nil) ; Keep this
- (setq erc-modules '(networks notifications))
- (erc-update-modules)
- (add-hook
-  'erc-nick-changed-functions #'my-erc-update-notifications-keywords)
  (setq
   erc-track-remove-disconnected-buffers t
   erc-hide-list '("PART" "QUIT" "JOIN")
@@ -1809,25 +1801,11 @@
   erc-log-channels-directory "~/.config/emacs/irc-logs/"
   erc-save-buffer-on-part t
   erc-log-write-after-insert t)
- ;; Enable ERC modules, including 'networks' but excluding 'nickbar'
- (setq erc-modules '(networks notifications)) ; Add 'networks' explicitly
+ (setq erc-modules '(networks notifications))
  (erc-update-modules)
-
- (add-hook
-  'erc-nick-changed-functions #'my-erc-update-notifications-keywords)
- ;; Initialize with a default or leave it nil until connected
- (setq erc-notifications-keywords nil)
-
  (erc-timestamp-mode 1)
  (erc-track-mode 1)
  (erc-autojoin-mode 1)
- (add-hook 'erc-insert-post-hook 'erc-save-buffer-in-logs)
- (add-hook
-  'erc-mode-hook
-  (lambda ()
-    (require 'erc-pcomplete)
-    (pcomplete-erc-setup)
-    (erc-completion-mode 1)))
  (require 'erc-button)
  (erc-button-mode 1)
  (setq erc-button-url-open-function 'eww-browse-url)
@@ -1836,6 +1814,16 @@
  (set-face-attribute 'erc-my-nick-face nil
                      :foreground "#ff79c6"
                      :weight 'bold)
+ :hook
+ ((erc-mode . my-erc-set-fill-column)
+  (erc-nick-changed . my-erc-update-notifications-keywords)
+  (erc-insert-post . erc-save-buffer-in-logs)
+  (erc-mode
+   .
+   (lambda ()
+     (require 'erc-pcomplete)
+     (pcomplete-erc-setup)
+     (erc-completion-mode 1))))
  :bind
  (:map
   erc-mode-map
