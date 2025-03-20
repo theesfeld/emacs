@@ -1059,14 +1059,77 @@
  (:map flyspell-mode-map ("C-;" . flyspell-correct-wrapper)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                   Project                                 ;;
+;;                                  Projects                                 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
  project
- :ensure nil
+ :ensure nil ;; Built into Emacs 30.1, no need to install
+ :bind-keymap
+ ("C-c p" . project-prefix-map) ;; Bind project commands to C-c p
+ :init
+ ;; Ensure project.el knows about Git projects
+ (setq project-vc-backend 'vc-git) ;; Explicitly use Git as the backend
+ (setq project-vc-ignores
+       '("*.o" "*.elc" "*.pyc" "node_modules/" "dist/" "build/"))
  :config
- (add-hook 'project-find-functions #'my-project-find-root))
+ ;; Improve project root detection
+ (setq project-find-functions
+       '(project-try-vc ;; Git/Mercurial/Subversion detection
+         my-project-find-root)) ;; Keep your custom function as a fallback
+ ;; Switch project behavior
+ (setq project-switch-commands
+       '((project-find-file "Find file" ?f)
+         (project-dired "Dired" ?d)
+         (magit-project-status "Magit" ?m)
+         (project-shell "Shell" ?s)
+         (treemacs "Treemacs" ?t)))
+ (setq project-switch-use-entire-map t) ;; Allow all project commands after switching
+ :hook
+ ((project-find-functions
+   .
+   (lambda (dir)
+     (when (project-current)
+       (message "Project detected: %s"
+                (project-root (project-current))))))))
+
+(use-package
+ treemacs
+ :ensure t
+ :defer t
+ :init
+ ;; Bind treemacs toggle globally
+ (global-set-key (kbd "C-c t") 'treemacs)
+ :config
+ ;; Integrate with project.el
+ (setq treemacs-project-follow-mode t) ;; Auto-follow current project
+ (setq treemacs-follow-mode t) ;; Follow current buffer
+ (setq treemacs-filewatch-mode t) ;; Auto-refresh on file changes
+ (setq treemacs-git-mode 'deferred) ;; Show Git status in tree
+ (setq treemacs-collapse-dirs 3) ;; Collapse empty dirs up to 3 levels
+ (setq treemacs-width 35) ;; Sidebar width
+ (setq treemacs-no-png-images nil) ;; Use icons if available
+ ;; Sync with all-the-icons
+ (when (featurep 'all-the-icons)
+   (treemacs-load-theme "all-the-icons"))
+ :hook
+ ((treemacs-mode
+   .
+   (lambda ()
+     (display-line-numbers-mode -1) ;; No line numbers in treemacs
+     (hl-line-mode -1))))) ;; No highlight line
+
+(use-package
+ treemacs-magit
+ :ensure t
+ :after (treemacs magit)
+ :demand t) ;; Load immediately after treemacs and magit
+
+(use-package
+ treemacs-all-the-icons
+ :ensure t
+ :after (treemacs all-the-icons)
+ :demand t) ;; Load immediately after treemacs and all-the-icons
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Eglot (LSP) Setup                             ;;
