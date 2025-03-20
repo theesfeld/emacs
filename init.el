@@ -1392,18 +1392,17 @@
 ;;                                   Magit/Forge                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Prefer remote upstream for magit
-(setq magit-prefer-remote-upstream t)
-
 (use-package
  magit
+ :ensure t
  :defer t
- :bind ("C-c G" . magit-status)) ; Use magit-status explicitly
-(use-package
- forge
- :defer t
- :after magit) ; Load after magit when needed
+ :config (setq magit-prefer-remote-upstream t)
+ :bind ("C-c G" . magit-status))
+
+(use-package forge :ensure t :defer t :after magit)
+
 (use-package magit-todos :ensure t :after magit)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Grep Ignorance                              ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
