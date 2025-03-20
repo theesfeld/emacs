@@ -1182,19 +1182,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Define the prefix keymap globally and early
-(defvar my-org-prefix-map (make-sparse-keymap)
-  "Prefix keymap for Org Mode commands.")
-;; Ensure it’s recognized as a keymap
-(define-prefix-command 'my-org-prefix-map)
-
-;; Set the global binding immediately
-(global-set-key (kbd "C-c o") 'my-org-prefix-map)
-
-;; Core Org configuration
 (use-package
  org
- :ensure nil ; Built-in package
- :init (require 'org-protocol)
+ :ensure nil
+ :init
+ (require 'org-protocol)
+ (defvar my-org-prefix-map (make-sparse-keymap)
+   "Prefix keymap for Org Mode commands.")
+ (define-prefix-command 'my-org-prefix-map)
+ (global-set-key (kbd "C-c o") 'my-org-prefix-map)
  :config
  ;; General Org settings
  (setq
@@ -1227,9 +1223,6 @@
  ;; Clock persistence
  (org-clock-persistence-insinuate)
 
- ;; Ensure IDs are created for captured items
- (add-hook 'org-capture-prepare-finalize-hook #'org-id-get-create)
-
  ;; Define key bindings for my-org-prefix-map
  (define-key my-org-prefix-map (kbd "o") #'my-org-open-agenda)
  (define-key my-org-prefix-map (kbd "c") #'org-capture)
@@ -1250,9 +1243,9 @@
  ;; Which-key integration
  (with-eval-after-load 'which-key
    (which-key-add-key-based-replacements
-    "C-c o" "org-mode" "C-c o a" "org-agenda" "C-c o d" "denote")))
+    "C-c o" "org-mode" "C-c o a" "org-agenda" "C-c o d" "denote"))
+ :hook (org-capture-prepare-finalize . org-id-get-create))
 
-;; Org-agenda configuration
 (use-package
  org-agenda
  :ensure nil
@@ -1275,7 +1268,6 @@
     (tags . " %i %-12:c")
     (search . " %i %-12:c"))))
 
-;; Org-capture configuration
 (use-package
  org-capture
  :ensure nil
@@ -1300,15 +1292,13 @@
       ,(expand-file-name "web.org" org-directory) "Web")
      "%:initial"
      :immediate-finish t)))
-
- ;; Close capture window after finalizing
- (add-hook
-  'org-capture-after-finalize-hook
+ :hook
+ (org-capture-after-finalize
+  .
   (lambda ()
     (when (get-buffer-window "*Capture*")
       (delete-window (get-buffer-window "*Capture*"))))))
 
-;; Org-download configuration
 (use-package
  org-download
  :ensure t
@@ -1317,7 +1307,6 @@
  (setq org-download-image-dir
        (expand-file-name "images" org-directory)))
 
-;; Org-attach configuration
 (use-package
  org-attach
  :ensure nil
@@ -1328,7 +1317,6 @@
   org-attach-use-inheritance t
   org-attach-id-dir (expand-file-name "attachments" org-directory)))
 
-;; Org-modern configuration
 (use-package
  org-modern
  :ensure t
@@ -1341,7 +1329,6 @@
   org-modern-table-vertical 2
   org-modern-table-horizontal 2))
 
-;; Org-auto-tangle configuration
 (use-package
  org-auto-tangle
  :ensure t
