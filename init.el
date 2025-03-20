@@ -949,12 +949,14 @@
 ;;                              Editing Helpers                              ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Manual formatting keybinding
-(global-set-key (kbd "C-x C-;") 'comment-or-uncomment-region)
+(use-package
+ emacs
+ :ensure nil
+ :bind (("C-x C-;" . comment-or-uncomment-region)))
 
-;; show uncommitted changes in the gutter
 (use-package
  diff-hl
+ :ensure t
  :hook (magit-post-refresh . diff-hl-magit-post-refresh)
  :config (global-diff-hl-mode +1))
 
@@ -965,6 +967,7 @@
 
 (use-package
  avy
+ :ensure t
  :bind (("M-j" . avy-goto-char-timer) ("C-’" . avy-goto-char-2))
  :init (avy-setup-default)
  :config
@@ -984,6 +987,7 @@
 
 (use-package
  avy-zap
+ :ensure t
  :bind
  (("M-z" . avy-zap-up-to-char-dwim) ("M-Z" . avy-zap-to-char-dwim))
  :config
