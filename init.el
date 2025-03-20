@@ -1941,19 +1941,20 @@
  (setq nov-verbose t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                 Flymake Setup
+;;                                 Flymake Setup                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
  flymake
  :ensure nil
- :hook ((prog-mode . flymake-mode) (emacs-lisp-mode . flymake-mode))
- :init
- (add-hook
-  'emacs-startup-hook
-  (lambda ()
-    (with-current-buffer "*scratch*"
-      (flymake-mode -1))))
+ :hook
+ ((prog-mode . flymake-mode)
+  (emacs-lisp-mode . flymake-mode)
+  (emacs-startup
+   .
+   (lambda ()
+     (with-current-buffer "*scratch*"
+       (flymake-mode -1)))))
  :config (setq flymake-fringe-indicator-position 'right-fringe)
  (setq flymake-no-changes-timeout 1) ; Faster feedback after typing
  (add-hook
@@ -1968,21 +1969,16 @@
  :bind
  (:map
   flymake-mode-map
-  ("C-c ! l" . flymake-show-buffer-diagnostics) ; List errors in buffer
-  ("C-c ! n" . flymake-goto-next-error) ; Jump to next error
-  ("C-c ! p" . flymake-goto-prev-error))) ; Jump to previous error
+  ("C-c ! l" . flymake-show-buffer-diagnostics)
+  ("C-c ! n" . flymake-goto-next-error)
+  ("C-c ! p" . flymake-goto-prev-error)))
 
-
-;; Optional: stricter linting with elisp-lint
 (use-package
  elisp-lint
  :ensure t
  :commands (elisp-lint-buffer elisp-lint-file)
  :bind (("C-c l" . elisp-lint-buffer))
  :config (setq elisp-lint-ignored-validators '("package-lint")))
-
-;; Optionally, if you want linting in all prog modes even outside Eglot:
-(add-hook 'prog-mode-hook #'flymake-mode)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                        snippets (Yasnippet)                               ;;
