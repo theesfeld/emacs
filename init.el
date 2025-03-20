@@ -1987,17 +1987,14 @@
 (use-package
  yasnippet
  :ensure t
- :init
- ;; Enable globally at startup
- (yas-global-mode 1)
+ :init (yas-global-mode 1)
  :custom
- ;; Explicitly set snippet directories
  (yas-snippet-dirs
   (list
-   (expand-file-name "snippets/" user-emacs-directory) ;; Personal snippets
-   (expand-file-name "snippets/"
-                     (file-name-directory
-                      (find-library-name "yasnippet-snippets")))))
+   (expand-file-name "snippets/" user-emacs-directory)
+   (expand-file-name
+    "snippets/"
+    (file-name-directory (find-library-name "yasnippet-snippets")))))
  (yas-prompt-functions
   '(yas-completing-prompt yas-ido-prompt yas-no-prompt))
  :config (add-hook 'after-init-hook #'yas-reload-all)
@@ -2008,8 +2005,6 @@
  :ensure t
  :after yasnippet
  :config
- ;; No need to call yas-reload-all here; handled in yasnippet block
- ;; Verify installation by checking the snippets directory
  (let ((snippets-dir
         (expand-file-name "snippets/"
                           (file-name-directory
