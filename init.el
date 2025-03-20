@@ -2084,31 +2084,15 @@
 ;;                                   eshell                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Define the toggle function first (outside use-package if not already defined)
-(defun my/toggle-buffer (buffer-name command)
-  "Toggle a buffer with BUFFER-NAME, running COMMAND if it doesn't exist."
-  (interactive)
-  (unless (commandp command)
-    (error "Second argument must be an interactive command"))
-  (let ((buffer (get-buffer buffer-name)))
-    (if (and buffer (get-buffer-window buffer))
-        ;; If the buffer exists and is visible, hide it
-        (quit-window nil (get-buffer-window buffer))
-      ;; If it doesn't exist or isn't visible, start it or switch to it
-      (if buffer
-          (switch-to-buffer buffer)
-        (call-interactively command)))))
-
 (use-package
  eshell
- :ensure nil ;; Built into Emacs, no need to install
+ :ensure nil
  :bind
  (("C-`" .
    (lambda ()
      (interactive)
-     (my/toggle-buffer "*eshell*" 'eshell)))) ;; Toggle Eshell
+     (my/toggle-buffer "*eshell*" 'eshell))))
  :init
- ;; Pre-config settings
  (setq
   eshell-scroll-to-bottom-on-input 'all
   eshell-error-if-no-glob t
@@ -2116,17 +2100,14 @@
   eshell-save-history-on-exit t
   eshell-prefer-lisp-functions nil
   eshell-destroy-buffer-when-process-dies t
-  ;; Initialize eshell-visual-commands if not already set
   eshell-visual-commands
   (if (boundp 'eshell-visual-commands)
       eshell-visual-commands
-    '("less" "more"))) ;; Default fallback
+    '("less" "more")))
  :config
- ;; Prompt setup
  (setq eshell-prompt-function
        (lambda () (concat (abbreviate-file-name (eshell/pwd)) " $ ")))
  (setq eshell-prompt-regexp "^[^#$\n]*[#$] ")
- ;; Custom clear function
  (defun eshell/clear ()
    "Clear the eshell buffer."
    (interactive)
@@ -2134,15 +2115,13 @@
      (erase-buffer)
      (eshell-send-input)))
  :hook
- (eshell-mode-hook
+ (eshell-mode
   .
   (lambda ()
-    (display-line-numbers-mode -1) ;; No line numbers
-    ;; Add visual commands
+    (display-line-numbers-mode -1)
     (add-to-list 'eshell-visual-commands "htop")
     (add-to-list 'eshell-visual-commands "ssh")
     (add-to-list 'eshell-visual-commands "tail")
-    ;; Define aliases
     (eshell/alias "ff" "find-file $1")
     (eshell/alias "ll" "ls -lh")
     (eshell/alias "clear" "eshell/clear"))))
