@@ -4,14 +4,6 @@
 ;;                             Early Initial Settings                       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Inhibit startup screen.
-(setq inhibit-startup-message t)
-
-;; Keep the custom variables out of our main init file.
-(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-(when (file-exists-p custom-file)
-  (load custom-file))
-
 (defvar gnus-home-directory
   (expand-file-name "gnus" user-emacs-directory)
   "Gnus home directory.")
@@ -457,6 +449,10 @@
  emacs
  :ensure nil ; Built-in, no need to install
  :init
+ ;; Moved from Early Initial Settings
+ (setq inhibit-startup-message t)
+ (setq custom-file
+       (expand-file-name "custom.el" user-emacs-directory))
  ;; Basic Emacs Information and pre-load settings
  (setq
   user-full-name "TJ"
@@ -485,6 +481,8 @@
  (save-place-mode 1)
  (require 'all-the-icons)
  :config
+ (when (file-exists-p custom-file)
+   (load custom-file))
  ;; Global Emacs Settings
  (global-visual-line-mode 1)
  (setq-default
@@ -514,9 +512,6 @@
  (require 'auth-source)
  (require 'epa-file)
  (epa-file-enable)
-
- ;; (setq epa-file-cache-passphrase-for-symmetric-encryption t)
- ;; (setq epa-file-inhibit-auto-save t)
 
  ;; UI Settings
  (menu-bar-mode -1)
@@ -554,7 +549,6 @@
    (setq gc-cons-threshold (* 100 1024 1024)))
 
  :hook
- ;; Mode activations and hooks
  ((text-mode . visual-wrap-prefix-mode)
   (before-save . whitespace-cleanup)
   (emacs-startup
@@ -568,9 +562,9 @@
      (size-indication-mode 1)
      (global-auto-revert-mode 1)
      (display-time-mode 1)))
-  (emacs-startup . my-adjust-gc-threshold) ; From Garbage Collection
-  (minibuffer-setup . my-increase-gc-during-minibuffer) ; From Garbage Collection
-  (minibuffer-exit . my-restore-gc-after-minibuffer)) ; From Garbage Collection
+  (emacs-startup . my-adjust-gc-threshold)
+  (minibuffer-setup . my-increase-gc-during-minibuffer)
+  (minibuffer-exit . my-restore-gc-after-minibuffer))
 
  :bind
  (("C-x k" . kill-current-buffer)
