@@ -23,14 +23,17 @@
 ;;                                  MELPA                                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(require 'package)
-(add-to-list
- 'package-archives '("melpa" . "https://melpa.org/packages/")
- t)
-(package-initialize) ; Ensure package system is ready
-(unless package-archive-contents
-  (package-refresh-contents)) ; Always refresh on first load
-(setq use-package-always-ensure t)
+(use-package
+ package
+ :ensure nil
+ :init
+ (add-to-list
+  'package-archives '("melpa" . "https://melpa.org/packages/")
+  t)
+ :config (package-initialize)
+ (unless package-archive-contents
+   (package-refresh-contents))
+ (setq use-package-always-ensure t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                CUSTOM FUNCTIONS                           ;;
@@ -429,19 +432,22 @@
 ;;                         Version Control for Config                       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Automatically commit changes to init.el using vc
-(defun my-auto-commit-init-el ()
-  "Commit changes to init.el after saving."
-  (when (and (buffer-file-name)
-             (string=
-              (file-name-nondirectory (buffer-file-name)) "init.el"))
-    (ignore-errors
-      (vc-checkin
-       (list (buffer-file-name))
-       'git
-       nil
-       "Auto-commit init.el changes"))))
-(add-hook 'after-save-hook #'my-auto-commit-init-el)
+(use-package
+ vc
+ :ensure nil
+ :config
+ (defun my-auto-commit-init-el ()
+   "Commit changes to init.el after saving."
+   (when (and (buffer-file-name)
+              (string=
+               (file-name-nondirectory (buffer-file-name)) "init.el"))
+     (ignore-errors
+       (vc-checkin
+        (list (buffer-file-name))
+        'git
+        nil
+        "Auto-commit init.el changes"))))
+ :hook (after-save . my-auto-commit-init-el))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     EMACS                                 ;;
