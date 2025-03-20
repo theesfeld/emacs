@@ -2073,10 +2073,6 @@
         (lambda ()
           (concat (abbreviate-file-name (eshell/pwd)) " $ ")))
   (setq eshell-prompt-regexp "^[^#$\n]*[#$] ")
-  ;; Aliases
-  (eshell/alias "ff" "find-file $1")
-  (eshell/alias "ll" "ls -lh")
-  (eshell/alias "clear" "eshell/clear")
   ;; Custom clear function
   (defun eshell/clear ()
     "Clear the eshell buffer."
@@ -2084,14 +2080,17 @@
     (let ((inhibit-read-only t))
       (erase-buffer)
       (eshell-send-input)))
-  ;; Hook for mode-specific tweaks
   :hook
   (eshell-mode-hook . (lambda ()
                         (display-line-numbers-mode -1) ;; No line numbers
-                        ;; Add visual commands safely
+                        ;; Add visual commands
                         (add-to-list 'eshell-visual-commands "htop")
                         (add-to-list 'eshell-visual-commands "ssh")
-                        (add-to-list 'eshell-visual-commands "tail")))))
+                        (add-to-list 'eshell-visual-commands "tail")
+                        ;; Define aliases
+                        (eshell/alias "ff" "find-file $1")
+                        (eshell/alias "ll" "ls -lh")
+                        (eshell/alias "clear" "eshell/clear")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  Gnus Setup                                ;;
