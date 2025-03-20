@@ -891,7 +891,6 @@
 ;;                              Vertico + Consult                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Smartparens with custom bindings
 (use-package
  smartparens
  :ensure t
@@ -912,41 +911,37 @@
  :ensure t
  :init (vertico-mode)
  :custom (vertico-cycle t)
+ :config
+ (with-eval-after-load 'all-the-icons
+   (defun my-consult-buffer-format (buffer)
+     "Add all-the-icons to BUFFER name for consult-buffer."
+     (let ((icon (all-the-icons-icon-for-buffer buffer)))
+       (concat icon " " (buffer-name buffer))))
+   (advice-add
+    'consult-buffer
+    :filter-return
+    (lambda (buffers) (mapcar #'my-consult-buffer-format buffers))))
+ (bind-key "s-<tab>" 'vertico-next vertico-map)
+ (bind-key "S-s-<tab>" 'vertico-previous vertico-map)
  :bind
  (:map
   vertico-map
   ("DEL" . vertico-directory-delete-char)
   ("M-DEL" . vertico-directory-delete-word)))
 
-(with-eval-after-load 'all-the-icons
-  (defun my-consult-buffer-format (buffer)
-    "Add all-the-icons to BUFFER name for consult-buffer."
-    (let ((icon (all-the-icons-icon-for-buffer buffer)))
-      (concat icon " " (buffer-name buffer))))
-  (advice-add
-   'consult-buffer
-   :filter-return
-   (lambda (buffers) (mapcar #'my-consult-buffer-format buffers))))
-
-;; Add s-<tab> and S-s-<tab> cycling in Vertico popup
-(with-eval-after-load 'vertico
-  (bind-key "s-<tab>" 'vertico-next vertico-map)
-  (bind-key "S-s-<tab>" 'vertico-previous vertico-map))
-
-;; Marginalia
-(use-package marginalia :init (marginalia-mode))
+(use-package marginalia :ensure t :init (marginalia-mode))
 
 (use-package
  all-the-icons-completion
  :ensure t
  :after (all-the-icons marginalia)
  :config (all-the-icons-completion-mode)
- (add-hook
-  'marginalia-mode-hook #'all-the-icons-completion-marginalia-setup))
+ :hook
+ (marginalia-mode . all-the-icons-completion-marginalia-setup))
 
-;; Alerts
 (use-package
  alert
+ :ensure t
  :commands (alert)
  :init (setq alert-default-style 'notifier))
 
