@@ -575,35 +575,32 @@
 ;;                               Shell Environment                          ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun my-load-env-file ()
-  "Load environment variables from ~/.config/emacs/.env into Emacs."
-  (let ((env-file (expand-file-name ".env" user-emacs-directory)))
-    (when (file-readable-p env-file)
-      (with-temp-buffer
-        (insert-file-contents env-file)
-        (goto-char (point-min))
-        (while (not (eobp))
-          (let ((line
-                 (buffer-substring-no-properties
-                  (line-beginning-position) (line-end-position))))
-            (unless (or (string-empty-p line)
-                        (string-prefix-p "#" line))
-              (when (string-match "^\\([^=]+\\)=\\(.*\\)$" line)
-                (let ((key (match-string 1 line))
-                      (value (match-string 2 line)))
-                  (setenv key value)
-                  (message "Loaded env: %s" key)))))
-          (forward-line 1))))
-    (unless (file-exists-p env-file)
-      (message "Warning: .env file not found at %s" env-file))))
-
-(my-load-env-file)
-
-;; Properly set up PATH and environment variables on macOS/Linux.
 (use-package
  exec-path-from-shell
- :ensure t ;; Ensure it’s installed
+ :ensure t
  :config
+ (defun my-load-env-file ()
+   "Load environment variables from ~/.config/emacs/.env into Emacs."
+   (let ((env-file (expand-file-name ".env" user-emacs-directory)))
+     (when (file-readable-p env-file)
+       (with-temp-buffer
+         (insert-file-contents env-file)
+         (goto-char (point-min))
+         (while (not (eobp))
+           (let ((line
+                  (buffer-substring-no-properties
+                   (line-beginning-position) (line-end-position))))
+             (unless (or (string-empty-p line)
+                         (string-prefix-p "#" line))
+               (when (string-match "^\\([^=]+\\)=\\(.*\\)$" line)
+                 (let ((key (match-string 1 line))
+                       (value (match-string 2 line)))
+                   (setenv key value)
+                   (message "Loaded env: %s" key)))))
+           (forward-line 1))))
+     (unless (file-exists-p env-file)
+       (message "Warning: .env file not found at %s" env-file))))
+ (my-load-env-file)
  (setq exec-path-from-shell-shell-name "/usr/bin/zsh") ;; Explicitly use Zsh
  (setq exec-path-from-shell-arguments '("-l")) ;; -l makes it a login shell, sourcing .zshrc
  (exec-path-from-shell-initialize) ;; Run unconditionally
