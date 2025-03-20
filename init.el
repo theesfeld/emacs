@@ -652,11 +652,7 @@
        (set-window-configuration my-ediff-window-config)
        (setq my-ediff-window-config nil))))
 
- :bind
- (("C-c d" . my-ediff-save-window-config)
-  :map
-  ediff-mode-map
-  ("q" . my-ediff-quit)))
+ :bind (("C-c d" . my-ediff-save-window-config)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Backup and Auto-Save                         ;;
