@@ -2052,10 +2052,29 @@
 ;;                                   eshell                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Define the toggle function first (outside use-package if not already defined)
+(defun my/toggle-buffer (buffer-name command)
+  "Toggle a buffer with BUFFER-NAME, running COMMAND if it doesn't exist."
+  (interactive)
+  (unless (commandp command)
+    (error "Second argument must be an interactive command"))
+  (let ((buffer (get-buffer buffer-name)))
+    (if (and buffer (get-buffer-window buffer))
+        ;; If the buffer exists and is visible, hide it
+        (quit-window nil (get-buffer-window buffer))
+      ;; If it doesn't exist or isn't visible, start it or switch to it
+      (if buffer
+          (switch-to-buffer buffer)
+        (call-interactively command)))))
+
 (use-package
  eshell
  :ensure nil ;; Built into Emacs, no need to install
- :bind (("C-`" . eshell)) ;; Quick access
+ :bind
+ (("C-`" .
+   (lambda ()
+     (interactive)
+     (my/toggle-buffer "*eshell*" 'eshell)))) ;; Toggle Eshell
  :init
  ;; Pre-config settings
  (setq
