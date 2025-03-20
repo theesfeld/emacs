@@ -795,37 +795,39 @@
  (completion-category-overrides
   '((file (styles partial-completion)))))
 
-;; Completion-Preview with Escape to dismiss
-(add-hook 'prog-mode-hook #'completion-preview-mode)
-(add-hook 'text-mode-hook #'completion-preview-mode)
-(with-eval-after-load 'comint
-  (add-hook 'comint-mode-hook #'completion-preview-mode))
-(with-eval-after-load 'completion-preview
-  (keymap-set
-   completion-preview-active-mode-map
-   "<escape>"
-   #'completion-preview-dismiss)
-  (keymap-set
-   completion-preview-active-mode-map
-   "<tab>"
-   #'completion-preview-insert)
-  (keymap-set
-   completion-preview-active-mode-map
-   "<down>"
-   #'completion-preview-next-candidate)
-  (keymap-set
-   completion-preview-active-mode-map
-   "<up>"
-   #'completion-preview-prev-candidate)
-  (setq completion-preview-minimum-symbol-length 3)
-  (setq completion-preview-exact-match-only t)
-  (push 'org-self-insert-command completion-preview-commands)
-  (push 'paredit-backward-delete completion-preview-commands))
-(defun completion-preview-dismiss ()
-  "Dismiss the current completion preview."
-  (interactive)
-  (when completion-preview--overlay
-    (completion-preview--hide)))
+(use-package
+ completion-preview
+ :ensure nil
+ :hook
+ ((prog-mode . completion-preview-mode)
+  (text-mode . completion-preview-mode)
+  (comint-mode . completion-preview-mode))
+ :config
+ (keymap-set
+  completion-preview-active-mode-map
+  "<escape>"
+  #'completion-preview-dismiss)
+ (keymap-set
+  completion-preview-active-mode-map
+  "<tab>"
+  #'completion-preview-insert)
+ (keymap-set
+  completion-preview-active-mode-map
+  "<down>"
+  #'completion-preview-next-candidate)
+ (keymap-set
+  completion-preview-active-mode-map
+  "<up>"
+  #'completion-preview-prev-candidate)
+ (setq completion-preview-minimum-symbol-length 3)
+ (setq completion-preview-exact-match-only t)
+ (push 'org-self-insert-command completion-preview-commands)
+ (push 'paredit-backward-delete completion-preview-commands)
+ (defun completion-preview-dismiss ()
+   "Dismiss the current completion preview."
+   (interactive)
+   (when completion-preview--overlay
+     (completion-preview--hide))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  IBUFFER                                  ;;
