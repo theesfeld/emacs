@@ -2055,32 +2055,34 @@
 (use-package
  eshell
  :ensure nil ;; Built into Emacs, no need to install
- :bind (("C-`" . eshell)) ;; Quick access, same as your eat binding
+ :bind (("C-`" . eshell)) ;; Quick access
  :init
  ;; Pre-config settings
  (setq
-  eshell-scroll-to-bottom-on-input 'all ;; Jump to prompt on input
-  eshell-error-if-no-glob t ;; Fail if globbing doesn’t match
-  eshell-hist-ignoredups t ;; No duplicate history entries
-  eshell-save-history-on-exit t ;; Persist history
-  eshell-prefer-lisp-functions nil ;; Use external commands by default
-  eshell-destroy-buffer-when-process-dies t) ;; Clean up dead buffers
+  eshell-scroll-to-bottom-on-input 'all
+  eshell-error-if-no-glob t
+  eshell-hist-ignoredups t
+  eshell-save-history-on-exit t
+  eshell-prefer-lisp-functions nil
+  eshell-destroy-buffer-when-process-dies t)
  :config
- ;; Post-load tweaks
+ ;; Ensure eshell is loaded before tweaking
+ (require 'eshell)
+ ;; Prompt setup
  (setq eshell-prompt-function
        (lambda () (concat (abbreviate-file-name (eshell/pwd)) " $ ")))
- (setq eshell-prompt-regexp "^[^#$\n]*[#$] ") ;; Match the prompt for navigation
- ;; Disable line numbers in eshell
+ (setq eshell-prompt-regexp "^[^#$\n]*[#$] ")
+ ;; Disable line numbers
  (add-hook
   'eshell-mode-hook (lambda () (display-line-numbers-mode -1)))
- ;; Visual commands (run in term-mode for better rendering)
+ ;; Visual commands (should now work after require)
  (add-to-list 'eshell-visual-commands "htop")
  (add-to-list 'eshell-visual-commands "ssh")
  (add-to-list 'eshell-visual-commands "tail")
- ;; Aliases for convenience
- (eshell/alias "ff" "find-file $1") ;; Open file in Emacs
- (eshell/alias "ll" "ls -lh") ;; Mimic dir listing
- (eshell/alias "clear" "eshell/clear") ;; Clear buffer
+ ;; Aliases
+ (eshell/alias "ff" "find-file $1")
+ (eshell/alias "ll" "ls -lh")
+ (eshell/alias "clear" "eshell/clear")
  ;; Custom clear function
  (defun eshell/clear ()
    "Clear the eshell buffer."
