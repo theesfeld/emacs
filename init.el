@@ -1938,7 +1938,7 @@
  (setq
   nov-unzip-program (executable-find "bsdtar")
   nov-unzip-args '("-xC" directory "-f" filename))
- (setq nov-verbose t)) ;; Temporary for debugging
+ (setq nov-verbose t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                 Flymake Setup
