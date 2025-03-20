@@ -662,36 +662,40 @@
 ;;                              Backup and Auto-Save                         ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Keep backups in a dedicated directory with timestamps
-(setq backup-directory-alist '(("." . "~/.config/emacs/backups")))
-(setq
- backup-by-copying t ;; Don't clobber symlinks
- version-control t ;; Use versioned backups
- kept-new-versions 10 ;; Keep 10 new versions
- kept-old-versions 5 ;; Keep 5 old versions
- delete-old-versions t ;; Auto-delete excess backups
- vc-make-backup-files t ;; Backup even under version control
- backup-by-copying-when-linked t) ;; Handle hard links safely
+(use-package
+ files
+ :ensure nil
+ :config
+ ;; Keep backups in a dedicated directory with timestamps
+ (setq backup-directory-alist '(("." . "~/.config/emacs/backups")))
+ (setq
+  backup-by-copying t ;; Don't clobber symlinks
+  version-control t ;; Use versioned backups
+  kept-new-versions 10 ;; Keep 10 new versions
+  kept-old-versions 5 ;; Keep 5 old versions
+  delete-old-versions t ;; Auto-delete excess backups
+  vc-make-backup-files t ;; Backup even under version control
+  backup-by-copying-when-linked t) ;; Handle hard links safely
 
-;; Timestamped backup files
-(setq make-backup-file-name-function
-      (lambda (file)
-        (concat
-         (file-name-concat "~/.config/emacs/backups"
-                           (file-name-nondirectory file))
-         "." (format-time-string "%Y%m%dT%H%M%S") "~")))
+ ;; Timestamped backup files
+ (setq make-backup-file-name-function
+       (lambda (file)
+         (concat
+          (file-name-concat "~/.config/emacs/backups"
+                            (file-name-nondirectory file))
+          "." (format-time-string "%Y%m%dT%H%M%S") "~")))
 
-;; Save auto-save files in a dedicated directory
-(setq
- auto-save-file-name-transforms
- '((".*" "~/.config/emacs/auto-save-list/" t))
- auto-save-default t
- auto-save-timeout 30 ;; Auto-save after 30 seconds of idle
- auto-save-interval 200) ;; Auto-save after 200 keystrokes
+ ;; Save auto-save files in a dedicated directory
+ (setq
+  auto-save-file-name-transforms
+  '((".*" "~/.config/emacs/auto-save-list/" t))
+  auto-save-default t
+  auto-save-timeout 30 ;; Auto-save after 30 seconds of idle
+  auto-save-interval 200) ;; Auto-save after 200 keystrokes
 
-;; No TRAMP backups
-(with-eval-after-load 'tramp
-  (setq tramp-backup-directory-alist nil))
+ ;; No TRAMP backups
+ (with-eval-after-load 'tramp
+   (setq tramp-backup-directory-alist nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    vundo                                  ;;
