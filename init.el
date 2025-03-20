@@ -833,35 +833,38 @@
 ;;                                  IBUFFER                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(setq ibuffer-saved-filter-groups
-      `(("home"
-         ("Emacs" (filename
-           .
-           ,(concat
-             "\\`"
-             (regexp-quote
-              (expand-file-name user-emacs-directory))
-             ".*")))
-         ("Prog" (derived-mode . prog-mode))
-         ("Org" (or (file-extension . "org")
-              (derived-mode . org-mode)
-              (derived-mode . org-agenda-mode)))
-         ("PDF" (derived-mode . pdf-tools-mode))
-         ("Gnus" (or (derived-mode . gnus-mode) (saved . "gnus")))
-         ("Net"
-          (or (derived-mode . eww-mode) (derived-mode . elfeed-mode)))
-         ("IRC" (derived-mode . erc-mode))
-         ("Dired" (derived-mode . dired-mode))
-         ("Proc" (process))
-         ("Stars" (starred-name)))))
-
-(add-hook
- 'ibuffer-mode-hook
- (lambda ()
-   (ibuffer-switch-to-saved-filter-groups "home")
-   (display-line-numbers-mode -1)))
-
-(global-set-key (kbd "C-x C-b") 'ibuffer)
+(use-package
+ ibuffer
+ :ensure nil
+ :config
+ (setq ibuffer-saved-filter-groups
+       `(("home"
+          ("Emacs" (filename
+            .
+            ,(concat
+              "\\`"
+              (regexp-quote
+               (expand-file-name user-emacs-directory))
+              ".*")))
+          ("Prog" (derived-mode . prog-mode))
+          ("Org" (or (file-extension . "org")
+               (derived-mode . org-mode)
+               (derived-mode . org-agenda-mode)))
+          ("PDF" (derived-mode . pdf-tools-mode))
+          ("Gnus" (or (derived-mode . gnus-mode) (saved . "gnus")))
+          ("Net" (or (derived-mode . eww-mode)
+               (derived-mode . elfeed-mode)))
+          ("IRC" (derived-mode . erc-mode))
+          ("Dired" (derived-mode . dired-mode))
+          ("Proc" (process))
+          ("Stars" (starred-name)))))
+ :hook
+ (ibuffer-mode
+  .
+  (lambda ()
+    (ibuffer-switch-to-saved-filter-groups "home")
+    (display-line-numbers-mode -1)))
+ :bind ("C-x C-b" . ibuffer))
 
 (use-package
  all-the-icons-ibuffer
