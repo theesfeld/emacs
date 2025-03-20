@@ -2052,44 +2052,46 @@
 ;;                                   eshell                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package
- eshell
- :ensure nil ;; Built into Emacs, no need to install
- :bind (("C-`" . eshell)) ;; Quick access
- :init
- ;; Pre-config settings
- (setq
-  eshell-scroll-to-bottom-on-input 'all
-  eshell-error-if-no-glob t
-  eshell-hist-ignoredups t
-  eshell-save-history-on-exit t
-  eshell-prefer-lisp-functions nil
-  eshell-destroy-buffer-when-process-dies t)
- :config
- ;; Ensure eshell is loaded before tweaking
- (require 'eshell)
- ;; Prompt setup
- (setq eshell-prompt-function
-       (lambda () (concat (abbreviate-file-name (eshell/pwd)) " $ ")))
- (setq eshell-prompt-regexp "^[^#$\n]*[#$] ")
- ;; Disable line numbers
- (add-hook
-  'eshell-mode-hook (lambda () (display-line-numbers-mode -1)))
- ;; Visual commands (should now work after require)
- (add-to-list 'eshell-visual-commands "htop")
- (add-to-list 'eshell-visual-commands "ssh")
- (add-to-list 'eshell-visual-commands "tail")
- ;; Aliases
- (eshell/alias "ff" "find-file $1")
- (eshell/alias "ll" "ls -lh")
- (eshell/alias "clear" "eshell/clear")
- ;; Custom clear function
- (defun eshell/clear ()
-   "Clear the eshell buffer."
-   (interactive)
-   (let ((inhibit-read-only t))
-     (erase-buffer)
-     (eshell-send-input))))
+(use-package eshell
+  :ensure nil ;; Built into Emacs, no need to install
+  :bind (("C-`" . eshell)) ;; Quick access
+  :init
+  ;; Pre-config settings
+  (setq eshell-scroll-to-bottom-on-input 'all
+        eshell-error-if-no-glob t
+        eshell-hist-ignoredups t
+        eshell-save-history-on-exit t
+        eshell-prefer-lisp-functions nil
+        eshell-destroy-buffer-when-process-dies t
+        ;; Initialize eshell-visual-commands if not already set
+        eshell-visual-commands (if (boundp 'eshell-visual-commands)
+                                   eshell-visual-commands
+                                 '("less" "more"))) ;; Default fallback
+  :config
+  ;; Prompt setup
+  (setq eshell-prompt-function
+        (lambda ()
+          (concat (abbreviate-file-name (eshell/pwd)) " $ ")))
+  (setq eshell-prompt-regexp "^[^#$\n]*[#$] ")
+  ;; Aliases
+  (eshell/alias "ff" "find-file $1")
+  (eshell/alias "ll" "ls -lh")
+  (eshell/alias "clear" "eshell/clear")
+  ;; Custom clear function
+  (defun eshell/clear ()
+    "Clear the eshell buffer."
+    (interactive)
+    (let ((inhibit-read-only t))
+      (erase-buffer)
+      (eshell-send-input)))
+  ;; Hook for mode-specific tweaks
+  :hook
+  (eshell-mode-hook . (lambda ()
+                        (display-line-numbers-mode -1) ;; No line numbers
+                        ;; Add visual commands safely
+                        (add-to-list 'eshell-visual-commands "htop")
+                        (add-to-list 'eshell-visual-commands "ssh")
+                        (add-to-list 'eshell-visual-commands "tail")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  Gnus Setup                                ;;
