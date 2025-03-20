@@ -1458,7 +1458,6 @@
 ;;                                Misc Packages                              ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Recentf with Consult integration
 (use-package
  recentf
  :ensure t
@@ -1468,9 +1467,8 @@
   recentf-max-saved-items 100
   recentf-max-menu-items 25
   recentf-exclude '("/tmp/" "/ssh:"))
- :bind (("C-c r" . consult-recent-file))) ; Vertico-powered recent files
+ :bind (("C-c r" . consult-recent-file)))
 
-;; SSH Deploy with status feedback
 (use-package
  ssh-deploy
  :ensure t
@@ -1488,7 +1486,6 @@
   (lambda ()
     (message "SSH Deploy: File %s synced" (buffer-file-name)))))
 
-;; Emacs-everywhere with Wayland tweaks and binding
 (use-package
  emacs-everywhere
  :ensure t
@@ -1498,7 +1495,7 @@
   #'grim/emacs-everywhere-wayland-app-info
   emacs-everywhere-copy-command '("wl-copy")
   emacs-everywhere-paste-command '("wl-paste"))
- (add-hook 'emacs-everywhere-init-hook #'whitespace-cleanup))
+ :hook (emacs-everywhere-init . whitespace-cleanup))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  Dired                                    ;;
