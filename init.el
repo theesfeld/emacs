@@ -2329,12 +2329,15 @@
 ;;                                 LaTeX templates                           ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Load all .el files from ~/.config/emacs/latex/templates/ and subdirectories
-(let ((templates-dir "~/.config/emacs/latex/templates/"))
-  (when (file-exists-p templates-dir)
-    (dolist (file
-             (directory-files-recursively templates-dir "\\.el$"))
-      (load-file file))))
+(use-package
+ emacs
+ :ensure nil
+ :config
+ (let ((templates-dir "~/.config/emacs/latex/templates/"))
+   (when (file-exists-p templates-dir)
+     (dolist (file
+              (directory-files-recursively templates-dir "\\.el$"))
+       (load-file file)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
