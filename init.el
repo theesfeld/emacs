@@ -1645,11 +1645,12 @@
   pdf-view-continuous t
   pdf-view-use-scaling t)
  (add-to-list 'pdf-view-incompatible-modes 'display-line-numbers-mode)
- (add-hook
-  'pdf-view-mode-hook
+ :hook
+ (pdf-view-mode
+  .
   (lambda ()
     (display-line-numbers-mode -1)
-    (hl-line-mode -1)))) ; Match your eat config
+    (hl-line-mode -1))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  DENOTE                                   ;;
