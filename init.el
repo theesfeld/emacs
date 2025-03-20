@@ -1603,15 +1603,15 @@
 
 (use-package
  eww
- :commands (eww eww-browse-url) ; Add 'eww' for manual use
- ;; :bind (("C-c w" . eww))         ; Easy access to EWW
+ :ensure nil
+ :commands (eww eww-browse-url)
  :init
  (setq browse-url-handlers
        '(("\\.pdf\\'" . my-open-remote-pdf-in-emacs)
          ("^https?://" . eww-browse-url)))
  :config
  (setq eww-auto-rename-buffer 'title) ; Nicer buffer names
- (add-hook 'eww-mode-hook (lambda () (display-line-numbers-mode -1)))) ; No line numbers
+ :hook (eww-mode . (lambda () (display-line-numbers-mode -1))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     pdf                                   ;;
