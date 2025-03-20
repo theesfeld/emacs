@@ -1150,19 +1150,18 @@
                  (string=
                   (buffer-file-name)
                   (expand-file-name "init.el" user-emacs-directory)))
-       (eglot-ensure)))))
+       (eglot-ensure))))
+  (eglot-managed-mode
+   .
+   (lambda ()
+     (add-hook 'before-save-hook #'eglot-format-buffer -10 t)
+     (setq eldoc-documentation-strategy #'eldoc-documentation-compose)
+     (eglot-inlay-hints-mode))))
  :config
  (add-to-list
   'eglot-server-programs
-  '(emacs-lisp-mode . nil)) ; No LSP server for Emacs Lisp
- (add-hook
-  'eglot-managed-mode-hook
-  (lambda ()
-    (add-hook 'before-save-hook #'eglot-format-buffer -10 t)
-    (setq eldoc-documentation-strategy #'eldoc-documentation-compose)
-    (eglot-inlay-hints-mode))))
+  '(emacs-lisp-mode . nil))) ; No LSP server for Emacs Lisp
 
-;; consult-lsp
 (use-package
  consult-lsp
  :ensure t
