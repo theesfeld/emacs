@@ -158,7 +158,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (when (eq window-system 'x)
-  ;; Core EXWM package
+  ;; Core EXWM package with all modules
   (use-package
    exwm
    :ensure t
@@ -408,8 +408,7 @@
        .
        (lambda ()
          (interactive)
-         (exwm-workspace-move-window 0)))
-      ([s tab] . next-buffer)))
+         (exwm-workspace-move-window 0)))))
    ;; Simulation keys for passing common Emacs bindings to applications
    (setq exwm-input-simulation-keys
          '(([?\C-b] . [left])
@@ -424,9 +423,9 @@
            ([?\C-k] . [S-end delete])
            ([?\M-w] . [?\C-c]) ;; Map M-w to Ctrl+C for X apps
            ([?\C-y] . [?\C-v]))) ;; Map C-y to Ctrl+V for X apps
-   ;; Multi-monitor setup with dynamic workspace count
+   ;; Multi-monitor setup with dynamic workspace count and eDP-1 scaling at 1.5x
    (defun my-exwm-update-displays ()
-     "Update EXWM workspaces and frames based on connected monitors with eDP-1 on far right."
+     "Update EXWM workspaces and frames based on connected monitors with eDP-1 on far right and scaled at 1.5x."
      (interactive)
      (let*
          ((xrandr-output
@@ -463,11 +462,19 @@
                 (width
                  (string-to-number
                   (car (split-string geometry "x")))))
-           (start-process-shell-command
-            "xrandr" nil
-            (format
-             "xrandr --output %s --mode %s --pos %dx0 --auto"
-             name (car (split-string geometry "+")) x-position))
+           (if (string= name "eDP-1")
+               ;; Special case for eDP-1: scale at 1.5x
+               (start-process-shell-command
+                "xrandr" nil
+                (format
+                 "xrandr --output %s --mode %s --pos %dx0 --scale 1.5x1.5 --auto"
+                 name (car (split-string geometry "+")) x-position))
+             ;; Default case for other monitors
+             (start-process-shell-command
+              "xrandr" nil
+              (format
+               "xrandr --output %s --mode %s --pos %dx0 --auto"
+               name (car (split-string geometry "+")) x-position)))
            (setq exwm-randr-workspace-monitor-plist
                  (plist-put
                   exwm-randr-workspace-monitor-plist i name))
@@ -508,6 +515,11 @@
      (run-at-time
       5 nil
       (lambda () (start-process "mullvad-vpn" nil "mullvad-vpn"))))
+   ;; EXWM-Randr configuration
+   (exwm-randr-mode 1)
+   ;; EXWM-Systemtray configuration
+   (setq exwm-systemtray-height 16)
+   (exwm-systemtray-mode 1)
    ;; Enable EXWM
    (exwm-enable)
    :hook
@@ -532,13 +544,14 @@
      (lambda ()
        (when (and (boundp 'exwm-workspace-current-index)
                   (integerp exwm-workspace-current-index))
-         (exwm-workspace-move-window
-          exwm-workspace-current-index))))))
-  (exwm-randr-mode 1)
-  (setq exwm-systemtray-height 16)
-  (exwm-systemtray-mode 1)
+         (exwm-workspace-move-window exwm-workspace-current-index))))
+    (exwm-randr-screen-change-hook
+     .
+     (lambda ()
+       (start-process-shell-command "xrandr" nil "xrandr --auto")
+       (my-exwm-update-displays)))))
 
-  ;; EXWM Modeline
+  ;; EXWM Modeline (separate package)
   (use-package
    exwm-modeline
    :ensure t
