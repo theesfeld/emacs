@@ -158,7 +158,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (when (eq window-system 'x)
-  ;; Core EXWM package with all modules
+  ;; Core EXWM package
   (use-package
    exwm
    :ensure t
@@ -212,10 +212,8 @@
        .
        (lambda ()
          (interactive)
-         (require 'counsel)
-         (ivy-mode 1) ;; Ensure Ivy is active for minibuffer
          (counsel-linux-app)))
-      ([?\s-v] . consult-yank-pop)
+      ([?\s-v] . consult-yank-pop) ;; Assumes consult is elsewhere
       ([?\s-q]
        .
        (lambda ()
@@ -408,7 +406,8 @@
        .
        (lambda ()
          (interactive)
-         (exwm-workspace-move-window 0)))))
+         (exwm-workspace-move-window 0)))
+      ([s tab] . next-buffer)))
    ;; Simulation keys for passing common Emacs bindings to applications
    (setq exwm-input-simulation-keys
          '(([?\C-b] . [left])
@@ -423,9 +422,9 @@
            ([?\C-k] . [S-end delete])
            ([?\M-w] . [?\C-c]) ;; Map M-w to Ctrl+C for X apps
            ([?\C-y] . [?\C-v]))) ;; Map C-y to Ctrl+V for X apps
-   ;; Multi-monitor setup with dynamic workspace count and eDP-1 scaling at 1.5x
+   ;; Multi-monitor setup with dynamic workspace count and eDP-1 scaling
    (defun my-exwm-update-displays ()
-     "Update EXWM workspaces and frames based on connected monitors with eDP-1 on far right and scaled at 1.5x."
+     "Update EXWM workspaces and frames based on connected monitors with eDP-1 on far right, scaled."
      (interactive)
      (let*
          ((xrandr-output
@@ -463,13 +462,13 @@
                  (string-to-number
                   (car (split-string geometry "x")))))
            (if (string= name "eDP-1")
-               ;; Special case for eDP-1: scale at 1.5x
+               ;; Scale eDP-1 (e.g., 1.5x scaling, adjust as needed)
                (start-process-shell-command
                 "xrandr" nil
                 (format
                  "xrandr --output %s --mode %s --pos %dx0 --scale 1.5x1.5 --auto"
                  name (car (split-string geometry "+")) x-position))
-             ;; Default case for other monitors
+             ;; Other monitors without scaling
              (start-process-shell-command
               "xrandr" nil
               (format
@@ -515,11 +514,6 @@
      (run-at-time
       5 nil
       (lambda () (start-process "mullvad-vpn" nil "mullvad-vpn"))))
-   ;; EXWM-Randr configuration
-   (exwm-randr-mode 1)
-   ;; EXWM-Systemtray configuration
-   (setq exwm-systemtray-height 16)
-   (exwm-systemtray-mode 1)
    ;; Enable EXWM
    (exwm-enable)
    :hook
@@ -537,21 +531,38 @@
      .
      (lambda ()
        (my-exwm-autostart)
-       (my-exwm-update-displays)
-       (set-frame-parameter nil 'fullscreen 'fullboth)))
+       (my-exwm-update-displays)))
     (exwm-manage-finish-hook
      .
      (lambda ()
        (when (and (boundp 'exwm-workspace-current-index)
                   (integerp exwm-workspace-current-index))
-         (exwm-workspace-move-window exwm-workspace-current-index))))
-    (exwm-randr-screen-change-hook
-     .
-     (lambda ()
-       (start-process-shell-command "xrandr" nil "xrandr --auto")
-       (my-exwm-update-displays)))))
+         (exwm-workspace-move-window
+          exwm-workspace-current-index))))))
 
-  ;; EXWM Modeline (separate package)
+  ;; EXWM RandR for multi-monitor support
+  (use-package
+   exwm-randr
+   :ensure t
+   :after exwm
+   :config
+   (exwm-randr-enable) ;; Explicitly enable instead of mode
+   :hook
+   (exwm-randr-screen-change-hook
+    .
+    (lambda ()
+      (start-process-shell-command "xrandr" nil "xrandr --auto")
+      (my-exwm-update-displays))))
+
+  ;; EXWM System Tray
+  (use-package
+   exwm-systemtray
+   :ensure t
+   :after exwm
+   :config (setq exwm-systemtray-height 16)
+   (exwm-systemtray-enable)) ;; Explicitly enable instead of mode
+
+  ;; EXWM Modeline
   (use-package
    exwm-modeline
    :ensure t
@@ -573,7 +584,14 @@
                    mode-line-modes
                    mode-line-format-right-align
                    ,(format-time-string "%Y-%m-%d %H:%M ")))
-   :hook (exwm-init-hook . exwm-modeline-mode)))
+   :hook (exwm-init-hook . exwm-modeline-mode))
+
+  ;; Counsel for app launcher
+  (use-package
+   counsel
+   :ensure t
+   :config
+   (ivy-mode 1))) ;; Enable Ivy for counsel-linux-app
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
