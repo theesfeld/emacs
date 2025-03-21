@@ -31,6 +31,17 @@
 ;;                                CUSTOM FUNCTIONS                           ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defun my-treemacs-show-current-project ()
+  "Open or refresh treemacs to show the current project root."
+  (interactive)
+  (let ((project (project-current t))) ;; Get current project, error if none
+    (if project
+        (progn
+          (treemacs-display-current-project-exclusively)
+          (treemacs-select-window))
+      (message "No project detected; opening treemacs normally")
+      (treemacs))))
+
 (defun my-org-download-images-from-capture ()
   (when (string-match-p ":website:" (buffer-string))
     (goto-char (point-min))
@@ -1315,34 +1326,56 @@
          (project-shell "Shell" ?s)
          (treemacs "Treemacs" ?t)))
  (setq project-switch-use-entire-map t) ;; Allow all project commands after switching
+ ;; Auto-load .venv for Python projects
+ (defun my-project-activate-venv ()
+   "Activate a Python virtual environment if .venv exists in the project root."
+   (interactive)
+   (when-let ((project (project-current))
+              (root (project-root project))
+              (venv-dir (expand-file-name ".venv" root)))
+     (when (file-directory-p venv-dir)
+       (pyvenv-activate venv-dir)
+       (message "Activated virtualenv: %s" venv-dir))))
  :hook
  ((project-find-functions
    .
    (lambda (dir)
      (when (project-current)
        (message "Project detected: %s"
-                (project-root (project-current))))))))
+                (project-root (project-current)))))
+  (project-switch-hook . my-project-activate-venv)))
 
 (use-package
  treemacs
  :ensure t
  :defer t
- :init (global-set-key (kbd "C-c t") 'treemacs)
+ :init
+ (global-set-key (kbd "C-c t") 'my-treemacs-show-current-project)
  :config
  (setq treemacs-project-follow-mode t) ;; Auto-follow current project
- (setq treemacs-follow-mode t) ;; Follow current buffer
- (setq treemacs-filewatch-mode t) ;; Auto-refresh on file changes
- (setq treemacs-git-mode 'deferred) ;; Show Git status
- (setq treemacs-collapse-dirs 3) ;; Collapse empty dirs
- (setq treemacs-width 35) ;; Sidebar width
+ (setq treemacs-follow-mode t)         ;; Follow current buffer
+ (setq treemacs-filewatch-mode t)      ;; Auto-refresh on file changes
+ (setq treemacs-git-mode 'deferred)    ;; Show Git status
+ (setq treemacs-collapse-dirs 3)       ;; Collapse empty dirs
+ (setq treemacs-width 35)              ;; Sidebar width
  (when (featurep 'all-the-icons)
    (treemacs-load-theme "all-the-icons"))
+ (defun my-treemacs-show-current-project ()
+   "Open or refresh treemacs to show the current project root."
+   (interactive)
+   (let ((project (project-current t))) ;; Get current project, error if none
+     (if project
+         (progn
+           (treemacs-display-current-project-exclusively)
+           (treemacs-select-window))
+       (message "No project detected; opening treemacs normally")
+       (treemacs))))
  :hook
  ((treemacs-mode
    .
    (lambda ()
      (display-line-numbers-mode -1) ;; No line numbers in treemacs
-     (hl-line-mode -1))))) ;; No highlight line
+     (hl-line-mode -1)))))          ;; No highlight line
 
 (use-package
  treemacs-magit
