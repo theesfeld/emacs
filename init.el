@@ -31,18 +31,6 @@
 ;;                                CUSTOM FUNCTIONS                           ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun my-treemacs-show-current-project ()
-  "Open or refresh treemacs to show the current project root."
-  (interactive)
-  (let
-      ((project (project-current t))) ;; Get current project, error if none
-    (if project
-        (progn
-          (treemacs-display-current-project-exclusively)
-          (treemacs-select-window))
-      (message "No project detected; opening treemacs normally")
-      (treemacs))))
-
 (defun my-org-download-images-from-capture ()
   (when (string-match-p ":website:" (buffer-string))
     (goto-char (point-min))
@@ -1355,9 +1343,10 @@
  (setq treemacs-project-follow-mode t) ;; Auto-follow current project
  (setq treemacs-follow-mode t) ;; Follow current buffer
  (setq treemacs-filewatch-mode t) ;; Auto-refresh on file changes
- (setq treemacs-git-mode 'deferred) ;; Show Git status
- (setq treemacs-collapse-dirs 3) ;; Collapse empty dirs
+ (setq treemacs-git-mode 'deferred) ;; Show Git status in tree
+ (setq treemacs-collapse-dirs 3) ;; Collapse empty dirs up to 3 levels
  (setq treemacs-width 35) ;; Sidebar width
+ (setq treemacs-no-png-images nil) ;; Use icons if available
  (when (featurep 'all-the-icons)
    (treemacs-load-theme "all-the-icons"))
  (defun my-treemacs-show-current-project ()
@@ -1378,7 +1367,7 @@
  ((treemacs-mode
    .
    (lambda ()
-     (display-line-numbers-mode -1) ;; No line numbers in treemacs
+     (display-line-numbers-mode -1)
      (hl-line-mode -1))))) ;; No highlight line
 
 (use-package
