@@ -1014,6 +1014,71 @@
    (when completion-preview--overlay
      (completion-preview--hide))))
 
+(use-package
+ corfu
+ :ensure t
+ :init (global-corfu-mode)
+ :hook
+ ((prog-mode . corfu-mode)
+  (text-mode . corfu-mode)
+  (eshell-mode . corfu-mode))
+ :custom
+ (corfu-cycle t) ;; Enable cycling through candidates
+ (corfu-auto t) ;; Auto-display completions
+ (corfu-auto-prefix 2) ;; Trigger after 2 characters
+ (corfu-auto-delay 0.1) ;; Fast popup delay
+ (corfu-quit-at-boundary t) ;; Quit if no match at word boundary
+ (corfu-quit-no-match t) ;; Quit if no match
+ (corfu-preselect-first t) ;; Preselect first candidate
+ :config
+ ;; Integrate with all-the-icons for visual flair
+ (when (featurep 'all-the-icons)
+   (setq corfu-margin-formatters
+         '(all-the-icons-completion-margin-formatter)))
+ ;; Enable corfu in minibuffer if vertico is active
+ (defun corfu-enable-in-minibuffer ()
+   "Enable Corfu in the minibuffer if Vertico is active."
+   (when (and (bound-and-true-p vertico--input)
+              (not (bound-and-true-p corfu-mode)))
+     (corfu-mode 1)))
+ (add-hook 'minibuffer-setup-hook #'corfu-enable-in-minibuffer)
+ :bind
+ (:map
+  corfu-map
+  ("TAB" . corfu-insert) ;; Insert selected completion
+  ("C-n" . corfu-next) ;; Next candidate
+  ("C-p" . corfu-previous) ;; Previous candidate
+  ("M-RET" . corfu-insert))) ;; Insert without quitting
+
+(use-package
+ cape
+ :ensure t
+ :after corfu
+ :init
+ ;; Toggle CAPE sources with a custom variable
+ (defvar my-enable-cape t
+   "Enable CAPE completion sources if non-nil.")
+ :config
+ (when my-enable-cape
+   ;; Add useful CAPE backends
+   (add-to-list 'completion-at-point-functions #'cape-dabbrev) ;; Dynamic abbreviations
+   (add-to-list 'completion-at-point-functions #'cape-file) ;; File paths
+   (add-to-list 'completion-at-point-functions #'cape-keyword) ;; Keywords
+   ;; Bind CAPE-specific commands
+   (global-set-key (kbd "C-c p d") #'cape-dabbrev)
+   (global-set-key (kbd "C-c p f") #'cape-file))
+ :bind
+ (:map
+  global-map
+  ("C-c p t" .
+   (lambda ()
+     (interactive)
+     (setq my-enable-cape (not my-enable-cape))
+     (message "CAPE sources %s"
+              (if my-enable-cape
+                  "enabled"
+                "disabled"))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  IBUFFER                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1229,16 +1294,6 @@
  ;; Reduce startup load
  (setq flyspell-issue-message-flag nil) ;; Disable verbose messages
  (setq flyspell-issue-welcome-flag nil))
-
-(use-package
- flyspell-popup
- :ensure t
- :after flyspell
- :hook (flyspell-mode . flyspell-popup-auto-correct-mode)
- :config
- (setq flyspell-popup-auto-correct-delay 2) ;; Delay before popup
- (define-key
-  flyspell-mode-map (kbd "C-c TAB") #'flyspell-popup-correct))
 
 (use-package
  flyspell-correct
