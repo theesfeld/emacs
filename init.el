@@ -153,434 +153,414 @@
  (unless (find-font (font-spec :name "all-the-icons"))
    (all-the-icons-install-fonts t)))
 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ;;                                     EXWM                                  ;;
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                     EXWM                                  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (when (eq window-system 'x)
-  ;; Load required EXWM modules first to ensure symbols are defined
-  (require 'exwm)
-  (require 'exwm-randr)
-  (require 'exwm-systemtray)
-
-  ;; Basic EXWM settings
-  (setq
-   exwm-workspace-show-all-buffers t
-   exwm-layout-show-all-buffers t
-   exwm-manage-force-tiling t
-   mouse-autoselect-window t
-   focus-follows-mouse t)
-
-  ;; Natural scrolling attempt
-  (setq mouse-wheel-scroll-amount '(5 ((shift) . 1))) ;; Positive for natural scroll
-  (setq mouse-wheel-progressive-speed t) ;; Progressive speed enabled
-
-  ;; Clipboard integration with X11
-  (setq x-select-enable-clipboard t)
-  (setq x-select-enable-primary t)
-  (setq select-enable-clipboard t)
-  (global-set-key (kbd "M-w") 'kill-ring-save) ;; M-w copies globally
-  (global-set-key (kbd "C-y") 'yank) ;; C-y pastes globally
-
-  ;; Mouse cursor size fix
-  (setq xterm-set-cursor-size nil) ;; Prevent EXWM from overriding cursor size
-  (start-process-shell-command
-   "xsetroot"
-   nil
-   "xsetroot -cursor_name left_ptr") ;; Set standard cursor
-
-  ;; Keybinding setup
-  (setq exwm-input-prefix-keys
-        '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
-
-  ;; Global keybindings
-  (setq
-   exwm-input-global-keys
-   `(([?\s-r] . exwm-reset)
-     ([?\s-w] . exwm-workspace-switch)
-     ([?\s-&]
-      .
-      (lambda (cmd)
-        (interactive (list (read-shell-command "$ ")))
-        (start-process-shell-command cmd nil cmd)))
-     ([?\s-x]
-      .
+  ;; Core EXWM package
+  (use-package
+   exwm
+   :ensure t
+   :config
+   ;; Basic EXWM settings
+   (setq
+    exwm-workspace-show-all-buffers t
+    exwm-layout-show-all-buffers t
+    exwm-manage-force-tiling t
+    mouse-autoselect-window t
+    focus-follows-mouse t)
+   ;; Natural scrolling attempt
+   (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
+   (setq mouse-wheel-progressive-speed t)
+   ;; Clipboard integration with X11
+   (setq
+    x-select-enable-clipboard t
+    x-select-enable-primary t
+    select-enable-clipboard t)
+   (global-set-key (kbd "M-w") 'kill-ring-save) ;; M-w copies globally
+   (global-set-key (kbd "C-y") 'yank) ;; C-y pastes globally
+   ;; Mouse cursor size fix
+   (setq xterm-set-cursor-size nil)
+   (start-process-shell-command
+    "xsetroot" nil "xsetroot -cursor_name left_ptr")
+   ;; Keybinding setup
+   (setq exwm-input-prefix-keys
+         '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
+   ;; Global keybindings
+   (setq
+    exwm-input-global-keys
+    `(([?\s-r] . exwm-reset)
+      ([?\s-w] . exwm-workspace-switch)
+      ([?\s-&]
+       .
+       (lambda (cmd)
+         (interactive (list (read-shell-command "$ ")))
+         (start-process-shell-command cmd nil cmd)))
+      ([?\s-x]
+       .
+       (lambda ()
+         (interactive)
+         (save-buffers-kill-emacs)))
+      ([?\s-e]
+       .
+       (lambda ()
+         (interactive)
+         (start-process-shell-command
+          "yazi" nil "footclient -e yazi")))
+      ([?\s-\ ]
+       .
+       (lambda ()
+         (interactive)
+         (require 'counsel)
+         (ivy-mode 1) ;; Ensure Ivy is active for minibuffer
+         (counsel-linux-app)))
+      ([?\s-v] . consult-yank-pop)
+      ([?\s-q]
+       .
+       (lambda ()
+         (interactive)
+         (kill-buffer-and-window)))
+      ;; Media keys with volume/brightness popups
+      ([XF86AudioRaiseVolume]
+       .
+       (lambda ()
+         (interactive)
+         (start-process-shell-command
+          "pactl-up" nil "pactl set-sink-volume @DEFAULT_SINK@ +5%")
+         (message
+          "Volume: %s"
+          (shell-command-to-string
+           "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1"))))
+      ([XF86AudioLowerVolume]
+       .
+       (lambda ()
+         (interactive)
+         (start-process-shell-command
+          "pactl-down" nil "pactl set-sink-volume @DEFAULT_SINK@ -5%")
+         (message
+          "Volume: %s"
+          (shell-command-to-string
+           "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1"))))
+      ([XF86AudioMute]
+       .
+       (lambda ()
+         (interactive)
+         (start-process-shell-command
+          "pactl-mute"
+          nil
+          "pactl set-sink-mute @DEFAULT_SINK@ toggle")
+         (message
+          "Volume: %s"
+          (if (string-match
+               "yes"
+               (shell-command-to-string
+                "pactl get-sink-mute @DEFAULT_SINK@"))
+              "Muted"
+            (shell-command-to-string
+             "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1")))))
+      ([XF86AudioMicMute]
+       .
+       (lambda ()
+         (interactive)
+         (start-process-shell-command
+          "pactl-mic-mute"
+          nil
+          "pactl set-source-mute @DEFAULT_SOURCE@ toggle")))
+      ([XF86MonBrightnessUp]
+       .
+       (lambda ()
+         (interactive)
+         (start-process-shell-command
+          "brightnessctl-up" nil "brightnessctl set +10%")
+         (message "Brightness: %s"
+                  (shell-command-to-string
+                   "brightnessctl -m | cut -d, -f4"))))
+      ([XF86MonBrightnessDown]
+       .
+       (lambda ()
+         (interactive)
+         (start-process-shell-command
+          "brightnessctl-down" nil "brightnessctl set 10%-")
+         (message "Brightness: %s"
+                  (shell-command-to-string
+                   "brightnessctl -m | cut -d, -f4"))))
+      ([XF86AudioPlay]
+       .
+       (lambda ()
+         (interactive)
+         (start-process-shell-command
+          "playerctl-play" nil "playerctl play-pause")))
+      ([XF86AudioPause]
+       .
+       (lambda ()
+         (interactive)
+         (start-process-shell-command
+          "playerctl-pause" nil "playerctl play-pause")))
+      ([XF86AudioNext]
+       .
+       (lambda ()
+         (interactive)
+         (start-process-shell-command
+          "playerctl-next" nil "playerctl next")))
+      ([XF86AudioPrev]
+       .
+       (lambda ()
+         (interactive)
+         (start-process-shell-command
+          "playerctl-prev" nil "playerctl previous")))
+      ([?\s-1]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-switch-create 1)))
+      ([?\s-2]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-switch-create 2)))
+      ([?\s-3]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-switch-create 3)))
+      ([?\s-4]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-switch-create 4)))
+      ([?\s-5]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-switch-create 5)))
+      ([?\s-6]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-switch-create 6)))
+      ([?\s-7]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-switch-create 7)))
+      ([?\s-8]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-switch-create 8)))
+      ([?\s-9]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-switch-create 9)))
+      ([?\s-0]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-switch-create 0)))
+      ([?\M-\s-1]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-move-window 1)))
+      ([?\M-\s-2]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-move-window 2)))
+      ([?\M-\s-3]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-move-window 3)))
+      ([?\M-\s-4]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-move-window 4)))
+      ([?\M-\s-5]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-move-window 5)))
+      ([?\M-\s-6]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-move-window 6)))
+      ([?\M-\s-7]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-move-window 7)))
+      ([?\M-\s-8]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-move-window 8)))
+      ([?\M-\s-9]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-move-window 9)))
+      ([?\M-\s-0]
+       .
+       (lambda ()
+         (interactive)
+         (exwm-workspace-move-window 0)))
+      ([s tab] . next-buffer)))
+   ;; Simulation keys for passing common Emacs bindings to applications
+   (setq exwm-input-simulation-keys
+         '(([?\C-b] . [left])
+           ([?\C-f] . [right])
+           ([?\C-p] . [up])
+           ([?\C-n] . [down])
+           ([?\C-a] . [home])
+           ([?\C-e] . [end])
+           ([?\M-v] . [prior])
+           ([?\C-v] . [next])
+           ([?\C-d] . [delete])
+           ([?\C-k] . [S-end delete])
+           ([?\M-w] . [?\C-c]) ;; Map M-w to Ctrl+C for X apps
+           ([?\C-y] . [?\C-v]))) ;; Map C-y to Ctrl+V for X apps
+   ;; Multi-monitor setup with dynamic workspace count
+   (defun my-exwm-update-displays ()
+     "Update EXWM workspaces and frames based on connected monitors with eDP-1 on far right."
+     (interactive)
+     (let*
+         ((xrandr-output
+           (shell-command-to-string "xrandr --current"))
+          (monitors
+           (cl-loop
+            for
+            line
+            in
+            (split-string xrandr-output "\n")
+            when
+            (string-match
+             "\\(.*\\) connected.*\\([0-9]+x[0-9]+\\+[-0-9]+\\+[-0-9]+\\)"
+             line)
+            collect
+            (list (match-string 1 line) (match-string 2 line))))
+          (monitor-count (length monitors))
+          (x-position 0))
+       ;; Sort monitors with eDP-1 last
+       (setq monitors
+             (sort monitors
+                   (lambda (a b)
+                     (if (string= (car a) "eDP-1")
+                         nil
+                       (if (string= (car b) "eDP-1")
+                           t
+                         (string< (car a) (car b)))))))
+       ;; Configure monitors and create workspace mapping
+       (setq exwm-randr-workspace-monitor-plist nil)
+       (dotimes (i monitor-count)
+         (let* ((monitor (nth i monitors))
+                (name (car monitor))
+                (geometry (cadr monitor))
+                (width
+                 (string-to-number
+                  (car (split-string geometry "x")))))
+           (start-process-shell-command
+            "xrandr" nil
+            (format
+             "xrandr --output %s --mode %s --pos %dx0 --auto"
+             name (car (split-string geometry "+")) x-position))
+           (setq exwm-randr-workspace-monitor-plist
+                 (plist-put
+                  exwm-randr-workspace-monitor-plist i name))
+           (setq x-position (+ x-position width))))
+       ;; Set workspace number to match monitor count
+       (setq exwm-workspace-number monitor-count)
+       ;; Remove excess workspaces
+       (when (> (length exwm-workspace--list) monitor-count)
+         (dolist (frame (nthcdr monitor-count exwm-workspace--list))
+           (delete-frame frame)))
+       ;; Ensure frames exist for each workspace
+       (dotimes (i exwm-workspace-number)
+         (unless (nth i exwm-workspace--list)
+           (exwm-workspace--add-frame-as-workspace (make-frame)))
+         (let ((frame (nth i exwm-workspace--list)))
+           (set-frame-parameter
+            frame 'exwm-randr-monitor
+            (plist-get exwm-randr-workspace-monitor-plist i))
+           (exwm-workspace-switch i)
+           (set-frame-parameter frame 'fullscreen 'fullboth)))))
+   ;; Autostart applications with 5-second delay
+   (defun my-exwm-autostart ()
+     "Start applications on EXWM initialization."
+     (interactive)
+     (run-at-time
+      5 nil
       (lambda ()
-        (interactive)
-        (save-buffers-kill-emacs))) ;; Improved exit
-     ([?\s-e]
-      .
+        (start-process "udiskie" nil "udiskie"
+                       "-as"
+                       "2>/tmp/udiskie.log")))
+     (run-at-time
+      5 nil
       (lambda ()
-        (interactive)
-        (start-process-shell-command
-         "yazi" nil "footclient -e yazi")))
-     ([?\s-\ ]
-      .
-      (lambda ()
-        (interactive)
-        (require 'counsel)
-        (ivy-mode 1) ;; Ensure Ivy is active for minibuffer
-        (counsel-linux-app)))
-     ([?\s-v] . consult-yank-pop)
-     ([?\s-q]
-      .
-      (lambda ()
-        (interactive)
-        (kill-buffer-and-window))) ;; s-q to kill current window
-     ;; Media keys with volume/brightness popups
-     ([XF86AudioRaiseVolume]
-      .
-      (lambda ()
-        (interactive)
-        (start-process-shell-command
-         "pactl-up" nil "pactl set-sink-volume @DEFAULT_SINK@ +5%")
-        (message
-         "Volume: %s"
-         (shell-command-to-string
-          "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1"))))
-     ([XF86AudioLowerVolume]
-      .
-      (lambda ()
-        (interactive)
-        (start-process-shell-command
-         "pactl-down" nil "pactl set-sink-volume @DEFAULT_SINK@ -5%")
-        (message
-         "Volume: %s"
-         (shell-command-to-string
-          "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1"))))
-     ([XF86AudioMute]
-      .
-      (lambda ()
-        (interactive)
-        (start-process-shell-command
-         "pactl-mute" nil "pactl set-sink-mute @DEFAULT_SINK@ toggle")
-        (message
-         "Volume: %s"
-         (if (string-match
-              "yes"
-              (shell-command-to-string
-               "pactl get-sink-mute @DEFAULT_SINK@"))
-             "Muted"
-           (shell-command-to-string
-            "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1")))))
-     ([XF86AudioMicMute]
-      .
-      (lambda ()
-        (interactive)
-        (start-process-shell-command
-         "pactl-mic-mute"
-         nil
-         "pactl set-source-mute @DEFAULT_SOURCE@ toggle")))
-     ([XF86MonBrightnessUp]
-      .
-      (lambda ()
-        (interactive)
-        (start-process-shell-command
-         "brightnessctl-up" nil "brightnessctl set +10%")
-        (message "Brightness: %s"
-                 (shell-command-to-string
-                  "brightnessctl -m | cut -d, -f4"))))
-     ([XF86MonBrightnessDown]
-      .
-      (lambda ()
-        (interactive)
-        (start-process-shell-command
-         "brightnessctl-down" nil "brightnessctl set 10%-")
-        (message "Brightness: %s"
-                 (shell-command-to-string
-                  "brightnessctl -m | cut -d, -f4"))))
-     ([XF86AudioPlay]
-      .
-      (lambda ()
-        (interactive)
-        (start-process-shell-command
-         "playerctl-play" nil "playerctl play-pause")))
-     ([XF86AudioPause]
-      .
-      (lambda ()
-        (interactive)
-        (start-process-shell-command
-         "playerctl-pause" nil "playerctl play-pause")))
-     ([XF86AudioNext]
-      .
-      (lambda ()
-        (interactive)
-        (start-process-shell-command
-         "playerctl-next" nil "playerctl next")))
-     ([XF86AudioPrev]
-      .
-      (lambda ()
-        (interactive)
-        (start-process-shell-command
-         "playerctl-prev" nil "playerctl previous")))
-     ([?\s-1]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-switch-create 1)))
-     ([?\s-2]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-switch-create 2)))
-     ([?\s-3]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-switch-create 3)))
-     ([?\s-4]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-switch-create 4)))
-     ([?\s-5]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-switch-create 5)))
-     ([?\s-6]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-switch-create 6)))
-     ([?\s-7]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-switch-create 7)))
-     ([?\s-8]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-switch-create 8)))
-     ([?\s-9]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-switch-create 9)))
-     ([?\s-0]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-switch-create 0)))
-     ([?\M-\s-1]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-move-window 1)))
-     ([?\M-\s-2]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-move-window 2)))
-     ([?\M-\s-3]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-move-window 3)))
-     ([?\M-\s-4]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-move-window 4)))
-     ([?\M-\s-5]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-move-window 5)))
-     ([?\M-\s-6]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-move-window 6)))
-     ([?\M-\s-7]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-move-window 7)))
-     ([?\M-\s-8]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-move-window 8)))
-     ([?\M-\s-9]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-move-window 9)))
-     ([?\M-\s-0]
-      .
-      (lambda ()
-        (interactive)
-        (exwm-workspace-move-window 0)))
-     ([?\s-tab] . exwm-workspace-switch))) ;; Fixed s-tab binding
-
-  ;; Simulation keys for passing common Emacs bindings to applications
-  (setq exwm-input-simulation-keys
-        '(([?\C-b] . [left])
-          ([?\C-f] . [right])
-          ([?\C-p] . [up])
-          ([?\C-n] . [down])
-          ([?\C-a] . [home])
-          ([?\C-e] . [end])
-          ([?\M-v] . [prior])
-          ([?\C-v] . [next])
-          ([?\C-d] . [delete])
-          ([?\C-k] . [S-end delete])
-          ([?\M-w] . [?\C-c]) ;; Map M-w to Ctrl+C for X apps
-          ([?\C-y] . [?\C-v]))) ;; Map C-y to Ctrl+V for X apps
-
-  ;; Multi-monitor setup with dynamic workspace count
-  (defun my-exwm-update-displays ()
-    "Update EXWM workspaces and frames based on connected monitors with eDP-1 on far right."
-    (interactive)
-    (let*
-        ((xrandr-output
-          (shell-command-to-string "xrandr --current"))
-         (monitors
-          (cl-loop
-           for
-           line
-           in
-           (split-string xrandr-output "\n")
-           when
-           (string-match
-            "\\(.*\\) connected.*\\([0-9]+x[0-9]+\\+[-0-9]+\\+[-0-9]+\\)"
-            line)
-           collect
-           (list (match-string 1 line) (match-string 2 line))))
-         (monitor-count (length monitors))
-         (x-position 0))
-      (message "Detected monitors: %s" monitors) ;; Debug output
-      (setq monitors
-            (sort monitors
-                  (lambda (a b)
-                    (if (string= (car a) "eDP-1")
-                        nil
-                      (if (string= (car b) "eDP-1")
-                          t
-                        (string< (car a) (car b)))))))
-      (setq exwm-randr-workspace-monitor-plist nil)
-      (dotimes (i monitor-count)
-        (let* ((monitor (nth i monitors))
-               (name (car monitor))
-               (geometry (cadr monitor))
-               (width
-                (string-to-number (car (split-string geometry "x")))))
-          (start-process-shell-command
-           "xrandr" nil
-           (format "xrandr --output %s --mode %s --pos %dx0 --auto"
-                   name (car (split-string geometry "+")) x-position))
-          (setq exwm-randr-workspace-monitor-plist
-                (plist-put exwm-randr-workspace-monitor-plist i name))
-          (setq x-position (+ x-position width))))
-      (setq exwm-workspace-number monitor-count)
-      (when (> (length exwm-workspace--list) monitor-count)
-        (dolist (frame (nthcdr monitor-count exwm-workspace--list))
-          (delete-frame frame)))
-      (dotimes (i exwm-workspace-number)
-        (unless (nth i exwm-workspace--list)
-          (let ((new-frame (make-frame)))
-            (exwm-workspace--add-frame-as-workspace new-frame)
-            (message "Created frame for workspace %d" i))) ;; Debug
-        (let ((frame (nth i exwm-workspace--list)))
-          (set-frame-parameter
-           frame 'exwm-randr-monitor
-           (plist-get exwm-randr-workspace-monitor-plist i))
-          (set-frame-position frame 0 0) ;; Force top-left corner
-          (set-frame-size frame 1920 1080 t) ;; Adjust to your monitor resolution
-          (set-frame-parameter frame 'fullscreen 'fullboth) ;; Maximize
-          (exwm-workspace-switch i)
-          (message "Mapped workspace %d to monitor %s"
-                   i
-                   (plist-get exwm-randr-workspace-monitor-plist i))))
-      (message "Workspace list: %s" exwm-workspace--list)
-      (message "Monitor mapping: %s"
-               exwm-randr-workspace-monitor-plist)))
-
-  ;; Autostart applications with 5-second delay
-  (defun my-exwm-autostart ()
-    "Start applications on EXWM initialization."
-    (interactive)
-    (run-at-time
-     5 nil
+        (start-process "blueman-applet" nil "blueman-applet")))
+     (run-at-time
+      5 nil
+      (lambda () (start-process "nm-applet" nil "nm-applet")))
+     (run-at-time
+      5 nil
+      (lambda () (start-process "mullvad-vpn" nil "mullvad-vpn"))))
+   ;; Enable EXWM
+   (exwm-enable)
+   :hook
+   ((exwm-update-class-hook
+     .
      (lambda ()
-       (start-process "udiskie" nil "udiskie"
-                      "-as"
-                      "2>/tmp/udiskie.log")))
-    (run-at-time
-     5 nil
+       (exwm-workspace-rename-buffer
+        (concat exwm-class-name ": " exwm-title))))
+    (exwm-update-title-hook
+     .
      (lambda ()
-       (start-process "blueman-applet" nil "blueman-applet")))
-    (run-at-time
-     5 nil
-     (lambda () (start-process "nm-applet" nil "nm-applet")))
-    (run-at-time
-     5 nil
-     (lambda () (start-process "mullvad-vpn" nil "mullvad-vpn"))))
+       (exwm-workspace-rename-buffer
+        (concat exwm-class-name ": " exwm-title))))
+    (exwm-init-hook
+     .
+     (lambda ()
+       (my-exwm-autostart)
+       (my-exwm-update-displays)
+       (set-frame-parameter nil 'fullscreen 'fullboth)))
+    (exwm-manage-finish-hook
+     .
+     (lambda ()
+       (when (and (boundp 'exwm-workspace-current-index)
+                  (integerp exwm-workspace-current-index))
+         (exwm-workspace-move-window
+          exwm-workspace-current-index))))))
+  (exwm-randr-mode 1)
+  (setq exwm-systemtray-height 16)
+  (exwm-systemtray-mode 1)
 
-  ;; MODELINE
+  ;; EXWM Modeline
   (use-package
    exwm-modeline
    :ensure t
-   :after (exwm)
-   :init (add-hook 'exwm-init-hook #'exwm-modeline-mode))
-
-  (setq exwm-systemtray-height 16)
-  (setq-default mode-line-format
-                `("%e"
-                  mode-line-front-space
-                  mode-line-mule-info
-                  mode-line-client
-                  mode-line-modified
-                  mode-line-remote
-                  mode-line-frame-identification
-                  mode-line-buffer-identification
-                  "   "
-                  mode-line-position
-                  (vc-mode vc-mode)
-                  "  "
-                  mode-line-modes
-                  mode-line-format-right-align
-                  ,(format-time-string "%Y-%m-%d %H:%M ")))
-
-  ;; Better buffer naming for X applications
-  (add-hook
-   'exwm-update-class-hook
-   (lambda ()
-     (exwm-workspace-rename-buffer
-      (concat exwm-class-name ": " exwm-title))))
-  (add-hook
-   'exwm-update-title-hook
-   (lambda ()
-     (exwm-workspace-rename-buffer
-      (concat exwm-class-name ": " exwm-title))))
-
-  ;; Hooks
-  (add-hook
-   'exwm-randr-screen-change-hook
-   (lambda ()
-     (start-process-shell-command "xrandr" nil "xrandr --auto")
-     (my-exwm-update-displays)))
-
-  (add-hook
-   'exwm-init-hook
-   (lambda ()
-     (my-exwm-autostart)
-     (run-at-time 1 nil #'my-exwm-update-displays) ;; Delay to ensure initialization
-     (set-frame-parameter nil 'fullscreen 'fullboth)))
-
-  ;; Ensure new applications open on current workspace
-  (add-hook
-   'exwm-manage-finish-hook
-   (lambda ()
-     (when (and (boundp 'exwm-workspace-current-index)
-                (integerp exwm-workspace-current-index))
-       (exwm-workspace-move-window exwm-workspace-current-index))))
-
-  ;; Enable EXWM components with updated syntax
-  (exwm-systemtray-mode 1)
-  (exwm-randr-mode 1)
-  (exwm-enable))
+   :after exwm
+   :config
+   (setq-default mode-line-format
+                 `("%e"
+                   mode-line-front-space
+                   mode-line-mule-info
+                   mode-line-client
+                   mode-line-modified
+                   mode-line-remote
+                   mode-line-frame-identification
+                   mode-line-buffer-identification
+                   "   "
+                   mode-line-position
+                   (vc-mode vc-mode)
+                   "  "
+                   mode-line-modes
+                   mode-line-format-right-align
+                   ,(format-time-string "%Y-%m-%d %H:%M ")))
+   :hook (exwm-init-hook . exwm-modeline-mode)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
