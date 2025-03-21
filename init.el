@@ -1327,19 +1327,14 @@
  treemacs
  :ensure t
  :defer t
- :init
- ;; Bind treemacs toggle globally
- (global-set-key (kbd "C-c t") 'treemacs)
+ :init (global-set-key (kbd "C-c t") 'treemacs)
  :config
- ;; Integrate with project.el
  (setq treemacs-project-follow-mode t) ;; Auto-follow current project
  (setq treemacs-follow-mode t) ;; Follow current buffer
  (setq treemacs-filewatch-mode t) ;; Auto-refresh on file changes
- (setq treemacs-git-mode 'deferred) ;; Show Git status in tree
- (setq treemacs-collapse-dirs 3) ;; Collapse empty dirs up to 3 levels
+ (setq treemacs-git-mode 'deferred) ;; Show Git status
+ (setq treemacs-collapse-dirs 3) ;; Collapse empty dirs
  (setq treemacs-width 35) ;; Sidebar width
- (setq treemacs-no-png-images nil) ;; Use icons if available
- ;; Sync with all-the-icons
  (when (featurep 'all-the-icons)
    (treemacs-load-theme "all-the-icons"))
  :hook
