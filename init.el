@@ -2175,13 +2175,20 @@
  :ensure nil
  :hook
  ((prog-mode . flymake-mode)
-  (emacs-lisp-mode . flymake-mode)
-  (emacs-startup
+  (emacs-lisp-mode
    .
    (lambda ()
-     (with-current-buffer "*scratch*"
-       (flymake-mode -1)))))
- :config (setq flymake-fringe-indicator-position 'right-fringe)
+     ;; Only enable flymake-mode for file-backed buffers
+     (when (buffer-file-name)
+       (flymake-mode 1)))))
+ :config
+ ;; Disable flymake in *scratch* buffer at initialization
+ (add-hook
+  'after-init-hook
+  (lambda ()
+    (with-current-buffer "*scratch*"
+      (flymake-mode -1))))
+ (setq flymake-fringe-indicator-position 'right-fringe)
  (setq flymake-no-changes-timeout 1) ; Faster feedback after typing
  (add-hook
   'emacs-lisp-mode-hook
