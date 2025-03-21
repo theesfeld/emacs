@@ -11,6 +11,8 @@
   (expand-file-name ".gnus.el" gnus-home-directory)
   "Gnus startup file.")
 
+(def)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  MELPA                                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1031,10 +1033,6 @@
  (corfu-quit-no-match t) ;; Quit if no match
  (corfu-preselect-first t) ;; Preselect first candidate
  :config
- ;; Integrate with all-the-icons for visual flair
- (when (featurep 'all-the-icons)
-   (setq corfu-margin-formatters
-         '(all-the-icons-completion-margin-formatter)))
  ;; Enable corfu in minibuffer if vertico is active
  (defun corfu-enable-in-minibuffer ()
    "Enable Corfu in the minibuffer if Vertico is active."
@@ -1184,10 +1182,13 @@
 (use-package
  all-the-icons-completion
  :ensure t
- :after (all-the-icons marginalia)
+ :after (all-the-icons marginalia corfu)
  :config (all-the-icons-completion-mode)
- :hook
- (marginalia-mode . all-the-icons-completion-marginalia-setup))
+ ;; Integrate with corfu by setting margin formatter
+ (when (featurep 'corfu)
+   (setq corfu-margin-formatters
+         '(all-the-icons-completion-margin-formatter)))
+ :hook (marginalia-mode . all-the-icons-completion-marginalia-setup))
 
 (use-package
  alert
