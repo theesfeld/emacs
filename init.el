@@ -2180,25 +2180,25 @@
    (lambda ()
      ;; Only enable flymake-mode for file-backed buffers
      (when (buffer-file-name)
-       (flymake-mode 1)))))
- :config
- ;; Disable flymake in *scratch* buffer at initialization
- (add-hook
-  'after-init-hook
-  (lambda ()
-    (with-current-buffer "*scratch*"
-      (flymake-mode -1))))
- (setq flymake-fringe-indicator-position 'right-fringe)
+       (flymake-mode 1))))
+  (after-init-hook
+   .
+   (lambda ()
+     (with-current-buffer "*scratch*"
+       (flymake-mode -1)))))
+ :config (setq flymake-fringe-indicator-position 'right-fringe)
  (setq flymake-no-changes-timeout 1) ; Faster feedback after typing
  (add-hook
   'emacs-lisp-mode-hook
   (lambda ()
-    (add-hook
-     'flymake-diagnostic-functions #'elisp-flymake-byte-compile
-     nil t)
-    (add-hook 'flymake-diagnostic-functions #'elisp-flymake-checkdoc
-              nil
-              t)))
+    ;; Only add diagnostic functions for file-backed buffers
+    (when (buffer-file-name)
+      (add-hook
+       'flymake-diagnostic-functions #'elisp-flymake-byte-compile
+       nil t)
+      (add-hook 'flymake-diagnostic-functions #'elisp-flymake-checkdoc
+                nil
+                t))))
  :bind
  (:map
   flymake-mode-map
