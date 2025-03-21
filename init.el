@@ -34,7 +34,8 @@
 (defun my-treemacs-show-current-project ()
   "Open or refresh treemacs to show the current project root."
   (interactive)
-  (let ((project (project-current t))) ;; Get current project, error if none
+  (let
+      ((project (project-current t))) ;; Get current project, error if none
     (if project
         (progn
           (treemacs-display-current-project-exclusively)
@@ -1349,24 +1350,27 @@
  treemacs
  :ensure t
  :defer t
- :init
- (global-set-key (kbd "C-c t") 'my-treemacs-show-current-project)
+ :init (global-set-key (kbd "C-c t") 'my-treemacs-show-current-project)
  :config
  (setq treemacs-project-follow-mode t) ;; Auto-follow current project
- (setq treemacs-follow-mode t)         ;; Follow current buffer
- (setq treemacs-filewatch-mode t)      ;; Auto-refresh on file changes
- (setq treemacs-git-mode 'deferred)    ;; Show Git status
- (setq treemacs-collapse-dirs 3)       ;; Collapse empty dirs
- (setq treemacs-width 35)              ;; Sidebar width
+ (setq treemacs-follow-mode t) ;; Follow current buffer
+ (setq treemacs-filewatch-mode t) ;; Auto-refresh on file changes
+ (setq treemacs-git-mode 'deferred) ;; Show Git status
+ (setq treemacs-collapse-dirs 3) ;; Collapse empty dirs
+ (setq treemacs-width 35) ;; Sidebar width
  (when (featurep 'all-the-icons)
    (treemacs-load-theme "all-the-icons"))
  (defun my-treemacs-show-current-project ()
    "Open or refresh treemacs to show the current project root."
    (interactive)
-   (let ((project (project-current t))) ;; Get current project, error if none
+   (let
+       ((project (project-current t))) ;; Get current project, error if none
      (if project
          (progn
-           (treemacs-display-current-project-exclusively)
+           ;; Remove all projects and add the current one
+           (treemacs-do-remove-project-from-workspace
+            (treemacs-current-workspace))
+           (treemacs-add-and-display-current-project)
            (treemacs-select-window))
        (message "No project detected; opening treemacs normally")
        (treemacs))))
@@ -1375,7 +1379,7 @@
    .
    (lambda ()
      (display-line-numbers-mode -1) ;; No line numbers in treemacs
-     (hl-line-mode -1)))))          ;; No highlight line
+     (hl-line-mode -1))))) ;; No highlight line
 
 (use-package
  treemacs-magit
