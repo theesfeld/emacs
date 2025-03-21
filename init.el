@@ -1343,7 +1343,7 @@
      (when (project-current)
        (message "Project detected: %s"
                 (project-root (project-current)))))
-  (project-switch-hook . my-project-activate-venv)))
+  (project-switch-hook . my-project-activate-venv))))
 
 (use-package
  treemacs
