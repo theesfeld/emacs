@@ -1044,8 +1044,7 @@
   ("TAB" . corfu-insert) ;; Insert selected completion
   ("C-n" . corfu-next) ;; Next candidate
   ("C-p" . corfu-previous) ;; Previous candidate
-  ("M-RET" . corfu-insert) ;; Insert without quitting
-  ("<escape>" . corfu-quit))) ;; Dismiss popup with ESC
+  ("M-RET" . corfu-insert))) ;; Insert without quitting
 
 (use-package
  cape
