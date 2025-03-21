@@ -1026,7 +1026,7 @@
  (corfu-cycle t) ;; Enable cycling through candidates
  (corfu-auto t) ;; Auto-display completions
  (corfu-auto-prefix 2) ;; Trigger after 2 characters
- (corfu-auto-delay 0.1) ;; Fast popup delay
+ (corfu-auto-delay 0.7) ;; Increased delay to 0.5 seconds
  (corfu-quit-at-boundary t) ;; Quit if no match at word boundary
  (corfu-quit-no-match t) ;; Quit if no match
  (corfu-preselect-first t) ;; Preselect first candidate
@@ -1044,36 +1044,24 @@
   ("TAB" . corfu-insert) ;; Insert selected completion
   ("C-n" . corfu-next) ;; Next candidate
   ("C-p" . corfu-previous) ;; Previous candidate
-  ("M-RET" . corfu-insert))) ;; Insert without quitting
+  ("M-RET" . corfu-insert) ;; Insert without quitting
+  ("<escape>" . corfu-quit))) ;; Dismiss popup with ESC
 
 (use-package
  cape
  :ensure t
  :after corfu
- :init
- ;; Toggle CAPE sources with a custom variable
- (defvar my-enable-cape t
-   "Enable CAPE completion sources if non-nil.")
  :config
- (when my-enable-cape
-   ;; Add useful CAPE backends
-   (add-to-list 'completion-at-point-functions #'cape-dabbrev) ;; Dynamic abbreviations
-   (add-to-list 'completion-at-point-functions #'cape-file) ;; File paths
-   (add-to-list 'completion-at-point-functions #'cape-keyword) ;; Keywords
-   ;; Bind CAPE-specific commands
-   (global-set-key (kbd "C-c p d") #'cape-dabbrev)
-   (global-set-key (kbd "C-c p f") #'cape-file))
+ ;; Add useful CAPE backends unconditionally
+ (add-to-list 'completion-at-point-functions #'cape-dabbrev) ;; Dynamic abbreviations
+ (add-to-list 'completion-at-point-functions #'cape-file) ;; File paths
+ (add-to-list 'completion-at-point-functions #'cape-keyword) ;; Keywords
+ ;; Bind CAPE-specific commands for manual invocation
  :bind
  (:map
   global-map
-  ("C-c p t" .
-   (lambda ()
-     (interactive)
-     (setq my-enable-cape (not my-enable-cape))
-     (message "CAPE sources %s"
-              (if my-enable-cape
-                  "enabled"
-                "disabled"))))))
+  ("C-c p d" . cape-dabbrev) ;; Manually trigger dabbrev completion
+  ("C-c p f" . cape-file))) ;; Manually trigger file completion
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  IBUFFER                                  ;;
