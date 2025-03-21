@@ -1347,9 +1347,10 @@
        ((project (project-current t))) ;; Get current project, error if none
      (if project
          (progn
-           ;; Remove all projects and add the current one
-           (treemacs-do-remove-project-from-workspace
-            (treemacs-current-workspace))
+           ;; Clear all projects and add the current one
+           (when
+               (treemacs-current-workspace) ;; Ensure workspace exists
+             (treemacs--remove-all-projects))
            (treemacs-add-and-display-current-project)
            (treemacs-select-window))
        (message "No project detected; opening treemacs normally")
