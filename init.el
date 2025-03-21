@@ -1338,17 +1338,8 @@
  treemacs
  :ensure t
  :defer t
- :init (global-set-key (kbd "C-c t") 'my-treemacs-show-current-project)
- :config
- (setq treemacs-project-follow-mode t) ;; Auto-follow current project
- (setq treemacs-follow-mode t) ;; Follow current buffer
- (setq treemacs-filewatch-mode t) ;; Auto-refresh on file changes
- (setq treemacs-git-mode 'deferred) ;; Show Git status in tree
- (setq treemacs-collapse-dirs 3) ;; Collapse empty dirs up to 3 levels
- (setq treemacs-width 35) ;; Sidebar width
- (setq treemacs-no-png-images nil) ;; Use icons if available
- (when (featurep 'all-the-icons)
-   (treemacs-load-theme "all-the-icons"))
+ :init
+ ;; Define the function before binding it
  (defun my-treemacs-show-current-project ()
    "Open or refresh treemacs to show the current project root."
    (interactive)
@@ -1363,6 +1354,17 @@
            (treemacs-select-window))
        (message "No project detected; opening treemacs normally")
        (treemacs))))
+ (global-set-key (kbd "C-c t") 'my-treemacs-show-current-project)
+ :config
+ (setq treemacs-project-follow-mode t) ;; Auto-follow current project
+ (setq treemacs-follow-mode t) ;; Follow current buffer
+ (setq treemacs-filewatch-mode t) ;; Auto-refresh on file changes
+ (setq treemacs-git-mode 'deferred) ;; Show Git status in tree
+ (setq treemacs-collapse-dirs 3) ;; Collapse empty dirs up to 3 levels
+ (setq treemacs-width 35) ;; Sidebar width
+ (setq treemacs-no-png-images nil) ;; Use icons if available
+ (when (featurep 'all-the-icons)
+   (treemacs-load-theme "all-the-icons"))
  :hook
  ((treemacs-mode
    .
