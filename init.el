@@ -1194,21 +1194,22 @@
  consult
  :ensure t
  :after vertico
+ :demand t ; Force immediate loading to debug autoload issues
  :init
- ;; Replace M-x with consult-m-x, but only if consult loads successfully
- (with-eval-after-load 'consult
-   (global-set-key [remap execute-extended-command] 'consult-m-x))
+ ;; Bind M-x to consult-m-x, with fallback to execute-extended-command
+ (global-set-key
+  [remap execute-extended-command]
+  (if (fboundp 'consult-m-x)
+      'consult-m-x
+    'execute-extended-command))
  :config
  ;; Enable history persistence
- (setq history-length 1000) ; Increase history size
+ (setq history-length 1000)
  (setq savehist-additional-variables
        (append
         savehist-additional-variables '(extended-command-history)))
- (savehist-mode 1) ; Persist command history across sessions
- :bind
- ;; Optional additional bindings for convenience
- (("C-c m" . consult-m-x) ; Alternative binding
-  ("C-x b" . consult-buffer))) ; Bonus: history-aware buffer switching
+ (savehist-mode 1)
+ :bind (("C-c m" . consult-m-x) ("C-x b" . consult-buffer)))
 
 (use-package marginalia :ensure t :init (marginalia-mode))
 
@@ -2093,7 +2094,7 @@
   erc-log-channels-directory "~/.config/emacs/irc-logs/"
   erc-save-buffer-on-part t
   erc-log-write-after-insert t)
- (setq erc-modules '(networks notifications match)) ; Added 'match module
+ (setq erc-modules '(networks notifications match))
  (erc-update-modules)
  (erc-timestamp-mode 1)
  (erc-track-mode 1)
@@ -2118,7 +2119,7 @@
  ;; Function to highlight the entire message when nick is mentioned
  (defun my-erc-highlight-nick-message (msg)
    "Highlight the entire message when my nick is mentioned."
-   (let ((nick (erc-current-nick))) ; Get the current nick dynamically
+   (let ((nick (erc-current-nick)))
      (when (and nick (string-match-p (regexp-quote nick) msg))
        (put-text-property
         0 (length msg) 'face 'erc-nick-mentioned-face
@@ -2127,7 +2128,7 @@
  (add-hook
   'erc-insert-modify-hook
   (lambda ()
-    (when (erc-buffer-server-p) ; Ensure we're in an ERC server buffer
+    (when (erc-server-buffer) ; Check if in a server-related context
       (save-excursion
         (goto-char (point-min))
         (while (not (eobp))
@@ -2135,12 +2136,12 @@
             (my-erc-highlight-nick-message msg))
           (forward-line 1))))))
  ;; Configure ERC match for nick highlighting
- (setq erc-keywords (lambda () (list (erc-current-nick)))) ; Dynamic nick as keyword
- (setq erc-match-keywords-hook nil) ; Clear default hook to avoid overlap
+ (setq erc-keywords (lambda () (list (erc-current-nick))))
+ (setq erc-match-keywords-hook nil)
  (add-hook
   'erc-match-keywords-hook
   (lambda ()
-    (when (and (erc-buffer-server-p) (erc-current-nick))
+    (when (and (erc-server-buffer) (erc-current-nick))
       (my-erc-highlight-nick-message
        (buffer-substring (point-min) (point-max))))))
  :hook
