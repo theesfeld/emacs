@@ -668,6 +668,14 @@
  (set-keyboard-coding-system 'utf-8)
  (set-language-environment "UTF-8")
  (save-place-mode 1)
+ (savehist-mode 1) ; Ensure history persistence is enabled
+ (setq savehist-file "~/.config/emacs/savehist")
+ (setq history-length 1000) ; Consistent with consult
+ (setq history-delete-duplicates t)
+ (setq savehist-save-minibuffer-history 1)
+ (setq savehist-additional-variables
+       '(kill-ring
+         search-ring regexp-search-ring extended-command-history)) ; Add command history
  (require 'all-the-icons)
  :config
  (when (file-exists-p custom-file)
@@ -1161,7 +1169,9 @@
  vertico
  :ensure t
  :init (vertico-mode)
- :custom (vertico-cycle t)
+ :custom
+ (vertico-cycle t)
+ (vertico-sort-function 'vertico-sort-history-alpha) ; Sort by history then alphabetically
  :config
  (with-eval-after-load 'all-the-icons
    (defun my-consult-buffer-format (buffer)
@@ -1179,6 +1189,25 @@
   vertico-map
   ("DEL" . vertico-directory-delete-char)
   ("M-DEL" . vertico-directory-delete-word)))
+
+(use-package
+ consult
+ :ensure t
+ :after vertico
+ :init
+ ;; Replace M-x with consult-M-x for history-aware completion
+ (global-set-key [remap execute-extended-command] 'consult-M-x)
+ :config
+ ;; Enable history persistence
+ (setq history-length 1000) ; Increase history size
+ (setq savehist-additional-variables
+       (append
+        savehist-additional-variables '(extended-command-history)))
+ (savehist-mode 1) ; Persist command history across sessions
+ :bind
+ ;; Optional additional bindings for convenience
+ (("C-c m" . consult-M-x) ; Alternative binding if you prefer
+  ("C-x b" . consult-buffer))) ; Bonus: history-aware buffer switching
 
 (use-package marginalia :ensure t :init (marginalia-mode))
 
