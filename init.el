@@ -1195,8 +1195,9 @@
  :ensure t
  :after vertico
  :init
- ;; Replace M-x with consult-M-x for history-aware completion
- (global-set-key [remap execute-extended-command] 'consult-M-x)
+ ;; Replace M-x with consult-m-x, but only if consult loads successfully
+ (with-eval-after-load 'consult
+   (global-set-key [remap execute-extended-command] 'consult-m-x))
  :config
  ;; Enable history persistence
  (setq history-length 1000) ; Increase history size
@@ -1206,7 +1207,7 @@
  (savehist-mode 1) ; Persist command history across sessions
  :bind
  ;; Optional additional bindings for convenience
- (("C-c m" . consult-M-x) ; Alternative binding if you prefer
+ (("C-c m" . consult-m-x) ; Alternative binding
   ("C-x b" . consult-buffer))) ; Bonus: history-aware buffer switching
 
 (use-package marginalia :ensure t :init (marginalia-mode))
