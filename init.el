@@ -1059,8 +1059,8 @@
  :bind
  (:map
   project-prefix-map
-  ("c d" . cape-dabbrev) ; Nest under C-c p c
-  ("c f" . cape-file)))
+  ("d" . cape-dabbrev) ; Nest under C-c p c
+  ("f" . cape-file)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  IBUFFER                                  ;;
