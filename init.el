@@ -2088,24 +2088,31 @@
  ;; Function to highlight the entire message when nick is mentioned
  (defun my-erc-highlight-nick-message (msg)
    "Highlight the entire message when my nick is mentioned."
-   (when (and erc-session-user
-              (string-match-p (regexp-quote erc-session-user) msg))
-     (put-text-property 0 (length msg) 'face 'erc-nick-mentioned-face
-                        msg)))
+   (let ((nick (erc-current-nick))) ; Get the current nick dynamically
+     (when (and nick (string-match-p (regexp-quote nick) msg))
+       (put-text-property
+        0 (length msg) 'face 'erc-nick-mentioned-face
+        msg))))
  ;; Add the highlight function to ERC's message insertion hook
  (add-hook
   'erc-insert-modify-hook
   (lambda ()
-    (save-excursion
-      (goto-char (point-min))
-      (while (not (eobp))
-        (let ((msg (buffer-substring (point) (line-end-position))))
-          (my-erc-highlight-nick-message msg))
-        (forward-line 1)))))
+    (when (erc-buffer-server-p) ; Ensure we're in an ERC server buffer
+      (save-excursion
+        (goto-char (point-min))
+        (while (not (eobp))
+          (let ((msg (buffer-substring (point) (line-end-position))))
+            (my-erc-highlight-nick-message msg))
+          (forward-line 1))))))
  ;; Configure ERC match for nick highlighting
- (setq erc-keywords (list erc-session-user)) ; Highlight your nick
+ (setq erc-keywords (lambda () (list (erc-current-nick)))) ; Dynamic nick as keyword
  (setq erc-match-keywords-hook nil) ; Clear default hook to avoid overlap
- (add-hook 'erc-match-keywords-hook #'my-erc-highlight-nick-message)
+ (add-hook
+  'erc-match-keywords-hook
+  (lambda ()
+    (when (and (erc-buffer-server-p) (erc-current-nick))
+      (my-erc-highlight-nick-message
+       (buffer-substring (point-min) (point-max))))))
  :hook
  ((erc-mode . my-erc-set-fill-column)
   (erc-nick-changed . my-erc-update-notifications-keywords)
