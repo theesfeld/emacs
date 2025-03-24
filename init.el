@@ -2136,7 +2136,18 @@
             (my-erc-highlight-nick-message msg))
           (forward-line 1))))))
  ;; Configure ERC match for nick highlighting
- (setq erc-keywords (lambda () (list (erc-current-nick))))
+ (setq erc-keywords '()) ; Initialize as empty list
+ (defun my-erc-update-keywords ()
+   "Update erc-keywords with the current nick."
+   (let ((nick (erc-current-nick)))
+     (when nick
+       (setq erc-keywords (list nick)))))
+ ;; Update keywords on connect and nick change
+ (add-hook
+  'erc-after-connect-hook
+  (lambda (&rest _args) (my-erc-update-keywords)))
+ (add-hook 'erc-nick-changed-hook #'my-erc-update-keywords)
+ ;; Clear default match hook and use our custom highlighting
  (setq erc-match-keywords-hook nil)
  (add-hook
   'erc-match-keywords-hook
