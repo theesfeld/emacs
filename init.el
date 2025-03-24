@@ -1057,10 +1057,9 @@
  (add-to-list 'completion-at-point-functions #'cape-keyword) ;; Keywords
  ;; Bind CAPE-specific commands for manual invocation
  :bind
- (:map
-  global-map
-  ("C-c p d" . cape-dabbrev) ;; Manually trigger dabbrev completion
-  ("C-c p f" . cape-file))) ;; Manually trigger file completion
+ (:map project-prefix-map
+        ("c d" . cape-dabbrev)  ; Nest under C-c p c
+        ("c f" . cape-file))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  IBUFFER                                  ;;
