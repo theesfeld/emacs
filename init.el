@@ -1433,6 +1433,7 @@
  :ensure nil
  :init
  (require 'org-protocol)
+ (require 'org-download)
  (defvar my-org-prefix-map (make-sparse-keymap)
    "Prefix keymap for Org Mode commands.")
  (define-prefix-command 'my-org-prefix-map)
@@ -2367,17 +2368,24 @@
    (let ((inhibit-read-only t))
      (erase-buffer)
      (eshell-send-input)))
+ ;; Function to disable visual distractions in Eshell and subprocesses
+ (defun my-eshell-disable-distractions ()
+   "Disable line numbers and highlighting in Eshell and subprocess buffers."
+   (display-line-numbers-mode -1)
+   (hl-line-mode -1))
  :hook
- (eshell-mode
-  .
-  (lambda ()
-    (display-line-numbers-mode -1)
-    (add-to-list 'eshell-visual-commands "htop")
-    (add-to-list 'eshell-visual-commands "ssh")
-    (add-to-list 'eshell-visual-commands "tail")
-    (eshell/alias "ff" "find-file $1")
-    (eshell/alias "ll" "ls -lh")
-    (eshell/alias "clear" "eshell/clear"))))
+ ((eshell-mode . my-eshell-disable-distractions)
+  (eshell-mode
+   .
+   (lambda ()
+     (add-to-list 'eshell-visual-commands "htop")
+     (add-to-list 'eshell-visual-commands "ssh")
+     (add-to-list 'eshell-visual-commands "tail")
+     (eshell/alias "ff" "find-file $1")
+     (eshell/alias "ll" "ls -lh")
+     (eshell/alias "clear" "eshell/clear")))
+  ;; Hook for visual subprocesses
+  (eshell-visual-subprocess-hook . my-eshell-disable-distractions)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  Gnus Setup                                ;;
