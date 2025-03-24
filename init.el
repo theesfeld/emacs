@@ -1116,6 +1116,7 @@
           ("Net" (or (derived-mode . eww-mode)
                (derived-mode . elfeed-mode)))
           ("IRC" (derived-mode . erc-mode))
+          ("LOG" (derived-mode . log-mode))
           ("Dired" (derived-mode . dired-mode))
           ("Proc" (process))
           ("Stars" (starred-name)))))
