@@ -862,13 +862,13 @@
  ;; Keep backups in a dedicated directory with timestamps
  (setq backup-directory-alist '(("." . "~/.config/emacs/backups")))
  (setq
-  backup-by-copying t ;; Don't clobber symlinks
-  version-control t ;; Use versioned backups
-  kept-new-versions 10 ;; Keep 10 new versions
-  kept-old-versions 5 ;; Keep 5 old versions
-  delete-old-versions t ;; Auto-delete excess backups
-  vc-make-backup-files t ;; Backup even under version control
-  backup-by-copying-when-linked t) ;; Handle hard links safely
+  backup-by-copying t
+  version-control t
+  kept-new-versions 10
+  kept-old-versions 5
+  delete-old-versions t
+  vc-make-backup-files t
+  backup-by-copying-when-linked t)
 
  ;; Timestamped backup files
  (setq make-backup-file-name-function
@@ -883,8 +883,8 @@
   auto-save-file-name-transforms
   '((".*" "~/.config/emacs/auto-save-list/" t))
   auto-save-default t
-  auto-save-timeout 30 ;; Auto-save after 30 seconds of idle
-  auto-save-interval 200) ;; Auto-save after 200 keystrokes
+  auto-save-timeout 30
+  auto-save-interval 200)
 
  ;; No TRAMP backups
  (with-eval-after-load 'tramp
@@ -899,8 +899,10 @@
            font-lock-warning-face
            t)))
   (font-lock-mode 1) (auto-revert-tail-mode 1))
+
  ;; Associate .log files with log-mode
  (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
+
  ;; Ensure buffer scrolls to the bottom in log-mode
  (add-hook
   'auto-revert-tail-mode-hook
