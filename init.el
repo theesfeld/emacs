@@ -1170,13 +1170,7 @@
  :after (all-the-icons marginalia corfu)
  :config (all-the-icons-completion-mode)
  :hook
- ((all-the-icons-completion-mode
-   .
-   (lambda ()
-     (when (featurep 'corfu)
-       (setq corfu-margin-formatters
-             '(all-the-icons-completion-margin-formatter)))))
-  (marginalia-mode . all-the-icons-completion-marginalia-setup)))
+ (marginalia-mode . all-the-icons-completion-marginalia-setup))
 
 (use-package
  alert
