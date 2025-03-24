@@ -2128,7 +2128,7 @@
  (add-hook
   'erc-insert-modify-hook
   (lambda ()
-    (when (erc-server-buffer) ; Check if in a server-related context
+    (when (erc-server-buffer)
       (save-excursion
         (goto-char (point-min))
         (while (not (eobp))
@@ -2136,18 +2136,16 @@
             (my-erc-highlight-nick-message msg))
           (forward-line 1))))))
  ;; Configure ERC match for nick highlighting
- (setq erc-keywords '()) ; Initialize as empty list
+ (setq erc-keywords '())
  (defun my-erc-update-keywords ()
    "Update erc-keywords with the current nick."
    (let ((nick (erc-current-nick)))
      (when nick
        (setq erc-keywords (list nick)))))
- ;; Update keywords on connect and nick change
  (add-hook
   'erc-after-connect-hook
   (lambda (&rest _args) (my-erc-update-keywords)))
  (add-hook 'erc-nick-changed-hook #'my-erc-update-keywords)
- ;; Clear default match hook and use our custom highlighting
  (setq erc-match-keywords-hook nil)
  (add-hook
   'erc-match-keywords-hook
@@ -2155,21 +2153,25 @@
     (when (and (erc-server-buffer) (erc-current-nick))
       (my-erc-highlight-nick-message
        (buffer-substring (point-min) (point-max))))))
+ ;; Completion setup
+ (defun my-erc-setup-completion ()
+   "Set up ERC completion with pcomplete and corfu."
+   (require 'erc-pcomplete)
+   (pcomplete-erc-setup) ; ERC's nick completion
+   (setq-local completion-at-point-functions
+               (list #'erc-pcomplete)) ; Use pcomplete for completion
+   (corfu-mode 1)) ; Enable corfu for dropdown UI
  :hook
  ((erc-mode . my-erc-set-fill-column)
   (erc-nick-changed . my-erc-update-notifications-keywords)
   (erc-insert-post . erc-save-buffer-in-logs)
-  (erc-mode
-   .
-   (lambda ()
-     (require 'erc-pcomplete)
-     (pcomplete-erc-setup)
-     (erc-completion-mode 1))))
+  (erc-mode . my-erc-setup-completion)) ; Replace old completion hook
  :bind
  (:map
   erc-mode-map
   ("C-c e" . erc-button-browse-url)
-  ("C-c l" . erc-view-log-mode))
+  ("C-c l" . erc-view-log-mode)
+  ("TAB" . completion-at-point)) ; Explicitly bind TAB
  :init
  (defun my-erc-connect ()
    "Retrieve IRC credentials from authinfo.gpg and connect to the IRC server"
