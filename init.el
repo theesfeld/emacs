@@ -2317,20 +2317,23 @@
 (use-package
  0x0
  :ensure t
- :init (setq 0x0-server "https://0x0.st") (setq 0x0-use-curl t)
- :bind (:map global-map ("C-c 0" . my-0x0-prefix-map))
- :bind
- (:map
-  my-0x0-prefix-map
-  ("f" . 0x0-upload-file)
-  ("s" . 0x0-shorten-uri)
-  ("t" . 0x0-upload-text)
-  ("d" . 0x0-dwim)
-  ("p" . 0x0-popup))
+ :init
+ (setq 0x0-server "https://0x0.st")
+ (setq 0x0-use-curl t)
+ ;; Define the prefix map before using it
  :config
  (defvar my-0x0-prefix-map (make-sparse-keymap)
    "Prefix keymap for 0x0 commands.")
  (define-prefix-command 'my-0x0-prefix-map)
+ ;; Bind the prefix command to "C-c 0"
+ (global-set-key (kbd "C-c 0") 'my-0x0-prefix-map)
+ ;; Define the subcommands under the prefix
+ (define-key my-0x0-prefix-map (kbd "f") '0x0-upload-file)
+ (define-key my-0x0-prefix-map (kbd "s") '0x0-shorten-uri)
+ (define-key my-0x0-prefix-map (kbd "t") '0x0-upload-text)
+ (define-key my-0x0-prefix-map (kbd "d") '0x0-dwim)
+ (define-key my-0x0-prefix-map (kbd "p") '0x0-popup)
+ ;; Optional: Integrate with which-key
  (with-eval-after-load 'which-key
    (which-key-add-key-based-replacements "C-c 0" "0x0-upload")))
 
