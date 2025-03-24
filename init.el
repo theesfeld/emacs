@@ -880,7 +880,25 @@
 
  ;; No TRAMP backups
  (with-eval-after-load 'tramp
-   (setq tramp-backup-directory-alist nil)))
+   (setq tramp-backup-directory-alist nil))
+
+ ;; Define a simple log-mode for .log files with auto-revert-tail-mode
+ (define-derived-mode
+  log-mode fundamental-mode "Log" "A simple mode for log files."
+  (setq font-lock-defaults
+        '(("\\(ERROR\\|WARN\\|INFO\\|DEBUG\\)"
+           1
+           font-lock-warning-face
+           t)))
+  (font-lock-mode 1) (auto-revert-tail-mode 1))
+ ;; Associate .log files with log-mode
+ (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
+ ;; Ensure buffer scrolls to the bottom in log-mode
+ (add-hook
+  'auto-revert-tail-mode-hook
+  (lambda ()
+    (when (eq major-mode 'log-mode)
+      (goto-char (point-max))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    vundo                                  ;;
@@ -2045,7 +2063,7 @@
   erc-log-channels-directory "~/.config/emacs/irc-logs/"
   erc-save-buffer-on-part t
   erc-log-write-after-insert t)
- (setq erc-modules '(networks notifications))
+ (setq erc-modules '(networks notifications match)) ; Added 'match module
  (erc-update-modules)
  (erc-timestamp-mode 1)
  (erc-track-mode 1)
@@ -2058,6 +2076,36 @@
  (set-face-attribute 'erc-my-nick-face nil
                      :foreground "#ff79c6"
                      :weight 'bold)
+ ;; Custom face for nick mentions with background highlight
+ (defface erc-nick-mentioned-face
+   '((t
+      :background "#452950"
+      :foreground "#ffcc66"
+      :weight bold
+      :extend t))
+   "Face for messages where my nick is mentioned in ERC, using Modus Vivendi colors."
+   :group 'erc-faces)
+ ;; Function to highlight the entire message when nick is mentioned
+ (defun my-erc-highlight-nick-message (msg)
+   "Highlight the entire message when my nick is mentioned."
+   (when (and erc-session-user
+              (string-match-p (regexp-quote erc-session-user) msg))
+     (put-text-property 0 (length msg) 'face 'erc-nick-mentioned-face
+                        msg)))
+ ;; Add the highlight function to ERC's message insertion hook
+ (add-hook
+  'erc-insert-modify-hook
+  (lambda ()
+    (save-excursion
+      (goto-char (point-min))
+      (while (not (eobp))
+        (let ((msg (buffer-substring (point) (line-end-position))))
+          (my-erc-highlight-nick-message msg))
+        (forward-line 1)))))
+ ;; Configure ERC match for nick highlighting
+ (setq erc-keywords (list erc-session-user)) ; Highlight your nick
+ (setq erc-match-keywords-hook nil) ; Clear default hook to avoid overlap
+ (add-hook 'erc-match-keywords-hook #'my-erc-highlight-nick-message)
  :hook
  ((erc-mode . my-erc-set-fill-column)
   (erc-nick-changed . my-erc-update-notifications-keywords)
