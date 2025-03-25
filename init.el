@@ -1150,12 +1150,6 @@
        (file-name-nondirectory
         (directory-file-name (project-root project))))))
 
- ;; Custom filter predicate for project-name (not needed separately now)
- ;; (defun ibuffer-filter-by-project-name (buf)
- ;;   "Filter buffers by project name."
- ;;   (equal (my-ibuffer-project-name buf)
- ;;          (cdr (assq 'project-name ibuffer-filter))))
-
  ;; Register the custom project-name filter
  (define-ibuffer-filter
   project-name "Filter buffers by project name."
@@ -1204,41 +1198,45 @@
      ("Stars" (starred-name)))
    "Static filter groups for ibuffer, applied only to non-project buffers.")
 
- ;; Combine project and static groups, with projects under a "Projects" header
- (setq ibuffer-saved-filter-groups
-       `(("home"
-          ("Projects" ,@ (my-ibuffer-generate-project-groups))
-          ,@
-          (mapcar
-           (lambda (group)
-             (let ((name (car group))
-                   (filter (cadr group)))
-               `(,name
-                 (and
-                  (not (project-name . nil)) ; Exclude project buffers
-                  ,filter))))
-           my-ibuffer-static-filter-groups))))
+ ;; Flag to track if filter groups have been initialized
+ (defvar my-ibuffer-filter-groups-initialized nil
+   "Non-nil if ibuffer filter groups have been initialized this session.")
 
- :hook
- (ibuffer-mode
-  .
-  (lambda ()
-    ;; Regenerate filter groups dynamically each time ibuffer opens
-    (setq
-     ibuffer-saved-filter-groups
-     `(("home" ("Projects" ,@ (my-ibuffer-generate-project-groups)) ,@
-        (mapcar
-         (lambda (group)
-           (let ((name (car group))
-                 (filter (cadr group)))
-             `(,name
-               (and
-                (not (project-name . nil)) ; Exclude project buffers
-                ,filter))))
-         my-ibuffer-static-filter-groups))))
-    (ibuffer-switch-to-saved-filter-groups "home")
-    (display-line-numbers-mode -1)))
- :bind ("C-x C-b" . ibuffer))
+ ;; Function to initialize filter groups
+ (defun my-ibuffer-initialize-filter-groups ()
+   "Initialize ibuffer filter groups once per session."
+   (unless my-ibuffer-filter-groups-initialized
+     (setq
+      ibuffer-saved-filter-groups
+      `(("home"
+         ("Projects" ,@ (my-ibuffer-generate-project-groups))
+         ,@
+         (mapcar
+          (lambda (group)
+            (let ((name (car group))
+                  (filter (cadr group)))
+              `(,name
+                (and
+                 (not (project-name . nil)) ; Exclude project buffers
+                 ,filter))))
+          my-ibuffer-static-filter-groups))))
+     (setq my-ibuffer-filter-groups-initialized t)))
+
+ ;; Wrapper function to ensure initialization before opening ibuffer
+ (defun my-ibuffer ()
+   "Open ibuffer with initialized filter groups."
+   (interactive)
+   (my-ibuffer-initialize-filter-groups)
+   (ibuffer)
+   (ibuffer-switch-to-saved-filter-groups "home"))
+
+ :hook (ibuffer-mode . (lambda () (display-line-numbers-mode -1)))
+
+ :bind
+ (("C-x C-b" . my-ibuffer)
+  :map
+  ibuffer-mode-map
+  ("C-c r" . my-ibuffer-initialize-filter-groups)))
 
 (use-package
  all-the-icons-ibuffer
