@@ -1386,24 +1386,6 @@
          (project-shell "Shell" ?s)
          (treemacs "Treemacs" ?t)))
  (setq project-switch-use-entire-map t) ;; Allow all project commands after switching
- ;; Auto-load .venv for Python projects
- (defun my-project-activate-venv ()
-   "Activate a Python virtual environment if .venv exists in the project root."
-   (interactive)
-   (when-let ((project (project-current))
-              (root (project-root project))
-              (venv-dir (expand-file-name ".venv" root)))
-     (when (file-directory-p venv-dir)
-       (pyvenv-activate venv-dir)
-       (message "Activated virtualenv: %s" venv-dir))))
- :hook
- ((project-find-functions
-   .
-   (lambda (dir)
-     (when (project-current)
-       (message "Project detected: %s"
-                (project-root (project-current))))))
-  (project-switch-hook . my-project-activate-venv)))
 
 (use-package
  treemacs
