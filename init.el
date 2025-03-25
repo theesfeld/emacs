@@ -1247,11 +1247,25 @@
    (projectile-discover-projects-in-directory "~/Code/")
    ;; Set ibuffer-projectile to skip remote files if needed
    (setq ibuffer-projectile-skip-if-remote t)
-   ;; Generate filter groups
-   (let ((groups (ibuffer-projectile-generate-filter-groups)))
-     (if groups
+   ;; Custom grouping function
+   (let ((project-groups '()))
+     (dolist (buffer (buffer-list))
+       (with-current-buffer buffer
+         (let ((project-root (projectile-project-root)))
+           (when project-root
+             (let ((project-name
+                    (file-name-nondirectory
+                     (directory-file-name project-root))))
+               (push (list
+                      project-name
+                      `((filename
+                         .
+                         ,(concat
+                           "\\`" (regexp-quote project-root)))))
+                     project-groups))))))
+     (if project-groups
          (progn
-           (setq ibuffer-filter-groups groups)
+           (setq ibuffer-filter-groups project-groups)
            (message "Project groups set: %S" ibuffer-filter-groups))
        (message "No project groups detected; using default grouping")
        (setq ibuffer-filter-groups
