@@ -1403,7 +1403,9 @@
           "build/")
         projectile-globally-ignored-directories))
  (setq projectile-switch-project-action #'projectile-dired)
- (setq projectile-enable-caching t))
+ (setq projectile-enable-caching t)
+ ;; Force Projectile to reindex projects if needed
+ (projectile-discover-projects-in-directory "~/Code/")) ;; Adjust path if needed
 
 (use-package
  treemacs
