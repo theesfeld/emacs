@@ -1241,7 +1241,7 @@ If FORCE is non-nil, reinitialize even if already initialized."
  :bind
  (("C-x C-b" . my-ibuffer)
   :map ibuffer-mode-map
-  ("C-c r" . (lambda () (interactive) (my-ibuffer-initialize-filter-groups t))))
+  ("C-c r" . (lambda () (interactive) (my-ibuffer-initialize-filter-groups t)))))
 
 (use-package
  all-the-icons-ibuffer
