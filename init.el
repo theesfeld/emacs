@@ -1193,8 +1193,8 @@
  bufler
  :ensure t
  :bind (("C-x C-b" . bufler)) ;; Replace ibuffer binding
- :config
- ;; Delay bufler setup until projectile and theme are fully loaded
+ :init
+ ;; Delay all configuration until projectile and modus-themes are loaded
  (with-eval-after-load 'projectile
    (with-eval-after-load 'modus-themes
      (bufler-defgroups
@@ -1216,25 +1216,23 @@
       ;; Fallback for any remaining buffers
       (auto-mode))
      ;; Customize appearance to match your Modus Vivendi theme
-     ;; Group headers (using bufler-title face)
      (set-face-attribute 'bufler-title nil
                          :foreground "#89b4fa"
                          :weight 'bold
                          :underline t)
-     ;; Buffer entries (using tabulated-list faces)
      (set-face-attribute 'tabulated-list-entries nil
-                         :foreground "#f9e2af") ;; Buffer names/icons
-     ;; Column-specific faces
-     (set-face-attribute 'bufler-size nil :foreground "#a3be8c") ;; Subtle green for size
-     (set-face-attribute 'bufler-mode nil :foreground "#b48ead") ;; Purple for mode
-     (set-face-attribute 'bufler-path nil :foreground "#81a1c1") ;; Blue for path/process
+                         :foreground "#f9e2af")
+     (set-face-attribute 'bufler-size nil :foreground "#a3be8c")
+     (set-face-attribute 'bufler-mode nil :foreground "#b48ead")
+     (set-face-attribute 'bufler-path nil :foreground "#81a1c1")
      ;; Column setup to match your ibuffer layout
      (setq bufler-columns '("Name" "Size" "Mode" "Filename/Process"))
-     (setq bufler-column-name-width 22) ;; Match your ibuffer Name width
-     (setq bufler-column-size-width 8) ;; Match your ibuffer Size width
-     (setq bufler-show-empty-groups nil) ;; Hide empty groups
-     (setq bufler-vc-state nil) ;; Disable VC state to avoid clutter
+     (setq bufler-column-name-width 22)
+     (setq bufler-column-size-width 8)
+     (setq bufler-show-empty-groups nil)
+     (setq bufler-vc-state nil)
      ;; Integrate all-the-icons
+     (require 'all-the-icons)
      (defun my-bufler-buffer-name (buffer)
        "Add all-the-icons to buffer names in bufler with correct color."
        (let ((name (buffer-name buffer))
