@@ -1159,12 +1159,10 @@
 
  ;; Register the custom project-name filter
  (define-ibuffer-filter
-  project-name
-  "Filter buffers by project name."
-  :description "project name"
-  :reader
-  (completing-read "Project name: " nil nil nil nil nil t)
-  (ibuffer-filter-by-project-name buf))
+  project-name "Filter buffers by project name."
+  (equal
+   (my-ibuffer-project-name buf)
+   (completing-read "Project name: " nil nil nil nil nil t)))
 
  ;; Function to generate project-based filter groups dynamically
  (defun my-ibuffer-generate-project-groups ()
