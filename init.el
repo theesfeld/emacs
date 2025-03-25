@@ -1174,10 +1174,11 @@
      "Add all-the-icons to BUFFER name for consult-buffer."
      (let ((icon (all-the-icons-icon-for-buffer buffer)))
        (concat icon " " (buffer-name buffer))))
-   (advice-add
-    'consult-buffer
-    :filter-return
-    (lambda (buffers) (mapcar #'my-consult-buffer-format buffers))))
+   ;; (advice-add
+   ;;  'consult-buffer
+   ;;  :filter-return
+   ;;  (lambda (buffers) (mapcar #'my-consult-buffer-format buffers)))
+   )
  (bind-key "s-<tab>" 'vertico-next vertico-map)
  (bind-key "S-s-<tab>" 'vertico-previous vertico-map)
  :bind
