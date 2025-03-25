@@ -1163,22 +1163,14 @@
  :ensure t
  :after (ibuffer projectile)
  :config
- (defun my-ibuffer-setup-filter-groups ()
-   "Set up ibuffer filter groups using only projectile projects."
+ (defun my-ibuffer-projectile-setup ()
+   "Set up ibuffer with projectile project groups only."
    (interactive)
-   (require 'ibuf-ext)
-   (let ((project-groups (ibuffer-projectile-generate-filter-groups))
-         (non-project-group
-          '(("Non-Project" (not (pred projectile-project-p))))))
-     (message "Project groups detected: %S" project-groups) ;; Debug output
-     (setq ibuffer-filter-groups
-           (append project-groups non-project-group))
-     (setq ibuffer-saved-filter-groups
-           (list (cons "home" ibuffer-filter-groups)))
-     (ibuffer-switch-to-saved-filter-groups "home")))
- (setq ibuffer-show-empty-filter-groups nil) ;; Hide empty groups
- :hook (ibuffer-mode . my-ibuffer-setup-filter-groups)
- :bind (:map ibuffer-mode-map ("C-c r" . my-ibuffer-setup-filter-groups)))
+   (ibuffer-projectile-set-filter-groups)
+   (message "Project groups set: %S" ibuffer-filter-groups)) ;; Debug output
+ (setq ibuffer-show-empty-filter-groups nil)
+ :hook (ibuffer-mode . my-ibuffer-projectile-setup)
+ :bind (:map ibuffer-mode-map ("C-c r" . my-ibuffer-projectile-setup)))
 
 (use-package
  all-the-icons-ibuffer
