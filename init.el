@@ -863,18 +863,7 @@
  (setq tramp-auto-save-directory "~/.config/emacs/tramp-auto-save/")
  (setq tramp-verbose 1) ; Minimal verbosity
  (setq tramp-default-method "ssh") ; Stable connection method
- (add-to-list 'tramp-remote-path 'tramp-own-remote-path) ; Include remote PATH
- ;; Prevent reentrant calls by isolating auto-revert connections
- (add-to-list
-  'tramp-connection-properties
-  '("/auto-revert$" "connection-buffer" "auto-revert"))
- :hook
- ((log-mode
-   .
-   (lambda ()
-     (when (file-remote-p default-directory)
-       (message "Auto-revert-tail-mode enabled for remote log: %s"
-                (buffer-file-name)))))))
+ (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Backup and Auto-Save                         ;;
