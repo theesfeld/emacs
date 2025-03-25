@@ -1160,7 +1160,7 @@
           (size 8 -1 :right)
           " "
           (filename-and-process -1 -1 :left))))
- ;; Styling with modus-vivendi colors (fixed face names)
+ ;; Styling with modus-vivendi colors (correct face names)
  (set-face-attribute 'ibuffer-title nil
                      :foreground "#f0f0f0" ; fg-main (bright white)
                      :background "#303030" ; bg-dim (dark gray)
