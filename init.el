@@ -1263,22 +1263,15 @@
  bufler
  :ensure t
  :bind (("C-x C-b" . bufler)) ;; Replace ibuffer binding
- :init
+ :config
  ;; Delay bufler setup until projectile and modus-themes are loaded
  (with-eval-after-load 'projectile
    (with-eval-after-load 'modus-themes
      (require 'all-the-icons)
      (bufler-defgroups
       (group
-       ;; Group by Projectile project using a custom matcher
-       (lambda (buffer)
-         (with-current-buffer buffer
-           (let ((root (projectile-project-root)))
-             (when root
-               (cons
-                (file-name-nondirectory
-                 (directory-file-name root))
-                (list 'buffer buffer)))))))
+       ;; Group by Projectile project using project-root
+       (project-root (lambda () (projectile-project-root))))
       (group
        ;; Special buffers (not in a project)
        (name-match
