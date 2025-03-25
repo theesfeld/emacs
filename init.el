@@ -1140,7 +1140,7 @@
  ;; Customize valid ibuffer faces for modus-vivendi
  (set-face-attribute 'ibuffer-deletion-face nil
                      :foreground "#f28fad" ;; Pink from modus-vivendi
-                     :weight bold)
+                     :weight 'bold)
  (set-face-attribute 'ibuffer-marked-face nil
                      :foreground "#f38ba8" ;; Red from modus-vivendi
                      :weight 'bold)
