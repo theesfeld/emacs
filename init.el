@@ -1130,58 +1130,104 @@
 ;;                                  IBUFFER                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package
- ibuffer
- :ensure nil
- :commands ibuffer
- :bind (("C-x C-b" . ibuffer))
- :hook (ibuffer-mode . (lambda () (display-line-numbers-mode -1)))
- :config (setq ibuffer-use-header-line t)
- (defun my-ibuffer-style-header ()
-   "Apply modus-vivendi styling to ibuffer header line."
-   (when (eq major-mode 'ibuffer-mode)
-     (setq header-line-format
-           (propertize (format " %-22s %8s  %s" "Name" "Size" "Mode")
-                       'face
-                       '(:foreground "#89b4fa" :weight bold)))))
- (defun my-ibuffer-style-filter-groups ()
-   "Apply modus-vivendi styling to filter group names."
-   (when (eq major-mode 'ibuffer-mode)
-     (save-excursion
-       (goto-char (point-min))
-       (while (re-search-forward "^\\s-*\\(.+\\)\\s-*$" nil t)
-         (when (get-text-property (point) 'ibuffer-filter-group-name)
-           (add-text-properties
-            (match-beginning 1) (match-end 1)
-            '(face
-              (:foreground "#89b4fa" :weight bold :underline t))))))))
- :hook (ibuffer-mode . my-ibuffer-style-header)
- :hook (ibuffer-mode . my-ibuffer-style-filter-groups))
+;; (use-package
+;;  ibuffer
+;;  :ensure nil
+;;  :commands ibuffer
+;;  :bind (("C-x C-b" . ibuffer))
+;;  :hook (ibuffer-mode . (lambda () (display-line-numbers-mode -1)))
+;;  :config (setq ibuffer-use-header-line t)
+;;  (defun my-ibuffer-style-header ()
+;;    "Apply modus-vivendi styling to ibuffer header line."
+;;    (when (eq major-mode 'ibuffer-mode)
+;;      (setq header-line-format
+;;            (propertize (format " %-22s %8s  %s" "Name" "Size" "Mode")
+;;                        'face
+;;                        '(:foreground "#89b4fa" :weight bold)))))
+;;  (defun my-ibuffer-style-filter-groups ()
+;;    "Apply modus-vivendi styling to filter group names."
+;;    (when (eq major-mode 'ibuffer-mode)
+;;      (save-excursion
+;;        (goto-char (point-min))
+;;        (while (re-search-forward "^\\s-*\\(.+\\)\\s-*$" nil t)
+;;          (when (get-text-property (point) 'ibuffer-filter-group-name)
+;;            (add-text-properties
+;;             (match-beginning 1) (match-end 1)
+;;             '(face
+;;               (:foreground "#89b4fa" :weight bold :underline t))))))))
+;;  :hook (ibuffer-mode . my-ibuffer-style-header)
+;;  :hook (ibuffer-mode . my-ibuffer-style-filter-groups))
+
+;; (use-package
+;;  ibuffer-projectile
+;;  :ensure t
+;;  :after (ibuffer projectile)
+;;  :config
+;;  (defun my-ibuffer-projectile-setup ()
+;;    "Set up ibuffer with projectile project groups only."
+;;    (interactive)
+;;    (ibuffer-projectile-set-filter-groups)
+;;    (message "Project groups set: %S" ibuffer-filter-groups)) ;; Debug output
+;;  (setq ibuffer-show-empty-filter-groups nil)
+;;  :hook (ibuffer-mode . my-ibuffer-projectile-setup)
+;;  :bind (:map ibuffer-mode-map ("C-c r" . my-ibuffer-projectile-setup)))
+
+;; (use-package
+;;  all-the-icons-ibuffer
+;;  :ensure t
+;;  :after ibuffer
+;;  :hook (ibuffer-mode . all-the-icons-ibuffer-mode)
+;;  :config
+;;  (setq all-the-icons-ibuffer-icon-size 1.0)
+;;  (setq all-the-icons-ibuffer-human-readable-size t)
+;;  (set-face-attribute 'all-the-icons-ibuffer-icon-face nil
+;;                      :foreground "#f9e2af"))
 
 (use-package
- ibuffer-projectile
+ bufler
  :ensure t
- :after (ibuffer projectile)
+ :bind (("C-x C-b" . bufler)) ;; Replace ibuffer binding
  :config
- (defun my-ibuffer-projectile-setup ()
-   "Set up ibuffer with projectile project groups only."
-   (interactive)
-   (ibuffer-projectile-set-filter-groups)
-   (message "Project groups set: %S" ibuffer-filter-groups)) ;; Debug output
- (setq ibuffer-show-empty-filter-groups nil)
- :hook (ibuffer-mode . my-ibuffer-projectile-setup)
- :bind (:map ibuffer-mode-map ("C-c r" . my-ibuffer-projectile-setup)))
-
-(use-package
- all-the-icons-ibuffer
- :ensure t
- :after ibuffer
- :hook (ibuffer-mode . all-the-icons-ibuffer-mode)
- :config
- (setq all-the-icons-ibuffer-icon-size 1.0)
- (setq all-the-icons-ibuffer-human-readable-size t)
- (set-face-attribute 'all-the-icons-ibuffer-icon-face nil
-                     :foreground "#f9e2af"))
+ ;; Define grouping by Projectile projects
+ (bufler-defgroups
+  (group
+   ;; Group by Projectile project
+   (projectile))
+  (group
+   ;; Special buffers (not in a project)
+   (name-match
+    "*Special*"
+    (rx
+     bos "*"
+     (or "scratch"
+         "Messages"
+         "Warnings"
+         "flymake log"
+         "async-native-c...")
+     "*")))
+  ;; Fallback for any remaining buffers
+  (auto-mode))
+ ;; Customize appearance to match your Modus Vivendi theme
+ (set-face-attribute 'bufler-group nil
+                     :foreground "#89b4fa"
+                     :weight 'bold
+                     :underline t)
+ (set-face-attribute 'bufler-buffer nil :foreground "#f9e2af") ;; Match your icon color
+ (setq bufler-columns '("Name" "Size" "Mode" "Filename/Process")) ;; Match ibuffer columns
+ (setq bufler-column-name-width 22) ;; Match your ibuffer Name width
+ (setq bufler-column-size-width 8) ;; Match your ibuffer Size width
+ (setq bufler-show-empty-groups nil) ;; Hide empty groups
+ (setq bufler-vc-state nil) ;; Disable VC state to avoid clutter
+ ;; Integrate all-the-icons
+ (defun my-bufler-buffer-name (buffer)
+   "Add all-the-icons to buffer names in bufler."
+   (let ((name (buffer-name buffer))
+         (icon (all-the-icons-icon-for-buffer buffer)))
+     (if icon
+         (concat icon " " name)
+       name)))
+ (advice-add 'bufler-buffer-name :override #'my-bufler-buffer-name)
+ :hook (bufler-mode . (lambda () (display-line-numbers-mode -1))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    helm                                   ;;
