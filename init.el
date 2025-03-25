@@ -1214,7 +1214,11 @@
                        :weight 'bold
                        :underline t)
    (set-face-attribute 'bufler-buffer nil :foreground "#f9e2af") ;; Match your icon color
-   (setq bufler-columns '("Name" "Size" "Mode" "Filename/Process")) ;; Match ibuffer columns
+   (set-face-attribute 'bufler-size nil :foreground "#a3be8c") ;; Subtle green for size
+   (set-face-attribute 'bufler-mode nil :foreground "#b48ead") ;; Purple for mode
+   (set-face-attribute 'bufler-path nil :foreground "#81a1c1") ;; Blue for path/process
+   ;; Column setup to match your ibuffer layout
+   (setq bufler-columns '("Name" "Size" "Mode" "Filename/Process"))
    (setq bufler-column-name-width 22) ;; Match your ibuffer Name width
    (setq bufler-column-size-width 8) ;; Match your ibuffer Size width
    (setq bufler-show-empty-groups nil) ;; Hide empty groups
@@ -1227,7 +1231,19 @@
        (if icon
            (concat icon " " name)
          name)))
-   (advice-add 'bufler-buffer-name :override #'my-bufler-buffer-name))
+   (advice-add 'bufler-buffer-name :override #'my-bufler-buffer-name)
+   ;; Add a header line styled like your ibuffer
+   (defun my-bufler-style-header ()
+     "Apply modus-vivendi styling to bufler header line."
+     (when (eq major-mode 'bufler-mode)
+       (setq header-line-format
+             (propertize (format " %-22s %8s  %s"
+                                 "Name"
+                                 "Size"
+                                 "Mode")
+                         'face
+                         '(:foreground "#89b4fa" :weight 'bold)))))
+   (add-hook 'bufler-mode-hook #'my-bufler-style-header))
  :hook (bufler-mode . (lambda () (display-line-numbers-mode -1))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
