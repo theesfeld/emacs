@@ -1154,9 +1154,7 @@
         projectile-globally-ignored-directories))
  (setq projectile-switch-project-action #'projectile-dired)
  (setq projectile-enable-caching t)
- ;; Force Projectile to discover projects at startup
- (projectile-discover-projects-in-directory "~/Code/") ;; Adjust path if needed
- ;; Ensure projects are known before bufler loads
+ (projectile-discover-projects-in-directory "~/Code/")
  (add-hook 'after-init-hook #'projectile-load-known-projects))
 
 (use-package
