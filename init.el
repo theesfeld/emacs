@@ -1145,10 +1145,31 @@
  :commands ibuffer
  :bind (("C-x C-b" . ibuffer)) ; Standard binding
  :config
- (setq ibuffer-expert t) ; No confirmations for deletions
+ (setq ibuffer-expert t) ; No confirmations
  (setq ibuffer-show-empty-filter-groups nil) ; Hide empty groups
- (setq ibuffer-default-sorting-mode 'major-mode) ; Default sort by mode
- (setq ibuffer-use-header-line t) ; Show header line
+ (setq ibuffer-default-sorting-mode 'major-mode) ; Sort by mode
+ (setq ibuffer-use-header-line t) ; Header line for style
+ ;; Custom format for a cleaner, styled look
+ (setq ibuffer-formats
+       '((mark
+          " "
+          (name 24 24 :left :elide)
+          " "
+          (mode 16 16 :left :elide)
+          " "
+          (size 8 -1 :right)
+          " "
+          (filename-and-process -1 -1 :left))))
+ ;; Styling with modus-vivendi colors
+ (set-face-attribute 'ibuffer-title-face nil
+                     :foreground "#f0f0f0" ; fg-main (bright white)
+                     :background "#303030" ; bg-dim (dark gray)
+                     :weight 'bold
+                     :height 1.2) ; Slightly larger
+ (set-face-attribute 'ibuffer-filter-group-name-face nil
+                     :foreground "#88c0d0" ; cyan-cooler
+                     :weight 'bold
+                     :underline t) ; Underline for group headers
  :hook ((ibuffer-mode . (lambda () (display-line-numbers-mode -1)))) ; Clean UI
  )
 
@@ -1159,29 +1180,30 @@
  :after ibuffer
  :config
  (setq ibuffer-project-use-cache t) ; Faster with caching
- ;; Combine project groups with static groups
+ ;; Generate filter groups with projects and statics
  (defun my-ibuffer-generate-filter-groups ()
    "Generate filter groups with projects and static categories."
    (let
        ((project-groups (ibuffer-project-generate-filter-groups))
         (static-groups
-         '(("Emacs" (filename . "\\.emacs\\.d/.*")) ; Emacs config files
+         '(("Emacs" (filename . "\\.emacs\\.d/.*")) ; Emacs config
            ("Dired" (mode . dired-mode)) ; Dired buffers
-           ("Org" (or (mode . org-mode) (mode . org-agenda-mode))) ; Org-related
-           ("Programming" (derived-mode . prog-mode)) ; Code buffers
+           ("Org" (or (mode . org-mode) (mode . org-agenda-mode))) ; Org stuff
+           ("Programming" (derived-mode . prog-mode)) ; Code
            ("Shells" (or (mode . shell-mode)
                 (mode . eshell-mode)
                 (mode . term-mode))) ; Shells
            ("Mail" (or (mode . gnus-group-mode)
                 (mode . gnus-summary-mode)
-                (mode . message-mode))) ; Mail-related
-           ("Web" (or (mode . eww-mode) (mode . elfeed-mode))) ; Web browsing
-           ("Chat" (mode . erc-mode)) ; IRC/Chat buffers
+                (mode . message-mode))) ; Mail
+           ("Web" (or (mode . eww-mode) (mode . elfeed-mode))) ; Web
+           ("Chat" (mode . erc-mode)) ; IRC/Chat
            ("Help" (or (mode . help-mode)
                 (mode . apropos-mode)
-                (mode . Info-mode))) ; Help buffers
-           ("Processes" (process)) ; Buffers with processes
-           ("Starred" (starred-name))))) ; Starred buffers
+                (mode . Info-mode))) ; Help
+           ("Logs" (mode . log-mode)) ; Log files
+           ("Processes" (process)) ; Processes
+           ("Starred" (starred-name))))) ; Starred
      (append project-groups static-groups)))
  :hook
  ((ibuffer-mode
@@ -1191,17 +1213,20 @@
      (unless (eq ibuffer-sorting-mode 'project-file-relative)
        (ibuffer-do-sort-by-project-file-relative))))))
 
-;; all-the-icons for visual flair
+;; all-the-icons for that extra drip
 (use-package
  all-the-icons-ibuffer
  :ensure t
  :after (all-the-icons ibuffer)
  :hook (ibuffer-mode . all-the-icons-ibuffer-mode)
  :config
- (setq all-the-icons-ibuffer-icon-size 1.0) ; Reasonable icon size
- (setq all-the-icons-ibuffer-human-readable-size t)) ; Readable file sizes
+ (setq all-the-icons-ibuffer-icon-size 1.0) ; Solid icon size
+ (setq all-the-icons-ibuffer-human-readable-size t) ; Readable sizes
+ ;; Tweak icon spacing for alignment
+ (setq all-the-icons-ibuffer-icon-separator "  ") ; More space after icons
+ )
 
-;; Ensure all-the-icons is available (dependency)
+;; Ensure all-the-icons is loaded
 (use-package
  all-the-icons
  :ensure t
