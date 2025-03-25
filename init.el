@@ -2817,6 +2817,7 @@
 ;;                             Activity Coder                                ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+emacs-lisp
 (use-package
  cw-activity-coder
  :vc (:fetcher github :repo "theesfeld/cw-activity-coder")
@@ -2825,7 +2826,7 @@
  (cw-activity-coder-api-key (getenv "XAI_API_KEY"))
  (cw-activity-coder-model "grok-2-latest")
  (cw-activity-coder-batch-size 100)
- (cw-activity-coder-rate-limit 8.0)
+ (cw-activity-coder-rate-limit 2.0)
  (cw-activity-coder-max-retries 3)
  (cw-activity-coder-api-timeout 300)
  (cw-activity-coder-output-dir
@@ -2835,7 +2836,7 @@
                     cw-activity-coder-output-dir))
  :init
  (unless cw-activity-coder-api-key
-   (setenv "XAI_API_KEY" "your-key-here")) ; Optional: Set within Emacs if not in env
+   (setenv "XAI_API_KEY" "your-key-here"))
  :config (message "CW Activity Coder loaded"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
