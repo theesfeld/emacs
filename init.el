@@ -963,8 +963,7 @@
                      nil)
                    "connection-buffer" "auto-revert")
                  tramp-connection-properties)))
-           (auto-revert-set-timer)))))) ; Dedicated connection for auto-revert
-  (find-file-hook . save-place-find-file-hook)))
+           (auto-revert-set-timer))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    vundo                                  ;;
