@@ -1165,7 +1165,7 @@
  ibuffer-project
  :ensure t
  :after ibuffer
- :config
+ :config (require 'ibuffer-project)
  (defvar my-ibuffer-static-filter-groups
    `(("EMACS" (filename
        .
