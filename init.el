@@ -1138,19 +1138,38 @@
  :hook (ibuffer-mode . (lambda () (display-line-numbers-mode -1)))
  :config
  ;; Customize valid ibuffer faces for modus-vivendi
- (set-face-attribute 'ibuffer-title-face nil
-                     :foreground "#cba6f7" ;; Mauve from modus-vivendi
-                     :weight 'bold)
- (set-face-attribute 'ibuffer-filter-group-name-face nil
-                     :foreground "#89b4fa" ;; Blue from modus-vivendi
-                     :weight 'bold
-                     :underline t)
+ (set-face-attribute 'ibuffer-deletion-face nil
+                     :foreground "#f28fad" ;; Pink from modus-vivendi
+                     : Luck bold)
  (set-face-attribute 'ibuffer-marked-face nil
                      :foreground "#f38ba8" ;; Red from modus-vivendi
                      :weight 'bold)
- (set-face-attribute 'ibuffer-deletion-face nil
-                     :foreground "#f28fad" ;; Pink from modus-vivendi
-                     :weight 'bold))
+ (set-face-attribute 'ibuffer-locked-buffer nil
+                     :foreground "#cba6f7" ;; Mauve from modus-vivendi
+                     :weight 'bold)
+ ;; Customize header line appearance (since no ibuffer-title-face exists)
+ (setq ibuffer-use-header-line t) ;; Enable header line if not already
+ (defun my-ibuffer-style-header ()
+   "Apply modus-vivendi styling to ibuffer header line."
+   (when (eq major-mode 'ibuffer-mode)
+     (setq header-line-format
+           (propertize (format " %-22s %8s  %s" "Name" "Size" "Mode")
+                       'face
+                       '(:foreground "#89b4fa" :weight bold)))))
+ ;; Customize filter group names (since no dedicated face exists)
+ (defun my-ibuffer-style-filter-groups ()
+   "Apply modus-vivendi styling to filter group names."
+   (when (eq major-mode 'ibuffer-mode)
+     (save-excursion
+       (goto-char (point-min))
+       (while (re-search-forward "^\\s-*\\(.+\\)\\s-*$" nil t)
+         (when (get-text-property (point) 'ibuffer-filter-group-name)
+           (add-text-properties
+            (match-beginning 1) (match-end 1)
+            '(face
+              (:foreground "#89b4fa" :weight bold :underline t))))))))
+ :hook (ibuffer-mode . my-ibuffer-style-header)
+ :hook (ibuffer-mode . my-ibuffer-style-filter-groups))
 
 (use-package
  ibuffer-project
