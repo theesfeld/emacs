@@ -1163,77 +1163,16 @@
  :ensure t
  :after (ibuffer projectile)
  :config
- (defvar my-ibuffer-static-filter-groups
-   `(("Config" (filename
-       .
-       ,(concat
-         "\\`"
-         (regexp-quote
-          (expand-file-name user-emacs-directory))
-         ".*")))
-     ("Code" (derived-mode . prog-mode))
-     ("Org" (or (file-extension . "org")
-          (derived-mode . org-mode)
-          (derived-mode . org-agenda-mode)))
-     ("Docs" (or (derived-mode . pdf-tools-mode)
-          (derived-mode . doc-view-mode)
-          (mode . text-mode)))
-     ("Mail/News" (or (derived-mode . gnus-mode)
-          (saved . "gnus")
-          (derived-mode . message-mode)))
-     ("Web"
-      (or (derived-mode . eww-mode) (derived-mode . elfeed-mode)))
-     ("Chat"
-      (or (derived-mode . erc-mode) (derived-mode . rcirc-mode)))
-     ("Logs" (derived-mode . log-mode))
-     ("Dired" (derived-mode . dired-mode))
-     ("Processes" (process . t))
-     ("Special" (starred-name))
-     ("Shells" (or (derived-mode . shell-mode)
-          (derived-mode . eshell-mode)
-          (derived-mode . term-mode))))
-   "Static filter groups for ibuffer, organized in an Emacs-y way.")
  (defun my-ibuffer-setup-filter-groups ()
-   "Set up ibuffer filter groups with projectile and static categories."
+   "Set up ibuffer filter groups using only projectile projects."
    (interactive)
    (require 'ibuf-ext)
    (let ((project-groups (ibuffer-projectile-generate-filter-groups))
-         (adjusted-static-groups
-          ;; Adjust static groups to avoid overlap with projects
-          `(("Config" (and (filename
-                   .
-                   ,(concat
-                     "\\`"
-                     (regexp-quote
-                      (expand-file-name user-emacs-directory))
-                     ".*"))
-                  (not (projectile-project-p))))
-            ("Code" (and (derived-mode . prog-mode)
-                  (not (projectile-project-p))))
-            ("Org" (or (file-extension . "org")
-                 (derived-mode . org-mode)
-                 (derived-mode . org-agenda-mode)))
-            ("Docs" (or (derived-mode . pdf-tools-mode)
-                 (derived-mode . doc-view-mode)
-                 (mode . text-mode)))
-            ("Mail/News" (or (derived-mode . gnus-mode)
-                 (saved . "gnus")
-                 (derived-mode . message-mode)))
-            ("Web" (or (derived-mode . eww-mode)
-                 (derived-mode . elfeed-mode)))
-            ("Chat" (or (derived-mode . erc-mode)
-                 (derived-mode . rcirc-mode)))
-            ("Logs" (derived-mode . log-mode))
-            ("Dired" (derived-mode . dired-mode))
-            ("Processes" (process . t))
-            ("Shells" (or (name . "\\*eshell\\*")
-                 (derived-mode . shell-mode)
-                 (derived-mode . eshell-mode)
-                 (derived-mode . term-mode)))
-            ("Emacs" (name . "\\*scratch\\*")))))
-     (message "Project groups: %S" project-groups) ;; Debug output
+         (non-project-group
+          '(("Non-Project" (not (pred projectile-project-p))))))
+     (message "Project groups detected: %S" project-groups) ;; Debug output
      (setq ibuffer-filter-groups
-           (append project-groups adjusted-static-groups))
+           (append project-groups non-project-group))
      (setq ibuffer-saved-filter-groups
            (list (cons "home" ibuffer-filter-groups)))
      (ibuffer-switch-to-saved-filter-groups "home")))
