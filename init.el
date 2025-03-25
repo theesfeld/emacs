@@ -2414,6 +2414,7 @@
  (setq 0x0-use-curl t)
  ;; Define the prefix map before using it
  :config
+ (setq 0x0-kill-ring-results t)
  (defvar my-0x0-prefix-map (make-sparse-keymap)
    "Prefix keymap for 0x0 commands.")
  (define-prefix-command 'my-0x0-prefix-map)
