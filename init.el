@@ -1149,7 +1149,7 @@
  (setq ibuffer-show-empty-filter-groups nil) ; Hide empty groups
  (setq ibuffer-default-sorting-mode 'major-mode) ; Sort by mode
  (setq ibuffer-use-header-line t) ; Header line for style
- ;; Custom format for a cleaner, styled look
+ ;; Custom format for a cleaner look
  (setq ibuffer-formats
        '((mark
           " "
@@ -1160,13 +1160,14 @@
           (size 8 -1 :right)
           " "
           (filename-and-process -1 -1 :left))))
- ;; Styling with modus-vivendi colors (correct face names)
- (set-face-attribute 'ibuffer-title nil
+ ;; Styling with modus-vivendi colors
+ (set-face-attribute 'header-line nil ; Correct face for header
                      :foreground "#f0f0f0" ; fg-main (bright white)
                      :background "#303030" ; bg-dim (dark gray)
                      :weight 'bold
                      :height 1.2) ; Slightly larger
- (set-face-attribute 'ibuffer-filter-group-name nil
+ (set-face-attribute 'ibuffer-filter-group-name-face
+                     nil ; Correct group face
                      :foreground "#88c0d0" ; cyan-cooler
                      :weight 'bold
                      :underline t) ; Underline for group headers
@@ -1213,7 +1214,7 @@
      (unless (eq ibuffer-sorting-mode 'project-file-relative)
        (ibuffer-do-sort-by-project-file-relative))))))
 
-;; all-the-icons for that extra drip
+;; all-the-icons for visual flair
 (use-package
  all-the-icons-ibuffer
  :ensure t
