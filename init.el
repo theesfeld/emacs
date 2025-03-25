@@ -123,14 +123,6 @@
     (delete-file (buffer-file-name))
     (message "Deleted aborted capture file: %s" (buffer-file-name))))
 
-(defun my-project-find-root (dir)
-  "Identify project roots in ~/Code and ~/.config/."
-  (let ((roots '("~/Code" "~/.config")))
-    (when (member
-           (file-truename (expand-file-name dir))
-           (mapcar #'file-truename (mapcar #'expand-file-name roots)))
-      (cons 'transient dir))))
-
 (declare-function pcomplete-erc-setup "erc-pcomplete")
 (declare-function completion-preview-insert "completion-preview")
 (declare-function completion-preview-next-candidate
@@ -1385,9 +1377,7 @@
        '("*.o" "*.elc" "*.pyc" "node_modules/" "dist/" "build/"))
  :config
  ;; Improve project root detection
- (setq project-find-functions
-       '(project-try-vc ;; Git/Mercurial/Subversion detection
-         my-project-find-root)) ;; Keep your custom function as a fallback
+ (setq project-find-functions '(project-try-vc))
  ;; Switch project behavior
  (setq project-switch-commands
        '((project-find-file "Find file" ?f)
