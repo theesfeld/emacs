@@ -1197,12 +1197,47 @@
    "Set up ibuffer filter groups with projectile and static categories."
    (interactive)
    (require 'ibuf-ext)
-   (let ((project-groups (ibuffer-projectile-generate-filter-groups)))
+   (let ((project-groups (ibuffer-projectile-generate-filter-groups))
+         (adjusted-static-groups
+          ;; Adjust static groups to avoid overlap with projects
+          `(("Config" (and (filename
+                   .
+                   ,(concat
+                     "\\`"
+                     (regexp-quote
+                      (expand-file-name user-emacs-directory))
+                     ".*"))
+                  (not (projectile-project-p))))
+            ("Code" (and (derived-mode . prog-mode)
+                  (not (projectile-project-p))))
+            ("Org" (or (file-extension . "org")
+                 (derived-mode . org-mode)
+                 (derived-mode . org-agenda-mode)))
+            ("Docs" (or (derived-mode . pdf-tools-mode)
+                 (derived-mode . doc-view-mode)
+                 (mode . text-mode)))
+            ("Mail/News" (or (derived-mode . gnus-mode)
+                 (saved . "gnus")
+                 (derived-mode . message-mode)))
+            ("Web" (or (derived-mode . eww-mode)
+                 (derived-mode . elfeed-mode)))
+            ("Chat" (or (derived-mode . erc-mode)
+                 (derived-mode . rcirc-mode)))
+            ("Logs" (derived-mode . log-mode))
+            ("Dired" (derived-mode . dired-mode))
+            ("Processes" (process . t))
+            ("Shells" (or (name . "\\*eshell\\*")
+                 (derived-mode . shell-mode)
+                 (derived-mode . eshell-mode)
+                 (derived-mode . term-mode)))
+            ("Emacs" (name . "\\*scratch\\*")))))
+     (message "Project groups: %S" project-groups) ;; Debug output
      (setq ibuffer-filter-groups
-           (append project-groups my-ibuffer-static-filter-groups))
+           (append project-groups adjusted-static-groups))
      (setq ibuffer-saved-filter-groups
            (list (cons "home" ibuffer-filter-groups)))
      (ibuffer-switch-to-saved-filter-groups "home")))
+ (setq ibuffer-show-empty-filter-groups nil) ;; Hide empty groups
  :hook (ibuffer-mode . my-ibuffer-setup-filter-groups)
  :bind (:map ibuffer-mode-map ("C-c r" . my-ibuffer-setup-filter-groups)))
 
@@ -1415,12 +1450,9 @@
 (use-package
  projectile
  :ensure t
- :bind-keymap
- ("C-c p" . projectile-command-map) ;; Bind project commands to C-c p
+ :bind-keymap ("C-c p" . projectile-command-map)
  :init (projectile-mode +1)
  :config
- ;; Project detection and ignores
- (setq projectile-project-search-path '("~/Code/")) ;; Adjust paths as needed
  (setq projectile-ignored-projects '("/tmp/" "~/"))
  (setq projectile-globally-ignored-directories
        (append
@@ -1432,23 +1464,6 @@
           "build/")
         projectile-globally-ignored-directories))
  (setq projectile-switch-project-action #'projectile-dired)
- ;; Customize switch commands (similar to project.el)
- (setq projectile-switch-project-action
-       (lambda ()
-         (interactive)
-         (let ((switch-commands
-                '(("Find file" . projectile-find-file)
-                  ("Dired" . projectile-dired)
-                  ("Magit" . magit-project-status)
-                  ("Shell" . projectile-run-shell)
-                  ("Treemacs" . my-treemacs-show-current-project))))
-           (call-interactively
-            (cdr
-             (assoc
-              (completing-read
-               "Switch to: " (mapcar #'car switch-commands))
-              switch-commands))))))
- ;; Enable caching for speed (optional, disable if issues arise)
  (setq projectile-enable-caching t))
 
 (use-package
