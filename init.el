@@ -1136,9 +1136,7 @@
  :commands ibuffer
  :bind (("C-x C-b" . ibuffer))
  :hook (ibuffer-mode . (lambda () (display-line-numbers-mode -1)))
- :config
- ;; Customize header line appearance
- (setq ibuffer-use-header-line t)
+ :config (setq ibuffer-use-header-line t)
  (defun my-ibuffer-style-header ()
    "Apply modus-vivendi styling to ibuffer header line."
    (when (eq major-mode 'ibuffer-mode)
@@ -1146,7 +1144,6 @@
            (propertize (format " %-22s %8s  %s" "Name" "Size" "Mode")
                        'face
                        '(:foreground "#89b4fa" :weight bold)))))
- ;; Customize filter group names
  (defun my-ibuffer-style-filter-groups ()
    "Apply modus-vivendi styling to filter group names."
    (when (eq major-mode 'ibuffer-mode)
@@ -1162,11 +1159,10 @@
  :hook (ibuffer-mode . my-ibuffer-style-filter-groups))
 
 (use-package
- projection
+ ibuffer-projectile
  :ensure t
- :after ibuffer
+ :after (ibuffer projectile)
  :config
- (require 'projection) ;; Ensure projection is loaded
  (defvar my-ibuffer-static-filter-groups
    `(("Config" (filename
        .
@@ -1197,26 +1193,11 @@
           (derived-mode . eshell-mode)
           (derived-mode . term-mode))))
    "Static filter groups for ibuffer, organized in an Emacs-y way.")
- (defun my-ibuffer-generate-project-filter-groups ()
-   "Generate ibuffer filter groups based on active projects using projection."
-   (require 'ibuf-ext)
-   (let ((project-roots (mapcar #'car (project-known-project-roots)))
-         filter-groups)
-     (dolist (buffer (buffer-list))
-       (with-current-buffer buffer
-         (when-let ((proj (project-current))
-                    (root (car (project-roots proj))))
-           (unless (member root filter-groups)
-             (push `(,(file-name-nondirectory
-                       (directory-file-name root))
-                     (filename . ,(concat "\\`" (regexp-quote root))))
-                   filter-groups)))))
-     filter-groups))
  (defun my-ibuffer-setup-filter-groups ()
-   "Set up ibuffer filter groups with projection and static categories."
+   "Set up ibuffer filter groups with projectile and static categories."
    (interactive)
    (require 'ibuf-ext)
-   (let ((project-groups (my-ibuffer-generate-project-filter-groups)))
+   (let ((project-groups (ibuffer-projectile-generate-filter-groups)))
      (setq ibuffer-filter-groups
            (append project-groups my-ibuffer-static-filter-groups))
      (setq ibuffer-saved-filter-groups
@@ -1234,7 +1215,7 @@
  (setq all-the-icons-ibuffer-icon-size 1.0)
  (setq all-the-icons-ibuffer-human-readable-size t)
  (set-face-attribute 'all-the-icons-ibuffer-icon-face nil
-                     :foreground "#f9e2af")) ;; Yellow from modus-vivendi
+                     :foreground "#f9e2af"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    helm                                   ;;
@@ -1432,53 +1413,68 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- project
- :ensure nil ;; Built into Emacs 30.1, no need to install
+ projectile
+ :ensure t
  :bind-keymap
- ("C-c p" . project-prefix-map) ;; Bind project commands to C-c p
- :init
- ;; Ensure project.el knows about Git projects
- ;(setq project-vc-backend 'vc-git) ;; Explicitly use Git as the backend
- (setq project-vc-ignores
-       '("*.o" "*.elc" "*.pyc" "node_modules/" "dist/" "build/"))
+ ("C-c p" . projectile-command-map) ;; Bind project commands to C-c p
+ :init (projectile-mode +1)
  :config
- ;; Improve project root detection
- (setq project-find-functions '(project-try-vc))
- ;; Switch project behavior
- (setq project-switch-commands
-       '((project-find-file "Find file" ?f)
-         (project-dired "Dired" ?d)
-         (magit-project-status "Magit" ?m)
-         (project-shell "Shell" ?s)
-         (treemacs "Treemacs" ?t)))
- (setq project-switch-use-entire-map t))
+ ;; Project detection and ignores
+ (setq projectile-project-search-path '("~/Code/")) ;; Adjust paths as needed
+ (setq projectile-ignored-projects '("/tmp/" "~/"))
+ (setq projectile-globally-ignored-directories
+       (append
+        '("*.o"
+          "*.elc"
+          "*.pyc"
+          "node_modules/"
+          "dist/"
+          "build/")
+        projectile-globally-ignored-directories))
+ (setq projectile-switch-project-action #'projectile-dired)
+ ;; Customize switch commands (similar to project.el)
+ (setq projectile-switch-project-action
+       (lambda ()
+         (interactive)
+         (let ((switch-commands
+                '(("Find file" . projectile-find-file)
+                  ("Dired" . projectile-dired)
+                  ("Magit" . magit-project-status)
+                  ("Shell" . projectile-run-shell)
+                  ("Treemacs" . my-treemacs-show-current-project))))
+           (call-interactively
+            (cdr
+             (assoc
+              (completing-read
+               "Switch to: " (mapcar #'car switch-commands))
+              switch-commands))))))
+ ;; Enable caching for speed (optional, disable if issues arise)
+ (setq projectile-enable-caching t))
 
 (use-package
  treemacs
  :ensure t
  :defer t
  :init
- ;; Define the function before binding it
  (defun my-treemacs-show-current-project ()
-   "Open or refresh treemacs to show the current project root."
+   "Open or refresh treemacs to show the current projectile project root."
    (interactive)
-   (let
-       ((project (project-current t))) ;; Get current project, error if none
+   (let ((project (projectile-project-root)))
      (if project
          (progn
-           (treemacs-add-and-display-current-project-exclusively)
+           (treemacs-add-and-display-project project)
            (treemacs-select-window))
        (message "No project detected; opening treemacs normally")
        (treemacs))))
  (global-set-key (kbd "C-c t") 'my-treemacs-show-current-project)
  :config
- (setq treemacs-project-follow-mode t) ;; Auto-follow current project
- (setq treemacs-follow-mode t) ;; Follow current buffer
- (setq treemacs-filewatch-mode t) ;; Auto-refresh on file changes
- (setq treemacs-git-mode 'deferred) ;; Show Git status in tree
- (setq treemacs-collapse-dirs 3) ;; Collapse empty dirs up to 3 levels
- (setq treemacs-width 35) ;; Sidebar width
- (setq treemacs-no-png-images nil) ;; Use icons if available
+ (setq treemacs-project-follow-mode t)
+ (setq treemacs-follow-mode t)
+ (setq treemacs-filewatch-mode t)
+ (setq treemacs-git-mode 'deferred)
+ (setq treemacs-collapse-dirs 3)
+ (setq treemacs-width 35)
+ (setq treemacs-no-png-images nil)
  (when (featurep 'all-the-icons)
    (treemacs-load-theme "all-the-icons"))
  :hook
@@ -1486,7 +1482,7 @@
    .
    (lambda ()
      (display-line-numbers-mode -1)
-     (hl-line-mode -1))))) ;; No highlight line
+     (hl-line-mode -1)))))
 
 (use-package
  treemacs-magit
