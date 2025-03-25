@@ -1137,14 +1137,14 @@
  :bind (("C-x C-b" . ibuffer))
  :hook (ibuffer-mode . (lambda () (display-line-numbers-mode -1)))
  :config
- ;; Customize ibuffer faces for modus-vivendi
- (set-face-attribute 'ibuffer-mode-face nil
-                     :foreground "#94e2d5" ;; Cyan from modus-vivendi
-                     :weight 'normal)
- (set-face-attribute
-  'ibuffer-size-face nil
-  :foreground "#f9e2af" ;; Yellow from modus-vivendi
-  :weight 'normal)
+ ;; Customize valid ibuffer faces for modus-vivendi
+ (set-face-attribute 'ibuffer-title-face nil
+                     :foreground "#cba6f7" ;; Mauve from modus-vivendi
+                     :weight 'bold)
+ (set-face-attribute 'ibuffer-filter-group-name-face nil
+                     :foreground "#89b4fa" ;; Blue from modus-vivendi
+                     :weight 'bold
+                     :underline t)
  (set-face-attribute 'ibuffer-marked-face nil
                      :foreground "#f38ba8" ;; Red from modus-vivendi
                      :weight 'bold)
@@ -1202,33 +1202,14 @@
                    (cadr group))))
                my-ibuffer-static-filter-groups)))))
      (ibuffer-switch-to-saved-filter-groups "home")))
- ;; Customize filter group name appearance
- (defun my-ibuffer-customize-group-names ()
-   "Apply modus-vivendi styling to filter group names."
-   (when (eq major-mode 'ibuffer-mode)
-     (save-excursion
-       (goto-char (point-min))
-       (while (re-search-forward "^\\s-*\\(.+\\)\\s-*$" nil t)
-         (let ((group-name (match-string 1)))
-           (when (get-text-property
-                  (point) 'ibuffer-filter-group-name)
-             (add-text-properties
-              (match-beginning 1) (match-end 1)
-              '(face
-                (:foreground
-                 "#89b4fa"
-                 :weight bold
-                 :underline t)))))))))
  (setq ibuffer-project-use-cache t)
- :hook
- ((ibuffer-mode . my-ibuffer-setup-filter-groups)
-  (ibuffer-mode . my-ibuffer-customize-group-names))
+ :hook (ibuffer-mode . my-ibuffer-setup-filter-groups)
  :bind (:map ibuffer-mode-map ("C-c r" . my-ibuffer-setup-filter-groups)))
 
 (use-package
  all-the-icons-ibuffer
  :ensure t
- :after ibuffer ;; Since all-the-icons is already loaded, just depend on ibuffer
+ :after ibuffer
  :hook (ibuffer-mode . all-the-icons-ibuffer-mode)
  :config
  (setq all-the-icons-ibuffer-icon-size 1.0)
