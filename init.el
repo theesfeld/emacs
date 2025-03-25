@@ -1169,45 +1169,44 @@
  :hook ((ibuffer-mode . (lambda () (display-line-numbers-mode -1)))) ; Clean UI
  )
 
-;; ibuffer-project for dynamic project grouping
 (use-package
  ibuffer-project
  :ensure t
  :after ibuffer
  :config
  (setq ibuffer-project-use-cache t) ; Faster with caching
- ;; Generate filter groups with projects and statics
+ ;; Define the filter group function without side effects
  (defun my-ibuffer-generate-filter-groups ()
    "Generate filter groups with projects and static categories."
-   (let
-       ((project-groups (ibuffer-project-generate-filter-groups))
-        (static-groups
-         '(("Emacs" (filename . "\\.emacs\\.d/.*")) ; Emacs config
-           ("Dired" (mode . dired-mode)) ; Dired buffers
-           ("Org" (or (mode . org-mode) (mode . org-agenda-mode))) ; Org stuff
-           ("Programming" (derived-mode . prog-mode)) ; Code
-           ("Shells" (or (mode . shell-mode)
-                (mode . eshell-mode)
-                (mode . term-mode))) ; Shells
-           ("Mail" (or (mode . gnus-group-mode)
-                (mode . gnus-summary-mode)
-                (mode . message-mode))) ; Mail
-           ("Web" (or (mode . eww-mode) (mode . elfeed-mode))) ; Web
-           ("Chat" (mode . erc-mode)) ; IRC/Chat
-           ("Help" (or (mode . help-mode)
-                (mode . apropos-mode)
-                (mode . Info-mode))) ; Help
-           ("Logs" (mode . log-mode)) ; Log files
-           ("Processes" (process)) ; Processes
-           ("Starred" (starred-name))))) ; Starred
+   (let ((project-groups (ibuffer-project-generate-filter-groups))
+         (static-groups
+          '(("Emacs" (filename . "\\.emacs\\.d/.*"))
+            ("Dired" (mode . dired-mode))
+            ("Org" (or (mode . org-mode) (mode . org-agenda-mode)))
+            ("Programming" (derived-mode . prog-mode))
+            ("Shells" (or (mode . shell-mode)
+                 (mode . eshell-mode)
+                 (mode . term-mode)))
+            ("Mail" (or (mode . gnus-group-mode)
+                 (mode . gnus-summary-mode)
+                 (mode . message-mode)))
+            ("Web" (or (mode . eww-mode) (mode . elfeed-mode)))
+            ("Chat" (mode . erc-mode))
+            ("Help" (or (mode . help-mode)
+                 (mode . apropos-mode)
+                 (mode . Info-mode)))
+            ("Logs" (mode . log-mode))
+            ("Processes" (process))
+            ("Starred" (starred-name)))))
      (append project-groups static-groups)))
+ ;; Set default sorting mode
+ (setq ibuffer-default-sorting-mode 'project-file-relative)
  :hook
  ((ibuffer-mode
    .
    (lambda ()
-     (setq ibuffer-filter-groups (my-ibuffer-generate-filter-groups))
-     (unless (eq ibuffer-sorting-mode 'project-file-relative)
-       (ibuffer-do-sort-by-project-file-relative))))))
+     (setq ibuffer-filter-groups
+           (my-ibuffer-generate-filter-groups))))))
 
 ;; all-the-icons for visual flair
 (use-package
