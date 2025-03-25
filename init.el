@@ -1147,101 +1147,103 @@
    "Return the project name for BUF, or nil if not in a project."
    (with-current-buffer buf
      (when-let ((project (project-current)))
-     (file-name-nondirectory
-      (directory-file-name (project-root project)))))
+       (file-name-nondirectory
+        (directory-file-name (project-root project)))))
 
- ;; Register the custom project-name filter
- (define-ibuffer-filter project-name
-     "Filter buffers by project name."
-   (:description "project name"
-    :reader (completing-read "Project name: " nil nil nil nil nil t))
-   (equal (my-ibuffer-project-name buf) qualifier))
+   ;; Register the custom project-name filter
+   (define-ibuffer-filter
+    project-name "Filter buffers by project name."
+    (:description
+     "project name"
+     :reader (completing-read "Project name: " nil nil nil nil nil t))
+    (equal (my-ibuffer-project-name buf) qualifier))
 
- ;; Function to generate project-based filter groups dynamically
- (defun my-ibuffer-generate-project-groups ()
-   "Generate filter groups for ibuffer based on Git project names."
-   (let ((projects (make-hash-table :test 'equal)))
-     ;; Collect all project names from buffers
-     (dolist (buf (buffer-list))
-       (when-let ((proj-name (my-ibuffer-project-name buf)))
-         (puthash proj-name t projects)))
-     ;; Create filter groups for each project
-     (let (groups)
-       (maphash
-        (lambda (proj-name _)
-          (push `(,proj-name (project-name . ,proj-name)) groups))
-        projects)
-       groups)))
+   ;; Function to generate project-based filter groups dynamically
+   (defun my-ibuffer-generate-project-groups ()
+     "Generate filter groups for ibuffer based on Git project names."
+     (let ((projects (make-hash-table :test 'equal)))
+       ;; Collect all project names from buffers
+       (dolist (buf (buffer-list))
+         (when-let ((proj-name (my-ibuffer-project-name buf)))
+           (puthash proj-name t projects)))
+       ;; Create filter groups for each project
+       (let (groups)
+         (maphash
+          (lambda (proj-name _)
+            (push `(,proj-name (project-name . ,proj-name)) groups))
+          projects)
+         groups)))
 
- ;; Define the static filter groups (without project overlap)
- (defvar my-ibuffer-static-filter-groups
-   `(("Emacs" (filename
-               .
-               ,(concat
-                 "\\`"
-                 (regexp-quote
-                  (expand-file-name user-emacs-directory))
-                 ".*")))
-     ("Prog" (derived-mode . prog-mode))
-     ("Org" (or (file-extension . "org")
-                (derived-mode . org-mode)
-                (derived-mode . org-agenda-mode)))
-     ("PDF" (derived-mode . pdf-tools-mode))
-     ("Gnus" (or (derived-mode . gnus-mode) (saved . "gnus")))
-     ("Net"
-      (or (derived-mode . eww-mode) (derived-mode . elfeed-mode)))
-     ("IRC" (derived-mode . erc-mode))
-     ("LOG" (derived-mode . log-mode))
-     ("Dired" (derived-mode . dired-mode))
-     ("Proc" (process))
-     ("Stars" (starred-name)))
-   "Static filter groups for ibuffer, applied only to non-project buffers.")
+   ;; Define the static filter groups (without project overlap)
+   (defvar my-ibuffer-static-filter-groups
+     `(("Emacs" (filename
+         .
+         ,(concat
+           "\\`"
+           (regexp-quote
+            (expand-file-name user-emacs-directory))
+           ".*")))
+       ("Prog" (derived-mode . prog-mode))
+       ("Org" (or (file-extension . "org")
+            (derived-mode . org-mode)
+            (derived-mode . org-agenda-mode)))
+       ("PDF" (derived-mode . pdf-tools-mode))
+       ("Gnus" (or (derived-mode . gnus-mode) (saved . "gnus")))
+       ("Net"
+        (or (derived-mode . eww-mode) (derived-mode . elfeed-mode)))
+       ("IRC" (derived-mode . erc-mode))
+       ("LOG" (derived-mode . log-mode))
+       ("Dired" (derived-mode . dired-mode))
+       ("Proc" (process))
+       ("Stars" (starred-name)))
+     "Static filter groups for ibuffer, applied only to non-project buffers.")
 
- ;; Flag to track if filter groups have been initialized
- (defvar my-ibuffer-filter-groups-initialized nil
-   "Non-nil if ibuffer filter groups have been initialized this session.")
+   ;; Flag to track if filter groups have been initialized
+   (defvar my-ibuffer-filter-groups-initialized nil
+     "Non-nil if ibuffer filter groups have been initialized this session.")
 
- ;; Function to initialize filter groups
- (defun my-ibuffer-initialize-filter-groups (&optional force)
-   "Initialize ibuffer filter groups once per session.
+   ;; Function to initialize filter groups
+   (defun my-ibuffer-initialize-filter-groups (&optional force)
+     "Initialize ibuffer filter groups once per session.
 If FORCE is non-nil, reinitialize even if already initialized."
-   (when (or force (not my-ibuffer-filter-groups-initialized))
-     (let ((inhibit-quit t))  ; Prevent recursive calls during initialization
-       (setq ibuffer-saved-filter-groups
-             `(("home"
-                ("Projects" ,@(my-ibuffer-generate-project-groups))
-                ,@
-                (mapcar
-                 (lambda (group)
-                   (let ((name (car group))
-                         (filter (cadr group)))
-                     `(,name
-                       (and
-                        (not (project-name . nil)) ; Exclude project buffers
-                        ,filter))))
-                 my-ibuffer-static-filter-groups))))
-       (setq my-ibuffer-filter-groups-initialized t)))
+     (when (or force (not my-ibuffer-filter-groups-initialized))
+       (let
+           ((inhibit-quit t)) ; Prevent recursive calls during initialization
+         (setq
+          ibuffer-saved-filter-groups
+          `(("home"
+             ("Projects" ,@ (my-ibuffer-generate-project-groups))
+             ,@
+             (mapcar
+              (lambda (group)
+                (let ((name (car group))
+                      (filter (cadr group)))
+                  `(,name
+                    (and
+                     (not (project-name . nil)) ; Exclude project buffers
+                     ,filter))))
+              my-ibuffer-static-filter-groups))))
+         (setq my-ibuffer-filter-groups-initialized t))))
 
- ;; Wrapper function to ensure initialization before opening ibuffer
- (defun my-ibuffer ()
-   "Open ibuffer with initialized filter groups."
-   (interactive)
-   (unless (eq major-mode 'ibuffer-mode)
-     (my-ibuffer-initialize-filter-groups))
-   (ibuffer)
-   (unless (eq major-mode 'ibuffer-mode)
-     (ibuffer-switch-to-saved-filter-groups "home")))
+   ;; Wrapper function to ensure initialization before opening ibuffer
+   (defun my-ibuffer ()
+     "Open ibuffer with initialized filter groups."
+     (interactive)
+     (unless (eq major-mode 'ibuffer-mode)
+       (my-ibuffer-initialize-filter-groups))
+     (ibuffer)
+     (unless (eq major-mode 'ibuffer-mode)
+       (ibuffer-switch-to-saved-filter-groups "home")))
 
- :hook
- (ibuffer-mode
-  .
-  (lambda ()
-    (display-line-numbers-mode -1)))
+   :hook (ibuffer-mode . (lambda () (display-line-numbers-mode -1)))
 
- :bind
- (("C-x C-b" . my-ibuffer)
-  :map ibuffer-mode-map
-  ("C-c r" . (lambda () (interactive) (my-ibuffer-initialize-filter-groups t)))))
+   :bind
+   (("C-x C-b" . my-ibuffer)
+    :map ibuffer-mode-map
+    ("C-c r" .
+     (lambda ()
+       (interactive)
+       (my-ibuffer-initialize-filter-groups t))))))
 
 (use-package
  all-the-icons-ibuffer
