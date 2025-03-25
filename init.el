@@ -888,20 +888,29 @@
   auto-save-timeout 30
   auto-save-interval 200)
 
- ;; Define a minimal log-mode for .log files
- (define-derived-mode
-  log-mode fundamental-mode "Log" "A simple mode for log files.")
+;; Define a minimal log-mode for .log files
+(define-derived-mode log-mode fundamental-mode "Log"
+  "A simple mode for log files."
+  ;; Enable font-lock for syntax highlighting
+  (setq font-lock-defaults '(log-mode-font-lock-keywords)))
 
- ;; Associate .log files with log-mode
- (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
+;; Define font-lock keywords for log levels
+(defvar log-mode-font-lock-keywords
+  '(("\\bDEBUG\\b" . 'font-lock-comment-face)    ; Blue for DEBUG
+    ("\\bINFO\\b"  . 'font-lock-string-face)     ; Green for INFO
+    ("\\bWARN\\b"  . 'font-lock-warning-face)    ; Yellow for WARN
+    ("\\bERROR\\b" . 'font-lock-function-name-face)) ; Red for ERROR
+  "Font-lock keywords for log-mode highlighting.")
 
- ;; Optionally enable auto-revert-tail-mode and scroll to bottom
- (add-hook 'log-mode-hook #'auto-revert-tail-mode)
- (add-hook
-  'auto-revert-tail-mode-hook
-  (lambda ()
-    (when (derived-mode-p 'log-mode)
-      (goto-char (point-max))))))
+;; Associate .log files with log-mode
+(add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
+
+;; Enable auto-revert-tail-mode and scroll to bottom
+(add-hook 'log-mode-hook #'auto-revert-tail-mode)
+(add-hook 'auto-revert-tail-mode-hook
+          (lambda ()
+            (when (derived-mode-p 'log-mode)
+              (goto-char (point-max)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    vundo                                  ;;
