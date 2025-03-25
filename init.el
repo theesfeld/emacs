@@ -1385,7 +1385,7 @@
          (magit-project-status "Magit" ?m)
          (project-shell "Shell" ?s)
          (treemacs "Treemacs" ?t)))
- (setq project-switch-use-entire-map t) ;; Allow all project commands after switching
+ (setq project-switch-use-entire-map t))
 
 (use-package
  treemacs
