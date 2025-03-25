@@ -1133,6 +1133,78 @@
   ("f" . cape-file)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                  Projects                                 ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package
+ projectile
+ :ensure t
+ :bind-keymap ("C-c p" . projectile-command-map)
+ :init (projectile-mode +1)
+ :config
+ (setq projectile-ignored-projects '("/tmp/" "~/"))
+ (setq projectile-globally-ignored-directories
+       (append
+        '("*.o"
+          "*.elc"
+          "*.pyc"
+          "node_modules/"
+          "dist/"
+          "build/")
+        projectile-globally-ignored-directories))
+ (setq projectile-switch-project-action #'projectile-dired)
+ (setq projectile-enable-caching t)
+ ;; Force Projectile to discover projects at startup
+ (projectile-discover-projects-in-directory "~/Code/") ;; Adjust path if needed
+ ;; Ensure projects are known before bufler loads
+ (add-hook 'after-init-hook #'projectile-load-known-projects))
+
+(use-package
+ treemacs
+ :ensure t
+ :defer t
+ :init
+ (defun my-treemacs-show-current-project ()
+   "Open or refresh treemacs to show the current projectile project root."
+   (interactive)
+   (let ((project (projectile-project-root)))
+     (if project
+         (progn
+           (treemacs-add-and-display-project project)
+           (treemacs-select-window))
+       (message "No project detected; opening treemacs normally")
+       (treemacs))))
+ (global-set-key (kbd "C-c t") 'my-treemacs-show-current-project)
+ :config
+ (setq treemacs-project-follow-mode t)
+ (setq treemacs-follow-mode t)
+ (setq treemacs-filewatch-mode t)
+ (setq treemacs-git-mode 'deferred)
+ (setq treemacs-collapse-dirs 3)
+ (setq treemacs-width 35)
+ (setq treemacs-no-png-images nil)
+ (when (featurep 'all-the-icons)
+   (treemacs-load-theme "all-the-icons"))
+ :hook
+ ((treemacs-mode
+   .
+   (lambda ()
+     (display-line-numbers-mode -1)
+     (hl-line-mode -1)))))
+
+(use-package
+ treemacs-magit
+ :ensure t
+ :after (treemacs magit)
+ :demand t) ;; Load immediately after treemacs and magit
+
+(use-package
+ treemacs-all-the-icons
+ :ensure t
+ :after (treemacs all-the-icons)
+ :demand t) ;; Load immediately after treemacs and all-the-icons
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  IBUFFER                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1449,78 +1521,6 @@
  :after flyspell
  :bind
  (:map flyspell-mode-map ("C-;" . flyspell-correct-wrapper)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                  Projects                                 ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package
- projectile
- :ensure t
- :bind-keymap ("C-c p" . projectile-command-map)
- :init (projectile-mode +1)
- :config
- (setq projectile-ignored-projects '("/tmp/" "~/"))
- (setq projectile-globally-ignored-directories
-       (append
-        '("*.o"
-          "*.elc"
-          "*.pyc"
-          "node_modules/"
-          "dist/"
-          "build/")
-        projectile-globally-ignored-directories))
- (setq projectile-switch-project-action #'projectile-dired)
- (setq projectile-enable-caching t)
- ;; Force Projectile to discover projects at startup
- (projectile-discover-projects-in-directory "~/Code/") ;; Adjust path if needed
- ;; Ensure projects are known before bufler loads
- (add-hook 'after-init-hook #'projectile-load-known-projects))
-
-(use-package
- treemacs
- :ensure t
- :defer t
- :init
- (defun my-treemacs-show-current-project ()
-   "Open or refresh treemacs to show the current projectile project root."
-   (interactive)
-   (let ((project (projectile-project-root)))
-     (if project
-         (progn
-           (treemacs-add-and-display-project project)
-           (treemacs-select-window))
-       (message "No project detected; opening treemacs normally")
-       (treemacs))))
- (global-set-key (kbd "C-c t") 'my-treemacs-show-current-project)
- :config
- (setq treemacs-project-follow-mode t)
- (setq treemacs-follow-mode t)
- (setq treemacs-filewatch-mode t)
- (setq treemacs-git-mode 'deferred)
- (setq treemacs-collapse-dirs 3)
- (setq treemacs-width 35)
- (setq treemacs-no-png-images nil)
- (when (featurep 'all-the-icons)
-   (treemacs-load-theme "all-the-icons"))
- :hook
- ((treemacs-mode
-   .
-   (lambda ()
-     (display-line-numbers-mode -1)
-     (hl-line-mode -1)))))
-
-(use-package
- treemacs-magit
- :ensure t
- :after (treemacs magit)
- :demand t) ;; Load immediately after treemacs and magit
-
-(use-package
- treemacs-all-the-icons
- :ensure t
- :after (treemacs all-the-icons)
- :demand t) ;; Load immediately after treemacs and all-the-icons
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Eglot (LSP) Setup                             ;;
