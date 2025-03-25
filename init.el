@@ -1240,26 +1240,28 @@
  :after (ibuffer projectile)
  :config
  (defun my-ibuffer-projectile-setup ()
-   "Set up ibuffer with projectile project groups."
+   "Set up ibuffer with projectile project groups, handling remote files and special buffers."
    (interactive)
-   (ibuffer-projectile-set-filter-groups)
+   (require 'ibuf-ext)
+   ;; Force projectile to initialize its project list
+   (projectile-discover-projects-in-directory "~/Code/")
+   ;; Set ibuffer-projectile to skip remote files if needed
+   (setq ibuffer-projectile-skip-if-remote t)
+   ;; Generate filter groups
+   (let ((groups (ibuffer-projectile-generate-filter-groups)))
+     (if groups
+         (progn
+           (setq ibuffer-filter-groups groups)
+           (message "Project groups set: %S" ibuffer-filter-groups))
+       (message "No project groups detected; using default grouping")
+       (setq ibuffer-filter-groups
+             `(("Default"
+                (or (name . "\\*.*\\*") (not (filename . "."))))))))
    (unless (eq ibuffer-sorting-mode 'alphabetic)
-     (ibuffer-do-sort-by-alphabetic))
-   (message "Project groups set: %S" ibuffer-filter-groups))
+     (ibuffer-do-sort-by-alphabetic)))
  (setq ibuffer-show-empty-filter-groups nil)
  :hook (ibuffer-mode . my-ibuffer-projectile-setup)
  :bind (:map ibuffer-mode-map ("C-c r" . my-ibuffer-projectile-setup)))
-
-(use-package
- all-the-icons-ibuffer
- :ensure t
- :after ibuffer
- :hook (ibuffer-mode . all-the-icons-ibuffer-mode)
- :config
- (setq all-the-icons-ibuffer-icon-size 1.0)
- (setq all-the-icons-ibuffer-human-readable-size t)
- (set-face-attribute 'all-the-icons-ibuffer-icon-face nil
-                     :foreground "#f9e2af"))
 
 (use-package
  all-the-icons-ibuffer
