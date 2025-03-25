@@ -1186,8 +1186,11 @@
 (use-package
  bufler
  :ensure t
+ :after projectile ;; Ensure projectile is loaded first
  :bind (("C-x C-b" . bufler)) ;; Replace ibuffer binding
  :config
+ ;; Ensure projectile is available
+ (require 'projectile)
  ;; Define grouping by Projectile projects
  (bufler-defgroups
   (group
@@ -1442,8 +1445,10 @@
         projectile-globally-ignored-directories))
  (setq projectile-switch-project-action #'projectile-dired)
  (setq projectile-enable-caching t)
- ;; Force Projectile to reindex projects if needed
- (projectile-discover-projects-in-directory "~/Code/")) ;; Adjust path if needed
+ ;; Force Projectile to discover projects at startup
+ (projectile-discover-projects-in-directory "~/Code/") ;; Adjust path if needed
+ ;; Ensure projects are known before bufler loads
+ (add-hook 'after-init-hook #'projectile-load-known-projects))
 
 (use-package
  treemacs
