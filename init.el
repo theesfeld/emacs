@@ -1138,95 +1138,44 @@
 ;;                                  IBUFFER                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Core ibuffer setup (built-in)
+;; Basic ibuffer setup
 (use-package
  ibuffer
  :ensure nil
  :commands ibuffer
- :bind (("C-x C-b" . ibuffer)) ; Standard binding
+ :bind (("C-x C-b" . ibuffer))
  :config
  (setq ibuffer-expert t) ; No confirmations
  (setq ibuffer-show-empty-filter-groups nil) ; Hide empty groups
- (setq ibuffer-default-sorting-mode 'major-mode) ; Sort by mode
- (setq ibuffer-use-header-line t) ; Header line for style
- ;; Custom format for a cleaner look
- (setq ibuffer-formats
-       '((mark
-          " "
-          (name 24 24 :left :elide)
-          " "
-          (mode 16 16 :left :elide)
-          " "
-          (size 8 -1 :right)
-          " "
-          (filename-and-process -1 -1 :left))))
- ;; Styling header with modus-vivendi colors
- (set-face-attribute 'header-line nil ; Only header styling
+ (setq ibuffer-default-sorting-mode 'project-file-relative) ; Sort by project
+ (setq ibuffer-use-header-line t) ; Header line
+ ;; Modus-vivendi header styling
+ (set-face-attribute 'header-line nil
                      :foreground "#f0f0f0" ; fg-main (bright white)
                      :background "#303030" ; bg-dim (dark gray)
                      :weight 'bold
-                     :height 1.2) ; Slightly larger
- :hook ((ibuffer-mode . (lambda () (display-line-numbers-mode -1)))) ; Clean UI
- )
+                     :height 1.2)) ; Slightly larger
 
+;; ibuffer-project for project grouping
 (use-package
  ibuffer-project
  :ensure t
  :after ibuffer
  :config
  (setq ibuffer-project-use-cache t) ; Faster with caching
- ;; Define the filter group function without side effects
- (defun my-ibuffer-generate-filter-groups ()
-   "Generate filter groups with projects and static categories."
-   (let ((project-groups (ibuffer-project-generate-filter-groups))
-         (static-groups
-          '(("Emacs" (filename . "\\.emacs\\.d/.*"))
-            ("Dired" (mode . dired-mode))
-            ("Org" (or (mode . org-mode) (mode . org-agenda-mode)))
-            ("Programming" (derived-mode . prog-mode))
-            ("Shells" (or (mode . shell-mode)
-                 (mode . eshell-mode)
-                 (mode . term-mode)))
-            ("Mail" (or (mode . gnus-group-mode)
-                 (mode . gnus-summary-mode)
-                 (mode . message-mode)))
-            ("Web" (or (mode . eww-mode) (mode . elfeed-mode)))
-            ("Chat" (mode . erc-mode))
-            ("Help" (or (mode . help-mode)
-                 (mode . apropos-mode)
-                 (mode . Info-mode)))
-            ("Logs" (mode . log-mode))
-            ("Processes" (process))
-            ("Starred" (starred-name)))))
-     (append project-groups static-groups)))
- ;; Set default sorting mode
- (setq ibuffer-default-sorting-mode 'project-file-relative)
  :hook
  ((ibuffer-mode
    .
    (lambda ()
      (setq ibuffer-filter-groups
-           (my-ibuffer-generate-filter-groups))))))
+           (ibuffer-project-generate-filter-groups))))))
 
-;; all-the-icons for visual flair
+;; Optional: all-the-icons if you want it
 (use-package
  all-the-icons-ibuffer
  :ensure t
  :after (all-the-icons ibuffer)
- :hook (ibuffer-mode . all-the-icons-ibuffer-mode)
- :config
- (setq all-the-icons-ibuffer-icon-size 1.0) ; Solid icon size
- (setq all-the-icons-ibuffer-human-readable-size t) ; Readable sizes
- (setq all-the-icons-ibuffer-icon-separator "  ") ; More space after icons
- )
-
-;; Ensure all-the-icons is loaded
-(use-package
- all-the-icons
- :ensure t
- :config
- (unless (find-font (font-spec :name "all-the-icons"))
-   (all-the-icons-install-fonts t)))
+ :hook (ibuffer-mode . all-the-icons-ibuffer-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    helm                                   ;;
