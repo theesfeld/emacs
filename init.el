@@ -2790,7 +2790,7 @@
  (:vc-backend
   Git
   :url "https://github.com/theesfeld/cw-activity-coder.git"
-  :branch "main")
+  :branch "master")
  :commands (cw-activity-coder)
  :custom
  (cw-activity-coder-api-key (getenv "XAI_API_KEY"))
