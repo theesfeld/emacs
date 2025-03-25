@@ -1150,19 +1150,19 @@
        (file-name-nondirectory
         (directory-file-name (project-root project))))))
 
- ;; Custom filter predicate for project-name
- (defun ibuffer-filter-by-project-name (buf)
-   "Filter buffers by project name."
-   (equal
-    (my-ibuffer-project-name buf)
-    (cdr (assq 'project-name ibuffer-filter))))
+ ;; Custom filter predicate for project-name (not needed separately now)
+ ;; (defun ibuffer-filter-by-project-name (buf)
+ ;;   "Filter buffers by project name."
+ ;;   (equal (my-ibuffer-project-name buf)
+ ;;          (cdr (assq 'project-name ibuffer-filter))))
 
  ;; Register the custom project-name filter
  (define-ibuffer-filter
   project-name "Filter buffers by project name."
-  (equal
-   (my-ibuffer-project-name buf)
-   (completing-read "Project name: " nil nil nil nil nil t)))
+  (:description
+   "project name"
+   :reader (completing-read "Project name: " nil nil nil nil nil t))
+  (equal (my-ibuffer-project-name buf) qualifier))
 
  ;; Function to generate project-based filter groups dynamically
  (defun my-ibuffer-generate-project-groups ()
