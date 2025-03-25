@@ -1268,18 +1268,17 @@
  (with-eval-after-load 'projectile
    (with-eval-after-load 'modus-themes
      (require 'all-the-icons)
-     ;; Wrapper function to handle buffer input and return project root
-     (defun my-projectile-project-root (buffer)
-       "Return the project root for BUFFER, or nil if not in a project."
-       (when-let ((dir
-                   (or (buffer-file-name buffer)
-                       (buffer-local-value
-                        'default-directory buffer))))
-         (projectile-project-root dir)))
      (bufler-defgroups
       (group
-       ;; Group by Projectile project using project-root
-       (project-root (my-projectile-project-root)))
+       ;; Group by Projectile project using a custom matcher
+       (lambda (buffer)
+         (with-current-buffer buffer
+           (let ((root (projectile-project-root)))
+             (when root
+               (cons
+                (file-name-nondirectory
+                 (directory-file-name root))
+                (list 'buffer buffer)))))))
       (group
        ;; Special buffers (not in a project)
        (name-match
