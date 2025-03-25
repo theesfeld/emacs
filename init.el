@@ -1450,7 +1450,7 @@
    .
    (lambda ()
      (add-hook 'before-save-hook #'eglot-format-buffer -10 t)
-     (setq eldoc-documentation-strategy #'eldoc-documentation-compose)
+     (setq eldoc-documentation-strategy #'eldoc-documentation-default)
      (eglot-inlay-hints-mode))))
  :config
  (add-to-list
