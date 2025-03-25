@@ -1166,7 +1166,7 @@
                      :background "#303030" ; bg-dim (dark gray)
                      :weight 'bold
                      :height 1.2) ; Slightly larger
- (set-face-attribute 'ibuffer-filter-group-name-face
+ (set-face-attribute 'ibuffer-filter-group-name
                      nil ; Correct group face
                      :foreground "#88c0d0" ; cyan-cooler
                      :weight 'bold
