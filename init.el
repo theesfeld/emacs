@@ -1206,9 +1206,11 @@
      ("Stars" (starred-name)))
    "Static filter groups for ibuffer, applied only to non-project buffers.")
 
- ;; Combine project and static groups, ensuring project groups take precedence
+ ;; Combine project and static groups, with projects under a "Projects" header
  (setq ibuffer-saved-filter-groups
-       `(("home" ,@ (my-ibuffer-generate-project-groups) ,@
+       `(("home"
+          ("Projects" ,@ (my-ibuffer-generate-project-groups))
+          ,@
           (mapcar
            (lambda (group)
              (let ((name (car group))
@@ -1226,7 +1228,7 @@
     ;; Regenerate filter groups dynamically each time ibuffer opens
     (setq
      ibuffer-saved-filter-groups
-     `(("home" ,@ (my-ibuffer-generate-project-groups) ,@
+     `(("home" ("Projects" ,@ (my-ibuffer-generate-project-groups)) ,@
         (mapcar
          (lambda (group)
            (let ((name (car group))
