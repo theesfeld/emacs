@@ -874,9 +874,11 @@
  (setq make-backup-file-name-function
        (lambda (file)
          (concat
-          (file-name-concat "~/.config/emacs/backups"
-                            (file-name-nondirectory file))
-          "." (format-time-string "%Y%m%dT%H%M%S") "~")))
+          "~/.config/emacs/backups/"
+          (file-name-nondirectory file)
+          "."
+          (format-time-string "%Y%m%dT%H%M%S")
+          "~")))
 
  ;; Save auto-save files in a dedicated directory
  (setq
@@ -886,28 +888,19 @@
   auto-save-timeout 30
   auto-save-interval 200)
 
- ;; No TRAMP backups
- (with-eval-after-load 'tramp
-   (setq tramp-backup-directory-alist nil))
-
- ;; Define a simple log-mode for .log files with auto-revert-tail-mode
+ ;; Define a minimal log-mode for .log files
  (define-derived-mode
-  log-mode fundamental-mode "Log" "A simple mode for log files."
-  (setq font-lock-defaults
-        '(("\\(ERROR\\|WARN\\|INFO\\|DEBUG\\)"
-           1
-           font-lock-warning-face
-           t)))
-  (font-lock-mode 1) (auto-revert-tail-mode 1))
+  log-mode fundamental-mode "Log" "A simple mode for log files.")
 
  ;; Associate .log files with log-mode
  (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
 
- ;; Ensure buffer scrolls to the bottom in log-mode
+ ;; Optionally enable auto-revert-tail-mode and scroll to bottom
+ (add-hook 'log-mode-hook #'auto-revert-tail-mode)
  (add-hook
   'auto-revert-tail-mode-hook
   (lambda ()
-    (when (eq major-mode 'log-mode)
+    (when (derived-mode-p 'log-mode)
       (goto-char (point-max))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
