@@ -2812,6 +2812,31 @@
        (load-file file)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                             Activity Coder                                ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package
+ cw-activity-coder
+ :vc (:fetcher github :repo "theesfeld/cw-activity-coder")
+ :commands (cw-activity-coder)
+ :custom
+ (cw-activity-coder-api-key (getenv "XAI_API_KEY"))
+ (cw-activity-coder-model "grok-2-latest")
+ (cw-activity-coder-batch-size 100)
+ (cw-activity-coder-rate-limit 8.0)
+ (cw-activity-coder-max-retries 3)
+ (cw-activity-coder-api-timeout 300)
+ (cw-activity-coder-output-dir
+  (expand-file-name "~/cw-activity-coder-output/"))
+ (cw-activity-coder-activity-codes-file
+  (expand-file-name "activitycodes.json"
+                    cw-activity-coder-output-dir))
+ :init
+ (unless cw-activity-coder-api-key
+   (setenv "XAI_API_KEY" "your-key-here")) ; Optional: Set within Emacs if not in env
+ :config (message "CW Activity Coder loaded"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (provide 'init)
