@@ -2827,11 +2827,11 @@
  (cw-activity-coder-api-key (getenv "XAI_API_KEY"))
  (cw-activity-coder-model "grok-2-latest")
  (cw-activity-coder-batch-size 100)
- (cw-activity-coder-rate-limit 2.0)
+ (cw-activity-coder-rate-limit 8.0)
  (cw-activity-coder-max-retries 3)
  (cw-activity-coder-api-timeout 300)
  (cw-activity-coder-output-dir
-  (expand-file-name "~/cw-activity-coder-output/"))
+  (expand-file-name "~/cw-activity-coder/"))
  (cw-activity-coder-activity-codes-file
   (expand-file-name "activitycodes.json"
                     cw-activity-coder-output-dir))
