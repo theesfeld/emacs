@@ -760,6 +760,12 @@
   ("C-x K" . kill-buffer)
   ("s-s" . #'grim/screenshot)))
 
+(use-package
+ windmove
+ :ensure nil
+ :config
+ (windmove-default-keybindings 'meta)) ; Use M-<arrow> instead
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Shell Environment                          ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
