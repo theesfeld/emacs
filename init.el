@@ -1137,16 +1137,6 @@
  :bind (("C-x C-b" . ibuffer))
  :hook (ibuffer-mode . (lambda () (display-line-numbers-mode -1)))
  :config
- ;; Customize valid ibuffer faces for modus-vivendi
- (set-face-attribute 'ibuffer-deletion-face nil
-                     :foreground "#f28fad" ;; Pink from modus-vivendi
-                     :weight 'bold)
- (set-face-attribute 'ibuffer-marked-face nil
-                     :foreground "#f38ba8" ;; Red from modus-vivendi
-                     :weight 'bold)
- (set-face-attribute 'ibuffer-locked-buffer nil
-                     :foreground "#cba6f7" ;; Mauve from modus-vivendi
-                     :weight 'bold)
  ;; Customize header line appearance
  (setq ibuffer-use-header-line t)
  (defun my-ibuffer-style-header ()
