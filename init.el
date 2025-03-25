@@ -2815,7 +2815,6 @@
 ;;                             Activity Coder                                ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emacs-lisp
 (use-package
  cw-activity-coder
  :vc (:fetcher github :repo "theesfeld/cw-activity-coder")
