@@ -1142,38 +1142,15 @@
  ibuffer
  :ensure nil
  :commands ibuffer ; Autoload ibuffer command
- :init
- ;; Define the project name function early
- (defun my-ibuffer-project-name (buf)
-   "Return the project name for BUF, or nil if not in a project."
-   (with-current-buffer buf
-     (when-let ((project (project-current)))
-       (file-name-nondirectory
-        (directory-file-name (project-root project))))))
- ;; Defer filter definition until ibuf-ext is loaded
- (with-eval-after-load 'ibuf-ext
-   (define-ibuffer-filter
-    project-name "Filter buffers by project name."
-    (:description
-     "project name"
-     :reader (completing-read "Project name: " nil nil nil nil nil t))
-    (equal (my-ibuffer-project-name buf) qualifier)))
- :config
- ;; Function to generate project-based filter groups dynamically
- (defun my-ibuffer-generate-project-groups ()
-   "Generate filter groups for ibuffer based on Git project names."
-   (let ((projects (make-hash-table :test 'equal)))
-     (dolist (buf (buffer-list))
-       (when-let ((proj-name (my-ibuffer-project-name buf)))
-         (puthash proj-name t projects)))
-     (let (groups)
-       (maphash
-        (lambda (proj-name _)
-          (push `(,proj-name (project-name . ,proj-name)) groups))
-        projects)
-       groups)))
+ :bind (("C-x C-b" . ibuffer)) ; Default binding to open ibuffer
+ :hook (ibuffer-mode . (lambda () (display-line-numbers-mode -1))))
 
- ;; Define the static filter groups (without project overlap)
+(use-package
+ ibuffer-project
+ :ensure t
+ :after ibuffer
+ :config
+ ;; Define static filter groups (applied to non-project buffers)
  (defvar my-ibuffer-static-filter-groups
    `(("Emacs" (filename
        .
@@ -1197,45 +1174,40 @@
      ("Stars" (starred-name)))
    "Static filter groups for ibuffer, applied only to non-project buffers.")
 
- ;; Flag to track if filter groups have been initialized
- (defvar my-ibuffer-filter-groups-initialized nil
-   "Non-nil if ibuffer filter groups have been initialized this session.")
-
- ;; Function to initialize filter groups
- (defun my-ibuffer-initialize-filter-groups (&optional force)
-   "Initialize ibuffer filter groups once per session.
-If FORCE is non-nil, reinitialize even if already initialized."
-   (when (or force (not my-ibuffer-filter-groups-initialized))
-     (let ((inhibit-quit t))
-       (setq ibuffer-saved-filter-groups
-             `(("home" ,@ (my-ibuffer-generate-project-groups) ,@
-                (mapcar
-                 (lambda (group)
-                   (let ((name (car group))
-                         (filter (cadr group)))
-                     `(,name
-                       (and (not (project-name . nil)) ,filter))))
-                 my-ibuffer-static-filter-groups))))
-       (setq my-ibuffer-filter-groups-initialized t))))
-
- ;; Wrapper function to ensure initialization before opening ibuffer
- (defun my-ibuffer ()
-   "Open ibuffer with initialized filter groups."
+ ;; Custom function to combine project and static filter groups
+ (defun my-ibuffer-setup-filter-groups ()
+   "Set up ibuffer filter groups with project and static categories."
    (interactive)
-   (unless (eq major-mode 'ibuffer-mode)
-     (my-ibuffer-initialize-filter-groups))
-   (ibuffer)
-   (unless (eq major-mode 'ibuffer-mode)
+   (require 'ibuf-ext) ; Ensure ibuf-ext is loaded for filter operations
+   (ibuffer-project-generate-filter-groups) ; Generate project-based groups
+   (let
+       ((project-groups (car ibuffer-saved-filter-groups))) ; Get project groups
+     (setq ibuffer-saved-filter-groups
+           (list
+            (cons
+             "home"
+             (append
+              project-groups
+              (mapcar
+               (lambda (group)
+                 (list
+                  (car group)
+                  (list
+                   'and
+                   (list
+                    'not (cons 'project-name nil))
+                   (cadr group))))
+               my-ibuffer-static-filter-groups)))))
      (ibuffer-switch-to-saved-filter-groups "home")))
 
- :hook (ibuffer-mode . (lambda () (display-line-numbers-mode -1)))
+ ;; Optional: Enable caching for faster project grouping
+ (setq ibuffer-project-use-cache t)
+
+ :hook (ibuffer-mode . my-ibuffer-setup-filter-groups)
  :bind
- (("C-x C-b" . my-ibuffer)
-  :map ibuffer-mode-map
-  ("C-c r" .
-   (lambda ()
-     (interactive)
-     (my-ibuffer-initialize-filter-groups t)))))
+ (:map
+  ibuffer-mode-map
+  ("C-c r" . my-ibuffer-setup-filter-groups))) ; Refresh groups manually
 
 (use-package
  all-the-icons-ibuffer
