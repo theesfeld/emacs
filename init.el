@@ -1264,9 +1264,12 @@
  :ensure t
  :bind (("C-x C-b" . bufler)) ;; Replace ibuffer binding
  :init
- ;; Delay all configuration until projectile and modus-themes are loaded
+ ;; Delay bufler setup until projectile and modus-themes are loaded
  (with-eval-after-load 'projectile
+   ;; Force projectile to initialize its autoloads
+   (projectile-discover-projects-in-directory "~/Code/")
    (with-eval-after-load 'modus-themes
+     (require 'all-the-icons)
      (bufler-defgroups
       (group
        ;; Group by Projectile project
@@ -1302,7 +1305,6 @@
      (setq bufler-show-empty-groups nil)
      (setq bufler-vc-state nil)
      ;; Integrate all-the-icons
-     (require 'all-the-icons)
      (defun my-bufler-buffer-name (buffer)
        "Add all-the-icons to buffer names in bufler with correct color."
        (let ((name (buffer-name buffer))
