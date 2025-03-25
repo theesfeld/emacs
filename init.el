@@ -1162,10 +1162,11 @@
  :hook (ibuffer-mode . my-ibuffer-style-filter-groups))
 
 (use-package
- ibuffer-project
+ projection
  :ensure t
  :after ibuffer
- :config (require 'ibuffer-project)
+ :config
+ (require 'projection) ;; Ensure projection is loaded
  (defvar my-ibuffer-static-filter-groups
    `(("EMACS" (filename
        .
@@ -1189,19 +1190,18 @@
      ("*STARS*" (starred-name)))
    "Static filter groups for ibuffer.")
  (defun my-ibuffer-setup-filter-groups ()
-   "Set up ibuffer filter groups with project and static categories."
+   "Set up ibuffer filter groups with projection and static categories."
    (interactive)
    (require 'ibuf-ext)
-   (ibuffer-project-generate-filter-groups)
-   (let ((project-groups (or (car ibuffer-saved-filter-groups) nil)))
+   (require 'projection-ibuffer) ;; Load projection's ibuffer integration
+   (projection-ibuffer-set-filter-groups) ;; Set project-based filter groups
+   (let
+       ((project-groups (or ibuffer-filter-groups nil))) ;; Use current groups set by projection
+     (setq ibuffer-filter-groups
+           (append project-groups my-ibuffer-static-filter-groups))
      (setq ibuffer-saved-filter-groups
-           (list
-            (cons
-             "home"
-             (append
-              project-groups my-ibuffer-static-filter-groups))))
+           (list (cons "home" ibuffer-filter-groups)))
      (ibuffer-switch-to-saved-filter-groups "home")))
- (setq ibuffer-project-use-cache t)
  :hook (ibuffer-mode . my-ibuffer-setup-filter-groups)
  :bind (:map ibuffer-mode-map ("C-c r" . my-ibuffer-setup-filter-groups)))
 
