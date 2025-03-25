@@ -1372,7 +1372,7 @@
  ("C-c p" . project-prefix-map) ;; Bind project commands to C-c p
  :init
  ;; Ensure project.el knows about Git projects
- (setq project-vc-backend 'vc-git) ;; Explicitly use Git as the backend
+ ;(setq project-vc-backend 'vc-git) ;; Explicitly use Git as the backend
  (setq project-vc-ignores
        '("*.o" "*.elc" "*.pyc" "node_modules/" "dist/" "build/"))
  :config
