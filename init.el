@@ -2787,9 +2787,8 @@
 (use-package
  cw-activity-coder
  :vc
- (:vc-backend
-  Git
-  :url "https://github.com/theesfeld/cw-activity-coder.git"
+ (:url
+  "https://github.com/theesfeld/cw-activity-coder.git"
   :branch "master")
  :commands (cw-activity-coder)
  :custom
