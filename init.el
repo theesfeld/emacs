@@ -2821,8 +2821,9 @@
   (expand-file-name "activitycodes.json"
                     cw-activity-coder-output-dir))
  :config
+ (require 'cw-activity-coder) ; Ensure the package is fully loaded
  (unless cw-activity-coder-api-key
-   (setenv "XAI_API_KEY" "your-key-here"))
+   (setenv "XAI_API_KEY" "your-actual-key-here")) ; Replace with real key
  (message "CW Activity Coder loaded"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
