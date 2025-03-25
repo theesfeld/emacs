@@ -1164,7 +1164,7 @@
 (use-package
  vertico
  :ensure t
- :init (vertico-mode)
+ :init (vertico-mode 1)
  :custom
  (vertico-cycle t)
  (vertico-sort-function 'vertico-sort-history-alpha) ; Sort by history then alphabetically
@@ -1192,8 +1192,6 @@
  :ensure t
  :after vertico
  :demand t
- :init
- (global-set-key (kbd "M-x") 'consult-m-x) ; Direct binding
  :config (setq history-length 1000)
  (setq savehist-additional-variables
        (append
