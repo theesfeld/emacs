@@ -888,29 +888,39 @@
   auto-save-timeout 30
   auto-save-interval 200)
 
-;; Define a minimal log-mode for .log files
-(define-derived-mode log-mode fundamental-mode "Log"
-  "A simple mode for log files."
+ ;; Save place settings
+ (setq save-place-file
+       (expand-file-name ".saveplace" user-emacs-directory))
+ (save-place-mode 1) ; Enable save-place-mode
+
+ ;; Define a minimal log-mode for .log files
+ (define-derived-mode
+  log-mode fundamental-mode "Log" "A simple mode for log files."
   ;; Enable font-lock for syntax highlighting
   (setq font-lock-defaults '(log-mode-font-lock-keywords)))
 
-;; Define font-lock keywords for log levels
-(defvar log-mode-font-lock-keywords
-  '(("\\bDEBUG\\b" . 'font-lock-comment-face)    ; Blue for DEBUG
-    ("\\bINFO\\b"  . 'font-lock-string-face)     ; Green for INFO
-    ("\\bWARN\\b"  . 'font-lock-warning-face)    ; Yellow for WARN
-    ("\\bERROR\\b" . 'font-lock-function-name-face)) ; Red for ERROR
-  "Font-lock keywords for log-mode highlighting.")
+ ;; Define font-lock keywords for log levels
+ (defvar log-mode-font-lock-keywords
+   '(("\\bDEBUG\\b" . 'font-lock-comment-face) ; Blue for DEBUG
+     ("\\bINFO\\b" . 'font-lock-string-face) ; Green for INFO
+     ("\\bWARN\\b" . 'font-lock-warning-face) ; Yellow for WARN
+     ("\\bERROR\\b" . 'font-lock-function-name-face)) ; Red for ERROR
+   "Font-lock keywords for log-mode highlighting.")
 
-;; Associate .log files with log-mode
-(add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
+ ;; Associate .log files with log-mode
+ (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
 
-;; Enable auto-revert-tail-mode and scroll to bottom
-(add-hook 'log-mode-hook #'auto-revert-tail-mode)
-(add-hook 'auto-revert-tail-mode-hook
-          (lambda ()
-            (when (derived-mode-p 'log-mode)
-              (goto-char (point-max)))))
+ :hook
+ ;; Hooks for log-mode
+ (log-mode . auto-revert-tail-mode) ; Enable tailing
+ (auto-revert-tail-mode
+  .
+  (lambda ()
+    (when (derived-mode-p 'log-mode)
+      (goto-char (point-max)))))
+ ;; Hooks for save-place-mode
+ (kill-buffer-hook . save-place-local-before-kill) ; Save position before killing buffer
+ (find-file-hook . save-place-find-file-hook)) ; Restore position when opening file
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    vundo                                  ;;
