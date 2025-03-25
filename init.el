@@ -1294,11 +1294,12 @@
       ;; Fallback for any remaining buffers
       (auto-mode))
      ;; Customize appearance to match your Modus Vivendi theme
-     (set-face-attribute 'bufler-title nil
+     (set-face-attribute 'magit-section-heading nil
                          :foreground "#89b4fa"
                          :weight 'bold
                          :underline t)
-     (set-face-attribute 'tabulated-list-entries nil
+     (set-face-attribute 'bufler-buffer nil :foreground "#f9e2af")
+     (set-face-attribute 'bufler-buffer-special nil
                          :foreground "#f9e2af")
      (set-face-attribute 'bufler-size nil :foreground "#a3be8c")
      (set-face-attribute 'bufler-mode nil :foreground "#b48ead")
