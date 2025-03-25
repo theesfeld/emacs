@@ -1197,14 +1197,26 @@
           (derived-mode . eshell-mode)
           (derived-mode . term-mode))))
    "Static filter groups for ibuffer, organized in an Emacs-y way.")
+ (defun my-ibuffer-generate-project-filter-groups ()
+   "Generate ibuffer filter groups based on active projects using projection."
+   (require 'ibuf-ext)
+   (let ((project-roots (mapcar #'car (project-known-project-roots)))
+         filter-groups)
+     (dolist (buffer (buffer-list))
+       (with-current-buffer buffer
+         (when-let ((proj (project-current))
+                    (root (car (project-roots proj))))
+           (unless (member root filter-groups)
+             (push `(,(file-name-nondirectory
+                       (directory-file-name root))
+                     (filename . ,(concat "\\`" (regexp-quote root))))
+                   filter-groups)))))
+     filter-groups))
  (defun my-ibuffer-setup-filter-groups ()
    "Set up ibuffer filter groups with projection and static categories."
    (interactive)
    (require 'ibuf-ext)
-   (require 'projection-ibuffer) ;; Load projection's ibuffer integration
-   (projection-ibuffer-set-filter-groups) ;; Set project-based filter groups
-   (let
-       ((project-groups (or ibuffer-filter-groups nil))) ;; Use current groups set by projection
+   (let ((project-groups (my-ibuffer-generate-project-filter-groups)))
      (setq ibuffer-filter-groups
            (append project-groups my-ibuffer-static-filter-groups))
      (setq ibuffer-saved-filter-groups
