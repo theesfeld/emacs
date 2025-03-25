@@ -2817,7 +2817,11 @@
 
 (use-package
  cw-activity-coder
- :vc (:fetcher github :repo "theesfeld/cw-activity-coder")
+ :vc
+ (:vc-backend
+  Git
+  :url "https://github.com/theesfeld/cw-activity-coder.git"
+  :branch "main")
  :commands (cw-activity-coder)
  :custom
  (cw-activity-coder-api-key (getenv "XAI_API_KEY"))
