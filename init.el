@@ -2167,14 +2167,20 @@
       :extend t))
    "Face for messages where my nick is mentioned in ERC, using Modus Vivendi colors."
    :group 'erc-faces)
- ;; Function to highlight the entire message when nick is mentioned
+ ;; Modified function to highlight message and add fringe marker
  (defun my-erc-highlight-nick-message (msg)
-   "Highlight the entire message when my nick is mentioned."
+   "Highlight the entire message and add a fringe marker when my nick is mentioned."
    (let ((nick (erc-current-nick)))
      (when (and nick (string-match-p (regexp-quote nick) msg))
+       ;; Highlight the full message
        (put-text-property
         0 (length msg) 'face 'erc-nick-mentioned-face
-        msg))))
+        msg)
+       ;; Add fringe indicator
+       (put-text-property 0 1 'display
+                          '(left-fringe
+                            erc-nick-mentioned-fringe bitmap)
+                          msg))))
  ;; Add the highlight function to ERC's message insertion hook
  (add-hook
   'erc-insert-modify-hook
@@ -2186,6 +2192,19 @@
           (let ((msg (buffer-substring (point) (line-end-position))))
             (my-erc-highlight-nick-message msg))
           (forward-line 1))))))
+ ;; Define fringe bitmap for red asterisk
+ (define-fringe-bitmap 'erc-nick-mentioned-fringe
+   [#b00000000
+    #b00111000 #b01111100 #b11111110 #b01111100 #b00111000 #b00000000]
+   nil nil 'center)
+ ;; Define face for fringe marker
+ (defface erc-nick-mentioned-fringe-face
+   '((t :foreground "red" :weight bold))
+   "Face for the fringe marker when nick is mentioned."
+   :group 'erc-faces)
+ ;; Associate face with fringe bitmap
+ (put
+  'erc-nick-mentioned-fringe 'face 'erc-nick-mentioned-fringe-face)
  ;; Configure ERC match for nick highlighting
  (setq erc-keywords '())
  (defun my-erc-update-keywords ()
@@ -2212,6 +2231,8 @@
    (setq-local completion-at-point-functions
                (list #'erc-pcomplete)) ; Use pcomplete for completion
    (corfu-mode 1)) ; Enable corfu for dropdown UI
+ ;; Disable line numbers in ERC
+ (add-hook 'erc-mode-hook (lambda () (display-line-numbers-mode -1)))
  :hook
  ((erc-mode . my-erc-set-fill-column)
   (erc-nick-changed . my-erc-update-notifications-keywords)
@@ -2250,23 +2271,6 @@
       :password password
       :full-name "blackdream")))
  :bind (:map global-map ("C-c E" . my-erc-connect)))
-
-(use-package
- erc-hl-nicks
- :ensure t
- :after erc
- :config
- (add-to-list 'erc-modules 'hl-nicks)
- (erc-update-modules))
-
-(use-package
- erc-image
- :ensure t
- :after erc
- :config
- (setq erc-image-inline-rescale 300)
- (add-to-list 'erc-modules 'image)
- (erc-update-modules))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                          Tree-sitter-based Modes                          ;;
