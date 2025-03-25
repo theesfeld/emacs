@@ -1141,23 +1141,27 @@
 (use-package
  ibuffer
  :ensure nil
+ :commands ibuffer ; Ensure ibuffer is autoloaded
+ :init
+ ;; Move filter definition to :init to ensure it runs before ibuffer loads
+ (progn
+   ;; Function to get the project name from a buffer
+   (defun my-ibuffer-project-name (buf)
+     "Return the project name for BUF, or nil if not in a project."
+     (with-current-buffer buf
+       (when-let ((project (project-current)))
+         (file-name-nondirectory
+          (directory-file-name (project-root project))))))
+   ;; Register the custom project-name filter
+   (with-eval-after-load 'ibuffer
+     (define-ibuffer-filter
+      project-name "Filter buffers by project name."
+      (:description
+       "project name"
+       :reader
+       (completing-read "Project name: " nil nil nil nil nil t))
+      (equal (my-ibuffer-project-name buf) qualifier))))
  :config
- ;; Function to get the project name from a buffer
- (defun my-ibuffer-project-name (buf)
-   "Return the project name for BUF, or nil if not in a project."
-   (with-current-buffer buf
-     (when-let ((project (project-current)))
-       (file-name-nondirectory
-        (directory-file-name (project-root project))))))
-
- ;; Register the custom project-name filter
- (define-ibuffer-filter
-  project-name "Filter buffers by project name."
-  (:description
-   "project name"
-   :reader (completing-read "Project name: " nil nil nil nil nil t))
-  (equal (my-ibuffer-project-name buf) qualifier))
-
  ;; Function to generate project-based filter groups dynamically
  (defun my-ibuffer-generate-project-groups ()
    "Generate filter groups for ibuffer based on Git project names."
