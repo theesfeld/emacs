@@ -1168,27 +1168,35 @@
  :config
  (require 'projection) ;; Ensure projection is loaded
  (defvar my-ibuffer-static-filter-groups
-   `(("EMACS" (filename
+   `(("Config" (filename
        .
        ,(concat
          "\\`"
          (regexp-quote
           (expand-file-name user-emacs-directory))
          ".*")))
-     ("PROG" (derived-mode . prog-mode))
-     ("ORG" (or (file-extension . "org")
+     ("Code" (derived-mode . prog-mode))
+     ("Org" (or (file-extension . "org")
           (derived-mode . org-mode)
           (derived-mode . org-agenda-mode)))
-     ("PDF" (derived-mode . pdf-tools-mode))
-     ("GNUS" (or (derived-mode . gnus-mode) (saved . "gnus")))
-     ("NET"
+     ("Docs" (or (derived-mode . pdf-tools-mode)
+          (derived-mode . doc-view-mode)
+          (mode . text-mode)))
+     ("Mail/News" (or (derived-mode . gnus-mode)
+          (saved . "gnus")
+          (derived-mode . message-mode)))
+     ("Web"
       (or (derived-mode . eww-mode) (derived-mode . elfeed-mode)))
-     ("IRC" (derived-mode . erc-mode))
-     ("LOG" (derived-mode . log-mode))
-     ("DIRED" (derived-mode . dired-mode))
-     ("PROC" (process . t))
-     ("*STARS*" (starred-name)))
-   "Static filter groups for ibuffer.")
+     ("Chat"
+      (or (derived-mode . erc-mode) (derived-mode . rcirc-mode)))
+     ("Logs" (derived-mode . log-mode))
+     ("Dired" (derived-mode . dired-mode))
+     ("Processes" (process . t))
+     ("Special" (starred-name))
+     ("Shells" (or (derived-mode . shell-mode)
+          (derived-mode . eshell-mode)
+          (derived-mode . term-mode))))
+   "Static filter groups for ibuffer, organized in an Emacs-y way.")
  (defun my-ibuffer-setup-filter-groups ()
    "Set up ibuffer filter groups with projection and static categories."
    (interactive)
