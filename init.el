@@ -1215,7 +1215,7 @@
                   (list 'and '(not-in-project) (cadr group))))
                my-ibuffer-static-filter-groups)))))
      (ibuffer-switch-to-saved-filter-groups "home")))
- (setq ibuffer-project-use-cache t)
+ (setq ibuffer-project-use-cache nil)
  :hook (ibuffer-mode . my-ibuffer-setup-filter-groups)
  :bind (:map ibuffer-mode-map ("C-c r" . my-ibuffer-setup-filter-groups)))
 
