@@ -1272,8 +1272,8 @@
      (require 'all-the-icons)
      (bufler-defgroups
       (group
-       ;; Group by Projectile project
-       (projectile))
+       ;; Group by Projectile project using project-root
+       (project-root (projectile-project-root)))
       (group
        ;; Special buffers (not in a project)
        (name-match
