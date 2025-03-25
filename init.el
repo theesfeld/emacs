@@ -910,17 +910,25 @@
  ;; Associate .log files with log-mode
  (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
 
+ ;; Ensure auto-revert works over TRAMP
+ (setq auto-revert-remote-files t) ; Enable reverting for remote files
+ (setq auto-revert-interval 1) ; Poll every 1 second for changes
+ (setq auto-revert-verbose nil) ; Reduce noise from revert messages
+
  :hook
  ;; Hooks for log-mode
- (log-mode . auto-revert-tail-mode) ; Enable tailing
+ (log-mode . auto-revert-tail-mode) ; Enable tailing for log-mode
  (auto-revert-tail-mode
   .
   (lambda ()
     (when (derived-mode-p 'log-mode)
-      (goto-char (point-max)))))
- ;; Hooks for save-place-mode
- (kill-buffer-hook . save-place-local-before-kill) ; Save position before killing buffer
- (find-file-hook . save-place-find-file-hook)) ; Restore position when opening file
+      (goto-char (point-max))
+      ;; Ensure TRAMP buffers are handled correctly
+      (when (file-remote-p default-directory)
+        (setq buffer-read-only nil) ; Prevent read-only issues with TRAMP
+        (auto-revert-set-timer))))) ; Force timer reset for remote files
+ ;; Hook for save-place-mode (restore position when opening file)
+ (find-file-hook . save-place-find-file-hook))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    vundo                                  ;;
