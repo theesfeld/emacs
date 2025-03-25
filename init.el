@@ -1138,9 +1138,17 @@
  :hook (ibuffer-mode . (lambda () (display-line-numbers-mode -1)))
  :config
  ;; Customize valid ibuffer faces for modus-vivendi
-
- ;; Customize header line appearance (since no ibuffer-title-face exists)
- (setq ibuffer-use-header-line t) ;; Enable header line if not already
+ (set-face-attribute 'ibuffer-deletion-face nil
+                     :foreground "#f28fad" ;; Pink from modus-vivendi
+                     :weight 'bold)
+ (set-face-attribute 'ibuffer-marked-face nil
+                     :foreground "#f38ba8" ;; Red from modus-vivendi
+                     :weight 'bold)
+ (set-face-attribute 'ibuffer-locked-buffer nil
+                     :foreground "#cba6f7" ;; Mauve from modus-vivendi
+                     :weight 'bold)
+ ;; Customize header line appearance
+ (setq ibuffer-use-header-line t)
  (defun my-ibuffer-style-header ()
    "Apply modus-vivendi styling to ibuffer header line."
    (when (eq major-mode 'ibuffer-mode)
@@ -1148,7 +1156,7 @@
            (propertize (format " %-22s %8s  %s" "Name" "Size" "Mode")
                        'face
                        '(:foreground "#89b4fa" :weight bold)))))
- ;; Customize filter group names (since no dedicated face exists)
+ ;; Customize filter group names
  (defun my-ibuffer-style-filter-groups ()
    "Apply modus-vivendi styling to filter group names."
    (when (eq major-mode 'ibuffer-mode)
@@ -1168,6 +1176,14 @@
  :ensure t
  :after ibuffer
  :config
+ ;; Define a custom filter to detect non-project buffers
+ (define-ibuffer-filter
+  not-in-project
+  "Filter buffers that do not belong to a project."
+  (:description "not in project")
+  (not
+   (with-current-buffer buf
+     (project-current))))
  (defvar my-ibuffer-static-filter-groups
    `(("Emacs" (filename
        .
@@ -1206,11 +1222,7 @@
                (lambda (group)
                  (list
                   (car group)
-                  (list
-                   'and
-                   (list
-                    'not (cons 'project-name nil))
-                   (cadr group))))
+                  (list 'and '(not-in-project) (cadr group))))
                my-ibuffer-static-filter-groups)))))
      (ibuffer-switch-to-saved-filter-groups "home")))
  (setq ibuffer-project-use-cache t)
@@ -1225,7 +1237,6 @@
  :config
  (setq all-the-icons-ibuffer-icon-size 1.0)
  (setq all-the-icons-ibuffer-human-readable-size t)
- ;; Customize icon face for modus-vivendi
  (set-face-attribute 'all-the-icons-ibuffer-icon-face nil
                      :foreground "#f9e2af")) ;; Yellow from modus-vivendi
 
