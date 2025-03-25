@@ -1130,44 +1130,112 @@
 ;;                                  IBUFFER                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Basic ibuffer setup
 (use-package
  ibuffer
  :ensure nil
  :commands ibuffer
  :bind (("C-x C-b" . ibuffer))
+ :hook (ibuffer-mode . (lambda () (display-line-numbers-mode -1)))
  :config
- (setq ibuffer-expert t) ; No confirmations
- (setq ibuffer-show-empty-filter-groups nil) ; Hide empty groups
- (setq ibuffer-default-sorting-mode 'project-file-relative) ; Sort by project
- (setq ibuffer-use-header-line t) ; Header line
- ;; Modus-vivendi header styling
- (set-face-attribute 'header-line nil
-                     :foreground "#f0f0f0" ; fg-main (bright white)
-                     :background "#303030" ; bg-dim (dark gray)
-                     :weight 'bold
-                     :height 1.2)) ; Slightly larger
+ ;; Customize ibuffer faces for modus-vivendi
+ (set-face-attribute 'ibuffer-mode-face nil
+                     :foreground "#94e2d5" ;; Cyan from modus-vivendi
+                     :weight 'normal)
+ (set-face-attribute
+  'ibuffer-size-face nil
+  :foreground "#f9e2af" ;; Yellow from modus-vivendi
+  :weight 'normal)
+ (set-face-attribute 'ibuffer-marked-face nil
+                     :foreground "#f38ba8" ;; Red from modus-vivendi
+                     :weight 'bold)
+ (set-face-attribute 'ibuffer-deletion-face nil
+                     :foreground "#f28fad" ;; Pink from modus-vivendi
+                     :weight 'bold))
 
-;; ibuffer-project for project grouping
 (use-package
  ibuffer-project
  :ensure t
  :after ibuffer
  :config
- (setq ibuffer-project-use-cache t) ; Faster with caching
+ (defvar my-ibuffer-static-filter-groups
+   `(("Emacs" (filename
+       .
+       ,(concat
+         "\\`"
+         (regexp-quote
+          (expand-file-name user-emacs-directory))
+         ".*")))
+     ("Prog" (derived-mode . prog-mode))
+     ("Org" (or (file-extension . "org")
+          (derived-mode . org-mode)
+          (derived-mode . org-agenda-mode)))
+     ("PDF" (derived-mode . pdf-tools-mode))
+     ("Gnus" (or (derived-mode . gnus-mode) (saved . "gnus")))
+     ("Net"
+      (or (derived-mode . eww-mode) (derived-mode . elfeed-mode)))
+     ("IRC" (derived-mode . erc-mode))
+     ("LOG" (derived-mode . log-mode))
+     ("Dired" (derived-mode . dired-mode))
+     ("Proc" (process . t))
+     ("Stars" (starred-name)))
+   "Static filter groups for ibuffer, applied only to non-project buffers.")
+ (defun my-ibuffer-setup-filter-groups ()
+   "Set up ibuffer filter groups with project and static categories."
+   (interactive)
+   (require 'ibuf-ext)
+   (ibuffer-project-generate-filter-groups)
+   (let ((project-groups (or (car ibuffer-saved-filter-groups) nil)))
+     (setq ibuffer-saved-filter-groups
+           (list
+            (cons
+             "home"
+             (append
+              project-groups
+              (mapcar
+               (lambda (group)
+                 (list
+                  (car group)
+                  (list
+                   'and
+                   (list
+                    'not (cons 'project-name nil))
+                   (cadr group))))
+               my-ibuffer-static-filter-groups)))))
+     (ibuffer-switch-to-saved-filter-groups "home")))
+ ;; Customize filter group name appearance
+ (defun my-ibuffer-customize-group-names ()
+   "Apply modus-vivendi styling to filter group names."
+   (when (eq major-mode 'ibuffer-mode)
+     (save-excursion
+       (goto-char (point-min))
+       (while (re-search-forward "^\\s-*\\(.+\\)\\s-*$" nil t)
+         (let ((group-name (match-string 1)))
+           (when (get-text-property
+                  (point) 'ibuffer-filter-group-name)
+             (add-text-properties
+              (match-beginning 1) (match-end 1)
+              '(face
+                (:foreground
+                 "#89b4fa"
+                 :weight bold
+                 :underline t)))))))))
+ (setq ibuffer-project-use-cache t)
  :hook
- ((ibuffer-mode
-   .
-   (lambda ()
-     (setq ibuffer-filter-groups
-           (ibuffer-project-generate-filter-groups))))))
+ ((ibuffer-mode . my-ibuffer-setup-filter-groups)
+  (ibuffer-mode . my-ibuffer-customize-group-names))
+ :bind (:map ibuffer-mode-map ("C-c r" . my-ibuffer-setup-filter-groups)))
 
-;; Optional: all-the-icons if you want it
 (use-package
  all-the-icons-ibuffer
  :ensure t
- :after (all-the-icons ibuffer)
- :hook (ibuffer-mode . all-the-icons-ibuffer-mode))
+ :after ibuffer ;; Since all-the-icons is already loaded, just depend on ibuffer
+ :hook (ibuffer-mode . all-the-icons-ibuffer-mode)
+ :config
+ (setq all-the-icons-ibuffer-icon-size 1.0)
+ (setq all-the-icons-ibuffer-human-readable-size t)
+ ;; Customize icon face for modus-vivendi
+ (set-face-attribute 'all-the-icons-ibuffer-icon-face nil
+                     :foreground "#f9e2af")) ;; Yellow from modus-vivendi
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    helm                                   ;;
