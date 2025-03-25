@@ -852,6 +852,31 @@
  :bind (("C-c d" . my-ediff-save-window-config)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                    tramp                                  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package
+ tramp
+ :ensure nil
+ :config
+ ;; Optimize TRAMP for auto-revert
+ (setq tramp-auto-save-directory "~/.config/emacs/tramp-auto-save/")
+ (setq tramp-verbose 1) ; Minimal verbosity
+ (setq tramp-default-method "ssh") ; Stable connection method
+ (add-to-list 'tramp-remote-path 'tramp-own-remote-path) ; Include remote PATH
+ ;; Prevent reentrant calls by isolating auto-revert connections
+ (add-to-list
+  'tramp-connection-properties
+  '("/auto-revert$" "connection-buffer" "auto-revert"))
+ :hook
+ ((log-mode
+   .
+   (lambda ()
+     (when (file-remote-p default-directory)
+       (message "Auto-revert-tail-mode enabled for remote log: %s"
+                (buffer-file-name)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Backup and Auto-Save                         ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -895,40 +920,51 @@
 
  ;; Define a minimal log-mode for .log files
  (define-derived-mode
-  log-mode fundamental-mode "Log" "A simple mode for log files."
-  ;; Enable font-lock for syntax highlighting
+  log-mode
+  fundamental-mode
+  "Log"
+  "A simple mode for log files."
   (setq font-lock-defaults '(log-mode-font-lock-keywords)))
 
  ;; Define font-lock keywords for log levels
  (defvar log-mode-font-lock-keywords
-   '(("\\bDEBUG\\b" . 'font-lock-comment-face) ; Blue for DEBUG
-     ("\\bINFO\\b" . 'font-lock-string-face) ; Green for INFO
-     ("\\bWARN\\b" . 'font-lock-warning-face) ; Yellow for WARN
-     ("\\bERROR\\b" . 'font-lock-function-name-face)) ; Red for ERROR
+   '(("\\bDEBUG\\b" . 'font-lock-comment-face)
+     ("\\bINFO\\b" . 'font-lock-string-face)
+     ("\\bWARN\\b" . 'font-lock-warning-face)
+     ("\\bERROR\\b" . 'font-lock-function-name-face))
    "Font-lock keywords for log-mode highlighting.")
 
  ;; Associate .log files with log-mode
  (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
 
- ;; Ensure auto-revert works over TRAMP
+ ;; Auto-revert settings for TRAMP
  (setq auto-revert-remote-files t) ; Enable reverting for remote files
- (setq auto-revert-interval 1) ; Poll every 1 second for changes
- (setq auto-revert-verbose nil) ; Reduce noise from revert messages
+ (setq auto-revert-interval 1) ; Poll every 1 second
+ (setq auto-revert-verbose nil) ; Silence revert messages
 
  :hook
- ;; Hooks for log-mode
- (log-mode . auto-revert-tail-mode) ; Enable tailing for log-mode
- (auto-revert-tail-mode
-  .
-  (lambda ()
-    (when (derived-mode-p 'log-mode)
-      (goto-char (point-max))
-      ;; Ensure TRAMP buffers are handled correctly
-      (when (file-remote-p default-directory)
-        (setq buffer-read-only nil) ; Prevent read-only issues with TRAMP
-        (auto-revert-set-timer))))) ; Force timer reset for remote files
- ;; Hook for save-place-mode (restore position when opening file)
- (find-file-hook . save-place-find-file-hook))
+ ((log-mode . auto-revert-tail-mode) ; Enable tailing for log-mode
+  (auto-revert-tail-mode
+   .
+   (lambda ()
+     (when (derived-mode-p 'log-mode)
+       (goto-char (point-max))
+       (when (file-remote-p default-directory)
+         (setq buffer-read-only nil) ; Ensure writable for TRAMP
+         (let ((tramp-connection-properties
+                (cons
+                 `(,(tramp-make-tramp-file-name
+                     (tramp-file-name-method
+                      tramp-default-remote-file-name)
+                     (tramp-file-name-user
+                      tramp-default-remote-file-name)
+                     (tramp-file-name-host
+                      tramp-default-remote-file-name)
+                     nil)
+                   "connection-buffer" "auto-revert")
+                 tramp-connection-properties)))
+           (auto-revert-set-timer)))))) ; Dedicated connection for auto-revert
+  (find-file-hook . save-place-find-file-hook)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    vundo                                  ;;
