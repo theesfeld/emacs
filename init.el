@@ -2806,8 +2806,13 @@
  (:url
   "https://github.com/theesfeld/cw-activity-coder.git"
   :branch "master")
- :demand t
- :commands (cw-activity-coder)
+ :commands
+ (cw-activity-coder
+  cw-activity-coder-display-receipt
+  cw-activity-coder-edit-codes
+  cw-activity-coder-add-files-from-dired
+  cw-activity-coder-clear-queue
+  cw-activity-coder-process-queued-files)
  :custom
  (cw-activity-coder-api-key (getenv "XAI_API_KEY"))
  (cw-activity-coder-model "grok-2-latest")
@@ -2821,7 +2826,6 @@
   (expand-file-name "activitycodes.json"
                     cw-activity-coder-output-dir))
  :config
- (require 'cw-activity-coder) ; Ensure the package is fully loaded
  (unless cw-activity-coder-api-key
    (setenv "XAI_API_KEY" "your-actual-key-here")) ; Replace with real key
  (message "CW Activity Coder loaded"))
