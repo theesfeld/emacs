@@ -1,5 +1,5 @@
 ;;; init.el -*- lexical-binding: t -*-
-(setq debug-on-error t)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Early Initial Settings                       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1191,17 +1191,10 @@
  consult
  :ensure t
  :after vertico
- :demand t ; Force immediate loading to debug autoload issues
+ :demand t
  :init
- ;; Bind M-x to consult-m-x, with fallback to execute-extended-command
- (global-set-key
-  [remap execute-extended-command]
-  (if (fboundp 'consult-m-x)
-      'consult-m-x
-    'execute-extended-command))
- :config
- ;; Enable history persistence
- (setq history-length 1000)
+ (global-set-key (kbd "M-x") 'consult-m-x) ; Direct binding
+ :config (setq history-length 1000)
  (setq savehist-additional-variables
        (append
         savehist-additional-variables '(extended-command-history)))
