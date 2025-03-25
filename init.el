@@ -1160,17 +1160,12 @@
           (size 8 -1 :right)
           " "
           (filename-and-process -1 -1 :left))))
- ;; Styling with modus-vivendi colors
- (set-face-attribute 'header-line nil ; Correct face for header
+ ;; Styling header with modus-vivendi colors
+ (set-face-attribute 'header-line nil ; Only header styling
                      :foreground "#f0f0f0" ; fg-main (bright white)
                      :background "#303030" ; bg-dim (dark gray)
                      :weight 'bold
                      :height 1.2) ; Slightly larger
- (set-face-attribute 'ibuffer-filter-group-name
-                     nil ; Correct group face
-                     :foreground "#88c0d0" ; cyan-cooler
-                     :weight 'bold
-                     :underline t) ; Underline for group headers
  :hook ((ibuffer-mode . (lambda () (display-line-numbers-mode -1)))) ; Clean UI
  )
 
