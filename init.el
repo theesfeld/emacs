@@ -1166,14 +1166,6 @@
  :ensure t
  :after ibuffer
  :config
- ;; Define a custom filter to detect non-project buffers
- (define-ibuffer-filter
-  not-in-project
-  "Filter buffers that do not belong to a project."
-  (:description "not in project")
-  (not
-   (with-current-buffer buf
-     (project-current))))
  (defvar my-ibuffer-static-filter-groups
    `(("EMACS" (filename
        .
@@ -1195,7 +1187,7 @@
      ("DIRED" (derived-mode . dired-mode))
      ("PROC" (process . t))
      ("*STARS*" (starred-name)))
-   "Static filter groups for ibuffer, applied only to non-project buffers.")
+   "Static filter groups for ibuffer.")
  (defun my-ibuffer-setup-filter-groups ()
    "Set up ibuffer filter groups with project and static categories."
    (interactive)
@@ -1207,15 +1199,9 @@
             (cons
              "home"
              (append
-              project-groups
-              (mapcar
-               (lambda (group)
-                 (list
-                  (car group)
-                  (list 'and '(not-in-project) (cadr group))))
-               my-ibuffer-static-filter-groups)))))
+              project-groups my-ibuffer-static-filter-groups))))
      (ibuffer-switch-to-saved-filter-groups "home")))
- (setq ibuffer-project-use-cache nil)
+ (setq ibuffer-project-use-cache t)
  :hook (ibuffer-mode . my-ibuffer-setup-filter-groups)
  :bind (:map ibuffer-mode-map ("C-c r" . my-ibuffer-setup-filter-groups)))
 
