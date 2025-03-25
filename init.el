@@ -1266,14 +1266,17 @@
  :init
  ;; Delay bufler setup until projectile and modus-themes are loaded
  (with-eval-after-load 'projectile
-   ;; Force projectile to initialize its autoloads
-   (projectile-discover-projects-in-directory "~/Code/")
    (with-eval-after-load 'modus-themes
      (require 'all-the-icons)
+     ;; Wrapper function to handle nil project roots
+     (defun my-projectile-project-root (dir)
+       "Return the project root for DIR, or nil if not in a project."
+       (when dir
+         (projectile-project-root dir)))
      (bufler-defgroups
       (group
        ;; Group by Projectile project using project-root
-       (project-root (projectile-project-root)))
+       (project-root (my-projectile-project-root)))
       (group
        ;; Special buffers (not in a project)
        (name-match
