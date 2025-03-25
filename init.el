@@ -1270,8 +1270,8 @@
      (require 'all-the-icons)
      (bufler-defgroups
       (group
-       ;; Group by Projectile project using project-root
-       (project-root (lambda () (projectile-project-root))))
+       ;; Group by Projectile project
+       (auto-projectile))
       (group
        ;; Special buffers (not in a project)
        (name-match
