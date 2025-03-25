@@ -1268,10 +1268,13 @@
  (with-eval-after-load 'projectile
    (with-eval-after-load 'modus-themes
      (require 'all-the-icons)
-     ;; Wrapper function to handle nil project roots
-     (defun my-projectile-project-root (dir)
-       "Return the project root for DIR, or nil if not in a project."
-       (when dir
+     ;; Wrapper function to handle buffer input and return project root
+     (defun my-projectile-project-root (buffer)
+       "Return the project root for BUFFER, or nil if not in a project."
+       (when-let ((dir
+                   (or (buffer-file-name buffer)
+                       (buffer-local-value
+                        'default-directory buffer))))
          (projectile-project-root dir)))
      (bufler-defgroups
       (group
