@@ -1138,85 +1138,57 @@
 ;;                                  IBUFFER                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Core ibuffer setup (built-in, no external package needed)
 (use-package
  ibuffer
  :ensure nil
  :commands ibuffer ; Autoload ibuffer command
- :bind (("C-x C-b" . ibuffer)) ; Default binding to open ibuffer
- :hook (ibuffer-mode . (lambda () (display-line-numbers-mode -1))))
+ :bind (("C-x C-b" . ibuffer)) ; Replace default buffer list binding
+ :hook ((ibuffer-mode . (lambda () (display-line-numbers-mode -1)))) ; Disable line numbers
+ :config
+ (setq ibuffer-expert t) ; Skip confirmation prompts
+ (setq ibuffer-show-empty-filter-groups nil) ; Hide empty groups
+ (setq ibuffer-default-sorting-mode 'major-mode)) ; Sort by major mode by default
 
+;; ibuffer-project for project-based grouping
 (use-package
  ibuffer-project
  :ensure t
  :after ibuffer
  :config
- ;; Define static filter groups (applied to non-project buffers)
- (defvar my-ibuffer-static-filter-groups
-   `(("Emacs" (filename
-       .
-       ,(concat
-         "\\`"
-         (regexp-quote
-          (expand-file-name user-emacs-directory))
-         ".*")))
-     ("Prog" (derived-mode . prog-mode))
-     ("Org" (or (file-extension . "org")
-          (derived-mode . org-mode)
-          (derived-mode . org-agenda-mode)))
-     ("PDF" (derived-mode . pdf-tools-mode))
-     ("Gnus" (or (derived-mode . gnus-mode) (saved . "gnus")))
-     ("Net"
-      (or (derived-mode . eww-mode) (derived-mode . elfeed-mode)))
-     ("IRC" (derived-mode . erc-mode))
-     ("LOG" (derived-mode . log-mode))
-     ("Dired" (derived-mode . dired-mode))
-     ("Proc" (process))
-     ("Stars" (starred-name)))
-   "Static filter groups for ibuffer, applied only to non-project buffers.")
+ (setq ibuffer-project-use-cache t) ; Cache project data for speed
+ :hook
+ ((ibuffer-mode . ibuffer-project-mode)) ; Enable project grouping automatically
+ :init
+ ;; Basic filter groups for non-project buffers
+ (setq
+  ibuffer-saved-filter-groups
+  '(("default"
+     ("Projects" (project-name)) ; Dynamically generated project buffers
+     ("Emacs" (filename . "\\.emacs\\.d/.*")) ; Emacs config files
+     ("Programming" (derived-mode . prog-mode)) ; All programming modes
+     ("Org" (or (mode . org-mode) (mode . org-agenda-mode))) ; Org-related
+     ("Dired" (mode . dired-mode)) ; Dired buffers
+     ("Net" (or (mode . eww-mode) (mode . elfeed-mode))) ; Web-related
+     ("IRC" (mode . erc-mode)) ; IRC buffers
+     ("Processes" (process)) ; Buffers with processes
+     ("Starred" (starred-name))))) ; Starred buffers
+ ;; Switch to the default filter group on entering ibuffer
+ (add-hook
+  'ibuffer-mode-hook
+  (lambda ()
+    (unless ibuffer-filter-groups ; Only set if not already customized
+      (ibuffer-switch-to-saved-filter-groups "default")))))
 
- ;; Custom function to combine project and static filter groups
- (defun my-ibuffer-setup-filter-groups ()
-   "Set up ibuffer filter groups with project and static categories."
-   (interactive)
-   (require 'ibuf-ext) ; Ensure ibuf-ext is loaded for filter operations
-   (ibuffer-project-generate-filter-groups) ; Generate project-based groups
-   (let
-       ((project-groups (car ibuffer-saved-filter-groups))) ; Get project groups
-     (setq ibuffer-saved-filter-groups
-           (list
-            (cons
-             "home"
-             (append
-              project-groups
-              (mapcar
-               (lambda (group)
-                 (list
-                  (car group)
-                  (list
-                   'and
-                   (list
-                    'not (cons 'project-name nil))
-                   (cadr group))))
-               my-ibuffer-static-filter-groups)))))
-     (ibuffer-switch-to-saved-filter-groups "home")))
-
- ;; Optional: Enable caching for faster project grouping
- (setq ibuffer-project-use-cache t)
-
- :hook (ibuffer-mode . my-ibuffer-setup-filter-groups)
- :bind
- (:map
-  ibuffer-mode-map
-  ("C-c r" . my-ibuffer-setup-filter-groups))) ; Refresh groups manually
-
+;; all-the-icons integration for visual enhancement
 (use-package
  all-the-icons-ibuffer
  :ensure t
- :after all-the-icons
- :hook (ibuffer-mode . all-the-icons-ibuffer-mode)
+ :after (all-the-icons ibuffer)
+ :hook (ibuffer-mode . all-the-icons-ibuffer-mode) ; Enable icons automatically
  :config
- (setq all-the-icons-ibuffer-icon-size 1.0)
- (setq all-the-icons-ibuffer-human-readable-size t))
+ (setq all-the-icons-ibuffer-icon-size 1.0) ; Standard icon size
+ (setq all-the-icons-ibuffer-human-readable-size t)) ; Human-readable file sizes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    helm                                   ;;
