@@ -1160,13 +1160,13 @@
           (size 8 -1 :right)
           " "
           (filename-and-process -1 -1 :left))))
- ;; Styling with modus-vivendi colors
- (set-face-attribute 'ibuffer-title-face nil
+ ;; Styling with modus-vivendi colors (fixed face names)
+ (set-face-attribute 'ibuffer-title nil
                      :foreground "#f0f0f0" ; fg-main (bright white)
                      :background "#303030" ; bg-dim (dark gray)
                      :weight 'bold
                      :height 1.2) ; Slightly larger
- (set-face-attribute 'ibuffer-filter-group-name-face nil
+ (set-face-attribute 'ibuffer-filter-group-name nil
                      :foreground "#88c0d0" ; cyan-cooler
                      :weight 'bold
                      :underline t) ; Underline for group headers
@@ -1222,7 +1222,6 @@
  :config
  (setq all-the-icons-ibuffer-icon-size 1.0) ; Solid icon size
  (setq all-the-icons-ibuffer-human-readable-size t) ; Readable sizes
- ;; Tweak icon spacing for alignment
  (setq all-the-icons-ibuffer-icon-separator "  ") ; More space after icons
  )
 
