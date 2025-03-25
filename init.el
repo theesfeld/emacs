@@ -1186,50 +1186,48 @@
 (use-package
  bufler
  :ensure t
- :after projectile ;; Ensure projectile is loaded first
  :bind (("C-x C-b" . bufler)) ;; Replace ibuffer binding
  :config
- ;; Ensure projectile is available
- (require 'projectile)
- ;; Define grouping by Projectile projects
- (bufler-defgroups
-  (group
-   ;; Group by Projectile project
-   (projectile))
-  (group
-   ;; Special buffers (not in a project)
-   (name-match
-    "*Special*"
-    (rx
-     bos "*"
-     (or "scratch"
-         "Messages"
-         "Warnings"
-         "flymake log"
-         "async-native-c...")
-     "*")))
-  ;; Fallback for any remaining buffers
-  (auto-mode))
- ;; Customize appearance to match your Modus Vivendi theme
- (set-face-attribute 'bufler-group nil
-                     :foreground "#89b4fa"
-                     :weight 'bold
-                     :underline t)
- (set-face-attribute 'bufler-buffer nil :foreground "#f9e2af") ;; Match your icon color
- (setq bufler-columns '("Name" "Size" "Mode" "Filename/Process")) ;; Match ibuffer columns
- (setq bufler-column-name-width 22) ;; Match your ibuffer Name width
- (setq bufler-column-size-width 8) ;; Match your ibuffer Size width
- (setq bufler-show-empty-groups nil) ;; Hide empty groups
- (setq bufler-vc-state nil) ;; Disable VC state to avoid clutter
- ;; Integrate all-the-icons
- (defun my-bufler-buffer-name (buffer)
-   "Add all-the-icons to buffer names in bufler."
-   (let ((name (buffer-name buffer))
-         (icon (all-the-icons-icon-for-buffer buffer)))
-     (if icon
-         (concat icon " " name)
-       name)))
- (advice-add 'bufler-buffer-name :override #'my-bufler-buffer-name)
+ ;; Delay bufler setup until projectile is fully loaded
+ (with-eval-after-load 'projectile
+   (bufler-defgroups
+    (group
+     ;; Group by Projectile project
+     (projectile))
+    (group
+     ;; Special buffers (not in a project)
+     (name-match
+      "*Special*"
+      (rx
+       bos "*"
+       (or "scratch"
+           "Messages"
+           "Warnings"
+           "flymake log"
+           "async-native-c...")
+       "*")))
+    ;; Fallback for any remaining buffers
+    (auto-mode))
+   ;; Customize appearance to match your Modus Vivendi theme
+   (set-face-attribute 'bufler-group nil
+                       :foreground "#89b4fa"
+                       :weight 'bold
+                       :underline t)
+   (set-face-attribute 'bufler-buffer nil :foreground "#f9e2af") ;; Match your icon color
+   (setq bufler-columns '("Name" "Size" "Mode" "Filename/Process")) ;; Match ibuffer columns
+   (setq bufler-column-name-width 22) ;; Match your ibuffer Name width
+   (setq bufler-column-size-width 8) ;; Match your ibuffer Size width
+   (setq bufler-show-empty-groups nil) ;; Hide empty groups
+   (setq bufler-vc-state nil) ;; Disable VC state to avoid clutter
+   ;; Integrate all-the-icons
+   (defun my-bufler-buffer-name (buffer)
+     "Add all-the-icons to buffer names in bufler."
+     (let ((name (buffer-name buffer))
+           (icon (all-the-icons-icon-for-buffer buffer)))
+       (if icon
+           (concat icon " " name)
+         name)))
+   (advice-add 'bufler-buffer-name :override #'my-bufler-buffer-name))
  :hook (bufler-mode . (lambda () (display-line-numbers-mode -1))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
