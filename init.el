@@ -1175,26 +1175,26 @@
    (with-current-buffer buf
      (project-current))))
  (defvar my-ibuffer-static-filter-groups
-   `(("Emacs" (filename
+   `(("EMACS" (filename
        .
        ,(concat
          "\\`"
          (regexp-quote
           (expand-file-name user-emacs-directory))
          ".*")))
-     ("Prog" (derived-mode . prog-mode))
-     ("Org" (or (file-extension . "org")
+     ("PROG" (derived-mode . prog-mode))
+     ("ORG" (or (file-extension . "org")
           (derived-mode . org-mode)
           (derived-mode . org-agenda-mode)))
      ("PDF" (derived-mode . pdf-tools-mode))
-     ("Gnus" (or (derived-mode . gnus-mode) (saved . "gnus")))
-     ("Net"
+     ("GNUS" (or (derived-mode . gnus-mode) (saved . "gnus")))
+     ("NET"
       (or (derived-mode . eww-mode) (derived-mode . elfeed-mode)))
      ("IRC" (derived-mode . erc-mode))
      ("LOG" (derived-mode . log-mode))
-     ("Dired" (derived-mode . dired-mode))
-     ("Proc" (process . t))
-     ("Stars" (starred-name)))
+     ("DIRED" (derived-mode . dired-mode))
+     ("PROC" (process . t))
+     ("*STARS*" (starred-name)))
    "Static filter groups for ibuffer, applied only to non-project buffers.")
  (defun my-ibuffer-setup-filter-groups ()
    "Set up ibuffer filter groups with project and static categories."
