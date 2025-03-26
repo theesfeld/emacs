@@ -2823,14 +2823,14 @@
 ;;                                 XLSX to CSV                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package
- xlsx-to-csv
- :vc
- (:url
-  "https://github.com/theesfeld/xlsx-to-csv.git"
-  :branch "master")
- :ensure t
- :init (require 'xlsx-to-csv))
+;; (use-package
+;;  xlsx-to-csv
+;;  :vc
+;;  (:url
+;;   "https://github.com/theesfeld/xlsx-to-csv.git"
+;;   :branch "master")
+;;  :ensure t
+;;  :init (require 'xlsx-to-csv))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
