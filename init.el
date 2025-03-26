@@ -861,74 +861,16 @@
  (setq tramp-auto-save-directory "~/.config/emacs/tramp-auto-save/")
  (setq tramp-verbose 1) ; Minimal verbosity
  (setq tramp-default-method "ssh") ; Stable connection method
- (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                              Backup and Auto-Save                         ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package
- files
- :ensure nil
- :config
- ;; Keep backups in a dedicated directory with timestamps
- (setq backup-directory-alist '(("." . "~/.config/emacs/backups")))
- (setq
-  backup-by-copying t
-  version-control t
-  kept-new-versions 10
-  kept-old-versions 5
-  delete-old-versions t
-  vc-make-backup-files t
-  backup-by-copying-when-linked t)
-
- ;; Timestamped backup files
- (setq make-backup-file-name-function
-       (lambda (file)
-         (concat
-          "~/.config/emacs/backups/"
-          (file-name-nondirectory file)
-          "."
-          (format-time-string "%Y%m%dT%H%M%S")
-          "~")))
-
- ;; Save auto-save files in a dedicated directory
- (setq
-  auto-save-file-name-transforms
-  '((".*" "~/.config/emacs/auto-save-list/" t))
-  auto-save-default t
-  auto-save-timeout 30
-  auto-save-interval 200)
-
- ;; Save place settings
- (setq save-place-file
-       (expand-file-name ".saveplace" user-emacs-directory))
- (save-place-mode 1) ; Enable save-place-mode
-
- ;; Define a minimal log-mode for .log files
- (define-derived-mode
-  log-mode
-  fundamental-mode
-  "Log"
-  "A simple mode for log files."
-  (setq font-lock-defaults '(log-mode-font-lock-keywords)))
-
- ;; Define font-lock keywords for log levels
- (defvar log-mode-font-lock-keywords
-   '(("\\bDEBUG\\b" . 'font-lock-comment-face)
-     ("\\bINFO\\b" . 'font-lock-string-face)
-     ("\\bWARN\\b" . 'font-lock-warning-face)
-     ("\\bERROR\\b" . 'font-lock-function-name-face))
-   "Font-lock keywords for log-mode highlighting.")
-
- ;; Associate .log files with log-mode
- (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
-
  ;; Auto-revert settings for TRAMP
  (setq auto-revert-remote-files t) ; Enable reverting for remote files
  (setq auto-revert-interval 1) ; Poll every 1 second
  (setq auto-revert-verbose nil) ; Silence revert messages
+ (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
+
+(use-package
+ files
+ :ensure nil
  :hook
  ((log-mode . auto-revert-tail-mode) ; Enable tailing for log-mode
   (auto-revert-tail-mode
@@ -951,6 +893,30 @@
                    "connection-buffer" "auto-revert")
                  tramp-connection-properties)))
            (auto-revert-set-timer))))))))
+
+;; Save place settings
+(setq save-place-file
+      (expand-file-name ".saveplace" user-emacs-directory))
+(save-place-mode 1) ; Enable save-place-mode
+
+;; Define a minimal log-mode for .log files
+(define-derived-mode
+ log-mode
+ fundamental-mode
+ "Log"
+ "A simple mode for log files."
+ (setq font-lock-defaults '(log-mode-font-lock-keywords)))
+
+;; Define font-lock keywords for log levels
+(defvar log-mode-font-lock-keywords
+  '(("\\bDEBUG\\b" . 'font-lock-comment-face)
+    ("\\bINFO\\b" . 'font-lock-string-face)
+    ("\\bWARN\\b" . 'font-lock-warning-face)
+    ("\\bERROR\\b" . 'font-lock-function-name-face))
+  "Font-lock keywords for log-mode highlighting.")
+
+;; Associate .log files with log-mode
+(add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    vundo                                  ;;
@@ -2778,48 +2744,50 @@
 ;;                                 Activity Coder                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Install cw-activity-coder from GitHub using :vc
-(use-package
- cw-activity-coder
- :vc
- (:url
-  "https://github.com/theesfeld/cw-activity-coder.git"
-  :branch "master"
-  :rev :newest)
- :ensure t ;; Ensure it's installed
- :defer t
- :commands (cw-activity-coder) ;; Autoload the main entry point
- :init
- ;; Set XAI_API_KEY if not already in environment (optional fallback)
- (unless (getenv "XAI_API_KEY")
-   (setenv "XAI_API_KEY" "your-key-here") ;; Replace with your actual key
-   (message
-    "XAI_API_KEY set in Emacs; consider setting it in your shell instead"))
- :custom
- ;; Customizations via setq-like settings
- (cw-activity-coder-model "grok-2-latest") ;; Use latest Grok model
- (cw-activity-coder-batch-size 50) ;; Smaller batch size for testing
- (cw-activity-coder-rate-limit 1.0) ;; Slower rate for reliability
- (cw-activity-coder-max-retries 5) ;; More retries for robustness
- (cw-activity-coder-api-timeout 600) ;; Longer timeout for slow networks
- (cw-activity-coder-output-dir "~/cw-output/") ;; Custom output directory
- :bind
- ;; Keybindings for convenience
- (("C-c w" . cw-activity-coder) ;; Launch the menu
-  :map dired-mode-map
-  ("C-c a" . cw-activity-coder-add-files-from-dired)) ;; Add files in Dired
- :config
- ;; Ensure output directory exists
- (unless (file-directory-p cw-activity-coder-output-dir)
-   (make-directory cw-activity-coder-output-dir t))
- ;; Optional: Hook to display receipt after processing
- (advice-add
-  'cw-activity-coder-process-queued-files
-  :after
-  (lambda (&rest _)
-    (when (zerop (length cw-activity-coder-files-to-process))
-      (cw-activity-coder-display-receipt))))
- (message "CW Activity Coder configured successfully"))
+;; (setq use-package-verbose t)
+;; (setq package-vc-verbose t)
+;; ;; Install cw-activity-coder from GitHub using :vc
+;; (use-package
+;;  cw-activity-coder
+;;  :vc
+;;  (:url
+;;   "https://github.com/theesfeld/cw-activity-coder.git"
+;;   :branch "master"
+;;   :rev :newest)
+;;  :ensure t ;; Ensure it's installed
+;;  :defer t
+;;  :commands (cw-activity-coder) ;; Autoload the main entry point
+;;  :init
+;;  ;; Set XAI_API_KEY if not already in environment (optional fallback)
+;;  (unless (getenv "XAI_API_KEY")
+;;    (setenv "XAI_API_KEY" "your-key-here") ;; Replace with your actual key
+;;    (message
+;;     "XAI_API_KEY set in Emacs; consider setting it in your shell instead"))
+;;  :custom
+;;  ;; Customizations via setq-like settings
+;;  (cw-activity-coder-model "grok-2-latest") ;; Use latest Grok model
+;;  (cw-activity-coder-batch-size 50) ;; Smaller batch size for testing
+;;  (cw-activity-coder-rate-limit 1.0) ;; Slower rate for reliability
+;;  (cw-activity-coder-max-retries 5) ;; More retries for robustness
+;;  (cw-activity-coder-api-timeout 600) ;; Longer timeout for slow networks
+;;  (cw-activity-coder-output-dir "~/cw-output/") ;; Custom output directory
+;;  :bind
+;;  ;; Keybindings for convenience
+;;  (("C-c w" . cw-activity-coder) ;; Launch the menu
+;;   :map dired-mode-map
+;;   ("C-c a" . cw-activity-coder-add-files-from-dired)) ;; Add files in Dired
+;;  :config
+;;  ;; Ensure output directory exists
+;;  (unless (file-directory-p cw-activity-coder-output-dir)
+;;    (make-directory cw-activity-coder-output-dir t))
+;;  ;; Optional: Hook to display receipt after processing
+;;  (advice-add
+;;   'cw-activity-coder-process-queued-files
+;;   :after
+;;   (lambda (&rest _)
+;;     (when (zerop (length cw-activity-coder-files-to-process))
+;;       (cw-activity-coder-display-receipt))))
+;;  (message "CW Activity Coder configured successfully"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                 XLSX to CSV                               ;;
