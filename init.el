@@ -2774,16 +2774,6 @@
               (directory-files-recursively templates-dir "\\.el$"))
        (load-file file)))))
 
-
-;; Ensure package.el and MELPA are available for dependencies
-(require 'package)
-(add-to-list
- 'package-archives '("melpa" . "https://melpa.org/packages/")
- t)
-(package-initialize)
-(unless package-archive-contents
-  (package-refresh-contents))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                 Activity Coder                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
