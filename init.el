@@ -2784,7 +2784,8 @@
  :vc
  (:url
   "https://github.com/theesfeld/cw-activity-coder.git"
-  :branch "master")
+  :branch "master"
+  :rev :newest)
  :ensure t ;; Ensure it's installed
  :defer t
  :commands (cw-activity-coder) ;; Autoload the main entry point
