@@ -2786,6 +2786,7 @@
   "https://github.com/theesfeld/cw-activity-coder.git"
   :branch "master")
  :ensure t ;; Ensure it's installed
+ :defer t
  :commands (cw-activity-coder) ;; Autoload the main entry point
  :init
  ;; Set XAI_API_KEY if not already in environment (optional fallback)
@@ -2830,7 +2831,21 @@
 ;;   "https://github.com/theesfeld/xlsx-to-csv.git"
 ;;   :branch "master")
 ;;  :ensure t
+;;  :defer t
 ;;  :init (require 'xlsx-to-csv))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                Mastodon                                   ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package
+ mastodon
+ :ensure t
+ :defer t
+ :config (require 'mastodon-async)
+ (setq
+  mastodon-instance-url "https://defcon.social"
+  mastodon-active-user "blackdream@defcon.social"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
