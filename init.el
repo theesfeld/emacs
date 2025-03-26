@@ -1213,6 +1213,20 @@
  :bind (("C-x C-b" . ibuffer))
  :hook (ibuffer-mode . (lambda () (display-line-numbers-mode -1)))
  :config (setq ibuffer-use-header-line t)
+ ;; Define static filter groups for non-project files
+ (setq ibuffer-saved-filter-groups
+       '(("default"
+          ("Emacs" (or (name . "^\\*.*\\*$") ; Emacs internal buffers
+               (mode . emacs-lisp-mode)))
+          ("Dired" (mode . dired-mode)) ("Text" (mode . text-mode))
+          ("Programming" (or (mode . prog-mode)
+               (mode . python-mode)
+               (mode . c-mode)))
+          ("Org" (mode . org-mode))
+          ("Shell" (or (mode . eshell-mode)
+               (mode . shell-mode)
+               (mode . term-mode))))))
+ ;; Styling for header and filter groups
  (defun my-ibuffer-style-header ()
    "Apply modus-vivendi styling to ibuffer header line."
    (when (eq major-mode 'ibuffer-mode)
@@ -1231,49 +1245,53 @@
             (match-beginning 1) (match-end 1)
             '(face
               (:foreground "#89b4fa" :weight bold :underline t))))))))
- :hook (ibuffer-mode . my-ibuffer-style-header)
- :hook (ibuffer-mode . my-ibuffer-style-filter-groups))
+ :hook
+ (ibuffer-mode . my-ibuffer-style-header)
+ (ibuffer-mode . my-ibuffer-style-filter-groups)
+ (ibuffer-mode
+  .
+  (lambda ()
+    (unless ibuffer-filter-groups
+      (ibuffer-switch-to-saved-filter-groups "default")))))
 
 (use-package
  ibuffer-projectile
  :ensure t
  :after (ibuffer projectile)
  :config
- (defun my-ibuffer-projectile-setup ()
-   "Set up ibuffer with projectile project groups, handling remote files and special buffers."
-   (interactive)
-   (require 'ibuf-ext)
-   ;; Force projectile to initialize its project list
-   (projectile-discover-projects-in-directory "~/Code/")
-   ;; Set ibuffer-projectile to skip remote files if needed
-   (setq ibuffer-projectile-skip-if-remote t)
-   ;; Custom grouping function
-   (let ((project-groups '()))
-     (dolist (buffer (buffer-list))
-       (with-current-buffer buffer
-         (let ((project-root (projectile-project-root)))
-           (when project-root
-             (let ((project-name
-                    (file-name-nondirectory
-                     (directory-file-name project-root))))
-               (push (list
-                      project-name
-                      `((filename
-                         .
-                         ,(concat
-                           "\\`" (regexp-quote project-root)))))
-                     project-groups))))))
+ ;; Skip remote files to avoid TRAMP slowdowns
+ (setq ibuffer-projectile-skip-if-remote t)
+ ;; Show empty filter groups for clarity
+ (setq ibuffer-show-empty-filter-groups t)
+ ;; Custom function to generate dynamic project groups
+ (defun my-ibuffer-projectile-generate-groups ()
+   "Generate ibuffer filter groups based on projectile projects."
+   (let ((project-groups (ibuffer-projectile-generate-filter-groups)))
      (if project-groups
          (progn
-           (setq ibuffer-filter-groups project-groups)
-           (message "Project groups set: %S" ibuffer-filter-groups))
-       (message "No project groups detected; using default grouping")
-       (setq ibuffer-filter-groups
-             `(("Default"
-                (or (name . "\\*.*\\*") (not (filename . "."))))))))
+           ;; Append static groups to project groups
+           (setq ibuffer-filter-groups
+                 (append
+                  project-groups
+                  (cdr
+                   (assoc "default" ibuffer-saved-filter-groups))))
+           (message "Project groups generated: %S"
+                    ibuffer-filter-groups))
+       (progn
+         (message "No projects found; using static groups only")
+         (setq ibuffer-filter-groups
+               (cdr
+                (assoc "default" ibuffer-saved-filter-groups)))))))
+ ;; Setup function to integrate with ibuffer
+ (defun my-ibuffer-projectile-setup ()
+   "Setup ibuffer with dynamic projectile groups and static fallbacks."
+   (interactive)
+   (require 'ibuf-ext)
+   (projectile-mode +1) ; Ensure projectile is active
+   (my-ibuffer-projectile-generate-groups)
    (unless (eq ibuffer-sorting-mode 'alphabetic)
-     (ibuffer-do-sort-by-alphabetic)))
- (setq ibuffer-show-empty-filter-groups nil)
+     (ibuffer-do-sort-by-alphabetic))
+   (ibuffer-update nil t))
  :hook (ibuffer-mode . my-ibuffer-projectile-setup)
  :bind (:map ibuffer-mode-map ("C-c r" . my-ibuffer-projectile-setup)))
 
@@ -2755,6 +2773,61 @@
      (dolist (file
               (directory-files-recursively templates-dir "\\.el$"))
        (load-file file)))))
+
+
+;; Ensure package.el and MELPA are available for dependencies
+(require 'package)
+(add-to-list
+ 'package-archives '("melpa" . "https://melpa.org/packages/")
+ t)
+(package-initialize)
+(unless package-archive-contents
+  (package-refresh-contents))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                 Activity Coder                            ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Install cw-activity-coder from GitHub using :vc
+(use-package
+ cw-activity-coder
+ :vc
+ (:url
+  "https://github.com/theesfeld/cw-activity-coder.git"
+  :branch "master")
+ :ensure t ;; Ensure it's installed
+ :commands (cw-activity-coder) ;; Autoload the main entry point
+ :init
+ ;; Set XAI_API_KEY if not already in environment (optional fallback)
+ (unless (getenv "XAI_API_KEY")
+   (setenv "XAI_API_KEY" "your-key-here") ;; Replace with your actual key
+   (message
+    "XAI_API_KEY set in Emacs; consider setting it in your shell instead"))
+ :custom
+ ;; Customizations via setq-like settings
+ (cw-activity-coder-model "grok-2-latest") ;; Use latest Grok model
+ (cw-activity-coder-batch-size 50) ;; Smaller batch size for testing
+ (cw-activity-coder-rate-limit 1.0) ;; Slower rate for reliability
+ (cw-activity-coder-max-retries 5) ;; More retries for robustness
+ (cw-activity-coder-api-timeout 600) ;; Longer timeout for slow networks
+ (cw-activity-coder-output-dir "~/cw-output/") ;; Custom output directory
+ :bind
+ ;; Keybindings for convenience
+ (("C-c w" . cw-activity-coder) ;; Launch the menu
+  :map dired-mode-map
+  ("C-c a" . cw-activity-coder-add-files-from-dired)) ;; Add files in Dired
+ :config
+ ;; Ensure output directory exists
+ (unless (file-directory-p cw-activity-coder-output-dir)
+   (make-directory cw-activity-coder-output-dir t))
+ ;; Optional: Hook to display receipt after processing
+ (advice-add
+  'cw-activity-coder-process-queued-files
+  :after
+  (lambda (&rest _)
+    (when (zerop (length cw-activity-coder-files-to-process))
+      (cw-activity-coder-display-receipt))))
+ (message "CW Activity Coder configured successfully"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
