@@ -1108,10 +1108,12 @@
  :bind-keymap ("C-c p" . projectile-command-map)
  :init (projectile-mode +1)
  :config
- ;; Ensure projectile searches for projects in ~/Code and other directories
+ ;; Ensure projectile searches for projects in ~/Code and its subdirectories
  (setq projectile-project-search-path '("~/Code/"))
  ;; Explicitly enable Git project discovery
  (setq projectile-project-root-files-bottom-up '(".git"))
+ ;; Enable auto-discovery of projects
+ (setq projectile-auto-discover t)
  ;; Ignore certain directories
  (setq projectile-ignored-projects '("/tmp/" "~/"))
  (setq projectile-globally-ignored-directories
@@ -1125,9 +1127,18 @@
         projectile-globally-ignored-directories))
  (setq projectile-switch-project-action #'projectile-dired)
  (setq projectile-enable-caching t)
- ;; Discover projects in ~/Code/ and other directories
+ ;; Discover projects at startup
  (projectile-discover-projects-in-search-path)
- (add-hook 'after-init-hook #'projectile-load-known-projects))
+ ;; Ensure projects are discovered when new buffers are opened
+ (add-hook
+  'find-file-hook #'projectile-discover-projects-in-search-path)
+ (add-hook 'after-init-hook #'projectile-load-known-projects)
+ ;; Debug: Log known projects at startup
+ (add-hook
+  'after-init-hook
+  (lambda ()
+    (message "Projectile known projects at startup: %S"
+             projectile-known-projects))))
 
 (use-package
  treemacs
@@ -1187,14 +1198,9 @@
  :config (setq ibuffer-use-header-line t)
  ;; Define static filter groups for non-project files
  (setq ibuffer-saved-filter-groups
-       '(("default" ("Emacs"
-           (and (or (name . "^\\*.*\\*$") ; Emacs internal buffers
-                    (derived-mode . emacs-lisp-mode))
-                (not
-                 (and (derived-mode . emacs-lisp-mode)
-                      (filename) ; Exclude file-backed buffers
-                      (ignore-errors
-                        (projectile-project-root))))))
+       '(("default"
+          ("Emacs" (or (name . "^\\*.*\\*$") ; Emacs internal buffers
+               (derived-mode . emacs-lisp-mode)))
           ("Dired" (derived-mode . dired-mode))
           ("Documents" (or (derived-mode . text-mode)
                (derived-mode . markdown-mode)
@@ -1254,28 +1260,41 @@
  ;; Custom function to generate dynamic project groups
  (defun my-ibuffer-projectile-generate-groups ()
    "Generate ibuffer filter groups based on projectile projects, only for populated groups."
-   (let ((project-groups (ibuffer-projectile-generate-filter-groups))
+   (let ((project-groups nil)
          (populated-groups nil))
-     ;; Debug: Log the generated project groups
+     ;; Ensure projectile has discovered projects
+     (projectile-discover-projects-in-search-path)
+     (message "Known projects: %S" projectile-known-projects)
+     ;; Generate project groups manually
+     (dolist (project projectile-known-projects)
+       (let ((group-name
+              (file-name-nondirectory (directory-file-name project)))
+             (predicate
+              `(lambda (buf)
+                 (let ((file (buffer-file-name buf)))
+                   (and file
+                        (string-prefix-p
+                         ,project (expand-file-name file)))))))
+         (push (list group-name predicate) project-groups)))
      (message "Generated project groups: %S" project-groups)
      ;; Filter out empty project groups
      (dolist (group project-groups)
        (let ((group-name (car group))
-             (group-predicates (cadr group)))
+             (group-predicate (cadr group)))
          ;; Check if there are any buffers matching this group
          (with-current-buffer (get-buffer "*ibuffer*")
            (let ((buffers
                   (ibuffer-get-buffers-matching-predicates
-                   group-predicates)))
+                   group-predicate)))
              (when buffers
                (message "Populated group %s with buffers: %S"
                         group-name
                         buffers)
-               (push (list group-name group-predicates)
+               (push (list group-name group-predicate)
                      populated-groups))))))
      (if populated-groups
          (progn
-           ;; Prepend static groups to populated project groups (reverse order)
+           ;; Prepend static groups to populated project groups
            (setq ibuffer-filter-groups
                  (append
                   (cdr
@@ -1528,7 +1547,14 @@
  :config
  (add-to-list
   'eglot-server-programs
-  '(emacs-lisp-mode . nil))) ; No LSP server for Emacs Lisp
+  '(emacs-lisp-mode . nil)) ; No LSP server for Emacs Lisp
+ ;; Disable python-flymake when eglot is active
+ (add-hook
+  'eglot-managed-mode-hook
+  (lambda ()
+    (when (derived-mode-p 'python-mode 'python-ts-mode)
+      (remove-hook 'flymake-diagnostic-functions 'python-flymake
+                   t)))))
 
 (use-package
  consult-lsp
