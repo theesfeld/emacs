@@ -1466,18 +1466,16 @@
    "Return a list of all Org files for agenda, including local, Beorg, and Denote notes."
    (delete-dups
     (append
-     ;; Local Org files in ~/.org/
      (directory-files "~/.org/" t "^[^b].*\\.org$" t)
-     ;; Beorg-synced files in ~/.org/ (symlinks starting with b-)
      (directory-files "~/.org/" t "b-.*\\.org$" t)
-     ;; Denote notes in ~/.org/notes/
      (directory-files "~/.org/notes/" t "\\.org$" t)
-     ;; Beorg notes in Nextcloud
      (directory-files "/home/grim/Nextcloud/org/notes/"
-                      t
-                      "\\.org$"
-                      t))))
- (setq org-agenda-files 'my-org-agenda-files) ; Use function for dynamic updates
+                      t "\\.org$" t))))
+ (setq org-agenda-files (my-org-agenda-files)) ; Initial setting
+ (defun my-org-update-agenda-files ()
+   "Update org-agenda-files dynamically."
+   (setq org-agenda-files (my-org-agenda-files)))
+ (add-hook 'org-agenda-mode-hook #'my-org-update-agenda-files)
 
  ;; Clock persistence
  (org-clock-persistence-insinuate)
