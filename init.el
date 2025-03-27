@@ -1187,9 +1187,14 @@
  :config (setq ibuffer-use-header-line t)
  ;; Define static filter groups for non-project files
  (setq ibuffer-saved-filter-groups
-       '(("default"
-          ("Emacs" (or (name . "^\\*.*\\*$") ; Emacs internal buffers
-               (derived-mode . emacs-lisp-mode)))
+       '(("default" ("Emacs"
+           (and (or (name . "^\\*.*\\*$") ; Emacs internal buffers
+                    (derived-mode . emacs-lisp-mode))
+                (not
+                 (and (derived-mode . emacs-lisp-mode)
+                      (filename) ; Exclude file-backed buffers
+                      (ignore-errors
+                        (projectile-project-root))))))
           ("Dired" (derived-mode . dired-mode))
           ("Documents" (or (derived-mode . text-mode)
                (derived-mode . markdown-mode)
@@ -1251,6 +1256,8 @@
    "Generate ibuffer filter groups based on projectile projects, only for populated groups."
    (let ((project-groups (ibuffer-projectile-generate-filter-groups))
          (populated-groups nil))
+     ;; Debug: Log the generated project groups
+     (message "Generated project groups: %S" project-groups)
      ;; Filter out empty project groups
      (dolist (group project-groups)
        (let ((group-name (car group))
@@ -1261,18 +1268,20 @@
                   (ibuffer-get-buffers-matching-predicates
                    group-predicates)))
              (when buffers
+               (message "Populated group %s with buffers: %S"
+                        group-name
+                        buffers)
                (push (list group-name group-predicates)
                      populated-groups))))))
      (if populated-groups
          (progn
-           ;; Append static groups to populated project groups
+           ;; Prepend static groups to populated project groups (reverse order)
            (setq ibuffer-filter-groups
                  (append
-                  populated-groups
                   (cdr
-                   (assoc "default" ibuffer-saved-filter-groups))))
-           (message "Project groups generated: %S"
-                    ibuffer-filter-groups))
+                   (assoc "default" ibuffer-saved-filter-groups))
+                  populated-groups))
+           (message "Final filter groups: %S" ibuffer-filter-groups))
        (progn
          (message
           "No populated project groups; using static groups only")
