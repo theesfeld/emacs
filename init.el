@@ -1456,25 +1456,28 @@
   org-refile-use-outline-path t
   org-outline-path-complete-in-steps nil)
 
- ;; Agenda files
- (setq org-agenda-files
-       (list
-        (expand-file-name "todos.org" org-directory)
-        (expand-file-name "outlook.org" org-directory)))
+ ;; Agenda files - Updated to include calendar.org and agenda.org
+ (setq
+  org-agenda-files
+  (list
+   (expand-file-name "todos.org" org-directory)
+   (expand-file-name "outlook.org" org-directory)
+   (expand-file-name "calendar.org" org-directory) ;; Added calendar.org
+   (expand-file-name "agenda.org" org-directory))) ;; Added agenda.org
 
  ;; Clock persistence
  (org-clock-persistence-insinuate)
 
- ;; Define key bindings for my-org-prefix-map
+ ;; Define key bindings for my-org-prefix-map (unchanged)
  (define-key my-org-prefix-map (kbd "o") #'my-org-open-agenda)
  (define-key my-org-prefix-map (kbd "c") #'org-capture)
  (define-key my-org-prefix-map (kbd "r") #'my-org-refile-to-todos)
  (define-key my-org-prefix-map (kbd "O") #'org-download-clipboard)
  (define-key my-org-prefix-map (kbd "t") #'my-org-attach-to-todos)
  (define-key my-org-prefix-map (kbd "n") #'my-org-capture-note-quick)
- (define-key my-org-prefix-map (kbd "d") #'my-denote-capture-note) ; Denote integration
+ (define-key my-org-prefix-map (kbd "d") #'my-denote-capture-note)
 
- ;; Agenda keymap
+ ;; Agenda keymap (unchanged)
  (defvar my-org-agenda-map (make-sparse-keymap))
  (define-key my-org-prefix-map (kbd "a") my-org-agenda-map)
  (define-key my-org-agenda-map (kbd "a") #'org-agenda)
@@ -1482,12 +1485,13 @@
  (define-key
   my-org-agenda-map (kbd "c") #'my-org-agenda-goto-current-clock)
 
- ;; Which-key integration
+ ;; Which-key integration (unchanged)
  (with-eval-after-load 'which-key
    (which-key-add-key-based-replacements
     "C-c o" "org-mode" "C-c o a" "org-agenda" "C-c o d" "denote"))
  :hook (org-capture-prepare-finalize . org-id-get-create))
 
+;; Org-agenda settings (unchanged)
 (use-package
  org-agenda
  :ensure nil
@@ -1510,6 +1514,7 @@
     (tags . " %i %-12:c")
     (search . " %i %-12:c"))))
 
+;; Org-capture settings (unchanged, keeping your existing templates)
 (use-package
  org-capture
  :ensure nil
@@ -1541,6 +1546,7 @@
     (when (get-buffer-window "*Capture*")
       (delete-window (get-buffer-window "*Capture*"))))))
 
+;; Org-download, org-attach, org-modern, org-auto-tangle, and utility functions remain unchanged
 (use-package
  org-download
  :ensure t
@@ -1564,10 +1570,9 @@
  :ensure t
  :hook (org-mode . org-modern-mode)
  :config
- ;; Customize glyphs for better aesthetics
  (setq
-  org-modern-star '("◉" "○" "✸" "✿") ; Custom stars for headings
-  org-modern-list '((43 . "•") (45 . "–") (42 . "◦")) ; Custom list bullets
+  org-modern-star '("◉" "○" "✸" "✿")
+  org-modern-list '((43 . "•") (45 . "–") (42 . "◦"))
   org-modern-table-vertical 2
   org-modern-table-horizontal 2))
 
@@ -1576,7 +1581,7 @@
  :ensure t
  :hook (org-mode . org-auto-tangle-mode))
 
-;; Denote integration
+;; Denote integration (unchanged)
 (defun my-denote-capture-note ()
   "Capture a note using denote and link it to the current Org file."
   (interactive)
@@ -1588,7 +1593,7 @@
              (file-name-base denote-file)))
     (org-capture-finalize t)))
 
-;; Utility functions
+;; Utility functions (unchanged)
 (defun my-org-refile-to-todos ()
   "Refile current heading to todos.org under 'Tasks'."
   (interactive)
@@ -1612,7 +1617,7 @@
   "Jump to the currently clocked task in agenda."
   (interactive)
   (org-agenda nil "a")
-  (org-agenda-goto (org-clock-is-active)))
+  (GIorg-agenda-goto (org-clock-is-active)))
 
 (defun my-org-open-agenda ()
   "Open the Org Agenda in a separate window."
