@@ -2790,11 +2790,12 @@
 
 (use-package
  chan-mode
- :ensure nil
- :quelpa
- (chan-mode
-  :fetcher git
-  :url "https://github.com/theesfeld/chan-mode.git")
+ :ensure t
+ :defer t
+ :vc
+ (:url 
+   "https://github.com/theesfeld/chan-mode.git"
+  :branch "master")
  :commands (chan-mode-start)
  :config (global-set-key (kbd "C-c 4") 'chan-mode-start))
 
