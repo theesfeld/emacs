@@ -2785,6 +2785,17 @@
 ;;  :init (require 'xlsx-to-csv))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                chan mode                                  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;(use-package chan-mode
+;;  :ensure nil
+;;  :quelpa (chan-mode :fetcher git :url "https://github.com/yourusername/chan-mode.git")
+;;  :commands (chan-mode-start)
+;;  :config
+;;  (global-set-key (kbd "C-c 4") 'chan-mode-start))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                Mastodon                                   ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
