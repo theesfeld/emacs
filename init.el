@@ -1099,93 +1099,6 @@
   ("f" . cape-file)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                  Projects                                 ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package
- projectile
- :ensure t
- :bind-keymap ("C-c p" . projectile-command-map)
- :init (projectile-mode +1)
- :config
- ;; Ensure projectile searches for projects in ~/Code and its subdirectories
- (setq projectile-project-search-path '("~/Code/"))
- ;; Explicitly enable Git project discovery
- (setq projectile-project-root-files-bottom-up '(".git"))
- ;; Enable auto-discovery of projects
- (setq projectile-auto-discover t)
- ;; Ignore certain directories
- (setq projectile-ignored-projects '("/tmp/" "~/"))
- (setq projectile-globally-ignored-directories
-       (append
-        '("*.o"
-          "*.elc"
-          "*.pyc"
-          "node_modules/"
-          "dist/"
-          "build/")
-        projectile-globally-ignored-directories))
- (setq projectile-switch-project-action #'projectile-dired)
- (setq projectile-enable-caching t)
- ;; Discover projects at startup
- (projectile-discover-projects-in-search-path)
- ;; Ensure projects are discovered when new buffers are opened
- (add-hook
-  'find-file-hook #'projectile-discover-projects-in-search-path)
- (add-hook 'after-init-hook #'projectile-load-known-projects)
- ;; Debug: Log known projects at startup
- (add-hook
-  'after-init-hook
-  (lambda ()
-    (message "Projectile known projects at startup: %S"
-             projectile-known-projects))))
-
-(use-package
- treemacs
- :ensure t
- :defer t
- :init
- (defun my-treemacs-show-current-project ()
-   "Open or refresh treemacs to show the current projectile project root."
-   (interactive)
-   (let ((project (projectile-project-root)))
-     (if project
-         (progn
-           (treemacs-add-and-display-project project)
-           (treemacs-select-window))
-       (message "No project detected; opening treemacs normally")
-       (treemacs))))
- (global-set-key (kbd "C-c t") 'my-treemacs-show-current-project)
- :config
- (setq treemacs-project-follow-mode t)
- (setq treemacs-follow-mode t)
- (setq treemacs-filewatch-mode t)
- (setq treemacs-git-mode 'deferred)
- (setq treemacs-collapse-dirs 3)
- (setq treemacs-width 35)
- (setq treemacs-no-png-images nil)
- (when (featurep 'all-the-icons)
-   (treemacs-load-theme "all-the-icons"))
- :hook
- ((treemacs-mode
-   .
-   (lambda ()
-     (display-line-numbers-mode -1)
-     (hl-line-mode -1)))))
-
-(use-package
- treemacs-magit
- :ensure t
- :after (treemacs magit)
- :demand t) ;; Load immediately after treemacs and magit
-
-(use-package
- treemacs-all-the-icons
- :ensure t
- :after (treemacs all-the-icons)
- :demand t) ;; Load immediately after treemacs and all-the-icons
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  IBUFFER                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1196,6 +1109,8 @@
  :bind (("C-x C-b" . ibuffer))
  :hook (ibuffer-mode . (lambda () (display-line-numbers-mode -1)))
  :config (setq ibuffer-use-header-line t)
+ ;; Show empty filter groups
+ (setq ibuffer-show-empty-filter-groups t)
  ;; Define static filter groups for non-project files
  (setq ibuffer-saved-filter-groups
        '(("default"
@@ -1245,80 +1160,12 @@
  (ibuffer-mode
   .
   (lambda ()
-    (unless ibuffer-filter-groups
-      (ibuffer-switch-to-saved-filter-groups "default")))))
-
-(use-package
- ibuffer-projectile
- :ensure t
- :after (ibuffer projectile)
- :config
- ;; Skip remote files to avoid TRAMP slowdowns
- (setq ibuffer-projectile-skip-if-remote t)
- ;; Hide empty filter groups
- (setq ibuffer-show-empty-filter-groups nil)
- ;; Custom function to generate dynamic project groups
- (defun my-ibuffer-projectile-generate-groups ()
-   "Generate ibuffer filter groups based on projectile projects, only for populated groups."
-   (let ((project-groups nil)
-         (populated-groups nil))
-     ;; Ensure projectile has discovered projects
-     (projectile-discover-projects-in-search-path)
-     (message "Known projects: %S" projectile-known-projects)
-     ;; Generate project groups manually
-     (dolist (project projectile-known-projects)
-       (let ((group-name
-              (file-name-nondirectory (directory-file-name project)))
-             (predicate
-              `(lambda (buf)
-                 (let ((file (buffer-file-name buf)))
-                   (and file
-                        (string-prefix-p
-                         ,project (expand-file-name file)))))))
-         (push (list group-name predicate) project-groups)))
-     (message "Generated project groups: %S" project-groups)
-     ;; Filter out empty project groups
-     (dolist (group project-groups)
-       (let ((group-name (car group))
-             (group-predicate (cadr group)))
-         ;; Check if there are any buffers matching this group
-         (with-current-buffer (get-buffer "*ibuffer*")
-           (let ((buffers
-                  (ibuffer-get-buffers-matching-predicates
-                   group-predicate)))
-             (when buffers
-               (message "Populated group %s with buffers: %S"
-                        group-name
-                        buffers)
-               (push (list group-name group-predicate)
-                     populated-groups))))))
-     (if populated-groups
-         (progn
-           ;; Prepend static groups to populated project groups
-           (setq ibuffer-filter-groups
-                 (append
-                  (cdr
-                   (assoc "default" ibuffer-saved-filter-groups))
-                  populated-groups))
-           (message "Final filter groups: %S" ibuffer-filter-groups))
-       (progn
-         (message
-          "No populated project groups; using static groups only")
-         (setq ibuffer-filter-groups
-               (cdr
-                (assoc "default" ibuffer-saved-filter-groups)))))))
- ;; Setup function to integrate with ibuffer
- (defun my-ibuffer-projectile-setup ()
-   "Setup ibuffer with dynamic projectile groups and static fallbacks."
-   (interactive)
-   (require 'ibuf-ext)
-   (projectile-mode +1) ; Ensure projectile is active
-   (my-ibuffer-projectile-generate-groups)
-   (unless (eq ibuffer-sorting-mode 'alphabetic)
-     (ibuffer-do-sort-by-alphabetic))
-   (ibuffer-update nil t))
- :hook (ibuffer-mode . my-ibuffer-projectile-setup)
- :bind (:map ibuffer-mode-map ("C-c r" . my-ibuffer-projectile-setup)))
+    ;; Ensure the custom filter groups are always applied
+    (ibuffer-switch-to-saved-filter-groups "default")
+    ;; Sort buffers alphabetically
+    (unless (eq ibuffer-sorting-mode 'alphabetic)
+      (ibuffer-do-sort-by-alphabetic))
+    (ibuffer-update nil t))))
 
 (use-package
  all-the-icons-ibuffer
@@ -1964,12 +1811,6 @@
   :ensure nil
   :after dired
   :config (dired-async-mode 1))
- (with-eval-after-load 'treemacs
-   (add-hook
-    'treemacs-select-hook
-    (lambda ()
-      (when (treemacs-current-workspace)
-        (dired (treemacs-get-local-project-root))))))
  (defun dired-open-externally ()
    "Open file under cursor with xdg-open."
    (interactive)
