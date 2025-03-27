@@ -1114,13 +1114,11 @@
  ;; Define static filter groups for non-project files
  (setq ibuffer-saved-filter-groups
        '(("default"
-          ("Emacs" (or (name . "^\\*.*\\*$") ; Emacs internal buffers
-               (derived-mode . emacs-lisp-mode)))
-          ("Dired" (derived-mode . dired-mode))
           ("Documents" (or (derived-mode . text-mode)
                (derived-mode . markdown-mode)
                (derived-mode . org-mode)))
           ("Programming" (derived-mode . prog-mode))
+          ("Dired" (derived-mode . dired-mode))
           ("Shells" (or (derived-mode . eshell-mode)
                (derived-mode . shell-mode)
                (derived-mode . term-mode)))
@@ -1133,8 +1131,10 @@
                (derived-mode . mastodon-mode)))
           ("Media" (or (derived-mode . pdf-view-mode)
                (derived-mode . nov-mode)))
-          ("Special" (or (derived-mode . calc-mode)
-               (derived-mode . xkcd-mode))))))
+          ("Special"
+           (or (derived-mode . calc-mode) (derived-mode . xkcd-mode)))
+          ("Emacs" (or (name . "^\\*.*\\*$")
+               (derived-mode . emacs-lisp-mode))))))
  ;; Styling for header and filter groups
  (defun my-ibuffer-style-header ()
    "Apply modus-vivendi styling to ibuffer header line."
