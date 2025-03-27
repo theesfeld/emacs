@@ -1975,7 +1975,7 @@
 
  :config
  ;; Remember to check the doc string of each of those variables.
- (setq denote-directory (expand-file-name "~/notes"))
+ (setq denote-directory (expand-file-name "~/.org/notes"))
  (setq denote-save-buffers nil)
  (setq denote-known-keywords '("emacs" "research"))
  (setq denote-infer-keywords t)
