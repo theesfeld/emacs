@@ -2743,50 +2743,32 @@
 ;;                                 Activity Coder                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; (setq use-package-verbose t)
-;; (setq package-vc-verbose t)
-;; ;; Install cw-activity-coder from GitHub using :vc
-;; (use-package
-;;  cw-activity-coder
-;;  :vc
-;;  (:url
-;;   "https://github.com/theesfeld/cw-activity-coder.git"
-;;   :branch "master"
-;;   :rev :newest)
-;;  :ensure t ;; Ensure it's installed
-;;  :defer t
-;;  :commands (cw-activity-coder) ;; Autoload the main entry point
-;;  :init
-;;  ;; Set XAI_API_KEY if not already in environment (optional fallback)
-;;  (unless (getenv "XAI_API_KEY")
-;;    (setenv "XAI_API_KEY" "your-key-here") ;; Replace with your actual key
-;;    (message
-;;     "XAI_API_KEY set in Emacs; consider setting it in your shell instead"))
-;;  :custom
-;;  ;; Customizations via setq-like settings
-;;  (cw-activity-coder-model "grok-2-latest") ;; Use latest Grok model
-;;  (cw-activity-coder-batch-size 50) ;; Smaller batch size for testing
-;;  (cw-activity-coder-rate-limit 1.0) ;; Slower rate for reliability
-;;  (cw-activity-coder-max-retries 5) ;; More retries for robustness
-;;  (cw-activity-coder-api-timeout 600) ;; Longer timeout for slow networks
-;;  (cw-activity-coder-output-dir "~/cw-output/") ;; Custom output directory
-;;  :bind
-;;  ;; Keybindings for convenience
-;;  (("C-c w" . cw-activity-coder) ;; Launch the menu
-;;   :map dired-mode-map
-;;   ("C-c a" . cw-activity-coder-add-files-from-dired)) ;; Add files in Dired
-;;  :config
-;;  ;; Ensure output directory exists
-;;  (unless (file-directory-p cw-activity-coder-output-dir)
-;;    (make-directory cw-activity-coder-output-dir t))
-;;  ;; Optional: Hook to display receipt after processing
-;;  (advice-add
-;;   'cw-activity-coder-process-queued-files
-;;   :after
-;;   (lambda (&rest _)
-;;     (when (zerop (length cw-activity-coder-files-to-process))
-;;       (cw-activity-coder-display-receipt))))
-;;  (message "CW Activity Coder configured successfully"))
+(setq use-package-verbose t)
+(setq package-vc-verbose t)
+;; Install cw-activity-coder from GitHub using :vc
+(use-package
+ cw-activity-coder
+ :vc
+ (:url
+  "https://github.com/theesfeld/cw-activity-coder.git"
+  :branch "master"
+  :rev
+  :newest)
+ :ensure t ;; Ensure it's installed
+ :defer t
+ :commands (xai-activity-coder-process-buffer)
+ :custom
+ (cw-activity-coder-api-key-env-var
+  "XAI_API_KEY" "Set to your xAI API key environment variable")
+ (cw-activity-coder-rate-limit 8 "Max concurrent API requests")
+ (cw-activity-coder-max-batch-size 100 "Max rows per batch")
+ (cw-activity-coder-max-retries 3 "Max retries per failed batch")
+ (cw-activity-coder-api-timeout 300 "API timeout in seconds")
+ (cw-activity-coder-model "grok-2-latest" "xAI model to use")
+ :init
+ (when (not (file-exists-p "activitycodes.json"))
+   (error "activitycodes.json not found in %s" default-directory))
+ :config (global-set-key (kbd "C-c x") #'xai-activity-coder-process-buffer))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                 XLSX to CSV                               ;;
