@@ -2755,7 +2755,6 @@
   :rev
   :newest)
  :ensure t ;; Ensure it's installed
- :defer t
  :commands (xai-activity-coder-process-buffer)
  :custom
  (cw-activity-coder-api-key-env-var
@@ -2790,10 +2789,11 @@
 
 (use-package chan-mode
   :ensure t ;; Install from ELPA (e.g., MELPA or custom repo)
-  :defer t
   :vc
   (:url "https://github.com/theesfeld/chan-mode.git"
-   :branch "master")
+   :branch "master"
+   :rev 
+   :newest)
   :commands (chan-mode-start)
   :bind (:map chan-catalog-mode-map
               ("RET" . chan-catalog-open-thread)
