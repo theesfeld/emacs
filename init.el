@@ -1115,10 +1115,10 @@
  (setq ibuffer-saved-filter-groups
        '(("default"
           ("Documents" (or (derived-mode . text-mode)
-               (derived-mode . markdown-mode)
-               (derived-mode . org-mode)))
+               (derived-mode . markdown-mode)))
           ("Programming" (derived-mode . prog-mode))
           ("Dired" (derived-mode . dired-mode))
+          ("Org" (derived-mode . org-mode))
           ("Shells" (or (derived-mode . eshell-mode)
                (derived-mode . shell-mode)
                (derived-mode . term-mode)))
