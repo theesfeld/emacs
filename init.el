@@ -1460,8 +1460,7 @@
  (setq
   org-agenda-files
   (list
-   (expand-file-name "todos.org" org-directory)
-   (expand-file-name "outlook.org" org-directory)
+   (expand-file-name "tasks.org" org-directory)
    (expand-file-name "calendar.org" org-directory) ;; Added calendar.org
    (expand-file-name "agenda.org" org-directory))) ;; Added agenda.org
 
