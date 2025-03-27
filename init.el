@@ -759,7 +759,7 @@
  (("C-x k" . kill-current-buffer)
   ("C-x K" . kill-buffer)
   ("s-s" . #'grim/screenshot)
-  ("s-<tab> . ibuffer")))
+  ("s-<tab>" . ibuffer)))
 
 (use-package
  windmove
