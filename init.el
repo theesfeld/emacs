@@ -1481,12 +1481,20 @@
  (define-key my-org-prefix-map (kbd "a") my-org-agenda-map)
  (define-key my-org-agenda-map (kbd "a") #'org-agenda)
  (define-key my-org-agenda-map (kbd "t") #'my-org-agenda-today)
- (define-key my-org-agenda-map (kbd "c") #'my-org-agenda-goto-current-clock)
+ (define-key
+  my-org-agenda-map (kbd "c") #'my-org-agenda-goto-current-clock)
 
  ;; Which-key integration
  (with-eval-after-load 'which-key
    (which-key-add-key-based-replacements
-    "C-c o" "org-mode" "C-c o a" "org-agenda" "C-c o d" "denote" "C-c o t" "todo-list"))
+    "C-c o"
+    "org-mode"
+    "C-c o a"
+    "org-agenda"
+    "C-c o d"
+    "denote"
+    "C-c o t"
+    "todo-list"))
  :hook (org-capture-prepare-finalize . org-id-get-create))
 
 (use-package
@@ -1497,15 +1505,24 @@
  ;; Custom agenda commands for TODO list
  (setq org-agenda-custom-commands
        '(("t" "All Open TODOs"
-          ((todo "TODO|NEXT|WAITING"
-                 ((org-agenda-overriding-header "Current Open TODOs"))))
-         ("d" "Today's Agenda with Open TODOs"
-          ((agenda "" ((org-agenda-span 'day)
-                       (org-agenda-overriding-header "Today's Schedule")))
-           (todo "TODO|NEXT|WAITING"
-                 ((org-agenda-overriding-header "Open TODOs (Today or Unscheduled)")
-                  (org-agenda-skip-function
-                   '(org-agenda-skip-entry-if 'scheduled 'deadline 'notregexp "^\\*\\s-+\\(TODO\\|NEXT\\|WAITING\\)"))))))))
+          ((todo
+            "TODO|NEXT|WAITING"
+            ((org-agenda-overriding-header "Current Open TODOs"))))
+          ("d" "Today's Agenda with Open TODOs"
+           ((agenda
+             ""
+             ((org-agenda-span 'day)
+              (org-agenda-overriding-header "Today's Schedule")))
+            (todo
+             "TODO|NEXT|WAITING"
+             ((org-agenda-overriding-header
+               "Open TODOs (Today or Unscheduled)")
+              (org-agenda-skip-function
+               '(org-agenda-skip-entry-if
+                 'scheduled
+                 'deadline
+                 'notregexp
+                 "^\\*\\s-+\\(TODO\\|NEXT\\|WAITING\\)")))))))))
 
  (setq
   org-agenda-start-on-weekday 1
@@ -1541,7 +1558,8 @@
      "* MEETING %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\nSCHEDULED: %^T\n%a")
     ("n" "Note" entry
      (file+headline
-      ,(expand-file-name "notes/notes.org" org-directory) "Notes") ;; Updated to notes subdirectory
+      ,(expand-file-name "notes/notes.org" org-directory)
+      "Notes") ;; Updated to notes subdirectory
      "* %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\n%a")
     ("w" "Web Capture" entry
      (file+headline
