@@ -2788,16 +2788,34 @@
 ;;                                chan mode                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package
- chan-mode
- :ensure t
- :defer t
- :vc
- (:url 
-   "https://github.com/theesfeld/chan-mode.git"
-  :branch "master")
- :commands (chan-mode-start)
- :config (global-set-key (kbd "C-c 4") 'chan-mode-start))
+(use-package chan-mode
+  :ensure t ;; Install from ELPA (e.g., MELPA or custom repo)
+  :defer t
+  :vc
+  (:url "https://github.com/theesfeld/chan-mode.git"
+   :branch "master")
+  :commands (chan-mode-start)
+  :bind (:map chan-catalog-mode-map
+              ("RET" . chan-catalog-open-thread)
+              ("b" . chan-catalog)
+         :map chan-thread-mode-map
+              ("n" . chan-thread-next)
+              ("p" . chan-thread-prev)
+              ("q" . kill-this-buffer)
+              ("e" . chan-thread-toggle-image-size)
+              ("i" . chan-thread-image-view)
+         :map chan-image-view-mode-map
+              ("<right>" . chan-image-view-next)
+              ("<left>" . chan-image-view-prev)
+              ("q" . kill-this-buffer)
+         :map global-map
+              ("C-c 4" . chan-mode-start))
+  :hook ((chan-catalog-mode . (lambda () (setq buffer-read-only t)))
+         (chan-thread-mode . (lambda () (setq buffer-read-only t)))
+         (chan-image-view-mode . (lambda () (setq buffer-read-only t))))
+  :config
+  ;; No additional config needed; all setup is in hooks or defaults
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                Mastodon                                   ;;
