@@ -1108,6 +1108,11 @@
  :bind-keymap ("C-c p" . projectile-command-map)
  :init (projectile-mode +1)
  :config
+ ;; Ensure projectile searches for projects in ~/Code and other directories
+ (setq projectile-project-search-path '("~/Code/"))
+ ;; Explicitly enable Git project discovery
+ (setq projectile-project-root-files-bottom-up '(".git"))
+ ;; Ignore certain directories
  (setq projectile-ignored-projects '("/tmp/" "~/"))
  (setq projectile-globally-ignored-directories
        (append
@@ -1120,7 +1125,8 @@
         projectile-globally-ignored-directories))
  (setq projectile-switch-project-action #'projectile-dired)
  (setq projectile-enable-caching t)
- (projectile-discover-projects-in-directory "~/Code/")
+ ;; Discover projects in ~/Code/ and other directories
+ (projectile-discover-projects-in-search-path)
  (add-hook 'after-init-hook #'projectile-load-known-projects))
 
 (use-package
@@ -1183,15 +1189,26 @@
  (setq ibuffer-saved-filter-groups
        '(("default"
           ("Emacs" (or (name . "^\\*.*\\*$") ; Emacs internal buffers
-               (mode . emacs-lisp-mode)))
-          ("Dired" (mode . dired-mode)) ("Text" (mode . text-mode))
-          ("Programming" (or (mode . prog-mode)
-               (mode . python-mode)
-               (mode . c-mode)))
-          ("Org" (mode . org-mode))
-          ("Shell" (or (mode . eshell-mode)
-               (mode . shell-mode)
-               (mode . term-mode))))))
+               (derived-mode . emacs-lisp-mode)))
+          ("Dired" (derived-mode . dired-mode))
+          ("Documents" (or (derived-mode . text-mode)
+               (derived-mode . markdown-mode)
+               (derived-mode . org-mode)))
+          ("Programming" (derived-mode . prog-mode))
+          ("Shells" (or (derived-mode . eshell-mode)
+               (derived-mode . shell-mode)
+               (derived-mode . term-mode)))
+          ("Email/News" (or (derived-mode . gnus-group-mode)
+               (derived-mode . gnus-summary-mode)
+               (derived-mode . gnus-article-mode)
+               (derived-mode . message-mode)))
+          ("Chat/IRC" (derived-mode . erc-mode))
+          ("Web/Social" (or (derived-mode . eww-mode)
+               (derived-mode . mastodon-mode)))
+          ("Media" (or (derived-mode . pdf-view-mode)
+               (derived-mode . nov-mode)))
+          ("Special" (or (derived-mode . calc-mode)
+               (derived-mode . xkcd-mode))))))
  ;; Styling for header and filter groups
  (defun my-ibuffer-style-header ()
    "Apply modus-vivendi styling to ibuffer header line."
@@ -1227,24 +1244,38 @@
  :config
  ;; Skip remote files to avoid TRAMP slowdowns
  (setq ibuffer-projectile-skip-if-remote t)
- ;; Show empty filter groups for clarity
- (setq ibuffer-show-empty-filter-groups t)
+ ;; Hide empty filter groups
+ (setq ibuffer-show-empty-filter-groups nil)
  ;; Custom function to generate dynamic project groups
  (defun my-ibuffer-projectile-generate-groups ()
-   "Generate ibuffer filter groups based on projectile projects."
-   (let ((project-groups (ibuffer-projectile-generate-filter-groups)))
-     (if project-groups
+   "Generate ibuffer filter groups based on projectile projects, only for populated groups."
+   (let ((project-groups (ibuffer-projectile-generate-filter-groups))
+         (populated-groups nil))
+     ;; Filter out empty project groups
+     (dolist (group project-groups)
+       (let ((group-name (car group))
+             (group-predicates (cadr group)))
+         ;; Check if there are any buffers matching this group
+         (with-current-buffer (get-buffer "*ibuffer*")
+           (let ((buffers
+                  (ibuffer-get-buffers-matching-predicates
+                   group-predicates)))
+             (when buffers
+               (push (list group-name group-predicates)
+                     populated-groups))))))
+     (if populated-groups
          (progn
-           ;; Append static groups to project groups
+           ;; Append static groups to populated project groups
            (setq ibuffer-filter-groups
                  (append
-                  project-groups
+                  populated-groups
                   (cdr
                    (assoc "default" ibuffer-saved-filter-groups))))
            (message "Project groups generated: %S"
                     ibuffer-filter-groups))
        (progn
-         (message "No projects found; using static groups only")
+         (message
+          "No populated project groups; using static groups only")
          (setq ibuffer-filter-groups
                (cdr
                 (assoc "default" ibuffer-saved-filter-groups)))))))
