@@ -2800,15 +2800,26 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
+ pg
+ :vc (:url "https://github.com/emarsden/pg-el" :rev :newest)
+ :init
+ ;; Load pg.el explicitly
+ (let ((pg-file
+        (expand-file-name "pg.el"
+                          (file-name-directory
+                           (locate-library "pg")))))
+   (when (file-exists-p pg-file)
+     (load-file pg-file)
+     (message "Loaded pg from %s" pg-file))
+   (unless (fboundp 'pg-connect)
+     (error "Failed to load pg-connect from %s" pg-file))))
+
+(use-package
  pgmacs
  :vc (:url "https://github.com/emarsden/pgmacs" :rev :newest)
+ :after pg ;; Ensure pg is loaded first
  :init
- ;; Load dependency 'pg' from GitHub
- (use-package
-  pg
-  :vc (:url "https://github.com/emarsden/pg-el" :rev :newest))
-
- ;; Explicitly load pgmacs.el to ensure functions are defined
+ ;; Load pgmacs.el explicitly
  (let ((pgmacs-file
         (expand-file-name "pgmacs.el"
                           (file-name-directory
