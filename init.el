@@ -2801,7 +2801,7 @@
 
 (use-package
  pgmacs
- :ensure t
+ :vc (:url "https://github.com/emarsden/pgmacs" :rev :newest) ;; Install from GitHub
  :commands (pgmacs-connect pgmacs-connect-manual)
  :init
  ;; Define a prefix keymap for pgmacs commands
@@ -2811,14 +2811,20 @@
  (global-set-key (kbd "C-c p") 'my-pgmacs-map)
 
  :config
+ ;; Ensure dependency 'pg' is installed (required by pgmacs)
+ (use-package
+  pg
+  :vc (:url "https://github.com/emarsden/pg-el" :rev :newest))
+
  ;; Function to retrieve and select a database connection from authinfo.gpg
  (defun pgmacs--get-connection ()
    "Retrieve PostgreSQL connections from authinfo.gpg and prompt for selection."
    (let* ((auth-entries
            (auth-source-search
-            :port "postgres" ;; Match 'postgres' service in authinfo
-            :require '(:host :user :secret :port :database)
-            :max 10)) ;; Limit to 10 connections
+            :port "postgres"
+            :require
+            '(:host :user :secret :port :database)
+            :max 10))
           (choices
            (mapcar
             (lambda (entry)
@@ -2833,7 +2839,7 @@
             "Select database connection: "
             (append choices (list manual-opt)))))
      (if (string= selection manual-opt)
-         (pgmacs-connect-manual) ;; Trigger manual entry
+         (pgmacs-connect-manual)
        (let* ((selected-index
                (cl-position selection choices :test #'string=))
               (entry (nth selected-index auth-entries)))
@@ -2886,9 +2892,7 @@
     "C-c p m"
     "connect-manual"))
 
- :hook
- (pgmacs-mode . (lambda () (display-line-numbers-mode -1))) ;; Disable line numbers
- )
+ :hook (pgmacs-mode . (lambda () (display-line-numbers-mode -1))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
