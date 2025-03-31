@@ -2917,7 +2917,7 @@
  :hook (pgmacs-mode . (lambda () (display-line-numbers-mode -1))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                  SES (Spreadsheet)                        ;;
+;;                                  SES (Spreadsheet)                       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
@@ -2925,12 +2925,6 @@
  :ensure nil ; SES is built-in, no need to install
  :commands (ses-mode new-ses)
  :init
- ;; Define a prefix keymap for SES commands
- (defvar my-ses-prefix-map (make-sparse-keymap)
-   "Prefix keymap for SES commands.")
- (define-prefix-command 'my-ses-prefix-map)
- (global-set-key (kbd "C-c s s") 'my-ses-prefix-map)
-
  ;; Pre-configure SES defaults before loading
  (setq ses-initial-size '(5 . 5)) ; Default 5 rows x 5 columns
  (setq ses-after-entry-functions '(ses-recalculate-cell)) ; Recalculate after entry
@@ -2943,11 +2937,10 @@
  (setq ses-mode-hook nil) ; Clear default hooks to customize below
 
  ;; Enhance readability and aesthetics
- (set-face-attribute
-  'ses-header-row-face nil
-  :background "#3b4252" ; Modus Vivendi dark blue-gray
-  :foreground "#88c0d0" ; Light cyan for contrast
-  :weight 'bold)
+ (set-face-attribute 'ses-header-row-face nil
+                     :background "#3b4252" ; Modus Vivendi dark blue-gray
+                     :foreground "#88c0d0" ; Light cyan for contrast
+                     :weight 'bold)
  (set-face-attribute 'ses-cell-face nil
                      :background "#2e3440" ; Darker background
                      :foreground "#d8dee9" ; Light foreground
@@ -2962,22 +2955,16 @@
      "Rename SES buffers with an icon."
      (rename-buffer
       (concat
-       (all-the-icons-faicon
-        "table"
-        :face '(:foreground "#81a1c1"))
-       " " (buffer-name))))
+       (all-the-icons-faicon "table" :face '(:foreground "#81a1c1"))
+       " "
+       (buffer-name))))
    (add-hook 'ses-mode-hook #'my-ses-buffer-name))
 
  ;; Custom functions for usability
  (defun my-ses-new-spreadsheet ()
    "Create a new SES spreadsheet with a prompted filename."
    (interactive)
-   (let ((file
-          (read-file-name "New spreadsheet file: "
-                          "~/.org/"
-                          nil
-                          nil
-                          ".ses")))
+   (let ((file (read-file-name "New spreadsheet file: " "~/.org/" nil nil ".ses")))
      (find-file file)
      (unless (eq major-mode 'ses-mode)
        (new-ses ses-initial-size))))
@@ -2987,9 +2974,9 @@
    (interactive)
    (ses-insert-formula
     (format "=SUM(%s%d:%s%d)"
-            (ses-column-letter (ses-current-column)) 1
-            (ses-column-letter
-             (ses-current-column))
+            (ses-column-letter (ses-current-column))
+            1
+            (ses-column-letter (ses-current-column))
             (1- (ses-row-number)))))
 
  (defun my-ses-insert-sum-row ()
@@ -3007,53 +2994,38 @@
    (interactive)
    (let ((cell (ses-get-cell (ses-row-number) (ses-current-column))))
      (if (ses-cell-property :read-only cell)
-         (ses-set-cell
-          (ses-row-number)
-          (ses-current-column)
-          :read-only nil)
-       (ses-set-cell
-        (ses-row-number)
-        (ses-current-column)
-        :read-only t))
+         (ses-set-cell (ses-row-number) (ses-current-column) :read-only nil)
+       (ses-set-cell (ses-row-number) (ses-current-column) :read-only t))
      (ses-recalculate-cell)
      (message "Cell %s%d read-only: %s"
               (ses-column-letter (ses-current-column))
               (ses-row-number)
-              (if (ses-cell-property :read-only cell)
-                  "off"
-                "on"))))
+              (if (ses-cell-property :read-only cell) "off" "on"))))
 
- ;; Keybindings under C-c s s prefix
- (define-key my-ses-prefix-map (kbd "n") #'my-ses-new-spreadsheet)
- (define-key my-ses-prefix-map (kbd "c") #'ses-insert-column)
- (define-key my-ses-prefix-map (kbd "r") #'ses-insert-row)
- (define-key my-ses-prefix-map (kbd "s c") #'my-ses-insert-sum-column)
- (define-key my-ses-prefix-map (kbd "s r") #'my-ses-insert-sum-row)
- (define-key my-ses-prefix-map (kbd "t") #'my-ses-toggle-read-only)
+ :bind
+ (("C-c S n" . my-ses-new-spreadsheet)          ; New spreadsheet
+  ("C-c S c" . ses-insert-column)              ; Insert column
+  ("C-c S r" . ses-insert-row)                 ; Insert row
+  ("C-c S s c" . my-ses-insert-sum-column)     ; Sum column
+  ("C-c S s r" . my-ses-insert-sum-row)        ; Sum row
+  ("C-c S t" . my-ses-toggle-read-only)        ; Toggle read-only
+  :map ses-mode-map
+  ("C-c C-c" . ses-recalculate-all)            ; Recalculate all
+  ("C-c C-f" . ses-insert-formula)             ; Insert formula
+  ("C-c C-d" . ses-delete-column)              ; Delete column
+  ("C-c C-r" . ses-delete-row))                ; Delete row
 
- ;; Local keybindings in ses-mode-map
- (define-key ses-mode-map (kbd "C-c C-c") #'ses-recalculate-all)
- (define-key ses-mode-map (kbd "C-c C-f") #'ses-insert-formula)
- (define-key ses-mode-map (kbd "C-c C-d") #'ses-delete-column)
- (define-key ses-mode-map (kbd "C-c C-r") #'ses-delete-row)
-
+ :config
  ;; Which-key integration
  (with-eval-after-load 'which-key
    (which-key-add-key-based-replacements
-    "C-c s s"
-    "ses-spreadsheet"
-    "C-c s s n"
-    "new-spreadsheet"
-    "C-c s s c"
-    "insert-column"
-    "C-c s s r"
-    "insert-row"
-    "C-c s s s c"
-    "sum-column"
-    "C-c s s s r"
-    "sum-row"
-    "C-c s s t"
-    "toggle-read-only"))
+    "C-c S" "ses-spreadsheet"
+    "C-c S n" "new-spreadsheet"
+    "C-c S c" "insert-column"
+    "C-c S r" "insert-row"
+    "C-c S s c" "sum-column"
+    "C-c S s r" "sum-row"
+    "C-c S t" "toggle-read-only"))
 
  :hook
  ((ses-mode
@@ -3066,7 +3038,7 @@
      (buffer-face-mode 1) ; Apply buffer-wide face
      (set-face-attribute 'buffer-face-mode-face nil
                          :family "Berkeley Mono" ; Match your font
-                         :height 120)))))
+                         :height 120))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
