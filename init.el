@@ -2796,6 +2796,101 @@
   (which-key-add-key-based-replacements "C-c m" "mastodon-prefix"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                 pgmacs Setup                             ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package
+ pgmacs
+ :ensure t
+ :commands (pgmacs-connect pgmacs-connect-manual)
+ :init
+ ;; Define a prefix keymap for pgmacs commands
+ (defvar my-pgmacs-map (make-sparse-keymap)
+   "Prefix keymap for pgmacs commands.")
+ (define-prefix-command 'my-pgmacs-map)
+ (global-set-key (kbd "C-c p") 'my-pgmacs-map)
+
+ :config
+ ;; Function to retrieve and select a database connection from authinfo.gpg
+ (defun pgmacs--get-connection ()
+   "Retrieve PostgreSQL connections from authinfo.gpg and prompt for selection."
+   (let* ((auth-entries
+           (auth-source-search
+            :port "postgres" ;; Match 'postgres' service in authinfo
+            :require '(:host :user :secret :port :database)
+            :max 10)) ;; Limit to 10 connections
+          (choices
+           (mapcar
+            (lambda (entry)
+              (let ((host (plist-get entry :host))
+                    (user (plist-get entry :user))
+                    (db (plist-get entry :database)))
+                (format "%s@%s/%s" user host db)))
+            auth-entries))
+          (manual-opt "Manual Entry")
+          (selection
+           (completing-read
+            "Select database connection: "
+            (append choices (list manual-opt)))))
+     (if (string= selection manual-opt)
+         (pgmacs-connect-manual) ;; Trigger manual entry
+       (let* ((selected-index
+               (cl-position selection choices :test #'string=))
+              (entry (nth selected-index auth-entries)))
+         (list
+          :host (plist-get entry :host)
+          :port (string-to-number (plist-get entry :port))
+          :user (plist-get entry :user)
+          :password
+          (if (functionp (plist-get entry :secret))
+              (funcall (plist-get entry :secret))
+            (plist-get entry :secret))
+          :database (plist-get entry :database))))))
+
+ ;; Function to connect using selected authinfo credentials
+ (defun pgmacs-connect ()
+   "Connect to a PostgreSQL database using credentials from authinfo.gpg."
+   (interactive)
+   (let ((conn (pgmacs--get-connection)))
+     (when conn
+       (apply 'pgmacs-open-connection conn)
+       (message "Connected to %s@%s/%s"
+                (plist-get conn :user)
+                (plist-get conn :host)
+                (plist-get conn :database)))))
+
+ ;; Function for manual connection entry
+ (defun pgmacs-connect-manual ()
+   "Manually enter PostgreSQL connection details."
+   (interactive)
+   (pgmacs-open-connection
+    :host (read-string "Host: ")
+    :port
+    (string-to-number
+     (read-string "Port (default 5432): " nil nil "5432"))
+    :user (read-string "User: ")
+    :password (read-passwd "Password: ")
+    :database (read-string "Database: ")))
+
+ ;; Keybindings under C-c p prefix
+ (define-key my-pgmacs-map (kbd "c") 'pgmacs-connect)
+ (define-key my-pgmacs-map (kbd "m") 'pgmacs-connect-manual)
+
+ ;; Which-key integration
+ (with-eval-after-load 'which-key
+   (which-key-add-key-based-replacements
+    "C-c p"
+    "pgmacs"
+    "C-c p c"
+    "connect-from-authinfo"
+    "C-c p m"
+    "connect-manual"))
+
+ :hook
+ (pgmacs-mode . (lambda () (display-line-numbers-mode -1))) ;; Disable line numbers
+ )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (provide 'init)
