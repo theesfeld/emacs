@@ -2803,18 +2803,31 @@
  pgmacs
  :vc (:url "https://github.com/emarsden/pgmacs" :rev :newest) ;; Install from GitHub
  :commands (pgmacs-connect pgmacs-connect-manual)
- :init
- ;; Define a prefix keymap for pgmacs commands
- (defvar my-pgmacs-map (make-sparse-keymap)
-   "Prefix keymap for pgmacs commands.")
- (define-prefix-command 'my-pgmacs-map)
- (global-set-key (kbd "C-c p") 'my-pgmacs-map)
-
  :config
  ;; Ensure dependency 'pg' is installed (required by pgmacs)
  (use-package
   pg
   :vc (:url "https://github.com/emarsden/pg-el" :rev :newest))
+
+ ;; Define prefix keymap and bindings
+ (defvar my-pgmacs-map (make-sparse-keymap)
+   "Prefix keymap for pgmacs commands.")
+ (define-prefix-command 'my-pgmacs-map)
+ (global-set-key (kbd "C-c p") 'my-pgmacs-map)
+ (define-key my-pgmacs-map (kbd "c") 'pgmacs-connect)
+ (define-key my-pgmacs-map (kbd "m") 'pgmacs-connect-manual)
+
+ ;; Which-key integration
+ (with-eval-after-load 'which-key
+   (which-key-add-key-based-replacements
+    "C-c p"
+    "pgmacs"
+    "C-c p c"
+    "connect-from-authinfo"
+    "C-c p m"
+    "connect-manual")
+   ;; Force which-key to recognize the prefix now
+   (which-key-declare-prefixes "C-c p" "pgmacs"))
 
  ;; Function to retrieve and select a database connection from authinfo.gpg
  (defun pgmacs--get-connection ()
@@ -2877,20 +2890,6 @@
     :user (read-string "User: ")
     :password (read-passwd "Password: ")
     :database (read-string "Database: ")))
-
- ;; Keybindings under C-c p prefix
- (define-key my-pgmacs-map (kbd "c") 'pgmacs-connect)
- (define-key my-pgmacs-map (kbd "m") 'pgmacs-connect-manual)
-
- ;; Which-key integration
- (with-eval-after-load 'which-key
-   (which-key-add-key-based-replacements
-    "C-c p"
-    "pgmacs"
-    "C-c p c"
-    "connect-from-authinfo"
-    "C-c p m"
-    "connect-manual"))
 
  :hook (pgmacs-mode . (lambda () (display-line-numbers-mode -1))))
 
