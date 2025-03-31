@@ -2813,19 +2813,14 @@
  (defun pgmacs-connect ()
    "Connect to a PostgreSQL database using credentials from authinfo.gpg."
    (interactive)
-   (let* ((connections
-           (auth-source-search
-            :port "5432"
-            :require
-            '(:host :user :secret :port :database)
-            :max 10))
+   (let* ((connections (auth-source-search :port "postgres" :max 10))
           (choices
            (mapcar
             (lambda (entry)
               (format "%s@%s/%s"
                       (plist-get entry :user)
                       (plist-get entry :host)
-                      (plist-get entry :database)))
+                      (or (plist-get entry :database) "unknown")))
             connections))
           (selection
            (completing-read "Select connection (or type 'manual'): "
@@ -2839,7 +2834,7 @@
          (when entry
            (pgmacs-open-connection
             :host (plist-get entry :host)
-            :port (string-to-number (plist-get entry :port))
+            :port (string-to-number (or (plist-get entry :dbport) "5432"))
             :user (plist-get entry :user)
             :password
             (if (functionp (plist-get entry :secret))
@@ -2873,6 +2868,9 @@
  (global-set-key (kbd "C-c p") pgmacs-map)
 
  :config
+ ;; Explicitly load pgmacs to ensure all functions are defined
+ (require 'pgmacs)
+
  ;; Enable which-key descriptions after package loads
  (when (featurep 'which-key)
    (which-key-add-key-based-replacements
