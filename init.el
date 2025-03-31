@@ -2757,11 +2757,108 @@
  mastodon
  :ensure t
  :defer t
- :config
- (require 'mastodon-async) ;; Async support for smoother interaction
- (require 'mastodon-media) ;; For media handling (images)
+ :init
+ ;; Define the prefix keymap and commands early to ensure availability
+ (defvar my-mastodon-prefix-map (make-sparse-keymap)
+   "Prefix keymap for Mastodon commands.")
+ (define-prefix-command 'my-mastodon-prefix-map)
+ (global-set-key (kbd "C-c m") 'my-mastodon-prefix-map)
 
- ;; Core settings
+ ;; Define interactive commands upfront
+ (defun my-mastodon-get-home-timeline ()
+   "Display the home timeline."
+   (interactive)
+   (require 'mastodon) ;; Ensure mastodon.el is loaded
+   (mastodon-tl--get-home-timeline))
+
+ (defun my-mastodon-get-federated-timeline ()
+   "Display the federated timeline."
+   (interactive)
+   (require 'mastodon)
+   (mastodon-tl--get-federated-timeline))
+
+ (defun my-mastodon-get-local-timeline ()
+   "Display the local timeline."
+   (interactive)
+   (require 'mastodon)
+   (mastodon-tl--get-local-timeline))
+
+ (defun my-mastodon-compose-toot ()
+   "Compose a new toot."
+   (interactive)
+   (require 'mastodon)
+   (mastodon-toot--compose-toot))
+
+ (defun my-mastodon-toggle-reply-to-toot ()
+   "Reply to the toot at point."
+   (interactive)
+   (require 'mastodon)
+   (mastodon-toot--toggle-reply-to-toot))
+
+ (defun my-mastodon-toggle-boost ()
+   "Boost or unboost the toot at point."
+   (interactive)
+   (require 'mastodon)
+   (mastodon-toot--toggle-boost))
+
+ (defun my-mastodon-toggle-favourite ()
+   "Favourite or unfavourite the toot at point."
+   (interactive)
+   (require 'mastodon)
+   (mastodon-toot--toggle-favourite))
+
+ (defun my-mastodon-capture-toot-to-org ()
+   "Capture the current toot to an Org file."
+   (interactive)
+   (require 'mastodon)
+   (mastodon-toot--store-link)
+   (org-capture nil "mT"))
+
+ (defun my-mastodon-capture-note-from-toot ()
+   "Capture a note inspired by the current toot."
+   (interactive)
+   (require 'mastodon)
+   (mastodon-toot--store-link)
+   (org-capture nil "mN"))
+
+ (defun my-mastodon-search-hashtag (tag)
+   "Search for a hashtag and display results."
+   (interactive "sHashtag: ")
+   (require 'mastodon)
+   (mastodon-tl--get-tag-timeline tag))
+
+ ;; Set keybindings in :init to ensure they’re bound early
+ (define-key
+  my-mastodon-prefix-map (kbd "h") #'my-mastodon-get-home-timeline)
+ (define-key
+  my-mastodon-prefix-map
+  (kbd "f")
+  #'my-mastodon-get-federated-timeline)
+ (define-key
+  my-mastodon-prefix-map (kbd "l") #'my-mastodon-get-local-timeline)
+ (define-key
+  my-mastodon-prefix-map (kbd "t") #'my-mastodon-compose-toot)
+ (define-key
+  my-mastodon-prefix-map (kbd "r") #'my-mastodon-toggle-reply-to-toot)
+ (define-key
+  my-mastodon-prefix-map (kbd "b") #'my-mastodon-toggle-boost)
+ (define-key
+  my-mastodon-prefix-map (kbd "v") #'my-mastodon-toggle-favourite)
+ (define-key
+  my-mastodon-prefix-map (kbd "c") #'my-mastodon-capture-toot-to-org)
+ (define-key
+  my-mastodon-prefix-map
+  (kbd "n")
+  #'my-mastodon-capture-note-from-toot)
+ (define-key
+  my-mastodon-prefix-map (kbd "s") #'my-mastodon-search-hashtag)
+
+ :config
+ ;; Load additional libraries
+ (require 'mastodon-async)
+ (require 'mastodon-media)
+
+ ;; Core settings (per latest documentation)
  (setq
   mastodon-instance-url "https://defcon.social"
   mastodon-active-user "blackdream@defcon.social"
@@ -2777,60 +2874,9 @@
  (setq mastodon-tl--display-media-p t)
  (add-hook
   'mastodon-tl--buffer-refreshed-hook
-  (lambda () (mastodon-media--inline-images (point-min) (point-max))))
-
- ;; Define interactive commands
- (defun my-mastodon-get-home-timeline ()
-   "Display the home timeline."
-   (interactive)
-   (mastodon-tl--get-home-timeline))
-
- (defun my-mastodon-get-f-defineederated-timeline ()
-   "Display the federated timeline."
-   (interactive)
-   (mastodon-tl--get-federated-timeline))
-
- (defun my-mastodon-get-local-timeline ()
-   "Display the local timeline."
-   (interactive)
-   (mastodon-tl--get-local-timeline))
-
- (defun my-mastodon-compose-toot ()
-   "Compose a new toot."
-   (interactive)
-   (mastodon-toot--compose-toot))
-
- (defun my-mastodon-toggle-reply-to-toot ()
-   "Reply to the toot at point."
-   (interactive)
-   (mastodon-toot--toggle-reply-to-toot))
-
- (defun my-mastodon-toggle-boost ()
-   "Boost or unboost the toot at point."
-   (interactive)
-   (mastodon-toot--toggle-boost))
-
- (defun my-mastodon-toggle-favourite ()
-   "Favourite or unfavourite the toot at point."
-   (interactive)
-   (mastodon-toot--toggle-favourite))
-
- (defun my-mastodon-capture-toot-to-org ()
-   "Capture the current toot to an Org file."
-   (interactive)
-   (mastodon-toot--store-link)
-   (org-capture nil "mT"))
-
- (defun my-mastodon-capture-note-from-toot ()
-   "Capture a note inspired by the current toot."
-   (interactive)
-   (mastodon-toot--store-link)
-   (org-capture nil "mN"))
-
- (defun my-mastodon-search-hashtag (tag)
-   "Search for a hashtag and display results."
-   (interactive "sHashtag: ")
-   (mastodon-tl--get-tag-timeline tag))
+  (lambda ()
+    (mastodon-mediaPORTUGUESE--inline-images
+     (point-min) (point-max))))
 
  ;; Enhance toot composition
  (add-hook
@@ -2843,39 +2889,7 @@
  ;; Integrate with Org-store-link
  (add-hook 'org-store-link-functions #'mastodon-toot--store-link))
 
-;; Define and populate the keymap outside use-package to ensure it’s available
-(defvar my-mastodon-prefix-map (make-sparse-keymap)
-  "Prefix keymap for Mastodon commands.")
-(define-prefix-command 'my-mastodon-prefix-map)
-(global-set-key (kbd "C-c m") 'my-mastodon-prefix-map)
-
-;; Set keybindings
-(define-key
- my-mastodon-prefix-map (kbd "h") #'my-mastodon-get-home-timeline)
-(define-key
- my-mastodon-prefix-map
- (kbd "f")
- #'my-mastodon-get-federated-timeline)
-(define-key
- my-mastodon-prefix-map (kbd "l") #'my-mastodon-get-local-timeline)
-(define-key
- my-mastodon-prefix-map (kbd "t") #'my-mastodon-compose-toot)
-(define-key
- my-mastodon-prefix-map (kbd "r") #'my-mastodon-toggle-reply-to-toot)
-(define-key
- my-mastodon-prefix-map (kbd "b") #'my-mastodon-toggle-boost)
-(define-key
- my-mastodon-prefix-map (kbd "v") #'my-mastodon-toggle-favourite)
-(define-key
- my-mastodon-prefix-map (kbd "c") #'my-mastodon-capture-toot-to-org)
-(define-key
- my-mastodon-prefix-map
- (kbd "n")
- #'my-mastodon-capture-note-from-toot)
-(define-key
- my-mastodon-prefix-map (kbd "s") #'my-mastodon-search-hashtag)
-
-;; Which-key integration
+;; Which-key integration (outside use-package to ensure it applies after loading)
 (with-eval-after-load 'which-key
   (which-key-add-key-based-replacements
    "C-c m"
@@ -2900,22 +2914,6 @@
    "note-from-toot"
    "C-c m s"
    "search-hashtag"))
-
-;; Ensure Org-capture templates are updated (add this to your org :config)
-(setq
- org-capture-templates
- (append
-  org-capture-templates
-  `(("mT" "Mastodon Toot" entry
-     (file+headline
-      ,(expand-file-name "mastodon.org" org-directory) "Toots")
-     "* %:description\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:URL: %:link\n:END:\n#+BEGIN_QUOTE\n%:initial\n#+END_QUOTE"
-     :immediate-finish t)
-    ("mN" "Mastodon Note" entry
-     (file+headline
-      ,(expand-file-name "notes/notes.org" org-directory) "Notes")
-     "* %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:INSPIRED-BY: %:link\n:END:\nInspired by: %:description"
-     :prepend t))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
