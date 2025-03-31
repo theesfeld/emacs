@@ -2758,67 +2758,67 @@
  :ensure t
  :defer t
  :init
- ;; Define the prefix keymap and commands early to ensure availability
+ ;; Define prefix keymap and commands early for immediate availability
  (defvar my-mastodon-prefix-map (make-sparse-keymap)
    "Prefix keymap for Mastodon commands.")
  (define-prefix-command 'my-mastodon-prefix-map)
  (global-set-key (kbd "C-c m") 'my-mastodon-prefix-map)
 
- ;; Define interactive commands upfront
+ ;; Interactive commands using latest mastodon.el API
  (defun my-mastodon-get-home-timeline ()
-   "Display the home timeline."
+   "Display the home timeline using mastodon-tl--home."
    (interactive)
-   (require 'mastodon) ;; Ensure mastodon.el is loaded
-   (mastodon-tl--get-home-timeline))
+   (require 'mastodon)
+   (mastodon-tl--home))
 
  (defun my-mastodon-get-federated-timeline ()
    "Display the federated timeline."
    (interactive)
    (require 'mastodon)
-   (mastodon-tl--get-federated-timeline))
+   (mastodon-tl--federated))
 
  (defun my-mastodon-get-local-timeline ()
    "Display the local timeline."
    (interactive)
    (require 'mastodon)
-   (mastodon-tl--get-local-timeline))
+   (mastodon-tl--local))
 
  (defun my-mastodon-compose-toot ()
    "Compose a new toot."
    (interactive)
    (require 'mastodon)
-   (mastodon-toot--compose-toot))
+   (mastodon-toot))
 
  (defun my-mastodon-toggle-reply-to-toot ()
    "Reply to the toot at point."
    (interactive)
    (require 'mastodon)
-   (mastodon-toot--toggle-reply-to-toot))
+   (mastodon-tl--toggle-reply-to-toot))
 
  (defun my-mastodon-toggle-boost ()
    "Boost or unboost the toot at point."
    (interactive)
    (require 'mastodon)
-   (mastodon-toot--toggle-boost))
+   (mastodon-tl--toggle-boost-or-favourite-toot "boost"))
 
  (defun my-mastodon-toggle-favourite ()
    "Favourite or unfavourite the toot at point."
    (interactive)
    (require 'mastodon)
-   (mastodon-toot--toggle-favourite))
+   (mastodon-tl--toggle-boost-or-favourite-toot "favourite"))
 
  (defun my-mastodon-capture-toot-to-org ()
    "Capture the current toot to an Org file."
    (interactive)
    (require 'mastodon)
-   (mastodon-toot--store-link)
+   (mastodon-tl--store-toot-link)
    (org-capture nil "mT"))
 
  (defun my-mastodon-capture-note-from-toot ()
    "Capture a note inspired by the current toot."
    (interactive)
    (require 'mastodon)
-   (mastodon-toot--store-link)
+   (mastodon-tl--store-toot-link)
    (org-capture nil "mN"))
 
  (defun my-mastodon-search-hashtag (tag)
@@ -2827,7 +2827,19 @@
    (require 'mastodon)
    (mastodon-tl--get-tag-timeline tag))
 
- ;; Set keybindings in :init to ensure they’re bound early
+ (defun my-mastodon-open-toot-in-buffer ()
+   "Open the current toot in a dedicated Org buffer."
+   (interactive)
+   (require 'mastodon)
+   (let ((toot (mastodon-tl--toot)))
+     (with-current-buffer (get-buffer-create "*Mastodon Toot*")
+       (erase-buffer)
+       (insert (mastodon-toot--toot-body toot))
+       (org-mode)
+       (goto-char (point-min))
+       (pop-to-buffer (current-buffer)))))
+
+ ;; Keybindings in :init for immediate effect
  (define-key
   my-mastodon-prefix-map (kbd "h") #'my-mastodon-get-home-timeline)
  (define-key
@@ -2852,13 +2864,16 @@
   #'my-mastodon-capture-note-from-toot)
  (define-key
   my-mastodon-prefix-map (kbd "s") #'my-mastodon-search-hashtag)
+ (define-key
+  my-mastodon-prefix-map (kbd "o") #'my-mastodon-open-toot-in-buffer)
 
  :config
  ;; Load additional libraries
  (require 'mastodon-async)
  (require 'mastodon-media)
+ (require 'mastodon-toot)
 
- ;; Core settings (per latest documentation)
+ ;; Core settings from latest documentation
  (setq
   mastodon-instance-url "https://defcon.social"
   mastodon-active-user "blackdream@defcon.social"
@@ -2867,16 +2882,16 @@
   mastodon-toot--default-visibility "public"
   mastodon-tl--enable-relative-timestamps t
   mastodon-tl--show-avatars t
+  mastodon-tl--display-media-p t ;; Enable image display
   mastodon-media--enable-image-cache t
-  mastodon-media--preview-max-height 300)
+  mastodon-media--preview-max-height 300
+  mastodon-tl--highlight-current-toot t ;; Highlight current toot
+  mastodon-tl--enable-proportional-fonts nil) ;; Fixed-width for alignment
 
- ;; Enable image display in timeline
- (setq mastodon-tl--display-media-p t)
+ ;; Image display in timeline
  (add-hook
   'mastodon-tl--buffer-refreshed-hook
-  (lambda ()
-    (mastodon-mediaPORTUGUESE--inline-images
-     (point-min) (point-max))))
+  (lambda () (mastodon-media--inline-images (point-min) (point-max))))
 
  ;; Enhance toot composition
  (add-hook
@@ -2884,12 +2899,22 @@
   (lambda ()
     (auto-fill-mode 1)
     (setq fill-column 500)
-    (visual-line-mode 1)))
+    (visual-line-mode 1)
+    (flyspell-mode 1))) ;; Spellcheck for polish
 
- ;; Integrate with Org-store-link
- (add-hook 'org-store-link-functions #'mastodon-toot--store-link))
+ ;; Org integration with latest link storage
+ (add-hook 'org-store-link-functions #'mastodon-tl--store-toot-link)
 
-;; Which-key integration (outside use-package to ensure it applies after loading)
+ ;; Custom timeline refresh function
+ (defun my-mastodon-refresh-timeline ()
+   "Refresh the current timeline."
+   (interactive)
+   (mastodon-tl--reload-timeline))
+
+ (define-key
+  my-mastodon-prefix-map (kbd "R") #'my-mastodon-refresh-timeline))
+
+;; Which-key integration
 (with-eval-after-load 'which-key
   (which-key-add-key-based-replacements
    "C-c m"
@@ -2913,7 +2938,11 @@
    "C-c m n"
    "note-from-toot"
    "C-c m s"
-   "search-hashtag"))
+   "search-hashtag"
+   "C-c m o"
+   "open-toot-in-buffer"
+   "C-c m R"
+   "refresh-timeline"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
