@@ -1669,7 +1669,17 @@
      (file+headline
       ,(expand-file-name "web.org" org-directory) "Web")
      "%:initial"
-     :immediate-finish t)))
+     :immediate-finish t)
+    ("mT" "Mastodon Toot" entry
+     (file+headline
+      ,(expand-file-name "mastodon.org" org-directory) "Toots")
+     "* %:description\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:URL: %:link\n:END:\n#+BEGIN_QUOTE\n%:initial\n#+END_QUOTE"
+     :immediate-finish t)
+    ("mN" "Mastodon Note" entry
+     (file+headline
+      ,(expand-file-name "notes/notes.org" org-directory) "Notes")
+     "* %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:INSPIRED-BY: %:link\n:END:\nInspired by: %:description"
+     :prepend t)))
  :hook
  (org-capture-after-finalize
   .
@@ -2747,10 +2757,157 @@
  mastodon
  :ensure t
  :defer t
- :config (require 'mastodon-async)
+ :init
+ ;; Define a prefix keymap for Mastodon commands
+ (defvar my-mastodon-prefix-map (make-sparse-keymap)
+   "Prefix keymap for Mastodon commands.")
+ (define-prefix-command 'my-mastodon-prefix-map)
+ (global-set-key (kbd "C-c m") 'my-mastodon-prefix-map)
+
+ :config
+ (require 'mastodon-async) ;; Async support for smoother interaction
+ (require 'mastodon-media) ;; For media handling (images)
+
+ ;; Core settings
  (setq
   mastodon-instance-url "https://defcon.social"
-  mastodon-active-user "blackdream@defcon.social"))
+  mastodon-active-user "blackdream@defcon.social"
+  mastodon-client--media-directory (expand-file-name "mastodon-media" user-emacs-directory)
+  mastodon-toot--enable-custom-emoji t ;; Support custom emojis
+  mastodon-toot--default-visibility "public" ;; Default visibility for toots
+  mastodon-tl--enable-relative-timestamps t ;; Relative timestamps
+  mastodon-tl--show-avatars t ;; Show avatars in timeline
+  mastodon-media--enable-image-cache t ;; Cache images for performance
+  mastodon-media--preview-max-height 300) ;; Set max height for image previews
+
+ ;; Enable image display in timeline
+ (setq mastodon-tl--display-media-p t) ;; Show media (images) inline
+ (add-hook
+  'mastodon-tl--buffer-refreshed-hook
+  (lambda () (mastodon-media--inline-images (point-min) (point-max))))
+
+ ;; Custom keybindings under C-c m
+ (define-key
+  my-mastodon-prefix-map (kbd "h") #'mastodon-tl--get-home-timeline)
+ (define-key
+  my-mastodon-prefix-map
+  (kbd "f")
+  #'mastodon-tl--get-federated-timeline)
+ (define-key
+  my-mastodon-prefix-map (kbd "l") #'mastodon-tl--get-local-timeline)
+ (define-key
+  my-mastodon-prefix-map (kbd "t") #'mastodon-toot--compose-toot)
+ (define-key
+  my-mastodon-prefix-map
+  (kbd "r")
+  #'mastodon-toot--toggle-reply-to-toot)
+ (define-key
+  my-mastodon-prefix-map (kbd "b") #'mastodon-toot--toggle-boost)
+ (define-key
+  my-mastodon-prefix-map (kbd "f") #'mastodon-toot--toggle-favourite)
+ (define-key
+  my-mastodon-prefix-map (kbd "c") #'my-mastodon-capture-toot-to-org)
+ (define-key
+  my-mastodon-prefix-map
+  (kbd "n")
+  #'my-mastodon-capture-note-from-toot)
+ (define-key
+  my-mastodon-prefix-map (kbd "s") #'my-mastodon-search-hashtag)
+
+ ;; Enhance toot composition
+ (add-hook
+  'mastodon-toot-mode-hook
+  (lambda ()
+    (auto-fill-mode 1) ;; Wrap text automatically
+    (setq fill-column 500) ;; Mastodon’s character limit
+    (visual-line-mode 1))) ;; Better readability
+
+ ;; Which-key integration
+ (with-eval-after-load 'which-key
+   (which-key-add-key-based-replacements
+    "C-c m"
+    "mastodon"
+    "C-c m h"
+    "home-timeline"
+    "C-c m f"
+    "federated-timeline"
+    "C-c m l"
+    "local-timeline"
+    "C-c m t"
+    "compose-toot"
+    "C-c m r"
+    "reply-to-toot"
+    "C-c m b"
+    "boost-toot"
+    "C-c m f"
+    "favourite-toot"
+    "C-c m c"
+    "capture-to-org"
+    "C-c m n"
+    "note-from-toot"
+    "C-c m s"
+    "search-hashtag"))
+
+ ;; Custom functions for Org integration
+ (defun my-mastodon-capture-toot-to-org ()
+   "Capture the current toot to an Org file with metadata."
+   (interactive)
+   (mastodon-toot--store-link) ;; Store the toot link
+   (org-capture nil "mT")) ;; Use Mastodon Toot template
+
+ (defun my-mastodon-capture-note-from-toot ()
+   "Capture a quick note inspired by the current toot."
+   (interactive)
+   (mastodon-toot--store-link)
+   (org-capture nil "mN")) ;; Use Mastodon Note template
+
+ (defun my-mastodon-search-hashtag (tag)
+   "Search for a hashtag and display results."
+   (interactive "sHashtag: ")
+   (mastodon-tl--get-tag-timeline tag))
+
+ (defun my-mastodon-open-toot-in-buffer ()
+   "Open the current toot in a dedicated buffer for editing or reference."
+   (interactive)
+   (let ((toot (mastodon-toot--toot-at-point)))
+     (with-current-buffer (get-buffer-create "*Mastodon Toot*")
+       (erase-buffer)
+       (insert (mastodon-toot--toot-text toot))
+       (org-mode) ;; Switch to Org-mode for further processing
+       (goto-char (point-min))
+       (pop-to-buffer (current-buffer)))))
+
+ ;; Integrate with Org-store-link
+ (add-hook 'org-store-link-functions #'mastodon-toot--store-link))
+
+;; Optional: Fetch Mastodon feed into Org (inspired by Sacha Chua)
+(use-package
+ org-feed
+ :ensure nil
+ :after org
+ :config
+ (defun my-mastodon-org-feed-formatter (entry)
+   "Format Mastodon RSS entries for Org."
+   (let ((title (plist-get entry :title))
+         (link (plist-get entry :link))
+         (date
+          (format-time-string (cdr org-time-stamp-formats)
+                              (date-to-time
+                               (plist-get entry :pubDate)))))
+     (format "* %s\n:PROPERTIES:\n:URL: %s\n:CREATED: %s\n:END:\n%s"
+             title
+             link
+             date
+             (plist-get entry :item-full-text))))
+ (add-to-list
+  'org-feed-alist
+  `("Mastodon" ,(concat
+      mastodon-instance-url
+      "/users/"
+      (replace-regexp-in-string "@.*$" "" mastodon-active-user)
+      ".rss")
+    ,(expand-file-name "mastodon.org" org-directory) "Mastodon Toots"
+    :formatter my-mastodon-org-feed-formatter)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
