@@ -2804,10 +2804,10 @@
  :mode ("\\.[Ss][Qq][Ll]\\'" . sql-mode) ; Associate .sql files with sql-mode
  :commands (sql-postgres sql-connect)
  :init
- ;; Ensure auth-source is loaded for authinfo.gpg
+ ;; Ensure auth-source is loaded early
  (require 'auth-source)
- ;; Optional: Customize auth-sources if not already set (uncomment if needed)
- ;; (setq auth-sources '("~/.authinfo.gpg"))
+ ;; Set default product globally to avoid runtime issues
+ (setq sql-product 'postgres)
  :config
  ;; Function to fetch PostgreSQL connections from authinfo.gpg
  (defun my-sql-postgres-connections ()
@@ -2817,64 +2817,81 @@
            :max 1000
            :port "5432"
            :require '(:user :secret))))
-     (mapcar
-      (lambda (entry)
-        (let ((host (plist-get entry :host))
-              (user (plist-get entry :user))
-              (password (funcall (plist-get entry :secret)))
-              (database (plist-get entry :database)))
-          (when
-              (and host user password database) ; Ensure all required fields
-            (list
-             (concat host "/" database) ; Unique identifier
-             (list 'sql-product 'postgres)
-             (list 'sql-server host)
-             (list 'sql-user user)
-             (list 'sql-password password)
-             (list 'sql-database database)
-             (list 'sql-port 5432)))))
-      auth-entries)))
+     (delq
+      nil
+      (mapcar
+       (lambda (entry)
+         (let ((host (plist-get entry :host))
+               (user (plist-get entry :user))
+               (password (funcall (plist-get entry :secret)))
+               (database (plist-get entry :database)))
+           (when
+               (and host user password database) ; Ensure all required fields
+             (list
+              (concat host "/" database) ; Unique identifier
+              :product 'postgres
+              :server host
+              :user user
+              :password password
+              :database database
+              :port 5432))))
+       auth-entries))))
 
  ;; Dynamically populate sql-connection-alist
- (setq sql-connection-alist
-       (delq nil (my-sql-postgres-connections))) ; Remove nil entries
+ (defun my-sql-update-connection-alist ()
+   "Update sql-connection-alist with PostgreSQL connections."
+   (setq sql-connection-alist (my-sql-postgres-connections)))
+
+ ;; Run update on load and after auth-source changes
+ (my-sql-update-connection-alist)
+ (add-hook
+  'auth-source-backend-updated-hook #'my-sql-update-connection-alist)
 
  ;; Function to interactively select and connect to a database
  (defun my-sql-connect-postgres ()
    "Prompt to select a PostgreSQL database from authinfo.gpg and connect."
    (interactive)
+   (my-sql-update-connection-alist) ; Ensure latest connections
    (let* ((connections (my-sql-postgres-connections))
-          (choice
-           (completing-read
-            "Select PostgreSQL database: " (mapcar #'car connections)
-            nil t)))
-     (when choice
-       (let ((connection (assoc choice connections)))
-         (sql-connect (car connection) (car connection))))))
+          (choices (mapcar #'car connections)))
+     (if (null connections)
+         (message "No PostgreSQL connections found in authinfo.gpg")
+       (let ((choice
+              (completing-read "Select PostgreSQL database: " choices
+                               nil t)))
+         (when choice
+           (let* ((connection (assoc choice connections))
+                  (conn-name (car connection)))
+             ;; Temporarily set connection parameters
+             (let ((sql-server (plist-get connection :server))
+                   (sql-user (plist-get connection :user))
+                   (sql-password (plist-get connection :password))
+                   (sql-database (plist-get connection :database))
+                   (sql-port (plist-get connection :port)))
+               (sql-connect conn-name conn-name))))))))
 
- ;; Keybindings for convenience
+ ;; Global keybinding for convenience
  :bind
- (:map
-  sql-mode-map
+ (("C-c C-p" . my-sql-connect-postgres) ; Global binding
+  :map sql-mode-map
   ("C-c C-c" . sql-send-paragraph) ; Send current paragraph
   ("C-c C-r" . sql-send-region) ; Send selected region
-  ("C-c C-b" . sql-send-buffer) ; Send entire buffer
-  ("C-c C-p" . my-sql-connect-postgres)) ; Custom connect command
+  ("C-c C-b" . sql-send-buffer)) ; Send entire buffer
 
- ;; Optional customizations for sql-mode behavior
+ ;; Customizations for sql-mode behavior
  :custom
  (sql-postgres-login-params
   '((user :default "")
     (database :default "") (server :default "")
-    (port :default 5432))) ; Minimal defaults, overridden by auth
+    (port :default 5432))) ; Minimal defaults
  (sql-input-ring-file-name "~/.emacs.d/sql/history") ; Save SQL history
- (sql-product 'postgres) ; Default to PostgreSQL
  :hook
  (sql-mode
   .
   (lambda ()
-    (when (eq sql-product 'postgres)
-      (sql-set-product 'postgres)))) ; Ensure PostgreSQL mode
+    (sql-set-product 'postgres) ; Reinforce product setting
+    (when (buffer-file-name)
+      (sql-highlight-postgres-keywords)))) ; Highlight PostgreSQL keywords
  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
