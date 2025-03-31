@@ -2769,19 +2769,19 @@
    "Display the home timeline using mastodon-tl--home."
    (interactive)
    (require 'mastodon)
-   (mastodon-tl--home))
+   (mastodon-tl-get-home-timeline))
 
  (defun my-mastodon-get-federated-timeline ()
    "Display the federated timeline."
    (interactive)
    (require 'mastodon)
-   (mastodon-tl--federated))
+   (mastodon-tl-get-federated-timeline))
 
  (defun my-mastodon-get-local-timeline ()
    "Display the local timeline."
    (interactive)
    (require 'mastodon)
-   (mastodon-tl--local))
+   (mastodon-tl-get-local-timeline))
 
  (defun my-mastodon-compose-toot ()
    "Compose a new toot."
@@ -2793,19 +2793,19 @@
    "Reply to the toot at point."
    (interactive)
    (require 'mastodon)
-   (mastodon-tl--toggle-reply-to-toot))
+   (mastodon-toggle-reply-to-toot))
 
  (defun my-mastodon-toggle-boost ()
    "Boost or unboost the toot at point."
    (interactive)
    (require 'mastodon)
-   (mastodon-tl--toggle-boost-or-favourite-toot "boost"))
+   (my-mastodon-toggle-boost "boost"))
 
  (defun my-mastodon-toggle-favourite ()
    "Favourite or unfavourite the toot at point."
    (interactive)
    (require 'mastodon)
-   (mastodon-tl--toggle-boost-or-favourite-toot "favourite"))
+   (my-mastodon-toggle-favourite "favourite"))
 
  (defun my-mastodon-capture-toot-to-org ()
    "Capture the current toot to an Org file."
@@ -2825,7 +2825,7 @@
    "Search for a hashtag and display results."
    (interactive "sHashtag: ")
    (require 'mastodon)
-   (mastodon-tl--get-tag-timeline tag))
+   (mastodon-search-query))
 
  (defun my-mastodon-open-toot-in-buffer ()
    "Open the current toot in a dedicated Org buffer."
