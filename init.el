@@ -2802,18 +2802,29 @@
 (use-package
  pgmacs
  :vc (:url "https://github.com/emarsden/pgmacs" :rev :newest)
- :commands (pgmacs-open-connection pgmacs-connect pgmacs-connect-manual)
  :init
  ;; Load dependency 'pg' from GitHub
  (use-package
   pg
   :vc (:url "https://github.com/emarsden/pg-el" :rev :newest))
 
- ;; Define connection functions before keybindings
+ ;; Explicitly load pgmacs.el to ensure functions are defined
+ (let ((pgmacs-file
+        (expand-file-name "pgmacs.el"
+                          (file-name-directory
+                           (locate-library "pgmacs")))))
+   (when (file-exists-p pgmacs-file)
+     (load-file pgmacs-file)
+     (message "Loaded pgmacs from %s" pgmacs-file))
+   (unless (fboundp 'pgmacs-open-connection)
+     (error
+      "Failed to load pgmacs-open-connection from %s" pgmacs-file)))
+
+ ;; Define connection functions
  (defun pgmacs-connect ()
    "Connect to a PostgreSQL database using credentials from authinfo.gpg."
    (interactive)
-   (let* ((connections (auth-source-search :port "5432" :max 10))
+   (let* ((connections (auth-source-search :port "postgres" :max 10))
           (choices
            (mapcar
             (lambda (entry)
@@ -2858,7 +2869,7 @@
     :password (read-passwd "Password: ")
     :database (read-string "Database: ")))
 
- ;; Set up keymap in :init to ensure it’s defined early
+ ;; Set up keymap
  (defvar pgmacs-map
    (let ((map (make-sparse-keymap)))
      (define-key map (kbd "c") #'pgmacs-connect)
@@ -2868,10 +2879,7 @@
  (global-set-key (kbd "C-c p") pgmacs-map)
 
  :config
- ;; Explicitly load pgmacs to ensure all functions are defined
- (require 'pgmacs)
-
- ;; Enable which-key descriptions after package loads
+ ;; Enable which-key descriptions
  (when (featurep 'which-key)
    (which-key-add-key-based-replacements
     "C-c p"
