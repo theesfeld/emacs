@@ -2817,17 +2817,15 @@
  (define-key my-pgmacs-map (kbd "c") 'pgmacs-connect)
  (define-key my-pgmacs-map (kbd "m") 'pgmacs-connect-manual)
 
- ;; Which-key integration
- (with-eval-after-load 'which-key
-   (which-key-add-key-based-replacements
-    "C-c p"
-    "pgmacs"
-    "C-c p c"
-    "connect-from-authinfo"
-    "C-c p m"
-    "connect-manual")
-   ;; Force which-key to recognize the prefix now
-   (which-key-declare-prefixes "C-c p" "pgmacs"))
+ ;; Ensure which-key is loaded and set up
+ (require 'which-key)
+ (which-key-add-key-based-replacements
+  "C-c p"
+  "pgmacs"
+  "C-c p c"
+  "connect-from-authinfo"
+  "C-c p m"
+  "connect-manual")
 
  ;; Function to retrieve and select a database connection from authinfo.gpg
  (defun pgmacs--get-connection ()
