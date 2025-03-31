@@ -2799,90 +2799,86 @@
 ;;                                 sql-mode                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package
- sql
- :mode ("\\.[Ss][Qq][Ll]\\'" . sql-mode)
- :commands (sql-postgres sql-connect)
- :init
- (require 'auth-source) ; Load early for authinfo.gpg
- (setq sql-product 'postgres) ; Default product globally
- :config
- ;; Fetch PostgreSQL connections from authinfo.gpg
- (defun my-sql-postgres-connections ()
-   "Return a list of PostgreSQL connections from authinfo.gpg."
-   (let ((auth-entries
-          (auth-source-search
-           :max 1000
-           :port "5432"
-           :require '(:user :secret))))
-     (delq
-      nil
-      (mapcar
-       (lambda (entry)
-         (let ((host (plist-get entry :host))
-               (user (plist-get entry :user))
-               (password (funcall (plist-get entry :secret)))
-               (database (plist-get entry :database)))
-           (when (and host user password database)
-             (list
-              (concat host "/" database) ; Connection name
-              (list 'sql-product 'postgres) ; Correct format
-              (list 'sql-server host)
-              (list 'sql-user user)
-              (list 'sql-password password)
-              (list 'sql-database database)
-              (list 'sql-port 5432)))))
-       auth-entries))))
+(use-package sql
+  :mode ("\\.[Ss][Qq][Ll]\\'" . sql-mode)
+  :commands (sql-postgres sql-connect)
+  :init
+  (require 'auth-source) ; Load early for authinfo.gpg
+  (setq sql-product 'postgres) ; Default globally to avoid runtime issues
+  :config
+  ;; Fetch PostgreSQL connections from authinfo.gpg
+  (defun my-sql-postgres-connections ()
+    "Return a list of PostgreSQL connections from authinfo.gpg."
+    (let ((auth-entries (auth-source-search :max 1000 :port "5432" :require '(:user :secret))))
+      (delq nil
+            (mapcar
+             (lambda (entry)
+               (let ((host (plist-get entry :host))
+                     (user (plist-get entry :user))
+                     (password (funcall (plist-get entry :secret)))
+                     (database (plist-get entry :database)))
+                 (when (and host user password database)
+                   (list (concat host "/" database) ; Connection name
+                         (list 'sql-product ''postgres) ; Double-quoted symbol
+                         (list 'sql-server host)
+                         (list 'sql-user user)
+                         (list 'sql-password password)
+                         (list 'sql-database database)
+                         (list 'sql-port 5432)))))
+             auth-entries))))
 
- ;; Update sql-connection-alist dynamically
- (defun my-sql-update-connection-alist ()
-   "Update sql-connection-alist with PostgreSQL connections."
-   (interactive)
-   (setq sql-connection-alist (my-sql-postgres-connections)))
+  ;; Update sql-connection-alist
+  (defun my-sql-update-connection-alist ()
+    "Update sql-connection-alist with PostgreSQL connections."
+    (interactive)
+    (let ((connections (my-sql-postgres-connections)))
+      (setq sql-connection-alist connections)
+      (when (called-interactively-p 'interactive)
+        (message "Updated sql-connection-alist with %d connections" (length connections)))))
 
- ;; Initial update and hook for auth-source changes
- (my-sql-update-connection-alist)
- ;; Note: auth-source-backend-updated-hook doesn’t exist; use manual update or timer
- (run-at-time t 300 'my-sql-update-connection-alist) ; Refresh every 5 minutes
+  ;; Initial update
+  (my-sql-update-connection-alist)
+  (run-at-time t 300 'my-sql-update-connection-alist) ; Refresh every 5 minutes
 
- ;; Interactive connection function
- (defun my-sql-connect-postgres ()
-   "Prompt to select a PostgreSQL database from authinfo.gpg and connect."
-   (interactive)
-   (my-sql-update-connection-alist)
-   (let* ((connections (my-sql-postgres-connections))
-          (choices (mapcar #'car connections)))
-     (if (null connections)
-         (message "No PostgreSQL connections found in authinfo.gpg")
-       (let ((choice
-              (completing-read "Select PostgreSQL database: " choices
-                               nil t)))
-         (when choice
-           (sql-connect choice))))))
+  ;; Interactive connection function
+  (defun my-sql-connect-postgres ()
+    "Prompt to select a PostgreSQL database from authinfo.gpg and connect."
+    (interactive)
+    (my-sql-update-connection-alist)
+    (let ((connections (my-sql-postgres-connections)))
+      (if (null connections)
+          (message "No PostgreSQL connections found in authinfo.gpg")
+        (let* ((choices (mapcar #'car connections))
+               (choice (completing-read "Select PostgreSQL database: " choices nil t)))
+          (when choice
+            (let ((conn (assoc choice connections)))
+              (unless conn
+                (error "Connection %s not found" choice))
+              (setq sql-product 'postgres) ; Reinforce product
+              (sql-connect choice choice)))))))
 
- ;; Keybindings
- :bind
- (("C-c C-p" . my-sql-connect-postgres) ; Global
-  :map
-  sql-mode-map
-  ("C-c C-c" . sql-send-paragraph)
-  ("C-c C-r" . sql-send-region)
-  ("C-c C-b" . sql-send-buffer))
+  ;; Keybindings
+  :bind
+  (("C-c C-p" . my-sql-connect-postgres) ; Global
+   :map sql-mode-map
+   ("C-c C-c" . sql-send-paragraph)
+   ("C-c C-r" . sql-send-region)
+   ("C-c C-b" . sql-send-buffer))
 
- :custom
- (sql-postgres-login-params
-  '((user :default "")
-    (database :default "")
-    (server :default "")
-    (port :default 5432)))
- (sql-input-ring-file-name "~/.emacs.d/sql/history")
- :hook
- (sql-mode
-  .
-  (lambda ()
-    (sql-set-product 'postgres)
-    (when (buffer-file-name)
-      (sql-highlight-postgres-keywords)))))
+  :custom
+  (sql-postgres-login-params '((user :default "")
+                               (database :default "")
+                               (server :default "")
+                               (port :default 5432)))
+  (sql-input-ring-file-name "~/.emacs.d/sql/history")
+  :hook
+  (sql-mode . (lambda ()
+                (sql-set-product 'postgres)
+                (when (buffer-file-name)
+                  (sql-highlight-postgres-keywords))))
+)
+  ;; Provide init.el ends here
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
