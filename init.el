@@ -1797,7 +1797,7 @@
  ;(setq aidermacs-use-architect-mode t)
  ;(setq aidermacs-architect-model "sonnet")
  ;(setq aidermacs-editor-model "deepseek/deepseek-chat"))
-
+ )
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                Misc Packages                              ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
