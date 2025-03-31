@@ -2773,38 +2773,90 @@
   mastodon-instance-url "https://defcon.social"
   mastodon-active-user "blackdream@defcon.social"
   mastodon-client--media-directory (expand-file-name "mastodon-media" user-emacs-directory)
-  mastodon-toot--enable-custom-emoji t ;; Support custom emojis
-  mastodon-toot--default-visibility "public" ;; Default visibility for toots
-  mastodon-tl--enable-relative-timestamps t ;; Relative timestamps
-  mastodon-tl--show-avatars t ;; Show avatars in timeline
-  mastodon-media--enable-image-cache t ;; Cache images for performance
-  mastodon-media--preview-max-height 300) ;; Set max height for image previews
+  mastodon-toot--enable-custom-emoji t
+  mastodon-toot--default-visibility "public"
+  mastodon-tl--enable-relative-timestamps t
+  mastodon-tl--show-avatars t
+  mastodon-media--enable-image-cache t
+  mastodon-media--preview-max-height 300)
 
  ;; Enable image display in timeline
- (setq mastodon-tl--display-media-p t) ;; Show media (images) inline
+ (setq mastodon-tl--display-media-p t)
  (add-hook
   'mastodon-tl--buffer-refreshed-hook
   (lambda () (mastodon-media--inline-images (point-min) (point-max))))
 
- ;; Custom keybindings under C-c m
+ ;; Custom interactive commands for keybindings
+ (defun my-mastodon-get-home-timeline ()
+   "Display the home timeline."
+   (interactive)
+   (mastodon-tl--get-home-timeline))
+
+ (defun my-mastodon-get-federated-timeline ()
+   "Display the federated timeline."
+   (interactive)
+   (mastodon-tl--get-federated-timeline))
+
+ (defun my-mastodon-get-local-timeline ()
+   "Display the local timeline."
+   (interactive)
+   (mastodon-tl--get-local-timeline))
+
+ (defun my-mastodon-compose-toot ()
+   "Compose a new toot."
+   (interactive)
+   (mastodon-toot--compose-toot))
+
+ (defun my-mastodon-toggle-reply-to-toot ()
+   "Reply to the toot at point."
+   (interactive)
+   (mastodon-toot--toggle-reply-to-toot))
+
+ (defun my-mastodon-toggle-boost ()
+   "Boost or unboost the toot at point."
+   (interactive)
+   (mastodon-toot--toggle-boost))
+
+ (defun my-mastodon-toggle-favourite ()
+   "Favourite or unfavourite the toot at point."
+   (interactive)
+   (mastodon-toot--toggle-favourite))
+
+ (defun my-mastodon-capture-toot-to-org ()
+   "Capture the current toot to an Org file."
+   (interactive)
+   (mastodon-toot--store-link)
+   (org-capture nil "mT"))
+
+ (defun my-mastodon-capture-note-from-toot ()
+   "Capture a note inspired by the current toot."
+   (interactive)
+   (mastodon-toot--store-link)
+   (org-capture nil "mN"))
+
+ (defun my-mastodon-search-hashtag (tag)
+   "Search for a hashtag and display results."
+   (interactive "sHashtag: ")
+   (mastodon-tl--get-tag-timeline tag))
+
+ ;; Keybindings under C-c m
  (define-key
-  my-mastodon-prefix-map (kbd "h") #'mastodon-tl--get-home-timeline)
+  my-mastodon-prefix-map (kbd "h") #'my-mastodon-get-home-timeline)
  (define-key
   my-mastodon-prefix-map
   (kbd "f")
-  #'mastodon-tl--get-federated-timeline)
+  #'my-mastodon-get-federated-timeline)
  (define-key
-  my-mastodon-prefix-map (kbd "l") #'mastodon-tl--get-local-timeline)
+  my-mastodon-prefix-map (kbd "l") #'my-mastodon-get-local-timeline)
  (define-key
-  my-mastodon-prefix-map (kbd "t") #'mastodon-toot--compose-toot)
+  my-mastodon-prefix-map (kbd "t") #'my-mastodon-compose-toot)
  (define-key
-  my-mastodon-prefix-map
-  (kbd "r")
-  #'mastodon-toot--toggle-reply-to-toot)
+  my-mastodon-prefix-map (kbd "r") #'my-mastodon-toggle-reply-to-toot)
  (define-key
-  my-mastodon-prefix-map (kbd "b") #'mastodon-toot--toggle-boost)
+  my-mastodon-prefix-map (kbd "b") #'my-mastodon-toggle-boost)
  (define-key
-  my-mastodon-prefix-map (kbd "f") #'mastodon-toot--toggle-favourite)
+  my-mastodon-prefix-map (kbd "v")
+  #'my-mastodon-toggle-favourite) ;; Changed 'f' to 'v' to avoid conflict
  (define-key
   my-mastodon-prefix-map (kbd "c") #'my-mastodon-capture-toot-to-org)
  (define-key
@@ -2818,9 +2870,9 @@
  (add-hook
   'mastodon-toot-mode-hook
   (lambda ()
-    (auto-fill-mode 1) ;; Wrap text automatically
-    (setq fill-column 500) ;; Mastodon’s character limit
-    (visual-line-mode 1))) ;; Better readability
+    (auto-fill-mode 1)
+    (setq fill-column 500)
+    (visual-line-mode 1)))
 
  ;; Which-key integration
  (with-eval-after-load 'which-key
@@ -2839,7 +2891,7 @@
     "reply-to-toot"
     "C-c m b"
     "boost-toot"
-    "C-c m f"
+    "C-c m v"
     "favourite-toot"
     "C-c m c"
     "capture-to-org"
@@ -2848,66 +2900,24 @@
     "C-c m s"
     "search-hashtag"))
 
- ;; Custom functions for Org integration
- (defun my-mastodon-capture-toot-to-org ()
-   "Capture the current toot to an Org file with metadata."
-   (interactive)
-   (mastodon-toot--store-link) ;; Store the toot link
-   (org-capture nil "mT")) ;; Use Mastodon Toot template
-
- (defun my-mastodon-capture-note-from-toot ()
-   "Capture a quick note inspired by the current toot."
-   (interactive)
-   (mastodon-toot--store-link)
-   (org-capture nil "mN")) ;; Use Mastodon Note template
-
- (defun my-mastodon-search-hashtag (tag)
-   "Search for a hashtag and display results."
-   (interactive "sHashtag: ")
-   (mastodon-tl--get-tag-timeline tag))
-
- (defun my-mastodon-open-toot-in-buffer ()
-   "Open the current toot in a dedicated buffer for editing or reference."
-   (interactive)
-   (let ((toot (mastodon-toot--toot-at-point)))
-     (with-current-buffer (get-buffer-create "*Mastodon Toot*")
-       (erase-buffer)
-       (insert (mastodon-toot--toot-text toot))
-       (org-mode) ;; Switch to Org-mode for further processing
-       (goto-char (point-min))
-       (pop-to-buffer (current-buffer)))))
-
  ;; Integrate with Org-store-link
  (add-hook 'org-store-link-functions #'mastodon-toot--store-link))
 
-;; Optional: Fetch Mastodon feed into Org (inspired by Sacha Chua)
-(use-package
- org-feed
- :ensure nil
- :after org
- :config
- (defun my-mastodon-org-feed-formatter (entry)
-   "Format Mastodon RSS entries for Org."
-   (let ((title (plist-get entry :title))
-         (link (plist-get entry :link))
-         (date
-          (format-time-string (cdr org-time-stamp-formats)
-                              (date-to-time
-                               (plist-get entry :pubDate)))))
-     (format "* %s\n:PROPERTIES:\n:URL: %s\n:CREATED: %s\n:END:\n%s"
-             title
-             link
-             date
-             (plist-get entry :item-full-text))))
- (add-to-list
-  'org-feed-alist
-  `("Mastodon" ,(concat
-      mastodon-instance-url
-      "/users/"
-      (replace-regexp-in-string "@.*$" "" mastodon-active-user)
-      ".rss")
-    ,(expand-file-name "mastodon.org" org-directory) "Mastodon Toots"
-    :formatter my-mastodon-org-feed-formatter)))
+;; Ensure Org-capture templates are updated (add this to your org :config)
+(setq
+ org-capture-templates
+ (append
+  org-capture-templates
+  `(("mT" "Mastodon Toot" entry
+     (file+headline
+      ,(expand-file-name "mastodon.org" org-directory) "Toots")
+     "* %:description\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:URL: %:link\n:END:\n#+BEGIN_QUOTE\n%:initial\n#+END_QUOTE"
+     :immediate-finish t)
+    ("mN" "Mastodon Note" entry
+     (file+headline
+      ,(expand-file-name "notes/notes.org" org-directory) "Notes")
+     "* %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:INSPIRED-BY: %:link\n:END:\nInspired by: %:description"
+     :prepend t))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
