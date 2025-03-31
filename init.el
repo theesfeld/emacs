@@ -2803,7 +2803,6 @@
  pg
  :vc (:url "https://github.com/emarsden/pg-el" :rev :newest)
  :init
- ;; Load pg.el explicitly
  (let ((pg-file
         (expand-file-name "pg.el"
                           (file-name-directory
@@ -2817,9 +2816,8 @@
 (use-package
  pgmacs
  :vc (:url "https://github.com/emarsden/pgmacs" :rev :newest)
- :after pg ;; Ensure pg is loaded first
+ :after pg
  :init
- ;; Load pgmacs.el explicitly
  (let ((pgmacs-file
         (expand-file-name "pgmacs.el"
                           (file-name-directory
@@ -2831,11 +2829,10 @@
      (error
       "Failed to load pgmacs-open-connection from %s" pgmacs-file)))
 
- ;; Define connection functions
  (defun pgmacs-connect ()
    "Connect to a PostgreSQL database using credentials from authinfo.gpg."
    (interactive)
-   (let* ((connections (auth-source-search :port "5432" :max 10))
+   (let* ((connections (auth-source-search :port "postgres" :max 10))
           (choices
            (mapcar
             (lambda (entry)
@@ -2880,7 +2877,6 @@
     :password (read-passwd "Password: ")
     :database (read-string "Database: ")))
 
- ;; Set up keymap
  (defvar pgmacs-map
    (let ((map (make-sparse-keymap)))
      (define-key map (kbd "c") #'pgmacs-connect)
@@ -2890,7 +2886,6 @@
  (global-set-key (kbd "C-c p") pgmacs-map)
 
  :config
- ;; Enable which-key descriptions
  (when (featurep 'which-key)
    (which-key-add-key-based-replacements
     "C-c p"
