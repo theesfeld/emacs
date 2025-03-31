@@ -2757,13 +2757,6 @@
  mastodon
  :ensure t
  :defer t
- :init
- ;; Define a prefix keymap for Mastodon commands
- (defvar my-mastodon-prefix-map (make-sparse-keymap)
-   "Prefix keymap for Mastodon commands.")
- (define-prefix-command 'my-mastodon-prefix-map)
- (global-set-key (kbd "C-c m") 'my-mastodon-prefix-map)
-
  :config
  (require 'mastodon-async) ;; Async support for smoother interaction
  (require 'mastodon-media) ;; For media handling (images)
@@ -2786,13 +2779,13 @@
   'mastodon-tl--buffer-refreshed-hook
   (lambda () (mastodon-media--inline-images (point-min) (point-max))))
 
- ;; Custom interactive commands for keybindings
+ ;; Define interactive commands
  (defun my-mastodon-get-home-timeline ()
    "Display the home timeline."
    (interactive)
    (mastodon-tl--get-home-timeline))
 
- (defun my-mastodon-get-federated-timeline ()
+ (defun my-mastodon-get-f-defineederated-timeline ()
    "Display the federated timeline."
    (interactive)
    (mastodon-tl--get-federated-timeline))
@@ -2839,33 +2832,6 @@
    (interactive "sHashtag: ")
    (mastodon-tl--get-tag-timeline tag))
 
- ;; Keybindings under C-c m
- (define-key
-  my-mastodon-prefix-map (kbd "h") #'my-mastodon-get-home-timeline)
- (define-key
-  my-mastodon-prefix-map
-  (kbd "f")
-  #'my-mastodon-get-federated-timeline)
- (define-key
-  my-mastodon-prefix-map (kbd "l") #'my-mastodon-get-local-timeline)
- (define-key
-  my-mastodon-prefix-map (kbd "t") #'my-mastodon-compose-toot)
- (define-key
-  my-mastodon-prefix-map (kbd "r") #'my-mastodon-toggle-reply-to-toot)
- (define-key
-  my-mastodon-prefix-map (kbd "b") #'my-mastodon-toggle-boost)
- (define-key
-  my-mastodon-prefix-map (kbd "v")
-  #'my-mastodon-toggle-favourite) ;; Changed 'f' to 'v' to avoid conflict
- (define-key
-  my-mastodon-prefix-map (kbd "c") #'my-mastodon-capture-toot-to-org)
- (define-key
-  my-mastodon-prefix-map
-  (kbd "n")
-  #'my-mastodon-capture-note-from-toot)
- (define-key
-  my-mastodon-prefix-map (kbd "s") #'my-mastodon-search-hashtag)
-
  ;; Enhance toot composition
  (add-hook
   'mastodon-toot-mode-hook
@@ -2874,34 +2840,66 @@
     (setq fill-column 500)
     (visual-line-mode 1)))
 
- ;; Which-key integration
- (with-eval-after-load 'which-key
-   (which-key-add-key-based-replacements
-    "C-c m"
-    "mastodon"
-    "C-c m h"
-    "home-timeline"
-    "C-c m f"
-    "federated-timeline"
-    "C-c m l"
-    "local-timeline"
-    "C-c m t"
-    "compose-toot"
-    "C-c m r"
-    "reply-to-toot"
-    "C-c m b"
-    "boost-toot"
-    "C-c m v"
-    "favourite-toot"
-    "C-c m c"
-    "capture-to-org"
-    "C-c m n"
-    "note-from-toot"
-    "C-c m s"
-    "search-hashtag"))
-
  ;; Integrate with Org-store-link
  (add-hook 'org-store-link-functions #'mastodon-toot--store-link))
+
+;; Define and populate the keymap outside use-package to ensure it’s available
+(defvar my-mastodon-prefix-map (make-sparse-keymap)
+  "Prefix keymap for Mastodon commands.")
+(define-prefix-command 'my-mastodon-prefix-map)
+(global-set-key (kbd "C-c m") 'my-mastodon-prefix-map)
+
+;; Set keybindings
+(define-key
+ my-mastodon-prefix-map (kbd "h") #'my-mastodon-get-home-timeline)
+(define-key
+ my-mastodon-prefix-map
+ (kbd "f")
+ #'my-mastodon-get-federated-timeline)
+(define-key
+ my-mastodon-prefix-map (kbd "l") #'my-mastodon-get-local-timeline)
+(define-key
+ my-mastodon-prefix-map (kbd "t") #'my-mastodon-compose-toot)
+(define-key
+ my-mastodon-prefix-map (kbd "r") #'my-mastodon-toggle-reply-to-toot)
+(define-key
+ my-mastodon-prefix-map (kbd "b") #'my-mastodon-toggle-boost)
+(define-key
+ my-mastodon-prefix-map (kbd "v") #'my-mastodon-toggle-favourite)
+(define-key
+ my-mastodon-prefix-map (kbd "c") #'my-mastodon-capture-toot-to-org)
+(define-key
+ my-mastodon-prefix-map
+ (kbd "n")
+ #'my-mastodon-capture-note-from-toot)
+(define-key
+ my-mastodon-prefix-map (kbd "s") #'my-mastodon-search-hashtag)
+
+;; Which-key integration
+(with-eval-after-load 'which-key
+  (which-key-add-key-based-replacements
+   "C-c m"
+   "mastodon"
+   "C-c m h"
+   "home-timeline"
+   "C-c m f"
+   "federated-timeline"
+   "C-c m l"
+   "local-timeline"
+   "C-c m t"
+   "compose-toot"
+   "C-c m r"
+   "reply-to-toot"
+   "C-c m b"
+   "boost-toot"
+   "C-c m v"
+   "favourite-toot"
+   "C-c m c"
+   "capture-to-org"
+   "C-c m n"
+   "note-from-toot"
+   "C-c m s"
+   "search-hashtag"))
 
 ;; Ensure Org-capture templates are updated (add this to your org :config)
 (setq
