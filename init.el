@@ -2800,35 +2800,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- pg
- :vc (:url "https://github.com/emarsden/pg-el" :rev :newest)
- :init
- (let ((pg-file
-        (expand-file-name "pg.el"
-                          (file-name-directory
-                           (locate-library "pg")))))
-   (when (file-exists-p pg-file)
-     (load-file pg-file)
-     (message "Loaded pg from %s" pg-file))
-   (unless (fboundp 'pg-connect)
-     (error "Failed to load pg-connect from %s" pg-file))))
-
-(use-package
  pgmacs
  :vc (:url "https://github.com/emarsden/pgmacs" :rev :newest)
- :after pg
  :init
- (let ((pgmacs-file
-        (expand-file-name "pgmacs.el"
-                          (file-name-directory
-                           (locate-library "pgmacs")))))
-   (when (file-exists-p pgmacs-file)
-     (load-file pgmacs-file)
-     (message "Loaded pgmacs from %s" pgmacs-file))
-   (unless (fboundp 'pgmacs-open-connection)
-     (error
-      "Failed to load pgmacs-open-connection from %s" pgmacs-file)))
+ ;; Load dependency 'pg' from GitHub
+ (use-package
+  pg
+  :vc (:url "https://github.com/emarsden/pg-el" :rev :newest))
 
+ ;; Define connection functions
  (defun pgmacs-connect ()
    "Connect to a PostgreSQL database using credentials from authinfo.gpg."
    (interactive)
@@ -2851,32 +2831,35 @@
        (let* ((index (cl-position selection choices :test #'string=))
               (entry (nth index connections)))
          (when entry
-           (pgmacs-open-connection
-            :host (plist-get entry :host)
-            :port (string-to-number (or (plist-get entry :dbport) "5432"))
-            :user (plist-get entry :user)
-            :password
-            (if (functionp (plist-get entry :secret))
-                (funcall (plist-get entry :secret))
-              (plist-get entry :secret))
-            :database (plist-get entry :database))
-           (message "Connected to %s@%s/%s"
-                    (plist-get entry :user)
-                    (plist-get entry :host)
-                    (plist-get entry :database)))))))
+           (let ((conn-string
+                  (format
+                   "user=%s port=%s dbname=%s host=%s password=%s"
+                   (plist-get entry :user)
+                   (or (plist-get entry :dbport) "5432")
+                   (plist-get entry :database)
+                   (plist-get entry :host)
+                   (if (functionp (plist-get entry :secret))
+                       (funcall (plist-get entry :secret))
+                     (plist-get entry :secret)))))
+             (pgmacs-open-string conn-string)
+             (message "Connected to %s@%s/%s"
+                      (plist-get entry :user)
+                      (plist-get entry :host)
+                      (plist-get entry :database))))))))
 
  (defun pgmacs-connect-manual ()
    "Manually enter PostgreSQL connection details."
    (interactive)
-   (pgmacs-open-connection
-    :host (read-string "Host: " nil nil "localhost")
-    :port
-    (string-to-number
-     (read-string "Port (default 5432): " nil nil "5432"))
-    :user (read-string "User: ")
-    :password (read-passwd "Password: ")
-    :database (read-string "Database: ")))
+   (let ((conn-string
+          (format "user=%s port=%s dbname=%s host=%s password=%s"
+                  (read-string "User: ")
+                  (read-string "Port (default 5432): " nil nil "5432")
+                  (read-string "Database: ")
+                  (read-string "Host: " nil nil "localhost")
+                  (read-passwd "Password: "))))
+     (pgmacs-open-string conn-string)))
 
+ ;; Set up keymap
  (defvar pgmacs-map
    (let ((map (make-sparse-keymap)))
      (define-key map (kbd "c") #'pgmacs-connect)
@@ -2886,6 +2869,10 @@
  (global-set-key (kbd "C-c p") pgmacs-map)
 
  :config
+ ;; Ensure pgmacs is loaded
+ (require 'pgmacs)
+
+ ;; Enable which-key descriptions
  (when (featurep 'which-key)
    (which-key-add-key-based-replacements
     "C-c p"
