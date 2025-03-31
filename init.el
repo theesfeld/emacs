@@ -2801,36 +2801,19 @@
 
 (use-package
  pgmacs
- :vc (:url "https://github.com/emarsden/pgmacs" :rev :newest) ;; Install from GitHub
- :commands (pgmacs-connect pgmacs-connect-manual)
- :config
- ;; Ensure dependency 'pg' is installed (required by pgmacs)
+ :vc (:url "https://github.com/emarsden/pgmacs" :rev :newest)
+ :commands (pgmacs-open-connection pgmacs-connect pgmacs-connect-manual)
+ :init
+ ;; Load dependency 'pg' from GitHub
  (use-package
   pg
   :vc (:url "https://github.com/emarsden/pg-el" :rev :newest))
 
- ;; Define prefix keymap and bindings
- (defvar my-pgmacs-map (make-sparse-keymap)
-   "Prefix keymap for pgmacs commands.")
- (define-prefix-command 'my-pgmacs-map)
- (global-set-key (kbd "C-c p") 'my-pgmacs-map)
- (define-key my-pgmacs-map (kbd "c") 'pgmacs-connect)
- (define-key my-pgmacs-map (kbd "m") 'pgmacs-connect-manual)
-
- ;; Ensure which-key is loaded and set up
- (require 'which-key)
- (which-key-add-key-based-replacements
-  "C-c p"
-  "pgmacs"
-  "C-c p c"
-  "connect-from-authinfo"
-  "C-c p m"
-  "connect-manual")
-
- ;; Function to retrieve and select a database connection from authinfo.gpg
- (defun pgmacs--get-connection ()
-   "Retrieve PostgreSQL connections from authinfo.gpg and prompt for selection."
-   (let* ((auth-entries
+ ;; Define connection functions before keybindings
+ (defun pgmacs-connect ()
+   "Connect to a PostgreSQL database using credentials from authinfo.gpg."
+   (interactive)
+   (let* ((connections
            (auth-source-search
             :port "postgres"
             :require
@@ -2839,55 +2822,66 @@
           (choices
            (mapcar
             (lambda (entry)
-              (let ((host (plist-get entry :host))
-                    (user (plist-get entry :user))
-                    (db (plist-get entry :database)))
-                (format "%s@%s/%s" user host db)))
-            auth-entries))
-          (manual-opt "Manual Entry")
+              (format "%s@%s/%s"
+                      (plist-get entry :user)
+                      (plist-get entry :host)
+                      (plist-get entry :database)))
+            connections))
           (selection
-           (completing-read
-            "Select database connection: "
-            (append choices (list manual-opt)))))
-     (if (string= selection manual-opt)
-         (pgmacs-connect-manual)
-       (let* ((selected-index
-               (cl-position selection choices :test #'string=))
-              (entry (nth selected-index auth-entries)))
-         (list
-          :host (plist-get entry :host)
-          :port (string-to-number (plist-get entry :port))
-          :user (plist-get entry :user)
-          :password
-          (if (functionp (plist-get entry :secret))
-              (funcall (plist-get entry :secret))
-            (plist-get entry :secret))
-          :database (plist-get entry :database))))))
+           (completing-read "Select connection (or type 'manual'): "
+                            (append choices '("manual"))
+                            nil
+                            t)))
+     (if (string= selection "manual")
+         (call-interactively #'pgmacs-connect-manual)
+       (let* ((index (cl-position selection choices :test #'string=))
+              (entry (nth index connections)))
+         (when entry
+           (pgmacs-open-connection
+            :host (plist-get entry :host)
+            :port (string-to-number (plist-get entry :port))
+            :user (plist-get entry :user)
+            :password
+            (if (functionp (plist-get entry :secret))
+                (funcall (plist-get entry :secret))
+              (plist-get entry :secret))
+            :database (plist-get entry :database))
+           (message "Connected to %s@%s/%s"
+                    (plist-get entry :user)
+                    (plist-get entry :host)
+                    (plist-get entry :database)))))))
 
- ;; Function to connect using selected authinfo credentials
- (defun pgmacs-connect ()
-   "Connect to a PostgreSQL database using credentials from authinfo.gpg."
-   (interactive)
-   (let ((conn (pgmacs--get-connection)))
-     (when conn
-       (apply 'pgmacs-open-connection conn)
-       (message "Connected to %s@%s/%s"
-                (plist-get conn :user)
-                (plist-get conn :host)
-                (plist-get conn :database)))))
-
- ;; Function for manual connection entry
  (defun pgmacs-connect-manual ()
    "Manually enter PostgreSQL connection details."
    (interactive)
    (pgmacs-open-connection
-    :host (read-string "Host: ")
+    :host (read-string "Host: " nil nil "localhost")
     :port
     (string-to-number
      (read-string "Port (default 5432): " nil nil "5432"))
     :user (read-string "User: ")
     :password (read-passwd "Password: ")
     :database (read-string "Database: ")))
+
+ ;; Set up keymap in :init to ensure it’s defined early
+ (defvar pgmacs-map
+   (let ((map (make-sparse-keymap)))
+     (define-key map (kbd "c") #'pgmacs-connect)
+     (define-key map (kbd "m") #'pgmacs-connect-manual)
+     map)
+   "Keymap for pgmacs commands.")
+ (global-set-key (kbd "C-c p") pgmacs-map)
+
+ :config
+ ;; Enable which-key descriptions after package loads
+ (when (featurep 'which-key)
+   (which-key-add-key-based-replacements
+    "C-c p"
+    "pgmacs"
+    "C-c p c"
+    "connect (authinfo)"
+    "C-c p m"
+    "connect (manual)"))
 
  :hook (pgmacs-mode . (lambda () (display-line-numbers-mode -1))))
 
