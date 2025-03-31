@@ -2815,7 +2815,7 @@
    (interactive)
    (let* ((connections
            (auth-source-search
-            :port "postgres"
+            :port "5432"
             :require
             '(:host :user :secret :port :database)
             :max 10))
