@@ -748,11 +748,11 @@
  (when (find-font (font-spec :name "Berkeley Mono"))
    (set-face-attribute 'default nil
                        :font "Berkeley Mono"
-                       :height 150))
+                       :height 140))
  (when (find-font (font-spec :name "Berkeley Mono Variable"))
    (set-face-attribute 'variable-pitch nil
                        :font "Berkeley Mono Variable"
-                       :height 170))
+                       :height 160))
  (set-face-attribute 'font-lock-comment-face nil
                      :slant 'italic
                      :weight 'light)
