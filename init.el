@@ -2824,7 +2824,7 @@
  (defun pgmacs-connect ()
    "Connect to a PostgreSQL database using credentials from authinfo.gpg."
    (interactive)
-   (let* ((connections (auth-source-search :port "postgres" :max 10))
+   (let* ((connections (auth-source-search :port "5432" :max 10))
           (choices
            (mapcar
             (lambda (entry)
