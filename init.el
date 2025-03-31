@@ -2943,10 +2943,11 @@
  (setq ses-mode-hook nil) ; Clear default hooks to customize below
 
  ;; Enhance readability and aesthetics
- (set-face-attribute 'ses-header-row-face nil
-                     :background "#3b4252" ; Modus Vivendi dark blue-gray
-                     :foreground "#88c0d0" ; Light cyan for contrast
-                     :weight 'bold)
+ (set-face-attribute
+  'ses-header-row-face nil
+  :background "#3b4252" ; Modus Vivendi dark blue-gray
+  :foreground "#88c0d0" ; Light cyan for contrast
+  :weight 'bold)
  (set-face-attribute 'ses-cell-face nil
                      :background "#2e3440" ; Darker background
                      :foreground "#d8dee9" ; Light foreground
@@ -2961,16 +2962,22 @@
      "Rename SES buffers with an icon."
      (rename-buffer
       (concat
-       (all-the-icons-faicon "table" :face '(:foreground "#81a1c1"))
-       " "
-       (buffer-name))))
+       (all-the-icons-faicon
+        "table"
+        :face '(:foreground "#81a1c1"))
+       " " (buffer-name))))
    (add-hook 'ses-mode-hook #'my-ses-buffer-name))
 
  ;; Custom functions for usability
  (defun my-ses-new-spreadsheet ()
    "Create a new SES spreadsheet with a prompted filename."
    (interactive)
-   (let ((file (read-file-name "New spreadsheet file: " "~/.org/" nil nil ".ses")))
+   (let ((file
+          (read-file-name "New spreadsheet file: "
+                          "~/.org/"
+                          nil
+                          nil
+                          ".ses")))
      (find-file file)
      (unless (eq major-mode 'ses-mode)
        (new-ses ses-initial-size))))
@@ -2980,9 +2987,9 @@
    (interactive)
    (ses-insert-formula
     (format "=SUM(%s%d:%s%d)"
-            (ses-column-letter (ses-current-column))
-            1
-            (ses-column-letter (ses-current-column))
+            (ses-column-letter (ses-current-column)) 1
+            (ses-column-letter
+             (ses-current-column))
             (1- (ses-row-number)))))
 
  (defun my-ses-insert-sum-row ()
@@ -3000,13 +3007,21 @@
    (interactive)
    (let ((cell (ses-get-cell (ses-row-number) (ses-current-column))))
      (if (ses-cell-property :read-only cell)
-         (ses-set-cell (ses-row-number) (ses-current-column) :read-only nil)
-       (ses-set-cell (ses-row-number) (ses-current-column) :read-only t))
+         (ses-set-cell
+          (ses-row-number)
+          (ses-current-column)
+          :read-only nil)
+       (ses-set-cell
+        (ses-row-number)
+        (ses-current-column)
+        :read-only t))
      (ses-recalculate-cell)
      (message "Cell %s%d read-only: %s"
               (ses-column-letter (ses-current-column))
               (ses-row-number)
-              (if (ses-cell-property :read-only cell) "off" "on"))))
+              (if (ses-cell-property :read-only cell)
+                  "off"
+                "on"))))
 
  ;; Keybindings under C-c s s prefix
  (define-key my-ses-prefix-map (kbd "n") #'my-ses-new-spreadsheet)
@@ -3025,13 +3040,20 @@
  ;; Which-key integration
  (with-eval-after-load 'which-key
    (which-key-add-key-based-replacements
-    "C-c s s" "ses-spreadsheet"
-    "C-c s s n" "new-spreadsheet"
-    "C-c s s c" "insert-column"
-    "C-c s s r" "insert-row"
-    "C-c s s s c" "sum-column"
-    "C-c s s s r" "sum-row"
-    "C-c s s t" "toggle-read-only"))
+    "C-c s s"
+    "ses-spreadsheet"
+    "C-c s s n"
+    "new-spreadsheet"
+    "C-c s s c"
+    "insert-column"
+    "C-c s s r"
+    "insert-row"
+    "C-c s s s c"
+    "sum-column"
+    "C-c s s s r"
+    "sum-row"
+    "C-c s s t"
+    "toggle-read-only"))
 
  :hook
  ((ses-mode
@@ -3044,7 +3066,7 @@
      (buffer-face-mode 1) ; Apply buffer-wide face
      (set-face-attribute 'buffer-face-mode-face nil
                          :family "Berkeley Mono" ; Match your font
-                         :height 120))))
+                         :height 120)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
