@@ -1706,6 +1706,16 @@
      (file+headline
       ,(expand-file-name "tasks.org" org-directory) "Tasks")
      "* TODO %:subject\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:EMAIL_LINK: %:link\n:END:\n\n%:initial\n"
+     :immediate-finish t)
+    ("r" "Read Later (RSS)" entry
+     (file+headline
+      ,(expand-file-name "tasks.org" org-directory) "Read Later")
+     "* TODO Read: %:description\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:LINK: %:link\n:END:\n"
+     :immediate-finish t)
+    ("e" "Email TODO" entry
+     (file+headline
+      ,(expand-file-name "tasks.org" org-directory) "Tasks")
+     "* TODO %:subject\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:EMAIL_LINK: %:link\n:END:\n"
      :immediate-finish t)))
  :hook
  (org-capture-after-finalize
@@ -2710,7 +2720,72 @@
      (switch-to-buffer "*scratch*"))
    (unless (get-buffer-window "*scratch*")
      (switch-to-buffer (other-buffer))))
- (define-key gnus-group-mode-map (kbd "q") 'my-gnus-group-quit))
+ (define-key gnus-group-mode-map (kbd "q") 'my-gnus-group-quit)
+
+ ;; Helper function to get URL from Gnus article
+ (defun gnus-article-get-url ()
+   "Extract the URL from the current Gnus article (e.g., for RSS)."
+   (save-excursion
+     (goto-char (point-min))
+     (when (re-search-forward "<a href=\"\\(http[^\"]+\\)\"" nil t)
+       (match-string 1))))
+
+ ;; Helper function to get title from Gnus article
+ (defun gnus-article-get-title ()
+   "Extract the title from the current Gnus article."
+   (save-excursion
+     (goto-char (point-min))
+     (when (re-search-forward "^Subject: \\(.*\\)$" nil t)
+       (match-string 1))))
+
+ ;; Function to capture RSS as a TODO
+ (defun my-gnus-capture-rss-to-org ()
+   "Capture the current Gnus RSS article as an Org TODO."
+   (interactive)
+   (when (eq major-mode 'gnus-article-mode)
+     (let*
+         ((url (gnus-article-get-url)) ; Get the URL from the article
+          (title (gnus-article-get-title)) ; Get the article title
+          (org-capture-link
+           (format
+            "org-protocol://capture?template=r&link=%s&description=%s"
+            (url-encode-url url) (url-encode-url title))))
+       (if (and url title)
+           (progn
+             (org-protocol-capture org-capture-link)
+             (message "Captured RSS: %s" title))
+         (message "No URL or title found in this article")))))
+
+ ;; Function to capture email as a TODO
+ (defun my-gnus-capture-email-to-org ()
+   "Capture the current Gnus email as an Org TODO."
+   (interactive)
+   (when (eq major-mode 'gnus-article-mode)
+     (let*
+         ((message-id (gnus-fetch-field "Message-ID")) ; Get the email's Message-ID
+          (subject (gnus-fetch-field "Subject")) ; Get the email subject
+          (email-link
+           (if message-id
+               (format "gnus:nnimap+mailbox.org:INBOX#%s"
+                       (substring message-id 1 -1)) ; Remove < and >
+             nil))
+          (org-capture-link
+           (format
+            "org-protocol://capture?template=e&link=%s&subject=%s"
+            (url-encode-url email-link) (url-encode-url subject))))
+       (if (and email-link subject)
+           (progn
+             (org-protocol-capture org-capture-link)
+             (message "Captured email: %s" subject))
+         (message "No Message-ID or subject found in this email")))))
+
+ ;; Bind the new capture functions to keys in gnus-article-mode-map
+ :bind
+ (:map
+  gnus-article-mode-map
+  ("C-c r" . my-gnus-capture-rss-to-org) ; Capture RSS
+  ("C-c e" . my-gnus-capture-email-to-org)) ; Capture email
+ )
 
 (use-package
  gnus-art
