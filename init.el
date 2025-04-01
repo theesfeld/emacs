@@ -1702,22 +1702,25 @@
       ,(expand-file-name "web.org" org-directory) "Web")
      "%:initial"
      :immediate-finish t)
-    ("mT" "Mastodon Toot" entry
+    ("o" "Outlook Email TODO" entry
      (file+headline
-      ,(expand-file-name "mastodon.org" org-directory) "Toots")
-     "* %:description\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:URL: %:link\n:END:\n#+BEGIN_QUOTE\n%:initial\n#+END_QUOTE"
-     :immediate-finish t)
-    ("mN" "Mastodon Note" entry
-     (file+headline
-      ,(expand-file-name "notes/notes.org" org-directory) "Notes")
-     "* %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:INSPIRED-BY: %:link\n:END:\nInspired by: %:description"
-     :prepend t)))
+      ,(expand-file-name "tasks.org" org-directory) "Tasks")
+     "* TODO %:subject\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:EMAIL_LINK: %:link\n:END:\n\n%:initial\n"
+     :immediate-finish t)))
  :hook
  (org-capture-after-finalize
   .
   (lambda ()
     (when (get-buffer-window "*Capture*")
       (delete-window (get-buffer-window "*Capture*"))))))
+
+(use-package
+ org-protocol
+ :ensure nil
+ :after org
+ :config
+ (setq org-protocol-default-template-key nil) ; Use template key from URL
+ (add-to-list 'org-modules 'org-protocol))
 
 (use-package
  org-download
