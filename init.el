@@ -2032,6 +2032,7 @@
  (pdf-view-mode
   .
   (lambda ()
+    (pdf-view-fit-page-to-window)
     (display-line-numbers-mode -1)
     (hl-line-mode -1))))
 
