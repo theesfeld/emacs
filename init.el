@@ -31,13 +31,26 @@
 ;;                                CUSTOM FUNCTIONS                           ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Function to turn C-M-s into a Hyper prefix
-(defun my-hyperify (prompt)
-  (let ((key (read-key-sequence prompt)))
-    (kbd (concat "H-" key))))
+;; Function to translate C-M-S-s-<key> to H-<key>
+(defun my-hyper-translate (key)
+  "Translate C-M-S-s-<key> to H-<key>, handling Shift."
+  (let ((base-key
+         (if (and (integerp key) (>= key ?A) (<= key ?Z))
+             (downcase key) ;; Strip Shift
+           key)))
+    (kbd (concat "H-" (char-to-string base-key)))))
 
-;; Bind your HYPR key (C-M-s) to the hyperify function
-(global-set-key (kbd "C-M-s") 'my-hyperify)
+;; Map C-M-S-s-<key> for all lowercase letters
+(dolist (char (number-sequence ?a ?z))
+  (define-key
+   key-translation-map (kbd (concat "C-M-S-s-" (char-to-string char)))
+   `(lambda (&optional _event)
+      (interactive)
+      (my-hyper-translate ,char))))
+
+;; Hyper bindings
+(global-set-key (kbd "H-a") 'magit)
+(global-set-key (kbd "H-b") 'switch-to-buffer)
 
 (defun increase-text-and-pane ()
   "Increase text size and adjust window width proportionally."
