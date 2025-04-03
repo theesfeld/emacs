@@ -33,24 +33,38 @@
 
 ;; Function to translate C-M-S-s-<key> to H-<key>
 (defun my-hyper-translate (key)
-  "Translate C-M-S-s-<key> to H-<key>, handling Shift."
-  (let ((base-key
-         (if (and (integerp key) (>= key ?A) (<= key ?Z))
-             (downcase key) ;; Strip Shift
-           key)))
-    (kbd (concat "H-" (char-to-string base-key)))))
+  "Translate C-M-S-s-<key> to H-<key>, handling any key type."
+  (let*
+      ((base-key
+        (if (and (integerp key) (>= key ?A) (<= key ?Z)) ;; If uppercase letter
+            (downcase key) ;; Strip Shift
+          key)) ;; Pass symbols/other keys as-is
+       (key-str
+        (cond
+         ((eq base-key ?+)
+          "+") ;; Explicit symbol mappings
+         ((eq base-key ?-)
+          "-")
+         ((eq base-key ?=)
+          "=")
+         ((eq base-key ?_)
+          "_")
+         (t
+          (char-to-string base-key))))) ;; Default to char
+    (kbd (concat "H-" key-str))))
 
-;; Map C-M-S-s-<key> for all lowercase letters
-(dolist (char (number-sequence ?a ?z))
-  (define-key
-   key-translation-map (kbd (concat "C-M-S-s-" (char-to-string char)))
-   `(lambda (&optional _event)
-      (interactive)
-      (my-hyper-translate ,char))))
-
-;; Hyper bindings
-(global-set-key (kbd "H-a") 'magit)
-(global-set-key (kbd "H-b") 'switch-to-buffer)
+;; Map C-M-S-s-<key> for letters and symbols
+(let ((keys
+       (append
+        (number-sequence ?a ?z) ;; a-z
+        '(?= ?- ?+ ?_)))) ;; =, -, +, _
+  (dolist (char keys)
+    (define-key
+     key-translation-map
+     (kbd (concat "C-M-S-s-" (char-to-string char)))
+     `(lambda (&optional _event)
+        (interactive)
+        (my-hyper-translate ,char)))))
 
 (defun increase-text-and-pane ()
   "Increase text size and adjust window width proportionally."
@@ -66,7 +80,7 @@
     (enlarge-window-horizontally
      (round (* (window-width) (- scale-factor 1))))))
 
-(global-set-key (kbd "C-M-+") 'increase-text-and-pane)
+(global-set-key (kbd "s-+") 'increase-text-and-pane)
 
 (defun decrease-text-and-pane ()
   "Decrease text size and adjust window width proportionally."
@@ -82,7 +96,7 @@
     (shrink-window-horizontally
      (round (* (window-width) (- 1 scale-factor))))))
 
-(global-set-key (kbd "C-M-_") 'decrease-text-and-pane)
+(global-set-key (kbd "s-_") 'decrease-text-and-pane)
 
 (defun my-org-download-images-from-capture ()
   (when (string-match-p ":website:" (buffer-string))
@@ -811,7 +825,7 @@
  :bind
  (("C-x k" . kill-current-buffer)
   ("C-x K" . kill-buffer)
-  ("s-s" . #'grim/screenshot)
+  ("H-s" . #'grim/screenshot)
   ("s-<tab>" . ibuffer)))
 
 (use-package
