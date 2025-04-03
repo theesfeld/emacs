@@ -31,6 +31,14 @@
 ;;                                CUSTOM FUNCTIONS                           ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Function to turn C-M-s into a Hyper prefix
+(defun my-hyperify (prompt)
+  (let ((key (read-key-sequence prompt)))
+    (kbd (concat "H-" key))))
+
+;; Bind your HYPR key (C-M-s) to the hyperify function
+(global-set-key (kbd "C-M-s") 'my-hyperify)
+
 (defun increase-text-and-pane ()
   "Increase text size and adjust window width proportionally."
   (interactive)
