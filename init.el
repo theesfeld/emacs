@@ -2598,7 +2598,7 @@
          (nnimap-address "imap.mailbox.org")
          (nnimap-server-port 993)
          (nnimap-stream ssl)
-         (nnimap-authenticator login))) ; Explicitly use login authenticator
+         (nnimap-authenticator login)))
 
  ;; No secondary methods by default; RSS added manually with G R
  (setq gnus-secondary-select-methods nil)
@@ -2646,8 +2646,10 @@
           (gnus-activate-group group t)
           (unless (gnus-group-subscribed-p group)
             (gnus-subscribe-group group)))))
+    ;; Fetch new news
     (gnus-group-get-new-news)
-    (gnus-group-list-groups 2)))
+    ;; Show all subscribed groups (up to level 5) in the main view
+    (gnus-group-list-groups 5 t))) ; 5 includes all typical mail levels, t forces update
 
  :custom
  ;; Directory and file settings
@@ -2655,17 +2657,17 @@
  (gnus-startup-file "~/.config/emacs/gnus/.newsrc")
  (gnus-cache-directory "~/.config/emacs/gnus/cache/")
  (gnus-cache-active-file "~/.config/emacs/gnus/cache/active")
- (gnus-use-dribble-file nil) ; Disable dribble file for simplicity
+ (gnus-use-dribble-file nil)
  (gnus-always-read-dribble-file nil)
 
  ;; Performance and behavior
  (gnus-check-new-newsgroups 'always)
- (gnus-asynchronous t) ; Asynchronous fetching
- (gnus-use-cache t) ; Cache articles
- (gnus-use-header-prefetch t) ; Prefetch headers
+ (gnus-asynchronous t)
+ (gnus-use-cache t)
+ (gnus-use-header-prefetch t)
 
  ;; Display settings
- (gnus-use-full-window nil) ; Don’t take over the whole frame
+ (gnus-use-full-window nil)
  (gnus-group-line-format "%M%S%p%P%5y:%B%(%g%)\n")
  (gnus-group-sort-function
   '(gnus-group-sort-by-alphabet gnus-group-sort-by-rank))
@@ -2676,7 +2678,7 @@
 
  ;; Threading
  (gnus-show-threads t)
- (gnus-fetch-old-headers nil) ; Don’t fetch old headers by default
+ (gnus-fetch-old-headers nil)
  (gnus-build-sparse-threads 'some)
  (gnus-summary-thread-gathering-function
   'gnus-gather-threads-by-subject)
@@ -2688,6 +2690,11 @@
  (gnus-sum-thread-tree-leaf-with-child "├▶")
  (gnus-sum-thread-tree-indent "  ")
  (gnus-sum-thread-tree-single-leaf "└▶")
+
+ ;; Ensure all subscribed groups are visible by default
+ (gnus-level-subscribed 5) ; Show groups up to level 5 in main view
+ (gnus-level-unsubscribed 6) ; Hide unsubscribed groups (e.g., Junk) unless explicitly requested
+ (gnus-level-zombie 7) ; Higher levels for zombie/dead groups
 
  :custom-face
  ;; Faces aligned with Modus Vivendi theme
@@ -2729,7 +2736,7 @@
 
  ;; Behavioral tweaks
  (setq gnus-article-browse-delete-temp 'ask)
- (setq gnus-expert-user t) ; Skip some prompts
+ (setq gnus-expert-user t)
 
  ;; Custom quit function
  (defun my-gnus-group-quit ()
@@ -2740,7 +2747,7 @@
        (switch-to-buffer "*scratch*")
      (switch-to-buffer (other-buffer))))
 
- ;; RSS and email capture functions (integrated with your org-capture)
+ ;; RSS and email capture functions
  (defun my-gnus-capture-rss-to-org ()
    "Capture current Gnus RSS article as an Org TODO."
    (interactive)
