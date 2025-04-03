@@ -2591,78 +2591,96 @@
  :ensure nil
  :commands (gnus gnus-unplugged)
  :init
+ ;; Primary select method for mailbox.org IMAP
  (setq gnus-select-method
        '(nnimap
          "mailbox.org"
          (nnimap-address "imap.mailbox.org")
          (nnimap-server-port 993)
          (nnimap-stream ssl)
-         (nnimap-authinfo-file "~/.authinfo.gpg")))
+         (nnimap-authenticator login))) ; Explicitly use login authenticator
 
- (setq gnus-secondary-select-methods nil) ;; Add RSS manually with G R
+ ;; No secondary methods by default; RSS added manually with G R
+ (setq gnus-secondary-select-methods nil)
 
- ;; SMTP setup
+ ;; SMTP configuration for sending mail
  (setq
   smtpmail-smtp-server "smtp.mailbox.org"
   smtpmail-smtp-service 587
   smtpmail-stream 'starttls
   smtpmail-smtp-user "theesfeld@mailbox.org"
-  smtpmail-auth-credentials "~/.authinfo.gpg"
   send-mail-function 'smtpmail-send-it
   message-send-mail-function 'smtpmail-send-it)
 
- ;; Keybindings
- (defvar my-gnus-map (make-sparse-keymap))
+ ;; Use auth-source for credentials
+ (setq
+  auth-sources '("~/.authinfo.gpg")
+  smtpmail-auth-credentials 'auth-source)
+
+ ;; Custom keymap for Gnus commands
+ (defvar my-gnus-map (make-sparse-keymap)
+   "Keymap for Gnus commands.")
  (global-set-key (kbd "C-c g") my-gnus-map)
  (define-key my-gnus-map (kbd "g") 'gnus)
  (define-key my-gnus-map (kbd "u") 'gnus-unplugged)
 
  :hook
+ ;; Enable topic mode if available
  (gnus-group-mode
   .
   (lambda ()
     (when (require 'gnus-topic nil t)
       (gnus-topic-mode)
-      (message "Gnus topic mode enabled"))
-    (unless (featurep 'gnus-topic)
-      (message "Gnus topic mode not available"))))
+      (message "Gnus topic mode enabled"))))
+
+ ;; Initial setup on startup
  (gnus-started-hook
   .
   (lambda ()
-    (dolist
-        (group (gnus-group-list-all-groups 6)) ;; Get all groups up to level 6
+    ;; Subscribe to all mailbox.org groups at level 2, except Junk at 6
+    (dolist (group (gnus-group-list-all-groups 6))
       (when (string-match-p "^nnimap\\+mailbox\\.org:" group)
         (if (string-match-p "Junk$" group)
-            (progn
-              (message "Setting %s to level 6" group)
-              (gnus-group-change-level group 6))
-          (message "Subscribing %s to level 2" group)
+            (gnus-group-change-level group 6)
           (gnus-group-change-level group 2)
           (gnus-activate-group group t)
           (unless (gnus-group-subscribed-p group)
             (gnus-subscribe-group group)))))
     (gnus-group-get-new-news)
-    (gnus-group-list-groups 2))) ;; Show only subscribed (level 2)
+    (gnus-group-list-groups 2)))
 
  :custom
+ ;; Directory and file settings
  (gnus-home-directory "~/.config/emacs/gnus/")
  (gnus-startup-file "~/.config/emacs/gnus/.newsrc")
- (gnus-use-dribble-file nil)
  (gnus-cache-directory "~/.config/emacs/gnus/cache/")
  (gnus-cache-active-file "~/.config/emacs/gnus/cache/active")
- (gnus-use-full-window nil)
+ (gnus-use-dribble-file nil) ; Disable dribble file for simplicity
  (gnus-always-read-dribble-file nil)
+
+ ;; Performance and behavior
  (gnus-check-new-newsgroups 'always)
- (gnus-asynchronous t)
- (gnus-use-cache t)
- (gnus-use-header-prefetch t)
- (gnus-generate-tree-function 'gnus-generate-horizontal-tree)
- (gnus-tree-minimize-window nil)
+ (gnus-asynchronous t) ; Asynchronous fetching
+ (gnus-use-cache t) ; Cache articles
+ (gnus-use-header-prefetch t) ; Prefetch headers
+
+ ;; Display settings
+ (gnus-use-full-window nil) ; Don’t take over the whole frame
  (gnus-group-line-format "%M%S%p%P%5y:%B%(%g%)\n")
  (gnus-group-sort-function
   '(gnus-group-sort-by-alphabet gnus-group-sort-by-rank))
  (gnus-summary-line-format "%U%R %B %s\n")
- (gnus-summary-make-false-root 'adopt)
+ (gnus-summary-display-arrow t)
+ (gnus-generate-tree-function 'gnus-generate-horizontal-tree)
+ (gnus-tree-minimize-window nil)
+
+ ;; Threading
+ (gnus-show-threads t)
+ (gnus-fetch-old-headers nil) ; Don’t fetch old headers by default
+ (gnus-build-sparse-threads 'some)
+ (gnus-summary-thread-gathering-function
+  'gnus-gather-threads-by-subject)
+ (gnus-thread-sort-functions '(gnus-thread-sort-by-date))
  (gnus-sum-thread-tree-root "├▶")
  (gnus-sum-thread-tree-false-root " ◇ ")
  (gnus-sum-thread-tree-single-indent "")
@@ -2670,9 +2688,9 @@
  (gnus-sum-thread-tree-leaf-with-child "├▶")
  (gnus-sum-thread-tree-indent "  ")
  (gnus-sum-thread-tree-single-leaf "└▶")
- (gnus-summary-display-arrow t)
 
  :custom-face
+ ;; Faces aligned with Modus Vivendi theme
  (gnus-group-mail-3 ((t (:foreground "#00bcff" :weight bold))))
  (gnus-group-mail-3-empty ((t (:foreground "#666699"))))
  (gnus-summary-normal-unread
@@ -2682,119 +2700,116 @@
  (gnus-header-content ((t (:foreground "#88c0d0"))))
 
  :config
+ ;; Ensure cache directory exists
  (make-directory gnus-cache-directory t)
+
+ ;; Posting styles for different contexts
  (setq gnus-posting-styles
        '((".*"
           (address "theesfeld@mailbox.org")
           (signature "Best,\nWilliam"))
-         ("INBOX/SAMHAIN.*"
+         ("nnimap\\+mailbox\\.org:INBOX/SAMHAIN.*"
           (address "grim@samhain.su")
           (signature "Regards,\nGrim"))
-         ("INBOX/THEESFELD.*"
+         ("nnimap\\+mailbox\\.org:INBOX/THEESFELD.*"
           (address "william@theesfeld.net")
           (signature "Cheers,\nTJ"))))
+
+ ;; Group parameters
  (setq gnus-parameters
        '(("nnimap\\+mailbox\\.org:.*"
           (display . all)
           (visible . t)
-          (level 2))
+          (level . 2))
          ("nnimap\\+mailbox\\.org:Junk"
           (display . nil)
           (visible . nil)
-          (level 6))
-         ("nnrss:.*" (display . all) (visible . t) (level 2))))
+          (level . 6))
+         ("nnrss:.*" (display . all) (visible . t) (level . 2))))
+
+ ;; Behavioral tweaks
  (setq gnus-article-browse-delete-temp 'ask)
- (setq gnus-expert-user t)
- (setq gnus-show-threads t)
- (setq gnus-fetch-old-headers nil)
- (setq gnus-build-sparse-threads 'some)
- (setq gnus-summary-thread-gathering-function
-       'gnus-gather-threads-by-subject)
- (setq gnus-thread-sort-functions '(gnus-thread-sort-by-date))
+ (setq gnus-expert-user t) ; Skip some prompts
 
  ;; Custom quit function
  (defun my-gnus-group-quit ()
-   "Quit Gnus and ensure a valid buffer is selected."
+   "Quit Gnus and switch to a valid buffer."
    (interactive)
    (gnus-group-quit)
-   (when (get-buffer "*scratch*")
-     (switch-to-buffer "*scratch*"))
-   (unless (get-buffer-window "*scratch*")
+   (if (get-buffer "*scratch*")
+       (switch-to-buffer "*scratch*")
      (switch-to-buffer (other-buffer))))
- (define-key gnus-group-mode-map (kbd "q") 'my-gnus-group-quit)
 
- ;; Helper function to get URL from Gnus article
- (defun gnus-article-get-url ()
-   "Extract the URL from the current Gnus article (e.g., for RSS)."
-   (save-excursion
-     (goto-char (point-min))
-     (when (re-search-forward "<a href=\"\\(http[^\"]+\\)\"" nil t)
-       (match-string 1))))
-
- ;; Helper function to get title from Gnus article
- (defun gnus-article-get-title ()
-   "Extract the title from the current Gnus article."
-   (save-excursion
-     (goto-char (point-min))
-     (when (re-search-forward "^Subject: \\(.*\\)$" nil t)
-       (match-string 1))))
-
- ;; Function to capture RSS as a TODO
+ ;; RSS and email capture functions (integrated with your org-capture)
  (defun my-gnus-capture-rss-to-org ()
-   "Capture the current Gnus RSS article as an Org TODO."
+   "Capture current Gnus RSS article as an Org TODO."
    (interactive)
    (when (eq major-mode 'gnus-article-mode)
      (let*
-         ((url (gnus-article-get-url)) ; Get the URL from the article
-          (title (gnus-article-get-title)) ; Get the article title
+         ((url (gnus-article-get-url))
+          (title (gnus-article-get-title))
           (org-capture-link
-           (format
-            "org-protocol://capture?template=r&link=%s&description=%s"
-            (url-encode-url url) (url-encode-url title))))
-       (if (and url title)
+           (when (and url title)
+             (format
+              "org-protocol://capture?template=r&link=%s&description=%s"
+              (url-encode-url url) (url-encode-url title)))))
+       (if org-capture-link
            (progn
              (org-protocol-capture org-capture-link)
              (message "Captured RSS: %s" title))
          (message "No URL or title found in this article")))))
 
- ;; Function to capture email as a TODO
  (defun my-gnus-capture-email-to-org ()
-   "Capture the current Gnus email as an Org TODO."
+   "Capture current Gnus email as an Org TODO."
    (interactive)
    (when (eq major-mode 'gnus-article-mode)
-     (let*
-         ((message-id (gnus-fetch-field "Message-ID")) ; Get the email's Message-ID
-          (subject (gnus-fetch-field "Subject")) ; Get the email subject
-          (email-link
-           (if message-id
+     (let* ((message-id (gnus-fetch-field "Message-ID"))
+            (subject (gnus-fetch-field "Subject"))
+            (email-link
+             (when message-id
                (format "gnus:nnimap+mailbox.org:INBOX#%s"
-                       (substring message-id 1 -1)) ; Remove < and >
-             nil))
-          (org-capture-link
-           (format
-            "org-protocol://capture?template=e&link=%s&subject=%s"
-            (url-encode-url email-link) (url-encode-url subject))))
-       (if (and email-link subject)
+                       (substring message-id 1 -1))))
+            (org-capture-link
+             (when (and email-link subject)
+               (format
+                "org-protocol://capture?template=e&link=%s&subject=%s"
+                (url-encode-url email-link)
+                (url-encode-url subject)))))
+       (if org-capture-link
            (progn
              (org-protocol-capture org-capture-link)
              (message "Captured email: %s" subject))
          (message "No Message-ID or subject found in this email")))))
 
- ;; Bind the new capture functions to keys in gnus-article-mode-map
+ ;; Helper functions for URL and title extraction
+ (defun gnus-article-get-url ()
+   "Extract URL from the current Gnus article."
+   (save-excursion
+     (goto-char (point-min))
+     (when (re-search-forward "<a href=\"\\(http[^\"]+\\)\"" nil t)
+       (match-string 1))))
+
+ (defun gnus-article-get-title ()
+   "Extract title from the current Gnus article."
+   (save-excursion
+     (goto-char (point-min))
+     (when (re-search-forward "^Subject: \\(.*\\)$" nil t)
+       (match-string 1))))
+
  :bind
+ (:map gnus-group-mode-map ("q" . my-gnus-group-quit))
  (:map
   gnus-article-mode-map
-  ("C-c r" . my-gnus-capture-rss-to-org) ; Capture RSS
-  ("C-c e" . my-gnus-capture-email-to-org)) ; Capture email
- )
+  ("C-c r" . my-gnus-capture-rss-to-org)
+  ("C-c e" . my-gnus-capture-email-to-org)))
 
 (use-package
  gnus-art
  :ensure nil
  :after gnus
  :config
- (setq gnus-inhibit-images nil)
- (setq gnus-blocked-images nil)
+ (setq gnus-inhibit-images nil) ; Show images
+ (setq gnus-blocked-images nil) ; Don’t block any images
  (setq gnus-article-mode-line-format "Gnus: %S")
  (setq gnus-visible-headers
        '("^From:"
