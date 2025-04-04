@@ -468,8 +468,8 @@
    ;; RandR and EXWM Enable
    (require 'exwm-randr)
    (setq exwm-randr-screen-change-hook #'my-exwm-update-displays)
-   (exwm-randr-enable)
-   (exwm-enable)
+   (exwm-randr-mode)
+   (exwm-init)
 
    :hook
    ((exwm-update-class-hook
