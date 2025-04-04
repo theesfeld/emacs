@@ -1364,9 +1364,9 @@
  flyspell
  :ensure nil
  :hook
- ((text-mode . flyspell-mode) ;; Prot enables in text modes
-  (org-mode . flyspell-mode) ;; Added for your Org usage
-  (prog-mode . flyspell-prog-mode)) ;; Comments/strings in code
+ ((text-mode-hook . flyspell-mode) ;; Prot enables in text modes
+  (org-mode-hook . flyspell-mode) ;; Added for your Org usage
+  (prog-mode-hook . flyspell-prog-mode)) ;; Comments/strings in code
  :config
  (setq ispell-program-name "aspell") ;; Prot uses aspell
  (setq ispell-dictionary "en_US") ;; Default dictionary
@@ -1375,17 +1375,15 @@
  ;; Prot’s performance tweaks
  (setq flyspell-issue-message-flag nil) ;; No chatter
  (setq flyspell-issue-welcome-flag nil) ;; No welcome
- ;; Prot binds correction manually
- :bind
- (:map
-  flyspell-mode-map
-  ("C-;" . flyspell-correct-wrapper)) ;; Prot’s correction key
  ;; Ensure aspell is installed
  (unless (executable-find "aspell")
    (message "Aspell not found; flyspell disabled")
-   (flyspell-mode -1)))
+   (flyspell-mode -1))
+ :bind
+ (:map
+  flyspell-mode-map
+  ("C-;" . flyspell-correct-wrapper))) ;; Prot’s correction key
 
-;; Prot uses flyspell-correct for manual corrections
 (use-package
  flyspell-correct
  :ensure t
