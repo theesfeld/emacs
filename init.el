@@ -443,7 +443,8 @@
                           "2>/tmp/udiskie.log")
            (start-process "blueman-applet" nil "blueman-applet")
            (start-process "nm-applet" nil "nm-applet")
-           (start-process "mullvad-vpn" nil "mullvad-vpn"))
+           ;;(start-process "mullvad-vpn" nil "mullvad-vpn")
+           )
        (error
         (message "Autostart failed: %s" (error-message-string err)))))
 
