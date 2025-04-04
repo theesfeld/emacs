@@ -402,19 +402,19 @@
                       (height
                        (string-to-number
                         (cadr (split-string resolution "x"))))
-                      (x-pos (nth 2 monitor))
-                      (y-pos (nth 3 monitor))
                       (frame (nth i exwm-workspace--list)))
                  (setq exwm-randr-workspace-monitor-plist
                        (plist-put
                         exwm-randr-workspace-monitor-plist i name))
                  (when frame
-                   (set-frame-size frame width height t)
-                   (set-frame-position frame x-pos y-pos))))
+                   (set-frame-parameter frame 'fullscreen nil) ; Ensure not fullscreen
+                   (set-frame-size frame width height t) ; Set exact size in pixels
+                   (set-frame-position frame 0 0)))) ; Reset position, let RandR handle offsets
              ;; Apply xrandr layout and refresh
              (start-process-shell-command
               "xrandr" nil "xrandr --auto")
              (exwm-randr-refresh)
+             (redisplay t) ; Force redraw
              (message "Updated %d monitors: %s"
                       monitor-count
                       monitors))
