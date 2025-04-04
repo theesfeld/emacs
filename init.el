@@ -362,7 +362,7 @@
 
    ;; Dynamic Multi-Monitor Setup
    (defun my-exwm-update-displays ()
-     "Update workspace-to-monitor mapping with correct dimensions."
+     "Update workspace-to-monitor mapping with maximized frames."
      (interactive)
      (let*
          ((xrandr-output
@@ -390,7 +390,7 @@
                 (1- (length exwm-workspace--list))))
              (while (< (length exwm-workspace--list) monitor-count)
                (exwm-workspace-add))
-             ;; Map workspaces to monitors and set frame sizes
+             ;; Map workspaces to monitors and maximize frames
              (setq exwm-randr-workspace-monitor-plist nil)
              (dotimes (i monitor-count)
                (let* ((monitor (nth i monitors))
@@ -408,10 +408,6 @@
                         exwm-randr-workspace-monitor-plist i name))
                  (when frame
                    (set-frame-parameter frame 'fullscreen 'maximized) ; Maximize to monitor size
-                   (set-frame-parameter
-                    frame
-                    'minibuffer
-                    (minibuffer-window)) ; Attach minibuffer
                    (message "Frame %d maximized for %s (%dx%d)"
                             i
                             name
