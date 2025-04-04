@@ -222,10 +222,10 @@
    :ensure t
    :config
    ;; Basic EXWM Settings
-   (setq exwm-workspace-number 1) ; Initial value, dynamically adjusted
+   (setq exwm-workspace-number 1) ; Initial value, adjusted by randr
    (setq exwm-workspace-show-all-buffers t)
    (setq exwm-layout-show-all-buffers t)
-   (setq exwm-manage-force-tiling nil) ; Allow floating for minibuffer/modeline
+   (setq exwm-manage-force-tiling nil) ; Allow modeline/minibuffer visibility
    (setq mouse-autoselect-window t)
    (setq focus-follows-mouse t)
    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
@@ -282,7 +282,7 @@
           (vector (intern (format "s-%d" i)))
           `(lambda ()
              (interactive)
-             (exwm-workspace-switch-create ,i))))
+             (exwm-workspace-switch ,i))))
        (number-sequence 0 9))
       ,@
       (mapcar
@@ -360,7 +360,7 @@
 
    ;; Dynamic Multi-Monitor Setup
    (defun my-exwm-update-displays ()
-     "Dynamically update workspaces and monitor layout."
+     "Update workspace-to-monitor mapping dynamically."
      (interactive)
      (let*
          ((xrandr-output
@@ -378,48 +378,42 @@
             collect
             (list (match-string 1 line) (match-string 2 line))))
           (monitor-count (length monitors)))
-       (when (> monitor-count 0)
-         (setq exwm-workspace-number monitor-count)
-         ;; Ensure enough workspaces exist
-         (while (< (length exwm-workspace--list) monitor-count)
-           (exwm-workspace--add-frame-as-workspace (make-frame)))
-         (while (> (length exwm-workspace--list) monitor-count)
-           (delete-frame (car (last exwm-workspace--list))))
-         ;; Configure monitors and assign workspaces
-         (setq exwm-randr-workspace-monitor-plist nil)
-         (dotimes (i monitor-count)
-           (let* ((monitor (nth i monitors))
-                  (name (car monitor))
-                  (geometry (cadr monitor))
-                  (width
-                   (string-to-number
-                    (car (split-string geometry "x"))))
-                  (height
-                   (string-to-number
-                    (cadr (split-string geometry "x\\|+"))))
-                  (x-offset
-                   (string-to-number
-                    (car
-                     (split-string (cadr (split-string geometry "+"))
-                                   "+"))))
-                  (frame (nth i exwm-workspace--list)))
+       (if (> monitor-count 0)
+           (progn
+             ;; Set workspace count to match monitors
+             (setq exwm-workspace-number monitor-count)
+             ;; Clear and rebuild workspace-monitor mapping
+             (setq exwm-randr-workspace-monitor-plist nil)
+             (dotimes (i monitor-count)
+               (let* ((monitor (nth i monitors))
+                      (name (car monitor))
+                      (geometry (cadr monitor)))
+                 (setq exwm-randr-workspace-monitor-plist
+                       (plist-put
+                        exwm-randr-workspace-monitor-plist i name))))
+             ;; Apply xrandr layout (left-to-right)
              (start-process-shell-command
               "xrandr" nil
-              (format
-               "xrandr --output %s --mode %s --pos %dx0 --auto"
-               name (car (split-string geometry "+")) x-offset))
-             (setq exwm-randr-workspace-monitor-plist
-                   (plist-put
-                    exwm-randr-workspace-monitor-plist i name))
-             (set-frame-parameter frame 'exwm-randr-monitor name)
-             (set-frame-size frame width height t)
-             (set-frame-position frame x-offset 0)
-             ;; Ensure modeline/minibuffer visibility
-             (set-frame-parameter frame 'fullscreen nil)
-             (set-frame-parameter frame 'unsplittable nil)))
-         (message "Updated %d monitors: %s" monitor-count monitors)
-         ;; Force redraw
-         (redisplay t))))
+              (concat
+               "xrandr "
+               (mapconcat (lambda (m)
+                            (let ((name (car m))
+                                  (geo (cadr m)))
+                              (format
+                               "--output %s --mode %s --pos %s --auto"
+                               name (car (split-string geo "+"))
+                               (string-join (cdr
+                                             (split-string geo "x"))
+                                            ""))))
+                          monitors
+                          " ")))
+             (message "Updated %d monitors: %s"
+                      monitor-count
+                      monitors))
+         (progn
+           (setq exwm-workspace-number 1)
+           (message
+            "No monitors detected, defaulting to 1 workspace")))))
 
    ;; Autostart Applications
    (defun my-exwm-autostart ()
@@ -444,16 +438,18 @@
 
    ;; System Tray
    (setq exwm-systemtray-height 24)
-   (exwm-systemtray-mode)
+   (exwm-systemtray-mode 1)
 
    ;; Modeline/Minibuffer Fix
-   (setq-default mode-line-format t) ; Ensure modeline is enabled
-   (setq echo-area-clear-delay nil) ; Immediate minibuffer updates
+   (setq-default mode-line-format t)
+   (setq echo-area-clear-delay nil)
+   (setq minibuffer-frame-alist
+         '((top . 0) (left . 0) (width . 80) (height . 2)))
 
    ;; RandR and EXWM Enable
    (require 'exwm-randr)
-   (setq exwm-randr-screen-change-hook #'my-exwm-update-displays)
-   (exwm-randr-mode)
+   (add-hook 'exwm-randr-screen-change-hook #'my-exwm-update-displays)
+   (exwm-randr-mode 1)
    (exwm-init)
 
    :hook
@@ -472,7 +468,6 @@
      (lambda ()
        (my-exwm-autostart)
        (my-exwm-update-displays)
-       ;; Ensure initial workspace has scratch
        (switch-to-buffer "*scratch*"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
