@@ -407,9 +407,16 @@
                        (plist-put
                         exwm-randr-workspace-monitor-plist i name))
                  (when frame
-                   (set-frame-parameter frame 'fullscreen nil) ; Ensure not fullscreen
-                   (set-frame-size frame width height t) ; Set exact size in pixels
-                   (set-frame-position frame 0 0)))) ; Reset position, let RandR handle offsets
+                   (set-frame-parameter frame 'fullscreen 'maximized) ; Maximize to monitor size
+                   (set-frame-parameter
+                    frame
+                    'minibuffer
+                    (minibuffer-window)) ; Attach minibuffer
+                   (message "Frame %d maximized for %s (%dx%d)"
+                            i
+                            name
+                            width
+                            height))))
              ;; Apply xrandr layout and refresh
              (start-process-shell-command
               "xrandr" nil "xrandr --auto")
