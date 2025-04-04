@@ -362,34 +362,44 @@
 
    ;; Dynamic Multi-Monitor Setup
    (defun my-exwm-update-displays ()
-     "Update workspace-to-monitor mapping dynamically for any monitor name."
+     "Update workspace-to-monitor mapping with correct dimensions."
      (interactive)
      (let*
          ((xrandr-output
            (shell-command-to-string "xrandr --current"))
           (monitors
            (cl-loop
-            for
-            line
-            in
-            (split-string xrandr-output "\n")
-            when
+            for line in (split-string xrandr-output "\n") when
             (string-match
-             "\\([a-zA-Z0-9-]+\\) connected.*\\([0-9]+x[0-9]+\\+[-0-9]+\\+[-0-9]+\\)"
+             "\\([a-zA-Z0-9-]+\\) connected.*\\([0-9]+x[0-9]+\\)+\\([-0-9]+\\)+\\([-0-9]+\\)"
              line)
             collect
-            (list (match-string 1 line) (match-string 2 line))))
+            (list
+             (match-string 1 line)
+             (match-string 2 line)
+             (string-to-number (match-string 3 line))
+             (string-to-number (match-string 4 line)))))
           (monitor-count (length monitors)))
        (if (> monitor-count 0)
            (progn
              (setq exwm-workspace-number monitor-count)
              (setq exwm-randr-workspace-monitor-plist nil)
              (dotimes (i monitor-count)
-               (let ((name (car (nth i monitors))))
+               (let* ((monitor (nth i monitors))
+                      (name (nth 0 monitor))
+                      (resolution (nth 1 monitor))
+                      (x-pos (nth 2 monitor))
+                      (y-pos (nth 3 monitor))
+                      (width
+                       (string-to-number
+                        (car (split-string resolution "x"))))
+                      (height
+                       (string-to-number
+                        (cadr (split-string resolution "x")))))
                  (setq exwm-randr-workspace-monitor-plist
                        (plist-put
                         exwm-randr-workspace-monitor-plist i name))))
-             ;; Let xrandr set the layout
+             ;; Apply xrandr layout
              (start-process-shell-command
               "xrandr" nil "xrandr --auto")
              (message "Updated %d monitors: %s"
