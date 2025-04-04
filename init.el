@@ -463,7 +463,7 @@
 
    ;; System Tray
    (setq exwm-systemtray-height 24) ; Slightly larger for modern DPI
-   (exwm-systemtray-enable)
+   (exwm-systemtray-mode)
 
    ;; RandR and EXWM Enable
    (require 'exwm-randr)
