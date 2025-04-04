@@ -226,7 +226,7 @@
    (setq exwm-workspace-show-all-buffers t)
    (setq exwm-layout-show-all-buffers t)
    (setq exwm-manage-force-tiling nil) ; Allow modeline/minibuffer
-   (setq mouse-autoselect-window t)
+   (setq mouse-autoselect-window nil)
    (setq focus-follows-mouse nil)
    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
    (setq mouse-wheel-progressive-speed nil) ; Disable progressive speed for reverse scroll
@@ -235,7 +235,7 @@
     x-select-enable-clipboard t
     x-select-enable-primary t
     select-enable-clipboard t)
-   (setq exwm-input-line-mode-passthrough t)
+   ;;(setq exwm-input-line-mode-passthrough t)
 
    ;; Reverse Mouse Scrolling
    (setq mouse-wheel-down-event 'wheel-up) ; Swap down to up
