@@ -1153,16 +1153,11 @@
  :ensure t
  :after vertico
  :demand t
- :config (setq history-length 1000)
+ :config (require 'consult) (setq history-length 1000)
  (setq savehist-additional-variables
        (append
         savehist-additional-variables '(extended-command-history)))
  (savehist-mode 1)
- (setq consult-buffer-sources
-       '(consult--source-buffer
-         consult--source-file
-         consult--source-bookmark
-         consult--source-project-buffer))
  :bind
  (("C-c m" . consult-M-x)
   ("C-x b" . consult-buffer)
