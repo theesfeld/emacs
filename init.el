@@ -1121,17 +1121,14 @@
 (use-package
  cape
  :ensure t
- :init
- ;; Load cape explicitly
- (require 'cape)
+ :init (require 'cape)
  :config
  ;; Force ispell to use aspell exclusively
  (setq ispell-program-name "aspell")
- (setq ispell-dictionary "en_US") ;; Set globally to ensure consistency
+ (setq ispell-dictionary "en_US")
  (setq ispell-really-aspell t)
  (setq ispell-extra-args '("--sug-mode=ultra" "-d" "en_US"))
  (setq ispell-personal-dictionary "~/.aspell.en.pws")
- ;; Define dictionary to fully delegate to aspell
  (setq ispell-local-dictionary-alist
        '(("en_US"
           "[[:alpha:]]"
@@ -1141,43 +1138,39 @@
           ("-d" "en_US")
           nil
           utf-8)))
- ;; Workaround: Custom ispell-lookup-words if default fails
+ ;; Custom lookup function to force aspell and debug
  (defun my-ispell-lookup-words (word)
-   "Use aspell directly to get word suggestions, bypassing plain-text requirement."
-   (condition-case nil
-       (ispell-lookup-words word) ;; Try default first
-     (error
-      (let* ((process
-              (start-process "aspell" nil "aspell" "-a" "-d" "en_US"))
-             (output
-              (with-temp-buffer
-                (process-send-string process (concat word "\n"))
-                (process-send-eof process)
-                (accept-process-output process 1 nil t)
-                (buffer-string))))
-        (when (string-match
-               "^& [^ ]+ \\([0-9]+\\) .*: \\(.*\\)$" output)
-          (split-string (match-string 2 output) ", "))))))
- ;; Override cape-ispell to use our workaround
- (advice-add
-  'cape-ispell
-  :around
-  (lambda (orig-fun &rest args)
-    (let ((ispell-lookup-words-function #'my-ispell-lookup-words))
-      (apply orig-fun args))))
- ;; Setup function for text modes
+   "Directly query aspell for suggestions, bypassing plain-text lookup."
+   (let* ((process
+           (start-process "aspell" nil "aspell" "-a" "-d" "en_US"))
+          (output
+           (with-temp-buffer
+             (process-send-string process (concat word "\n"))
+             (process-send-eof process)
+             (accept-process-output process 1 nil t)
+             (buffer-string))))
+     (message "Aspell raw output for '%s': %s" word output)
+     (if (string-match "^& [^ ]+ \\([0-9]+\\) .*: \\(.*\\)$" output)
+         (split-string (match-string 2 output) ", ")
+       nil)))
+ ;; Override ispell-lookup-words globally
+ (defadvice ispell-lookup-words (around use-my-aspell activate)
+   "Force ispell-lookup-words to use my-ispell-lookup-words."
+   (setq ad-return-value (my-ispell-lookup-words (ad-get-arg 0))))
+ ;; Setup function for text modes with debug
  (defun my-cape-text-mode-setup ()
    "Set up completion with cape-ispell for text modes only."
    (when (derived-mode-p 'text-mode 'org-mode 'markdown-mode)
      (setq-local completion-at-point-functions
                  (append
                   completion-at-point-functions (list #'cape-ispell)))
-     (message "Enabled cape-ispell in %s with lookup: %s"
-              major-mode
-              (my-ispell-lookup-words "teh"))))
+     (let ((suggestions (my-ispell-lookup-words "teh")))
+       (message "Enabled cape-ispell in %s with lookup: %s"
+                major-mode
+                suggestions))))
  :hook
  ((text-mode . my-cape-text-mode-setup)
-  (org-mode . my-cape-text-mode_setup)
+  (org-mode . my-cape-text-mode-setup)
   (markdown-mode . my-cape-text-mode-setup)))
 
 (use-package
