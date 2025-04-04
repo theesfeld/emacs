@@ -1127,17 +1127,14 @@
   (text-mode . corfu-mode)
   (eshell-mode . corfu-mode))
  :custom
- (corfu-cycle t)
- (corfu-auto t)
- (corfu-auto-prefix 2)
- (corfu-auto-delay 0.7)
- (corfu-quit-at-boundary t)
- (corfu-quit-no-match t)
- (corfu-preselect-first t)
+ (corfu-cycle t) ;; Cycle through candidates
+ (corfu-auto t) ;; Auto-show completions
+ (corfu-auto-prefix 2) ;; Trigger after 2 chars
+ (corfu-auto-delay 0.7) ;; Delay before showing
+ (corfu-quit-at-boundary t) ;; Quit at word boundary
+ (corfu-quit-no-match t) ;; Quit if no match
+ (corfu-preselect-first t) ;; Preselect first candidate
  :config
- ;; Use ispell’s built-in completion
- (add-to-list
-  'completion-at-point-functions #'ispell-completion-at-point)
  ;; Enable in minibuffer with Vertico
  (defun corfu-enable-in-minibuffer ()
    "Enable Corfu in the minibuffer if Vertico is active."
@@ -1158,16 +1155,8 @@
  :ensure t
  :after corfu
  :config
- ;; Add useful CAPE backends unconditionally
- (add-to-list 'completion-at-point-functions #'cape-dabbrev) ;; Dynamic abbreviations
- (add-to-list 'completion-at-point-functions #'cape-file) ;; File paths
- (add-to-list 'completion-at-point-functions #'cape-keyword) ;; Keywords
- ;; Bind CAPE-specific commands for manual invocation
- :bind
- (:map
-  project-prefix-map
-  ("d" . cape-dabbrev) ; Nest under C-c p c
-  ("f" . cape-file)))
+ ;; Add spell-checking completion
+ (add-to-list 'completion-at-point-functions #'cape-ispell))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  IBUFFER                                  ;;
