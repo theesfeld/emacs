@@ -1427,7 +1427,8 @@
  ;; Silence save operations
  (setq ispell-silently-savep t)
  ;; Define the personal dictionary file
- (setq ispell-personal-dictionary "~/.emacs.d/ispell_personal_dict")
+ (setq ispell-personal-dictionary
+       "~/.config/emacs/ispell_personal_dict")
  ;; If aspell isn’t found, disable flyspell to avoid errors
  (unless (executable-find ispell-program-name)
    (message "Aspell not found; disabling flyspell")
