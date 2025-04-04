@@ -825,8 +825,7 @@
  :bind
  (("C-x k" . kill-current-buffer)
   ("C-x K" . kill-buffer)
-  ("H-s" . #'grim/screenshot)
-  ("s-<tab>" . ibuffer)))
+  ("H-s" . #'grim/screenshot)))
 
 (use-package
  windmove
@@ -1072,131 +1071,6 @@
     (smartparens-mode nil "smartparens"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                               Completion Setup                            ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Prot uses Vertico with Orderless, no Corfu or Cape
-(use-package
- vertico
- :ensure t
- :init (vertico-mode 1)
- :custom
- (vertico-cycle t) ;; Cycle through candidates
- (vertico-count 10) ;; Show 10 candidates max, Prot’s default
- :config
- ;; Prot’s tweak: Sort by history then alphabetically
- (setq vertico-sort-function 'vertico-sort-history-alpha))
-
-(use-package
- orderless
- :ensure t
- :custom
- (completion-styles '(orderless basic)) ;; Prot’s preferred styles
- (completion-category-defaults nil)
- (completion-category-overrides
-  '((file (styles basic partial-completion))))) ;; Sensible file completion
-
-;; Prot uses Consult for enhanced commands
-(use-package
- consult
- :ensure t
- :after vertico
- :demand t
- :config
- (setq history-length 1000) ;; Same as yours, Prot keeps history long
- (setq savehist-additional-variables
-       (append
-        savehist-additional-variables '(extended-command-history)))
- (savehist-mode 1)
- :bind
- (("C-c m" . consult-M-x) ;; Prot’s M-x replacement
-  ("C-x b" . consult-buffer) ;; Buffer switching
-  ("C-x 4 b" . consult-buffer-other-window))) ;; Prot’s addition
-
-;; Marginalia for annotations, Prot’s choice
-(use-package marginalia :ensure t :init (marginalia-mode 1))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                  IBUFFER                                  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package
- ibuffer
- :ensure nil
- :commands ibuffer
- :bind (("C-x C-b" . ibuffer))
- :hook (ibuffer-mode . (lambda () (display-line-numbers-mode -1)))
- :config (setq ibuffer-use-header-line t)
- ;; Show empty filter groups
- (setq ibuffer-show-empty-filter-groups t)
- ;; Define static filter groups for non-project files
- (setq ibuffer-saved-filter-groups
-       '(("default"
-          ("Documents" (or (derived-mode . text-mode)
-               (derived-mode . markdown-mode)))
-          ("Programming" (derived-mode . prog-mode))
-          ("Dired" (derived-mode . dired-mode))
-          ("Org" (derived-mode . org-mode))
-          ("Shells" (or (derived-mode . eshell-mode)
-               (derived-mode . shell-mode)
-               (derived-mode . term-mode)))
-          ("Email/News" (or (derived-mode . gnus-group-mode)
-               (derived-mode . gnus-summary-mode)
-               (derived-mode . gnus-article-mode)
-               (derived-mode . message-mode)))
-          ("Chat/IRC" (derived-mode . erc-mode))
-          ("Web/Social" (or (derived-mode . eww-mode)
-               (derived-mode . mastodon-mode)))
-          ("Media" (or (derived-mode . pdf-view-mode)
-               (derived-mode . nov-mode)))
-          ("Special"
-           (or (derived-mode . calc-mode) (derived-mode . xkcd-mode)))
-          ("Emacs" (or (name . "^\\*.*\\*$")
-               (derived-mode . emacs-lisp-mode))))))
- ;; Styling for header and filter groups
- (defun my-ibuffer-style-header ()
-   "Apply modus-vivendi styling to ibuffer header line."
-   (when (eq major-mode 'ibuffer-mode)
-     (setq header-line-format
-           (propertize (format " %-22s %8s  %s" "Name" "Size" "Mode")
-                       'face
-                       '(:foreground "#89b4fa" :weight bold)))))
- (defun my-ibuffer-style-filter-groups ()
-   "Apply modus-vivendi styling to filter group names."
-   (when (eq major-mode 'ibuffer-mode)
-     (save-excursion
-       (goto-char (point-min))
-       (while (re-search-forward "^\\s-*\\(.+\\)\\s-*$" nil t)
-         (when (get-text-property (point) 'ibuffer-filter-group-name)
-           (add-text-properties
-            (match-beginning 1) (match-end 1)
-            '(face
-              (:foreground "#89b4fa" :weight bold :underline t))))))))
- :hook
- (ibuffer-mode . my-ibuffer-style-header)
- (ibuffer-mode . my-ibuffer-style-filter-groups)
- (ibuffer-mode
-  .
-  (lambda ()
-    ;; Ensure the custom filter groups are always applied
-    (ibuffer-switch-to-saved-filter-groups "default")
-    ;; Sort buffers alphabetically
-    (unless (eq ibuffer-sorting-mode 'alphabetic)
-      (ibuffer-do-sort-by-alphabetic))
-    (ibuffer-update nil t))))
-
-(use-package
- all-the-icons-ibuffer
- :ensure t
- :after ibuffer
- :hook (ibuffer-mode . all-the-icons-ibuffer-mode)
- :config
- (setq all-the-icons-ibuffer-icon-size 1.0)
- (setq all-the-icons-ibuffer-human-readable-size t)
- (set-face-attribute 'all-the-icons-ibuffer-icon-face nil
-                     :foreground "#f9e2af"))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    helm                                   ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1209,7 +1083,7 @@
  (setq helm-mode nil)) ; Disable Helm globally
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                              Vertico + Consult                            ;;
+;;                              Buffer Management                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
@@ -1232,8 +1106,9 @@
  :ensure t
  :init (vertico-mode 1)
  :custom
- (vertico-cycle t)
- (vertico-sort-function 'vertico-sort-history-alpha) ; Sort by history then alphabetically
+ (vertico-cycle t) ; Cycle through candidates
+ (vertico-count 10) ; Show 10 candidates max, Prot’s default
+ (vertico-sort-function 'vertico-sort-history-alpha) ; History then alpha
  :config
  (with-eval-after-load 'all-the-icons
    (defun my-consult-buffer-format (buffer)
@@ -1244,32 +1119,50 @@
     'consult-buffer
     :filter-return
     (lambda (buffers) (mapcar #'my-consult-buffer-format buffers))))
- (bind-key "s-<tab>" 'vertico-next vertico-map)
- (bind-key "S-s-<tab>" 'vertico-previous vertico-map)
  :bind
  (:map
   vertico-map
   ("DEL" . vertico-directory-delete-char)
-  ("M-DEL" . vertico-directory-delete-word)))
+  ("M-DEL" . vertico-directory-delete-word)
+  ("s-<tab>" . vertico-next)
+  ("S-s-<tab>" . vertico-previous)))
 
 (use-package
  consult
  :ensure t
  :after vertico
  :demand t
- :config (setq history-length 1000)
+ :config
+ (setq history-length 1000) ; Long history, per Prot
  (setq savehist-additional-variables
        (append
         savehist-additional-variables '(extended-command-history)))
- (savehist-mode 1)
- :bind (("C-c m" . consult-m-x) ("C-x b" . consult-buffer)))
+ (savehist-mode 1) ; Persist history
+ (setq consult-buffer-sources
+       '(consult--source-buffer
+         consult--source-file consult--source-bookmark
+         consult--source-project-buffer)) ; Prot-style sources
+ :bind
+ (("C-c m" . consult-M-x) ; Your existing M-x replacement
+  ("C-x b" . consult-buffer) ; Prot’s primary buffer switcher
+  ("C-x 4 b" . consult-buffer-other-window) ; Open in other window
+  ("C-x p b" . consult-project-buffer))) ; Project-specific buffers
 
-(use-package marginalia :ensure t :init (marginalia-mode))
+(use-package
+ orderless
+ :ensure t
+ :custom
+ (completion-styles '(orderless basic)) ; Prot’s preferred styles
+ (completion-category-defaults nil)
+ (completion-category-overrides
+  '((file (styles basic partial-completion)))))
+
+(use-package marginalia :ensure t :init (marginalia-mode 1))
 
 (use-package
  all-the-icons-completion
  :ensure t
- :after (all-the-icons marginalia corfu)
+ :after (all-the-icons marginalia)
  :config (all-the-icons-completion-mode)
  :hook
  (marginalia-mode . all-the-icons-completion-marginalia-setup))
