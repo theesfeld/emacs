@@ -226,8 +226,8 @@
    (setq exwm-workspace-show-all-buffers t)
    (setq exwm-layout-show-all-buffers t)
    (setq exwm-manage-force-tiling nil) ; Allow modeline/minibuffer
-   (setq mouse-autoselect-window t)
-   (setq focus-follows-mouse t)
+   (setq mouse-autoselect-window nil)
+   (setq focus-follows-mouse nil)
    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
    (setq mouse-wheel-progressive-speed nil) ; Disable progressive speed for reverse scroll
    (setq mouse-wheel-scroll-amount-horizontal 1) ; Optional: horizontal scroll amount
@@ -245,8 +245,12 @@
     "xsetroot" nil "xsetroot -cursor_name left_ptr")
 
    ;; Input Prefix Keys
+
    (setq exwm-input-prefix-keys
-         '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
+         '(?\s-))
+   (setq exwm-input-line-mode-passthrough t)
+   ;; (setq exwm-input-prefix-keys
+   ;;       '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
 
    ;; Global Keybindings
    (setq
