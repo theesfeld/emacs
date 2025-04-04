@@ -1119,18 +1119,6 @@
     'consult-buffer
     :filter-return
     (lambda (buffers) (mapcar #'my-consult-buffer-format buffers))))
- (set-face-attribute 'vertico-current nil
-                     :background "#452950"
-                     :foreground "#ffcc66"
-                     :weight 'bold)
- (set-face-attribute 'vertico-group-title nil
-                     :foreground "#bd93f9"
-                     :slant 'italic
-                     :weight 'bold)
- (set-face-attribute 'vertico-group-separator nil
-                     :foreground "#88c0d0"
-                     :strike-through t)
- (set-face-attribute 'vertico-default nil :foreground "#d8dee9")
  :bind
  (:map
   vertico-map
@@ -1184,16 +1172,7 @@
   ("C-x 4 b" . consult-buffer-other-window)
   ("C-x p b" . consult-project-buffer)))
 
-(use-package
- marginalia
- :ensure t
- :init (marginalia-mode 1)
- :config
- (set-face-attribute 'marginalia-file-name nil :foreground "#d8dee9")
- (set-face-attribute 'marginalia-mode nil
-                     :foreground "#88c0d0"
-                     :slant 'italic)
- (set-face-attribute 'marginalia-size nil :foreground "#ffcc66"))
+(use-package marginalia :ensure t :init (marginalia-mode 1))
 
 (use-package
  all-the-icons-completion
