@@ -1135,9 +1135,10 @@
  (corfu-quit-no-match t)
  (corfu-preselect-first t)
  :config
- ;; Add ispell as a completion backend
- (add-to-list 'completion-at-point-functions #'cape-ispell)
- ;; Enable corfu in minibuffer if vertico is active
+ ;; Use ispell’s built-in completion
+ (add-to-list
+  'completion-at-point-functions #'ispell-completion-at-point)
+ ;; Enable in minibuffer with Vertico
  (defun corfu-enable-in-minibuffer ()
    "Enable Corfu in the minibuffer if Vertico is active."
    (when (and (bound-and-true-p vertico--input)
@@ -1415,45 +1416,28 @@
 (use-package
  flyspell
  :ensure nil
- :hook ((text-mode . flyspell-mode) (org-mode . flyspell-mode))
+ :hook
+ ((text-mode . flyspell-mode) ;; Enable in text modes
+  (prog-mode . flyspell-prog-mode)) ;; Enable for comments/strings in code
  :init
- ;; Explicitly set aspell as the spell checker
- (setq ispell-program-name "aspell")
- ;; Set the dictionary to use (replace "en_US" with your installed dictionary if different)
- (setq ispell-dictionary "en_US")
- ;; Extra args for better aspell performance
- (setq ispell-extra-args
-       '("--sug-mode=ultra" "--camel-case" "--run-together"))
- ;; Silence save operations
- (setq ispell-silently-savep t)
- ;; Define the personal dictionary file
- (setq ispell-personal-dictionary
-       "~/.config/emacs/ispell_personal_dict")
- ;; If aspell isn’t found, disable flyspell to avoid errors
- (unless (executable-find ispell-program-name)
-   (message "Aspell not found; disabling flyspell")
-   (remove-hook 'text-mode-hook 'flyspell-mode)
-   (remove-hook 'org-mode-hook 'flyspell-mode))
+ (setq ispell-program-name "aspell") ;; Use aspell as the backend
+ (setq ispell-dictionary "en_US") ;; Default dictionary (adjust if needed)
  :config
- ;; Reduce startup load
- (setq flyspell-issue-message-flag nil)
- (setq flyspell-issue-welcome-flag nil)
- ;; Fallback to a common dictionary file if needed
- (when (and (executable-find "aspell")
-            (not
-             (stringp
-              (shell-command-to-string
-               "aspell dump dicts | grep en_US"))))
-   (message
-    "Aspell dictionary 'en_US' not found; falling back to /usr/share/dict/words")
-   (setq ispell-alternate-dictionary "/usr/share/dict/words"))
- :custom
- (flyspell-default-dictionary "en_US") ;; Default dictionary
- :bind (:map flyspell-mode-map ("C-;" . flyspell-correct-wrapper)))
+ ;; Optional: Improve performance and usability
+ (setq flyspell-issue-message-flag nil) ;; Silence unnecessary messages
+ (setq flyspell-issue-welcome-flag nil) ;; No welcome message
+ ;; Check if aspell is installed
+ (unless (executable-find "aspell")
+   (message "Aspell not found; flyspell disabled")
+   (flyspell-mode -1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Eglot (LSP) Setup                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+pewp
+and
+pee
 
 (use-package
  eglot
