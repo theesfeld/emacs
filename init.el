@@ -432,6 +432,42 @@
            (message
             "No monitors detected, defaulting to 1 workspace")))))
 
+   (defun my-exwm-mode-line-marker (frame)
+     "Return a colored marker for the mode-line of FRAME."
+     (propertize
+      " ● "
+      'face
+      (if (eq frame (selected-frame))
+          '(:foreground "#ffcc66" :weight bold) ; Active: yellow
+        '(:foreground "#a0a0a0" :weight normal)))) ; Inactive: gray
+
+   ;; Function to update mode-line for all frames
+   (defun my-exwm-update-mode-line-marker ()
+     "Update the mode-line marker for all frames based on the active workspace."
+     (dolist (frame (frame-list))
+       (let ((marker (my-exwm-mode-line-marker frame)))
+         ;; Store the marker as a frame parameter
+         (set-frame-parameter frame 'my-mode-line-marker marker)
+         ;; Update the mode-line-format for this frame
+         (with-selected-frame frame
+           (setq mode-line-format
+                 (cons
+                  '(:eval
+                    (frame-parameter nil 'my-mode-line-marker))
+                  (default-value 'mode-line-format))))))
+     (force-mode-line-update t)) ; Update all mode-lines
+
+   ;; Ensure the default mode-line-format doesn’t override our changes
+   (setq-default mode-line-format
+                 (cons "" mode-line-format)) ; Placeholder to avoid conflicts
+
+   ;; Hook into EXWM workspace switch
+   (add-hook
+    'exwm-workspace-switch-hook #'my-exwm-update-mode-line-marker)
+
+   ;; Initial call to set up all frames
+   (my-exwm-update-mode-line-marker)
+
    ;; Autostart Applications
    (defun my-exwm-autostart ()
      "Start applications after EXWM initialization with error handling."
