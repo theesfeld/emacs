@@ -452,24 +452,25 @@
    (setq exwm-systemtray-height 24)
    (exwm-systemtray-mode 1)
 
-   ;; Modeline with Battery Status
-   (require 'battery)
-   (setq-default mode-line-format
-                 '("%e" (:eval
-                    (when (and battery-status-function
-                               (display-battery-mode))
-                      (let ((status
-                             (funcall battery-status-function)))
-                        (concat
-                         " Bat: " (cdr (assoc ?p status)) "% "))))
-                   " %b " ; Buffer name
-                   " %l:%c " ; Line and column
-                   " %m " ; Mode name
-                   " %*")) ; Modified status
-   (display-battery-mode 1) ; Enable battery display
-   (display-time-mode 1) ; enable time display
-   (setq echo-area-clear-delay nil)
-   (setq minibuffer-frame-alist
+   (display-time-mode 1)
+    (setq display-time-24hr-format t) ; 24-hour clock
+    (setq display-time-day-and-date nil) ; Just time, no date
+    (display-battery-mode 1)
+
+    ;; Append time and battery to the default mode-line, aligned right
+    (setq-default mode-line-end-spaces
+                  '(""
+                    (:eval (propertize " " 'display '((space :align-to (- right 20))))) ; Space before right edge
+                    (:eval (when (and battery-status-function display-battery-mode)
+                             (let ((status (funcall battery-status-function)))
+                               (propertize (concat "Bat: " (cdr (assoc ?p status)) "% ")
+                                           'face 'mode-line))))
+                    (:eval (when display-time-mode
+                             (propertize display-time-string
+                                         'face 'mode-line)))))
+
+;   (setq echo-area-clear-delay nil)
+;   (setq minibuffer-frame-alist
          '((top . 0) (left . 0) (width . 80) (height . 2)))
 
    ;; RandR and EXWM Enable
