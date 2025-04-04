@@ -1119,6 +1119,23 @@
      (completion-preview--hide))))
 
 (use-package
+ cape
+ :ensure t
+ :init
+ ;; Load cape early to ensure functions are defined
+ (require 'cape)
+ :config
+ ;; Define a function to add cape-ispell only in text modes
+ (defun my-cape-text-mode-setup ()
+   "Add cape-ispell to completion-at-point-functions for text modes."
+   (when (derived-mode-p 'text-mode 'org-mode 'markdown-mode)
+     (add-to-list 'completion-at-point-functions #'cape-ispell)))
+ :hook
+ ((text-mode . my-cape-text-mode-setup)
+  (org-mode . my-cape-text-mode-setup)
+  (markdown-mode . my-cape-text-mode-setup)))
+
+(use-package
  corfu
  :ensure t
  :init (global-corfu-mode)
@@ -1127,13 +1144,13 @@
   (text-mode . corfu-mode)
   (eshell-mode . corfu-mode))
  :custom
- (corfu-cycle t) ;; Cycle through candidates
- (corfu-auto t) ;; Auto-show completions
- (corfu-auto-prefix 2) ;; Trigger after 2 chars
- (corfu-auto-delay 0.7) ;; Delay before showing
- (corfu-quit-at-boundary t) ;; Quit at word boundary
- (corfu-quit-no-match t) ;; Quit if no match
- (corfu-preselect-first t) ;; Preselect first candidate
+ (corfu-cycle t)
+ (corfu-auto t)
+ (corfu-auto-prefix 2)
+ (corfu-auto-delay 0.7)
+ (corfu-quit-at-boundary t)
+ (corfu-quit-no-match t)
+ (corfu-preselect-first t)
  :config
  ;; Enable in minibuffer with Vertico
  (defun corfu-enable-in-minibuffer ()
@@ -1149,14 +1166,6 @@
   ("C-n" . corfu-next)
   ("C-p" . corfu-previous)
   ("M-RET" . corfu-insert)))
-
-(use-package
- cape
- :ensure t
- :after corfu
- :config
- ;; Add spell-checking completion
- (add-to-list 'completion-at-point-functions #'cape-ispell))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  IBUFFER                                  ;;
