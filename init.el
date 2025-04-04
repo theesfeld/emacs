@@ -533,7 +533,7 @@
      (lambda ()
        (my-exwm-autostart)
        (my-exwm-update-displays)
-       (switch-to-buffer "*scratch*")
+       (switch-to-buffer "*scratchtch*")
        (exwm-workspace-switch 0))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -679,7 +679,7 @@
    .
    (lambda ()
      (global-display-line-numbers-mode 1)
-     (global-hl-line-mode 1)
+     ;     (global-hl-line-mode 1)
      (pixel-scroll-precision-mode 1)
      (line-number-mode 1)
      (column-number-mode 1)
@@ -2781,6 +2781,17 @@
     "connect (manual)"))
 
  :hook (pgmacs-mode . (lambda () (display-line-numbers-mode -1))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                    LINE NUMBERS                           ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package
+ hl-line
+ :ensure nil ; Built-in, no need to install
+ :hook
+ (prog-mode . hl-line-mode)) ; Enable only in prog-mode derived modes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  SES (Spreadsheet)                       ;;
