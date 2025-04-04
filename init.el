@@ -226,23 +226,28 @@
    (setq exwm-workspace-show-all-buffers t)
    (setq exwm-layout-show-all-buffers t)
    (setq exwm-manage-force-tiling nil) ; Allow modeline/minibuffer
-   (setq focus-follows-mouse nil) ; No mouse focus
-   (setq mouse-autoselect-window nil) ; No auto-select
+   (setq mouse-autoselect-window nil)
+   (setq focus-follows-mouse nil)
    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
-   (setq mouse-wheel-progressive-speed nil)
-   (setq mouse-wheel-down-event 'wheel-up) ; Reverse scrolling
-   (setq mouse-wheel-up-event 'wheel-down)
+   (setq mouse-wheel-progressive-speed nil) ; Disable progressive speed for reverse scroll
+   (setq mouse-wheel-scroll-amount-horizontal 1) ; Optional: horizontal scroll amount
    (setq
     x-select-enable-clipboard t
     x-select-enable-primary t
     select-enable-clipboard t)
-   (setq exwm-input-line-mode-passthrough t) ; Pass keys to Emacs
+   (setq exwm-input-line-mode-passthrough t)
+
+   ;; Reverse Mouse Scrolling
+   (setq mouse-wheel-down-event 'wheel-up) ; Swap down to up
+   (setq mouse-wheel-up-event 'wheel-down) ; Swap up to down
 
    ;; Fix mouse cursor
    (start-process-shell-command
     "xsetroot" nil "xsetroot -cursor_name left_ptr")
+
+   ;; Input Prefix Keys
    (setq exwm-input-prefix-keys
-         '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-` ?\M-& ?\M-: ?\C-\ ))
+         '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
 
    ;; Global Keybindings
    (setq
@@ -333,6 +338,7 @@
          (kbd (format "s-%d" i))
          (lambda ()
            (interactive)
+           (message "Switching to workspace %d" i)
            (exwm-workspace-switch i))))
       (number-sequence 0 9))
      (mapcar
@@ -341,6 +347,7 @@
          (kbd (format "M-s-%d" i))
          (lambda ()
            (interactive)
+           (message "Moving window to workspace %d" i)
            (exwm-workspace-move-window i))))
       (number-sequence 0 9))))
 
@@ -372,21 +379,58 @@
             (string-match
              "\\([a-zA-Z0-9-]+\\) connected\\( primary\\)? \\([0-9]+x[0-9]+\\)\\+\\([-0-9]+\\)\\+\\([-0-9]+\\)"
              line)
-            collect (list (match-string 1 line))))
+            collect
+            (list
+             (match-string 1 line)
+             (match-string 3 line)
+             (string-to-number (match-string 4 line))
+             (string-to-number (match-string 5 line)))))
           (monitor-count (length monitors)))
-       (setq exwm-workspace-number monitor-count)
-       (while (> (length exwm-workspace--list) monitor-count)
-         (exwm-workspace-delete (1- (length exwm-workspace--list))))
-       (while (< (length exwm-workspace--list) monitor-count)
-         (exwm-workspace-add))
-       (dotimes (i monitor-count)
-         (let ((monitor (nth i monitors))
-               (frame (nth i exwm-workspace--list)))
-           (plist-put
-            exwm-randr-workspace-monitor-plist i (car monitor))
-           (when frame
-             (set-frame-parameter frame 'fullscreen 'maximized))))
-       (exwm-randr-refresh)))
+       (if (> monitor-count 0)
+           (progn
+             ;; Set workspace count
+             (setq exwm-workspace-number monitor-count)
+             ;; Clear and recreate workspaces
+             (while (> (length exwm-workspace--list) monitor-count)
+               (exwm-workspace-delete
+                (1- (length exwm-workspace--list))))
+             (while (< (length exwm-workspace--list) monitor-count)
+               (exwm-workspace-add))
+             ;; Map workspaces to monitors and maximize frames
+             (setq exwm-randr-workspace-monitor-plist nil)
+             (dotimes (i monitor-count)
+               (let* ((monitor (nth i monitors))
+                      (name (nth 0 monitor))
+                      (resolution (nth 1 monitor))
+                      (width
+                       (string-to-number
+                        (car (split-string resolution "x"))))
+                      (height
+                       (string-to-number
+                        (cadr (split-string resolution "x"))))
+                      (frame (nth i exwm-workspace--list)))
+                 (setq exwm-randr-workspace-monitor-plist
+                       (plist-put
+                        exwm-randr-workspace-monitor-plist i name))
+                 (when frame
+                   (set-frame-parameter frame 'fullscreen 'maximized) ; Maximize to monitor size
+                   (message "Frame %d maximized for %s (%dx%d)"
+                            i
+                            name
+                            width
+                            height))))
+             ;; Apply xrandr layout and refresh
+             (start-process-shell-command
+              "xrandr" nil "xrandr --auto")
+             (exwm-randr-refresh)
+             (redisplay t) ; Force redraw
+             (message "Updated %d monitors: %s"
+                      monitor-count
+                      monitors))
+         (progn
+           (setq exwm-workspace-number 1)
+           (message
+            "No monitors detected, defaulting to 1 workspace")))))
 
    ;; Autostart Applications
    (defun my-exwm-autostart ()
@@ -407,6 +451,26 @@
    (setq exwm-systemtray-height 24)
    (exwm-systemtray-mode 1)
 
+   ;; Modeline with Battery Status
+   (require 'battery)
+   (setq-default mode-line-format
+                 '("%e" (:eval
+                    (when (and battery-status-function
+                               (display-battery-mode))
+                      (let ((status
+                             (funcall battery-status-function)))
+                        (concat
+                         " Bat: " (cdr (assoc ?p status)) "% "))))
+                   " %b " ; Buffer name
+                   " %l:%c " ; Line and column
+                   " %m " ; Mode name
+                   " %*")) ; Modified status
+   (display-battery-mode 1) ; Enable battery display
+   (display-time-mode 1) ; enable time display
+   (setq echo-area-clear-delay nil)
+   (setq minibuffer-frame-alist
+         '((top . 0) (left . 0) (width . 80) (height . 2)))
+
    ;; RandR and EXWM Enable
    (require 'exwm-randr)
    (add-hook 'exwm-randr-screen-change-hook #'my-exwm-update-displays)
@@ -418,12 +482,12 @@
      .
      (lambda ()
        (exwm-workspace-rename-buffer
-        (or exwm-title exwm-class-name "*EXWM*"))))
+        (or exwm-title exwm-class-name "*EXWM*")))) ; Use app title or class
     (exwm-update-title-hook
      .
      (lambda ()
        (exwm-workspace-rename-buffer
-        (or exwm-title exwm-class-name "*EXWM*"))))
+        (or exwm-title exwm-class-name "*EXWM*")))) ; Update with title
     (exwm-init-hook
      .
      (lambda ()
