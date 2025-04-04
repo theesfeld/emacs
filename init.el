@@ -1122,16 +1122,16 @@
  cape
  :ensure t
  :init
- ;; Load cape explicitly to ensure all functions are available
+ ;; Load cape explicitly
  (require 'cape)
  :config
- ;; Configure ispell to fully use aspell on Arch Linux
+ ;; Force ispell to use aspell exclusively
  (setq ispell-program-name "aspell")
- (setq ispell-dictionary "en_US")
- ;; Force aspell as the backend and configure it properly
+ (setq ispell-dictionary "en_US") ;; Set globally to ensure consistency
  (setq ispell-really-aspell t)
  (setq ispell-extra-args '("--sug-mode=ultra" "-d" "en_US"))
- ;; Define dictionary settings to avoid plain-text lookup
+ (setq ispell-personal-dictionary "~/.aspell.en.pws")
+ ;; Define dictionary to fully delegate to aspell
  (setq ispell-local-dictionary-alist
        '(("en_US"
           "[[:alpha:]]"
@@ -1141,8 +1141,30 @@
           ("-d" "en_US")
           nil
           utf-8)))
- ;; Optional: personal dictionary for custom words
- (setq ispell-personal-dictionary "~/.aspell.en.pws")
+ ;; Workaround: Custom ispell-lookup-words if default fails
+ (defun my-ispell-lookup-words (word)
+   "Use aspell directly to get word suggestions, bypassing plain-text requirement."
+   (condition-case nil
+       (ispell-lookup-words word) ;; Try default first
+     (error
+      (let* ((process
+              (start-process "aspell" nil "aspell" "-a" "-d" "en_US"))
+             (output
+              (with-temp-buffer
+                (process-send-string process (concat word "\n"))
+                (process-send-eof process)
+                (accept-process-output process 1 nil t)
+                (buffer-string))))
+        (when (string-match
+               "^& [^ ]+ \\([0-9]+\\) .*: \\(.*\\)$" output)
+          (split-string (match-string 2 output) ", "))))))
+ ;; Override cape-ispell to use our workaround
+ (advice-add
+  'cape-ispell
+  :around
+  (lambda (orig-fun &rest args)
+    (let ((ispell-lookup-words-function #'my-ispell-lookup-words))
+      (apply orig-fun args))))
  ;; Setup function for text modes
  (defun my-cape-text-mode-setup ()
    "Set up completion with cape-ispell for text modes only."
@@ -1150,10 +1172,12 @@
      (setq-local completion-at-point-functions
                  (append
                   completion-at-point-functions (list #'cape-ispell)))
-     (message "Enabled cape-ispell in %s" major-mode)))
+     (message "Enabled cape-ispell in %s with lookup: %s"
+              major-mode
+              (my-ispell-lookup-words "teh"))))
  :hook
  ((text-mode . my-cape-text-mode-setup)
-  (org-mode . my-cape-text-mode-setup)
+  (org-mode . my-cape-text-mode_setup)
   (markdown-mode . my-cape-text-mode-setup)))
 
 (use-package
