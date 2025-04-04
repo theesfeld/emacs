@@ -444,7 +444,7 @@
 
    ;; System Tray
    (setq exwm-systemtray-height 24)
-   (exwm-systemtray-enable) ; Use enable instead of mode
+   (exwm-systemtray-mode) ; Use enable instead of mode
 
    ;; Modeline with Battery Status
    (require 'battery)
