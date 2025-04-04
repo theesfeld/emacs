@@ -444,7 +444,7 @@
 
    ;; System Tray
    (setq exwm-systemtray-height 24)
-   (exwm-systemtray-enable)
+   (exwm-systemtray-mode)
 
    ;; Modeline/Minibuffer Fix
    (setq-default mode-line-format t) ; Ensure modeline is enabled
@@ -453,8 +453,8 @@
    ;; RandR and EXWM Enable
    (require 'exwm-randr)
    (setq exwm-randr-screen-change-hook #'my-exwm-update-displays)
-   (exwm-randr-enable)
-   (exwm-enable)
+   (exwm-randr-mode)
+   (exwm-init)
 
    :hook
    ((exwm-update-class-hook
