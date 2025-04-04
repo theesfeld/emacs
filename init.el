@@ -1106,9 +1106,9 @@
  :ensure t
  :init (vertico-mode 1)
  :custom
- (vertico-cycle t) ; Cycle through candidates
- (vertico-count 10) ; Show 10 candidates max, Prot’s default
- (vertico-sort-function 'vertico-sort-history-alpha) ; History then alpha
+ (vertico-cycle t)
+ (vertico-count 10)
+ (vertico-sort-function 'vertico-sort-history-alpha)
  :config
  (with-eval-after-load 'all-the-icons
    (defun my-consult-buffer-format (buffer)
@@ -1119,6 +1119,18 @@
     'consult-buffer
     :filter-return
     (lambda (buffers) (mapcar #'my-consult-buffer-format buffers))))
+ (set-face-attribute 'vertico-current nil
+                     :background "#5e81ac"
+                     :foreground "#d8dee9"
+                     :weight 'bold)
+ (set-face-attribute 'vertico-group-title nil
+                     :foreground "#6272a4"
+                     :slant 'italic
+                     :weight 'light)
+ (set-face-attribute 'vertico-group-separator nil
+                     :foreground "#6272a4"
+                     :strike-through t)
+ (set-face-attribute 'vertico-default nil :foreground "#d8dee9")
  :bind
  (:map
   vertico-map
@@ -1128,36 +1140,44 @@
   ("S-s-<tab>" . vertico-previous)))
 
 (use-package
- consult
- :ensure t
- :after vertico
- :demand t
- :config
- (setq history-length 1000) ; Long history, per Prot
- (setq savehist-additional-variables
-       (append
-        savehist-additional-variables '(extended-command-history)))
- (savehist-mode 1) ; Persist history
- (setq consult-buffer-sources
-       '(consult--source-buffer
-         consult--source-file consult--source-bookmark
-         consult--source-project-buffer)) ; Prot-style sources
- :bind
- (("C-c m" . consult-M-x) ; Your existing M-x replacement
-  ("C-x b" . consult-buffer) ; Prot’s primary buffer switcher
-  ("C-x 4 b" . consult-buffer-other-window) ; Open in other window
-  ("C-x p b" . consult-project-buffer))) ; Project-specific buffers
-
-(use-package
  orderless
  :ensure t
  :custom
- (completion-styles '(orderless basic)) ; Prot’s preferred styles
+ (completion-styles '(orderless basic))
  (completion-category-defaults nil)
  (completion-category-overrides
   '((file (styles basic partial-completion)))))
 
-(use-package marginalia :ensure t :init (marginalia-mode 1))
+(use-package
+ consult
+ :ensure t
+ :after vertico
+ :demand t
+ :config (setq history-length 1000)
+ (setq savehist-additional-variables
+       (append
+        savehist-additional-variables '(extended-command-history)))
+ (savehist-mode 1)
+ (setq consult-buffer-sources
+       '(consult--source-buffer
+         consult--source-file
+         consult--source-bookmark
+         consult--source-project-buffer))
+ :bind
+ (("C-c m" . consult-M-x)
+  ("C-x b" . consult-buffer)
+  ("C-x 4 b" . consult-buffer-other-window)
+  ("C-x p b" . consult-project-buffer)))
+
+(use-package
+ marginalia
+ :ensure t
+ :init (marginalia-mode 1)
+ :config
+ (set-face-attribute 'marginalia-file-name nil :foreground "#d8dee9")
+ (set-face-attribute 'marginalia-mode nil
+                     :foreground "#6272a4"
+                     :slant 'italic))
 
 (use-package
  all-the-icons-completion
