@@ -448,7 +448,6 @@
        (error
         (message "Autostart failed: %s" (error-message-string err)))))
 
-   ;; System Tray
    (setq exwm-systemtray-height 24)
    (exwm-systemtray-mode 1)
 
@@ -460,9 +459,8 @@
    ;; Append time and battery to the default mode-line, aligned right
    (setq-default
     mode-line-end-spaces
-    '(""
-      (:eval
-       (propertize " " 'display '((space :align-to (- right 20))))) ; Space before right edge
+    '("" (:eval
+       (propertize " " 'display '((space :align-to (- right 25))))) ; Space before right edge
       (:eval
        (when (and battery-status-function display-battery-mode)
          (let ((status
