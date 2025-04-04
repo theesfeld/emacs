@@ -222,10 +222,10 @@
    :ensure t
    :config
    ;; Basic EXWM Settings
-   (setq exwm-workspace-number 1) ; Initial value, adjusted by randr
+   (setq exwm-workspace-number 1) ; Initial value, adjusted dynamically
    (setq exwm-workspace-show-all-buffers t)
    (setq exwm-layout-show-all-buffers t)
-   (setq exwm-manage-force-tiling nil) ; Allow modeline/minibuffer visibility
+   (setq exwm-manage-force-tiling nil) ; Allow modeline/minibuffer
    (setq mouse-autoselect-window t)
    (setq focus-follows-mouse t)
    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
@@ -246,102 +246,104 @@
    ;; Global Keybindings
    (setq
     exwm-input-global-keys
-    `(([?\s-r] . exwm-reset)
-      ([?\s-w] . exwm-workspace-switch)
-      ([?\s-&]
-       .
-       (lambda (cmd)
-         (interactive (list (read-shell-command "$ ")))
-         (start-process-shell-command cmd nil cmd)))
-      ([?\s-x]
-       .
-       (lambda ()
-         (interactive)
-         (save-buffers-kill-emacs)))
-      ([?\s-e]
-       .
-       (lambda ()
-         (interactive)
-         (start-process-shell-command
-          "yazi" nil "footclient -e yazi")))
-      ([?\s-\ ]
-       .
-       (lambda ()
-         (interactive)
-         (counsel-linux-app)))
-      ([?\s-v] . consult-yank-pop)
-      ([?\s-q]
-       .
-       (lambda ()
-         (interactive)
-         (kill-buffer-and-window)))
-      ,@
-      (mapcar
-       (lambda (i)
-         (cons
-          (vector (intern (format "s-%d" i)))
-          `(lambda ()
-             (interactive)
-             (exwm-workspace-switch ,i))))
-       (number-sequence 0 9))
-      ,@
-      (mapcar
-       (lambda (i)
-         (cons
-          (vector (intern (format "M-s-%d" i)))
-          `(lambda ()
-             (interactive)
-             (exwm-workspace-move-window ,i))))
-       (number-sequence 0 9))
-      ;; Media Keys
-      ([XF86AudioRaiseVolume]
-       .
-       (lambda ()
-         (interactive)
-         (shell-command "pactl set-sink-volume @DEFAULT_SINK@ +5%")
-         (message
-          "Volume: %s"
-          (shell-command-to-string
-           "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1"))))
-      ([XF86AudioLowerVolume]
-       .
-       (lambda ()
-         (interactive)
-         (shell-command "pactl set-sink-volume @DEFAULT_SINK@ -5%")
-         (message
-          "Volume: %s"
-          (shell-command-to-string
-           "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1"))))
-      ([XF86AudioMute]
-       .
-       (lambda ()
-         (interactive)
-         (shell-command "pactl set-sink-mute @DEFAULT_SINK@ toggle")
-         (message
-          "Volume: %s"
-          (if (string-match
-               "yes"
-               (shell-command-to-string
-                "pactl get-sink-mute @DEFAULT_SINK@"))
-              "Muted"
-            (shell-command-to-string
-             "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1")))))
-      ([XF86MonBrightnessUp]
-       .
-       (lambda ()
-         (interactive)
-         (shell-command "brightnessctl set +10%")
-         (message "Brightness: %s"
-                  (shell-command-to-string
-                   "brightnessctl -m | cut -d, -f4"))))
-      ([XF86MonBrightnessDown]
-       .
-       (lambda ()
-         (interactive)
-         (shell-command "brightnessctl set 10%-")
-         (message "Brightness: %s"
-                  (shell-command-to-string
-                   "brightnessctl -m | cut -d, -f4"))))))
+    (nconc
+     `(([?\s-r] . exwm-reset)
+       ([?\s-w] . exwm-workspace-switch)
+       ([?\s-&]
+        .
+        (lambda (cmd)
+          (interactive (list (read-shell-command "$ ")))
+          (start-process-shell-command cmd nil cmd)))
+       ([?\s-x]
+        .
+        (lambda ()
+          (interactive)
+          (save-buffers-kill-emacs)))
+       ([?\s-e]
+        .
+        (lambda ()
+          (interactive)
+          (start-process-shell-command
+           "yazi" nil "footclient -e yazi")))
+       ([?\s-\ ]
+        .
+        (lambda ()
+          (interactive)
+          (counsel-linux-app)))
+       ([?\s-v] . consult-yank-pop)
+       ([?\s-q]
+        .
+        (lambda ()
+          (interactive)
+          (kill-buffer-and-window)))
+       ;; Media Keys
+       ([XF86AudioRaiseVolume]
+        .
+        (lambda ()
+          (interactive)
+          (shell-command "pactl set-sink-volume @DEFAULT_SINK@ +5%")
+          (message
+           "Volume: %s"
+           (shell-command-to-string
+            "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1"))))
+       ([XF86AudioLowerVolume]
+        .
+        (lambda ()
+          (interactive)
+          (shell-command "pactl set-sink-volume @DEFAULT_SINK@ -5%")
+          (message
+           "Volume: %s"
+           (shell-command-to-string
+            "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1"))))
+       ([XF86AudioMute]
+        .
+        (lambda ()
+          (interactive)
+          (shell-command "pactl set-sink-mute @DEFAULT_SINK@ toggle")
+          (message
+           "Volume: %s"
+           (if (string-match
+                "yes"
+                (shell-command-to-string
+                 "pactl get-sink-mute @DEFAULT_SINK@"))
+               "Muted"
+             (shell-command-to-string
+              "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1")))))
+       ([XF86MonBrightnessUp]
+        .
+        (lambda ()
+          (interactive)
+          (shell-command "brightnessctl set +10%")
+          (message "Brightness: %s"
+                   (shell-command-to-string
+                    "brightnessctl -m | cut -d, -f4"))))
+       ([XF86MonBrightnessDown]
+        .
+        (lambda ()
+          (interactive)
+          (shell-command "brightnessctl set 10%-")
+          (message "Brightness: %s"
+                   (shell-command-to-string
+                    "brightnessctl -m | cut -d, -f4")))))
+     ;; Workspace Switching and Moving
+     (mapcar
+      (lambda (i)
+        (cons
+         (kbd (format "s-%d" i))
+         (lambda ()
+           (interactive)
+           (message "Switching to workspace %d" i)
+           (exwm-workspace-switch i))))
+      (number-sequence 0 9))
+     (mapcar
+      (lambda (i)
+        (cons
+         (kbd (format "M-s-%d" i))
+         (lambda ()
+           (interactive)
+           (message "Moving window to workspace %d" i)
+           (exwm-workspace-move-window i))))
+      (number-sequence 0 9))))
 
    ;; Simulation Keys
    (setq exwm-input-simulation-keys
@@ -360,7 +362,7 @@
 
    ;; Dynamic Multi-Monitor Setup
    (defun my-exwm-update-displays ()
-     "Update workspace-to-monitor mapping dynamically."
+     "Update workspace-to-monitor mapping dynamically for any monitor name."
      (interactive)
      (let*
          ((xrandr-output
@@ -373,40 +375,23 @@
             (split-string xrandr-output "\n")
             when
             (string-match
-             "\\(eDP-?[0-1]\\|DP-?[0-1]\\) connected.*\\([0-9]+x[0-9]+\\+[-0-9]+\\+[-0-9]+\\)"
+             "\\([a-zA-Z0-9-]+\\) connected.*\\([0-9]+x[0-9]+\\+[-0-9]+\\+[-0-9]+\\)"
              line)
             collect
             (list (match-string 1 line) (match-string 2 line))))
           (monitor-count (length monitors)))
        (if (> monitor-count 0)
            (progn
-             ;; Set workspace count to match monitors
              (setq exwm-workspace-number monitor-count)
-             ;; Clear and rebuild workspace-monitor mapping
              (setq exwm-randr-workspace-monitor-plist nil)
              (dotimes (i monitor-count)
-               (let* ((monitor (nth i monitors))
-                      (name (car monitor))
-                      (geometry (cadr monitor)))
+               (let ((name (car (nth i monitors))))
                  (setq exwm-randr-workspace-monitor-plist
                        (plist-put
                         exwm-randr-workspace-monitor-plist i name))))
-             ;; Apply xrandr layout (left-to-right)
+             ;; Let xrandr set the layout
              (start-process-shell-command
-              "xrandr" nil
-              (concat
-               "xrandr "
-               (mapconcat (lambda (m)
-                            (let ((name (car m))
-                                  (geo (cadr m)))
-                              (format
-                               "--output %s --mode %s --pos %s --auto"
-                               name (car (split-string geo "+"))
-                               (string-join (cdr
-                                             (split-string geo "x"))
-                                            ""))))
-                          monitors
-                          " ")))
+              "xrandr" nil "xrandr --auto")
              (message "Updated %d monitors: %s"
                       monitor-count
                       monitors))
@@ -468,7 +453,8 @@
      (lambda ()
        (my-exwm-autostart)
        (my-exwm-update-displays)
-       (switch-to-buffer "*scratch*"))))))
+       (switch-to-buffer "*scratch*")
+       (exwm-workspace-switch 0))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
