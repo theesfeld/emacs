@@ -453,25 +453,29 @@
    (exwm-systemtray-mode 1)
 
    (display-time-mode 1)
-    (setq display-time-24hr-format t) ; 24-hour clock
-    (setq display-time-day-and-date nil) ; Just time, no date
-    (display-battery-mode 1)
+   (setq display-time-24hr-format t) ; 24-hour clock
+   (setq display-time-day-and-date t) ; Just time, no date
+   (display-battery-mode 1)
 
-    ;; Append time and battery to the default mode-line, aligned right
-    (setq-default mode-line-end-spaces
-                  '(""
-                    (:eval (propertize " " 'display '((space :align-to (- right 20))))) ; Space before right edge
-                    (:eval (when (and battery-status-function display-battery-mode)
-                             (let ((status (funcall battery-status-function)))
-                               (propertize (concat "Bat: " (cdr (assoc ?p status)) "% ")
-                                           'face 'mode-line))))
-                    (:eval (when display-time-mode
-                             (propertize display-time-string
-                                         'face 'mode-line)))))
+   ;; Append time and battery to the default mode-line, aligned right
+   (setq-default
+    mode-line-end-spaces
+    '(""
+      (:eval
+       (propertize " " 'display '((space :align-to (- right 20))))) ; Space before right edge
+      (:eval
+       (when (and battery-status-function display-battery-mode)
+         (let ((status
+                (funcall battery-status-function)))
+           (propertize (concat "Bat: " (cdr (assoc ?p status)) "% ")
+                       'face 'mode-line))))
+      (:eval
+       (when display-time-mode
+         (propertize display-time-string 'face 'mode-line)))))
 
-;   (setq echo-area-clear-delay nil)
-;   (setq minibuffer-frame-alist
-         '((top . 0) (left . 0) (width . 80) (height . 2)))
+   ;   (setq echo-area-clear-delay nil)
+   ;   (setq minibuffer-frame-alist
+   ;         '((top . 0) (left . 0) (width . 80) (height . 2)))
 
    ;; RandR and EXWM Enable
    (require 'exwm-randr)
