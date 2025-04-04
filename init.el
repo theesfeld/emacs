@@ -1127,14 +1127,16 @@
   (text-mode . corfu-mode)
   (eshell-mode . corfu-mode))
  :custom
- (corfu-cycle t) ;; Enable cycling through candidates
- (corfu-auto t) ;; Auto-display completions
- (corfu-auto-prefix 2) ;; Trigger after 2 characters
- (corfu-auto-delay 0.7) ;; Increased delay to 0.5 seconds
- (corfu-quit-at-boundary t) ;; Quit if no match at word boundary
- (corfu-quit-no-match t) ;; Quit if no match
- (corfu-preselect-first t) ;; Preselect first candidate
+ (corfu-cycle t)
+ (corfu-auto t)
+ (corfu-auto-prefix 2)
+ (corfu-auto-delay 0.7)
+ (corfu-quit-at-boundary t)
+ (corfu-quit-no-match t)
+ (corfu-preselect-first t)
  :config
+ ;; Add ispell as a completion backend
+ (add-to-list 'completion-at-point-functions #'cape-ispell)
  ;; Enable corfu in minibuffer if vertico is active
  (defun corfu-enable-in-minibuffer ()
    "Enable Corfu in the minibuffer if Vertico is active."
@@ -1145,10 +1147,10 @@
  :bind
  (:map
   corfu-map
-  ("TAB" . corfu-insert) ;; Insert selected completion
-  ("C-n" . corfu-next) ;; Next candidate
-  ("C-p" . corfu-previous) ;; Previous candidate
-  ("M-RET" . corfu-insert))) ;; Insert without quitting
+  ("TAB" . corfu-insert)
+  ("C-n" . corfu-next)
+  ("C-p" . corfu-previous)
+  ("M-RET" . corfu-insert)))
 
 (use-package
  cape
@@ -1415,27 +1417,36 @@
  :ensure nil
  :hook ((text-mode . flyspell-mode) (org-mode . flyspell-mode))
  :init
- (setq
-  ispell-program-name "aspell"
-  ispell-extra-args '("--sug-mode=ultra" "--camel-case" "--run-together")
-  ispell-silently-savep t)
- :custom (flyspell-default-dictionary "american")
- :config
- ;; Prevent hanging by checking aspell availability
+ ;; Explicitly set aspell as the spell checker
+ (setq ispell-program-name "aspell")
+ ;; Set the dictionary to use (replace "en_US" with your installed dictionary if different)
+ (setq ispell-dictionary "en_US")
+ ;; Extra args for better aspell performance
+ (setq ispell-extra-args
+       '("--sug-mode=ultra" "--camel-case" "--run-together"))
+ ;; Silence save operations
+ (setq ispell-silently-savep t)
+ ;; Define the personal dictionary file
+ (setq ispell-personal-dictionary "~/.emacs.d/ispell_personal_dict")
+ ;; If aspell isn’t found, disable flyspell to avoid errors
  (unless (executable-find ispell-program-name)
    (message "Aspell not found; disabling flyspell")
    (remove-hook 'text-mode-hook 'flyspell-mode)
    (remove-hook 'org-mode-hook 'flyspell-mode))
+ :config
  ;; Reduce startup load
- (setq flyspell-issue-message-flag nil) ;; Disable verbose messages
- (setq flyspell-issue-welcome-flag nil))
-
-(use-package
- flyspell-correct
- :ensure t
- :after flyspell
- :bind
- (:map flyspell-mode-map ("C-;" . flyspell-correct-wrapper)))
+ (setq flyspell-issue-message-flag nil)
+ (setq flyspell-issue-welcome-flag nil)
+ ;; Ensure aspell dictionary is available, or fall back to a plain word list
+ (unless (file-exists-p
+          (concat (ispell-aspell-data-dir) "/" ispell-dictionary))
+   (message
+    "Aspell dictionary '%s' not found; falling back to /usr/share/dict/words"
+    ispell-dictionary)
+   (setq ispell-alternate-dictionary "/usr/share/dict/words"))
+ :custom
+ (flyspell-default-dictionary "en_US") ;; Default dictionary
+ :bind (:map flyspell-mode-map ("C-;" . flyspell-correct-wrapper)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Eglot (LSP) Setup                             ;;
