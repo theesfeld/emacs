@@ -382,15 +382,7 @@
           (monitor-count (length monitors)))
        (if (> monitor-count 0)
            (progn
-             ;; Set workspace count
              (setq exwm-workspace-number monitor-count)
-             ;; Clear existing workspaces
-             (while (> (length exwm-workspace--list) 0)
-               (exwm-workspace-delete 0))
-             ;; Create workspaces
-             (dotimes (_ monitor-count)
-               (exwm-workspace-add))
-             ;; Map workspaces to monitors
              (setq exwm-randr-workspace-monitor-plist nil)
              (dotimes (i monitor-count)
                (let* ((monitor (nth i monitors))
@@ -401,7 +393,6 @@
              ;; Apply xrandr layout
              (start-process-shell-command
               "xrandr" nil "xrandr --auto")
-             (exwm-randr-refresh)
              (message "Updated %d monitors: %s"
                       monitor-count
                       monitors))
