@@ -1122,14 +1122,20 @@
  cape
  :ensure t
  :init
- ;; Load cape early to ensure functions are defined
+ ;; Load cape explicitly to ensure all functions are available
  (require 'cape)
  :config
- ;; Define a function to add cape-ispell only in text modes
+ ;; Ensure ispell is set up (since cape-ispell depends on it)
+ (setq ispell-program-name "aspell") ;; Match your flyspell config
+ (setq ispell-dictionary "en_US")
+ ;; Function to set up completion-at-point-functions locally
  (defun my-cape-text-mode-setup ()
-   "Add cape-ispell to completion-at-point-functions for text modes."
+   "Set up completion with cape-ispell for text modes only."
    (when (derived-mode-p 'text-mode 'org-mode 'markdown-mode)
-     (add-to-list 'completion-at-point-functions #'cape-ispell)))
+     (setq-local completion-at-point-functions
+                 (append
+                  completion-at-point-functions (list #'cape-ispell)))
+     (message "Enabled cape-ispell in %s" major-mode)))
  :hook
  ((text-mode . my-cape-text-mode-setup)
   (org-mode . my-cape-text-mode-setup)
