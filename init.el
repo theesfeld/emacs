@@ -1125,13 +1125,25 @@
  ;; Load cape explicitly to ensure all functions are available
  (require 'cape)
  :config
- ;; Configure ispell to work with aspell properly
- (setq ispell-program-name "aspell") (setq ispell-dictionary "en_US")
- ;; Tell ispell to use aspell’s dictionary directly, avoiding plain-text lookup
- (setq ispell-really-aspell t) ;; Explicitly mark aspell as the backend
- (setq ispell-extra-args '("--sug-mode=ultra")) ;; Fast suggestion mode
- (setq ispell-personal-dictionary "~/.aspell.en.pws") ;; Optional: personal word list
- ;; Function to set up completion-at-point-functions locally
+ ;; Configure ispell to fully use aspell on Arch Linux
+ (setq ispell-program-name "aspell")
+ (setq ispell-dictionary "en_US")
+ ;; Force aspell as the backend and configure it properly
+ (setq ispell-really-aspell t)
+ (setq ispell-extra-args '("--sug-mode=ultra" "-d" "en_US"))
+ ;; Define dictionary settings to avoid plain-text lookup
+ (setq ispell-local-dictionary-alist
+       '(("en_US"
+          "[[:alpha:]]"
+          "[^[:alpha:]]"
+          "[']"
+          nil
+          ("-d" "en_US")
+          nil
+          utf-8)))
+ ;; Optional: personal dictionary for custom words
+ (setq ispell-personal-dictionary "~/.aspell.en.pws")
+ ;; Setup function for text modes
  (defun my-cape-text-mode-setup ()
    "Set up completion with cape-ispell for text modes only."
    (when (derived-mode-p 'text-mode 'org-mode 'markdown-mode)
