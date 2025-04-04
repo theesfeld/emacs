@@ -225,23 +225,22 @@
     (setq exwm-workspace-show-all-buffers t)
     (setq exwm-layout-show-all-buffers t)
     (setq exwm-manage-force-tiling nil) ; Allow modeline/minibuffer
-    (setq mouse-autoselect-window t)
-    (setq focus-follows-mouse t)
+    (setq focus-follows-mouse nil) ; No mouse focus
+    (setq mouse-autoselect-window nil) ; No auto-select
     (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
-    (setq mouse-wheel-progressive-speed nil) ; Disable progressive speed
+    (setq mouse-wheel-progressive-speed nil)
     (setq mouse-wheel-down-event 'wheel-up) ; Reverse scrolling
     (setq mouse-wheel-up-event 'wheel-down)
     (setq x-select-enable-clipboard t
           x-select-enable-primary t
           select-enable-clipboard t)
-    (setq exwm-input-line-mode-passthrough t) ; Pass keys to X apps in line-mode
+    (setq exwm-input-line-mode-passthrough t) ; Pass keys to Emacs
 
     ;; Fix mouse cursor
     (start-process-shell-command "xsetroot" nil "xsetroot -cursor_name left_ptr")
 
-    ;; Input Prefix Keys
-    (setq exwm-input-prefix-keys
-          '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
+    ;; Input Prefix Keys (ONLY Super)
+    (setq exwm-input-prefix-keys '(?\s-))
 
     ;; Global Keybindings
     (setq exwm-input-global-keys
@@ -289,13 +288,11 @@
            (mapcar (lambda (i)
                      (cons (kbd (format "s-%d" i))
                            (lambda () (interactive)
-                             (message "Switching to workspace %d" i)
                              (exwm-workspace-switch i))))
                    (number-sequence 0 9))
            (mapcar (lambda (i)
                      (cons (kbd (format "M-s-%d" i))
                            (lambda () (interactive)
-                             (message "Moving window to workspace %d" i)
                              (exwm-workspace-move-window i))))
                    (number-sequence 0 9))))
 
@@ -321,66 +318,36 @@
       (let* ((xrandr-output (shell-command-to-string "xrandr --current"))
              (monitors (cl-loop for line in (split-string xrandr-output "\n")
                                 when (string-match "\\([a-zA-Z0-9-]+\\) connected\\( primary\\)? \\([0-9]+x[0-9]+\\)\\+\\([-0-9]+\\)\\+\\([-0-9]+\\)" line)
-                                collect (list (match-string 1 line)
-                                              (match-string 3 line)
-                                              (string-to-number (match-string 4 line))
-                                              (string-to-number (match-string 5 line)))))
+                                collect (list (match-string 1 line))))
              (monitor-count (length monitors)))
-        (if (> monitor-count 0)
-            (progn
-              (setq exwm-workspace-number monitor-count)
-              (while (> (length exwm-workspace--list) monitor-count)
-                (exwm-workspace-delete (1- (length exwm-workspace--list))))
-              (while (< (length exwm-workspace--list) monitor-count)
-                (exwm-workspace-add))
-              (setq exwm-randr-workspace-monitor-plist nil)
-              (dotimes (i monitor-count)
-                (let* ((monitor (nth i monitors))
-                       (name (nth 0 monitor))
-                       (resolution (nth 1 monitor))
-                       (width (string-to-number (car (split-string resolution "x"))))
-                       (height (string-to-number (cadr (split-string resolution "x"))))
-                       (frame (nth i exwm-workspace--list)))
-                  (setq exwm-randr-workspace-monitor-plist
-                        (plist-put exwm-randr-workspace-monitor-plist i name))
-                  (when frame
-                    (set-frame-parameter frame 'fullscreen 'maximized)
-                    (message "Frame %d maximized for %s (%dx%d)" i name width height))))
-              (start-process-shell-command "xrandr" nil "xrandr --auto")
-              (exwm-randr-refresh)
-              (redisplay t)
-              (message "Updated %d monitors: %s" monitor-count monitors))
-          (progn
-            (setq exwm-workspace-number 1)
-            (message "No monitors detected, defaulting to 1 workspace")))))
+        (setq exwm-workspace-number monitor-count)
+        (while (> (length exwm-workspace--list) monitor-count)
+          (exwm-workspace-delete (1- (length exwm-workspace--list))))
+        (while (< (length exwm-workspace--list) monitor-count)
+          (exwm-workspace-add))
+        (dotimes (i monitor-count)
+          (let ((monitor (nth i monitors))
+                (frame (nth i exwm-workspace--list)))
+            (plist-put exwm-randr-workspace-monitor-plist i (car monitor))
+            (when frame
+              (set-frame-parameter frame 'fullscreen 'maximized))))
+        (exwm-randr-refresh)))
 
     ;; Autostart Applications
     (defun my-exwm-autostart ()
-      "Start applications after EXWM initialization."
+      "Start applications after EXWM initialization with error handling."
       (interactive)
-      (start-process "udiskie" nil "udiskie" "-as" "2>/tmp/udiskie.log")
-      (start-process "blueman-applet" nil "blueman-applet")
-      (start-process "nm-applet" nil "nm-applet")
-      (start-process "mullvad-vpn" nil "mullvad-vpn"))
+      (condition-case err
+          (progn
+            (start-process "udiskie" nil "udiskie" "-as" "2>/tmp/udiskie.log")
+            (start-process "blueman-applet" nil "blueman-applet")
+            (start-process "nm-applet" nil "nm-applet")
+            (start-process "mullvad-vpn" nil "mullvad-vpn"))
+        (error (message "Autostart failed: %s" (error-message-string err)))))
 
     ;; System Tray
     (setq exwm-systemtray-height 24)
     (exwm-systemtray-mode 1)
-
-    ;; Modeline with Battery Status
-    (require 'battery)
-    (setq-default mode-line-format
-                  '("%e"
-                    (:eval (when (and battery-status-function (display-battery-mode))
-                             (let ((status (funcall battery-status-function)))
-                               (concat " Bat: " (cdr (assoc ?p status)) "% "))))
-                    " %b " ; Buffer name
-                    " %l:%c " ; Line and column
-                    " %m " ; Mode name
-                    " %*")) ; Modified status
-    (display-battery-mode 1)
-    (setq echo-area-clear-delay nil)
-    (setq minibuffer-frame-alist '((top . 0) (left . 0) (width . 80) (height . 2)))
 
     ;; RandR and EXWM Enable
     (require 'exwm-randr)
@@ -399,7 +366,7 @@
                          (my-exwm-autostart)
                          (my-exwm-update-displays)
                          (switch-to-buffer "*scratch*")
-                         (exwm-workspace-switch 0)))))
+                         (exwm-workspace-switch 0))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
