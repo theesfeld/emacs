@@ -226,11 +226,11 @@
    (setq exwm-workspace-show-all-buffers t)
    (setq exwm-layout-show-all-buffers t)
    (setq exwm-manage-force-tiling nil) ; Allow modeline/minibuffer
-   (setq mouse-autoselect-window nil)
+   (setq mouse-autoselect-window t)
    (setq focus-follows-mouse nil)
    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
    (setq mouse-wheel-progressive-speed nil) ; Disable progressive speed for reverse scroll
-   (setq mouse-wheel-scroll-amount-horizontal 1) ; Optional: horizontal scroll amount
+   (setq mouse-wheel-scroll-amount-horizontal nil) ; Optional: horizontal scroll amount
    (setq
     x-select-enable-clipboard t
     x-select-enable-primary t
