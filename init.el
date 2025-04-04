@@ -371,28 +371,50 @@
            (cl-loop
             for line in (split-string xrandr-output "\n") when
             (string-match
-             "\\([a-zA-Z0-9-]+\\) connected \\([0-9]+x[0-9]+\\)\\+\\([-0-9]+\\)\\+\\([-0-9]+\\)"
+             "\\([a-zA-Z0-9-]+\\) connected\\( primary\\)? \\([0-9]+x[0-9]+\\)\\+\\([-0-9]+\\)\\+\\([-0-9]+\\)"
              line)
             collect
             (list
              (match-string 1 line)
-             (match-string 2 line)
-             (string-to-number (match-string 3 line))
-             (string-to-number (match-string 4 line)))))
+             (match-string 3 line)
+             (string-to-number (match-string 4 line))
+             (string-to-number (match-string 5 line)))))
           (monitor-count (length monitors)))
        (if (> monitor-count 0)
            (progn
+             ;; Set workspace count
              (setq exwm-workspace-number monitor-count)
+             ;; Clear and recreate workspaces
+             (while (> (length exwm-workspace--list) monitor-count)
+               (exwm-workspace-delete
+                (1- (length exwm-workspace--list))))
+             (while (< (length exwm-workspace--list) monitor-count)
+               (exwm-workspace-add))
+             ;; Map workspaces to monitors and set frame sizes
              (setq exwm-randr-workspace-monitor-plist nil)
              (dotimes (i monitor-count)
                (let* ((monitor (nth i monitors))
-                      (name (nth 0 monitor)))
+                      (name (nth 0 monitor))
+                      (resolution (nth 1 monitor))
+                      (width
+                       (string-to-number
+                        (car (split-string resolution "x"))))
+                      (height
+                       (string-to-number
+                        (cadr (split-string resolution "x"))))
+                      (x-pos (nth 2 monitor))
+                      (y-pos (nth 3 monitor))
+                      (frame (nth i exwm-workspace--list)))
                  (setq exwm-randr-workspace-monitor-plist
                        (plist-put
-                        exwm-randr-workspace-monitor-plist i name))))
-             ;; Apply xrandr layout
+                        exwm-randr-workspace-monitor-plist i name))
+                 (when frame
+                   (set-frame-size frame width height t)
+                   (set-frame-position frame x-pos y-pos))))
+             ;; Apply xrandr layout and refresh
              (start-process-shell-command
               "xrandr" nil "xrandr --auto")
+             (exwm-randr-refresh)
              (message "Updated %d monitors: %s"
                       monitor-count
                       monitors))
