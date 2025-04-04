@@ -1437,12 +1437,14 @@
  ;; Reduce startup load
  (setq flyspell-issue-message-flag nil)
  (setq flyspell-issue-welcome-flag nil)
- ;; Ensure aspell dictionary is available, or fall back to a plain word list
- (unless (file-exists-p
-          (concat (ispell-aspell-data-dir) "/" ispell-dictionary))
+ ;; Fallback to a common dictionary file if needed
+ (when (and (executable-find "aspell")
+            (not
+             (stringp
+              (shell-command-to-string
+               "aspell dump dicts | grep en_US"))))
    (message
-    "Aspell dictionary '%s' not found; falling back to /usr/share/dict/words"
-    ispell-dictionary)
+    "Aspell dictionary 'en_US' not found; falling back to /usr/share/dict/words")
    (setq ispell-alternate-dictionary "/usr/share/dict/words"))
  :custom
  (flyspell-default-dictionary "en_US") ;; Default dictionary
