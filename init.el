@@ -1120,15 +1120,15 @@
     :filter-return
     (lambda (buffers) (mapcar #'my-consult-buffer-format buffers))))
  (set-face-attribute 'vertico-current nil
-                     :background "#5e81ac"
-                     :foreground "#d8dee9"
+                     :background "#452950"
+                     :foreground "#ffcc66"
                      :weight 'bold)
  (set-face-attribute 'vertico-group-title nil
-                     :foreground "#6272a4"
+                     :foreground "#bd93f9"
                      :slant 'italic
-                     :weight 'light)
+                     :weight 'bold)
  (set-face-attribute 'vertico-group-separator nil
-                     :foreground "#6272a4"
+                     :foreground "#88c0d0"
                      :strike-through t)
  (set-face-attribute 'vertico-default nil :foreground "#d8dee9")
  :bind
@@ -1158,6 +1158,26 @@
        (append
         savehist-additional-variables '(extended-command-history)))
  (savehist-mode 1)
+ (defvar my-consult-hidden-buffer-source
+   `(:name
+     "Hidden Buffers"
+     :narrow ?h
+     :category buffer
+     :face consult-buffer
+     :history buffer-name-history
+     :state ,#'consult--buffer-state
+     :items
+     ,(lambda ()
+        (mapcar
+         #'buffer-name
+         (seq-filter
+          (lambda (buf)
+            (and (string-match-p "^\\*" (buffer-name buf))
+                 (not (get-buffer-window buf 'visible))))
+          (buffer-list)))))
+   "Source for hidden buffers starting with *.")
+ (add-to-list 'consult-buffer-sources 'my-consult-hidden-buffer-source
+              t)
  :bind
  (("C-c m" . consult-M-x)
   ("C-x b" . consult-buffer)
@@ -1171,8 +1191,9 @@
  :config
  (set-face-attribute 'marginalia-file-name nil :foreground "#d8dee9")
  (set-face-attribute 'marginalia-mode nil
-                     :foreground "#6272a4"
-                     :slant 'italic))
+                     :foreground "#88c0d0"
+                     :slant 'italic)
+ (set-face-attribute 'marginalia-size nil :foreground "#ffcc66"))
 
 (use-package
  all-the-icons-completion
