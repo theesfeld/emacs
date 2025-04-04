@@ -229,11 +229,16 @@
    (setq mouse-autoselect-window t)
    (setq focus-follows-mouse t)
    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
-   (setq mouse-wheel-progressive-speed t)
+   (setq mouse-wheel-progressive-speed nil) ; Disable progressive speed for reverse scroll
+   (setq mouse-wheel-scroll-amount-horizontal 1) ; Optional: horizontal scroll amount
    (setq
     x-select-enable-clipboard t
     x-select-enable-primary t
     select-enable-clipboard t)
+
+   ;; Reverse Mouse Scrolling
+   (setq mouse-wheel-down-event 'wheel-up) ; Swap down to up
+   (setq mouse-wheel-up-event 'wheel-down) ; Swap up to down
 
    ;; Fix mouse cursor
    (start-process-shell-command
@@ -430,29 +435,32 @@
    (defun my-exwm-autostart ()
      "Start applications after EXWM initialization."
      (interactive)
-     (run-at-time
-      2 nil
-      (lambda ()
-        (start-process "udiskie" nil "udiskie"
-                       "-as"
-                       "2>/tmp/udiskie.log")))
-     (run-at-time
-      2 nil
-      (lambda ()
-        (start-process "blueman-applet" nil "blueman-applet")))
-     (run-at-time
-      2 nil
-      (lambda () (start-process "nm-applet" nil "nm-applet")))
-     (run-at-time
-      2 nil
-      (lambda () (start-process "mullvad-vpn" nil "mullvad-vpn"))))
+     (dolist (cmd
+              '(("udiskie" "udiskie" "-as" "2>/tmp/udiskie.log")
+                ("blueman-applet" "blueman-applet")
+                ("nm-applet" "nm-applet")
+                ("mullvad-vpn" "mullvad-vpn")))
+       (apply #'start-process-shell-command cmd)))
 
    ;; System Tray
    (setq exwm-systemtray-height 24)
-   (exwm-systemtray-mode 1)
+   (exwm-systemtray-enable) ; Use enable instead of mode
 
-   ;; Modeline/Minibuffer Fix
-   (setq-default mode-line-format t)
+   ;; Modeline with Battery Status
+   (require 'battery)
+   (setq-default mode-line-format
+                 '("%e" (:eval
+                    (when (and battery-status-function
+                               (display-battery-mode))
+                      (let ((status
+                             (funcall battery-status-function)))
+                        (concat
+                         " Bat: " (cdr (assoc ?p status)) "% "))))
+                   " %b " ; Buffer name
+                   " %l:%c " ; Line and column
+                   " %m " ; Mode name
+                   " %*")) ; Modified status
+   (display-battery-mode 1) ; Enable battery display
    (setq echo-area-clear-delay nil)
    (setq minibuffer-frame-alist
          '((top . 0) (left . 0) (width . 80) (height . 2)))
@@ -468,12 +476,12 @@
      .
      (lambda ()
        (exwm-workspace-rename-buffer
-        (concat exwm-class-name ": " exwm-title))))
+        (or exwm-title exwm-class-name "*EXWM*")))) ; Use app title or class
     (exwm-update-title-hook
      .
      (lambda ()
        (exwm-workspace-rename-buffer
-        (concat exwm-class-name ": " exwm-title))))
+        (or exwm-title exwm-class-name "*EXWM*")))) ; Update with title
     (exwm-init-hook
      .
      (lambda ()
