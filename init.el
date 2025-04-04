@@ -1125,9 +1125,12 @@
  ;; Load cape explicitly to ensure all functions are available
  (require 'cape)
  :config
- ;; Ensure ispell is set up (since cape-ispell depends on it)
- (setq ispell-program-name "aspell") ;; Match your flyspell config
- (setq ispell-dictionary "en_US")
+ ;; Configure ispell to work with aspell properly
+ (setq ispell-program-name "aspell") (setq ispell-dictionary "en_US")
+ ;; Tell ispell to use aspell’s dictionary directly, avoiding plain-text lookup
+ (setq ispell-really-aspell t) ;; Explicitly mark aspell as the backend
+ (setq ispell-extra-args '("--sug-mode=ultra")) ;; Fast suggestion mode
+ (setq ispell-personal-dictionary "~/.aspell.en.pws") ;; Optional: personal word list
  ;; Function to set up completion-at-point-functions locally
  (defun my-cape-text-mode-setup ()
    "Set up completion with cape-ispell for text modes only."
