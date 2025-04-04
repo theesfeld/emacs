@@ -371,7 +371,7 @@
            (cl-loop
             for line in (split-string xrandr-output "\n") when
             (string-match
-             "\\([a-zA-Z0-9-]+\\) connected.*\\([0-9]+x[0-9]+\\)+\\([-0-9]+\\)+\\([-0-9]+\\)"
+             "\\([a-zA-Z0-9-]+\\) connected \\([0-9]+x[0-9]+\\)\\+\\([-0-9]+\\)\\+\\([-0-9]+\\)"
              line)
             collect
             (list
@@ -382,26 +382,26 @@
           (monitor-count (length monitors)))
        (if (> monitor-count 0)
            (progn
+             ;; Set workspace count
              (setq exwm-workspace-number monitor-count)
+             ;; Clear existing workspaces
+             (while (> (length exwm-workspace--list) 0)
+               (exwm-workspace-delete 0))
+             ;; Create workspaces
+             (dotimes (_ monitor-count)
+               (exwm-workspace-add))
+             ;; Map workspaces to monitors
              (setq exwm-randr-workspace-monitor-plist nil)
              (dotimes (i monitor-count)
                (let* ((monitor (nth i monitors))
-                      (name (nth 0 monitor))
-                      (resolution (nth 1 monitor))
-                      (x-pos (nth 2 monitor))
-                      (y-pos (nth 3 monitor))
-                      (width
-                       (string-to-number
-                        (car (split-string resolution "x"))))
-                      (height
-                       (string-to-number
-                        (cadr (split-string resolution "x")))))
+                      (name (nth 0 monitor)))
                  (setq exwm-randr-workspace-monitor-plist
                        (plist-put
                         exwm-randr-workspace-monitor-plist i name))))
              ;; Apply xrandr layout
              (start-process-shell-command
               "xrandr" nil "xrandr --auto")
+             (exwm-randr-refresh)
              (message "Updated %d monitors: %s"
                       monitor-count
                       monitors))
