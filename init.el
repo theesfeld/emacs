@@ -1075,134 +1075,46 @@
 ;;                               Completion Setup                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Prot uses Vertico with Orderless, no Corfu or Cape
+(use-package
+ vertico
+ :ensure t
+ :init (vertico-mode 1)
+ :custom
+ (vertico-cycle t) ;; Cycle through candidates
+ (vertico-count 10) ;; Show 10 candidates max, Prot’s default
+ :config
+ ;; Prot’s tweak: Sort by history then alphabetically
+ (setq vertico-sort-function 'vertico-sort-history-alpha))
+
 (use-package
  orderless
  :ensure t
  :custom
- (completion-styles '(orderless basic))
+ (completion-styles '(orderless basic)) ;; Prot’s preferred styles
  (completion-category-defaults nil)
  (completion-category-overrides
-  '((file (styles partial-completion)))))
+  '((file (styles basic partial-completion))))) ;; Sensible file completion
 
+;; Prot uses Consult for enhanced commands
 (use-package
- completion-preview
- :ensure nil
- :hook
- ((prog-mode . completion-preview-mode)
-  (text-mode . completion-preview-mode)
-  (comint-mode . completion-preview-mode))
- :config
- (keymap-set
-  completion-preview-active-mode-map
-  "<escape>"
-  #'completion-preview-dismiss)
- (keymap-set
-  completion-preview-active-mode-map
-  "<tab>"
-  #'completion-preview-insert)
- (keymap-set
-  completion-preview-active-mode-map
-  "<down>"
-  #'completion-preview-next-candidate)
- (keymap-set
-  completion-preview-active-mode-map
-  "<up>"
-  #'completion-preview-prev-candidate)
- (setq completion-preview-minimum-symbol-length 3)
- (setq completion-preview-exact-match-only t)
- (push 'org-self-insert-command completion-preview-commands)
- (push 'paredit-backward-delete completion-preview-commands)
- (defun completion-preview-dismiss ()
-   "Dismiss the current completion preview."
-   (interactive)
-   (when completion-preview--overlay
-     (completion-preview--hide))))
-
-(use-package
- cape
+ consult
  :ensure t
- :init
- ;; Load cape and cape-ispell explicitly
- (require 'cape)
- (autoload 'cape-ispell "cape-ispell" nil t) ;; Ensure cape-ispell is defined
+ :after vertico
+ :demand t
  :config
- ;; Force ispell to use aspell exclusively
- (setq ispell-program-name "aspell")
- (setq ispell-dictionary "en_US")
- (setq ispell-really-aspell t)
- (setq ispell-extra-args '("--sug-mode=ultra" "-d" "en_US"))
- (setq ispell-personal-dictionary "~/.aspell.en.pws")
- (setq ispell-local-dictionary-alist
-       '(("en_US"
-          "[[:alpha:]]"
-          "[^[:alpha:]]"
-          "[']"
-          nil
-          ("-d" "en_US")
-          nil
-          utf-8)))
- ;; Custom lookup function using shell-command-to-string
- (defun my-ispell-lookup-words (word)
-   "Directly query aspell for suggestions via shell."
-   (let* ((command
-           (format "echo %s | aspell -a -d en_US"
-                   (shell-quote-argument word)))
-          (output (shell-command-to-string command)))
-     (message "Aspell raw output for '%s': %s" word output)
-     (if (string-match "^& [^ ]+ \\([0-9]+\\) .*: \\(.*\\)$" output)
-         (split-string (match-string 2 output) ", ")
-       nil)))
- ;; Override ispell-lookup-words globally
- (defadvice ispell-lookup-words (around use-my-aspell activate)
-   "Force ispell-lookup-words to use my-ispell-lookup-words."
-   (setq ad-return-value (my-ispell-lookup-words (ad-get-arg 0))))
- ;; Setup function for text modes with debug
- (defun my-cape-text-mode-setup ()
-   "Set up completion with cape-ispell for text modes only."
-   (when (derived-mode-p 'text-mode 'org-mode 'markdown-mode)
-     (setq-local completion-at-point-functions
-                 (append
-                  completion-at-point-functions (list #'cape-ispell)))
-     (let ((suggestions (my-ispell-lookup-words "teh")))
-       (message "Enabled cape-ispell in %s with lookup: %s"
-                major-mode
-                suggestions))))
- :hook
- ((text-mode . my-cape-text-mode-setup)
-  (org-mode . my-cape-text-mode-setup)
-  (markdown-mode . my-cape-text-mode-setup)))
-
-(use-package
- corfu
- :ensure t
- :init (global-corfu-mode)
- :hook
- ((prog-mode . corfu-mode)
-  (text-mode . corfu-mode)
-  (eshell-mode . corfu-mode))
- :custom
- (corfu-cycle t)
- (corfu-auto t)
- (corfu-auto-prefix 2)
- (corfu-auto-delay 0.7)
- (corfu-quit-at-boundary t)
- (corfu-quit-no-match t)
- (corfu-preselect-first t)
- :config
- ;; Enable in minibuffer with Vertico
- (defun corfu-enable-in-minibuffer ()
-   "Enable Corfu in the minibuffer if Vertico is active."
-   (when (and (bound-and-true-p vertico--input)
-              (not (bound-and-true-p corfu-mode)))
-     (corfu-mode 1)))
- (add-hook 'minibuffer-setup-hook #'corfu-enable-in-minibuffer)
+ (setq history-length 1000) ;; Same as yours, Prot keeps history long
+ (setq savehist-additional-variables
+       (append
+        savehist-additional-variables '(extended-command-history)))
+ (savehist-mode 1)
  :bind
- (:map
-  corfu-map
-  ("TAB" . corfu-insert)
-  ("C-n" . corfu-next)
-  ("C-p" . corfu-previous)
-  ("M-RET" . corfu-insert)))
+ (("C-c m" . consult-M-x) ;; Prot’s M-x replacement
+  ("C-x b" . consult-buffer) ;; Buffer switching
+  ("C-x 4 b" . consult-buffer-other-window))) ;; Prot’s addition
+
+;; Marginalia for annotations, Prot’s choice
+(use-package marginalia :ensure t :init (marginalia-mode 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  IBUFFER                                  ;;
@@ -1445,26 +1357,41 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                   FlySpell                               ;;
+;;                                   Flyspell                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
  flyspell
  :ensure nil
  :hook
- ((text-mode . flyspell-mode) ;; Enable in text modes
-  (prog-mode . flyspell-prog-mode)) ;; Enable for comments/strings in code
- :init
- (setq ispell-program-name "aspell") ;; Use aspell as the backend
- (setq ispell-dictionary "en_US") ;; Default dictionary (adjust if needed)
+ ((text-mode . flyspell-mode) ;; Prot enables in text modes
+  (org-mode . flyspell-mode) ;; Added for your Org usage
+  (prog-mode . flyspell-prog-mode)) ;; Comments/strings in code
  :config
- ;; Optional: Improve performance and usability
- (setq flyspell-issue-message-flag nil) ;; Silence unnecessary messages
- (setq flyspell-issue-welcome-flag nil) ;; No welcome message
- ;; Check if aspell is installed
+ (setq ispell-program-name "aspell") ;; Prot uses aspell
+ (setq ispell-dictionary "en_US") ;; Default dictionary
+ (setq ispell-extra-args '("--sug-mode=ultra")) ;; Fast suggestions, Prot’s style
+ (setq ispell-personal-dictionary "~/.aspell.en.pws") ;; Personal words
+ ;; Prot’s performance tweaks
+ (setq flyspell-issue-message-flag nil) ;; No chatter
+ (setq flyspell-issue-welcome-flag nil) ;; No welcome
+ ;; Prot binds correction manually
+ :bind
+ (:map
+  flyspell-mode-map
+  ("C-;" . flyspell-correct-wrapper)) ;; Prot’s correction key
+ ;; Ensure aspell is installed
  (unless (executable-find "aspell")
    (message "Aspell not found; flyspell disabled")
    (flyspell-mode -1)))
+
+;; Prot uses flyspell-correct for manual corrections
+(use-package
+ flyspell-correct
+ :ensure t
+ :after flyspell
+ :bind
+ (:map flyspell-mode-map ("C-;" . flyspell-correct-wrapper)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Eglot (LSP) Setup                             ;;
