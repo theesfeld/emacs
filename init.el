@@ -1121,7 +1121,10 @@
 (use-package
  cape
  :ensure t
- :init (require 'cape)
+ :init
+ ;; Load cape and cape-ispell explicitly
+ (require 'cape)
+ (autoload 'cape-ispell "cape-ispell" nil t) ;; Ensure cape-ispell is defined
  :config
  ;; Force ispell to use aspell exclusively
  (setq ispell-program-name "aspell")
@@ -1138,17 +1141,13 @@
           ("-d" "en_US")
           nil
           utf-8)))
- ;; Custom lookup function to force aspell and debug
+ ;; Custom lookup function using shell-command-to-string
  (defun my-ispell-lookup-words (word)
-   "Directly query aspell for suggestions, bypassing plain-text lookup."
-   (let* ((process
-           (start-process "aspell" nil "aspell" "-a" "-d" "en_US"))
-          (output
-           (with-temp-buffer
-             (process-send-string process (concat word "\n"))
-             (process-send-eof process)
-             (accept-process-output process 1 nil t)
-             (buffer-string))))
+   "Directly query aspell for suggestions via shell."
+   (let* ((command
+           (format "echo %s | aspell -a -d en_US"
+                   (shell-quote-argument word)))
+          (output (shell-command-to-string command)))
      (message "Aspell raw output for '%s': %s" word output)
      (if (string-match "^& [^ ]+ \\([0-9]+\\) .*: \\(.*\\)$" output)
          (split-string (match-string 2 output) ", ")
