@@ -294,14 +294,7 @@
           (interactive)
           (when (executable-find "systemctl")
             (start-process-shell-command
-             "suspend" nil "systemctl suspend"))))
-       ([?\s-h]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "systemctl")
-            (start-process-shell-command
-             "hibernate" nil "systemctl hibernate"))))
+             "suspend" nil "systemctl suspend-then-hibernate"))))
        ;; XF86 Power Keys
        ([XF86PowerOff]
         .
@@ -317,14 +310,7 @@
           (when (and (executable-find "systemctl")
                      (executable-find "slock"))
             (start-process-shell-command
-             "suspend" nil "systemctl suspend"))))
-       ([?\s-XF86Sleep]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "systemctl")
-            (start-process-shell-command
-             "hibernate" nil "systemctl hibernate"))))
+             "suspend" nil "systemctl suspend-then-hibernate"))))
        ;; Media Keys
        ([XF86AudioRaiseVolume]
         .
@@ -558,7 +544,7 @@
    (exwm-init)
 
    ;; Ensure autostart runs after full initialization
-   (run-with-timer 3 nil #'my-exwm-autostart)
+   (run-with-timer 10 nil #'my-exwm-autostart)
 
    (start-process-shell-command
     "xinput"
