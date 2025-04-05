@@ -225,7 +225,7 @@
    (setq exwm-workspace-number 1) ; Initial value, adjusted dynamically
    (setq exwm-workspace-show-all-buffers t)
    (setq exwm-layout-show-all-buffers t)
-   (setq exwm-manage-force-tiling t) ; Allow modeline/minibuffer
+   (setq exwm-manage-force-tiling t)
    (setq mouse-autoselect-window t)
    (setq focus-follows-mouse t)
    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
