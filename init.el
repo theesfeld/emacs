@@ -222,7 +222,7 @@
    :ensure t
    :config
    ;; Basic EXWM Settings
-   (setq exwm-workspace-number 1) ; Initial value, adjusted dynamically
+   (setq exwm-workspace-number 1)
    (setq exwm-workspace-show-all-buffers t)
    (setq exwm-layout-show-all-buffers t)
    (setq exwm-manage-force-tiling t)
@@ -230,15 +230,15 @@
    (setq focus-follows-mouse t)
    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
    (setq mouse-wheel-progressive-speed t)
-   (setq mouse-wheel-scroll-amount-horizontal nil) ; Optional: horizontal scroll amount
+   (setq mouse-wheel-scroll-amount-horizontal nil)
    (setq
     x-select-enable-clipboard t
     x-select-enable-primary t
     select-enable-clipboard t)
 
    ;; Reverse Mouse Scrolling
-   (setq mouse-wheel-down-event 'wheel-up) ; Swap down to up
-   (setq mouse-wheel-up-event 'wheel-down) ; Swap up to down
+   (setq mouse-wheel-down-event 'wheel-up)
+   (setq mouse-wheel-up-event 'wheel-down)
 
    ;; Fix mouse cursor
    (start-process-shell-command
@@ -294,14 +294,14 @@
           (interactive)
           (when (executable-find "systemctl")
             (start-process-shell-command
-             "suspend" nil "systemctl suspend"))))
+             "suspend" nil "systemctl suspend-then-hibernate"))))
        ([?\s-h]
         .
         (lambda ()
           (interactive)
           (when (executable-find "systemctl")
             (start-process-shell-command
-             "hibernate" nil "systemctl hibernate"))))
+             "hibernate" nil "systemctl suspend-then-hibernate"))))
        ;; XF86 Power Keys
        ([XF86PowerOff]
         .
@@ -491,42 +491,6 @@
     'exwm-workspace-switch-hook #'my-exwm-update-mode-line-marker)
    (my-exwm-update-mode-line-marker)
 
-   ;; Autostart Applications with Power Management
-   (defun my-exwm-autostart ()
-     "Start applications and services after EXWM initialization with error handling."
-     (interactive)
-     (run-with-idle-timer
-      1 nil ; Delay 1 second after idle to ensure X is ready
-      (lambda ()
-        (condition-case err
-            (progn
-              ;; GUI Applets
-              (when (executable-find "nm-applet")
-                (start-process-shell-command
-                 "nm-applet" nil "nm-applet &"))
-              (when (executable-find "blueman-applet")
-                (start-process-shell-command
-                 "blueman-applet" nil "blueman-applet &"))
-              (when (executable-find "udiskie")
-                (start-process-shell-command
-                 "udiskie" nil "udiskie -as 2>/tmp/udiskie.log &"))
-              ;; Power Management Services
-              (when (executable-find "slock")
-                (start-process-shell-command
-                 "xss-lock"
-                 nil
-                 "xss-lock --transfer-sleep-lock -- slock &"))
-              (when (and (executable-find "xautolock")
-                         (executable-find "slock"))
-                (start-process-shell-command
-                 "xautolock"
-                 nil
-                 "xautolock -time 10 -locker 'slock' &"))
-              (message "EXWM autostart completed"))
-          (error
-           (message "EXWM autostart failed: %s"
-                    (error-message-string err)))))))
-
    ;; System Tray and Display Settings
    (setq exwm-systemtray-height 24)
    (exwm-systemtray-mode 1)
@@ -567,6 +531,7 @@
     nil
     "xinput set-prop 10 'Coordinate Transformation Matrix' 2 0 0 0 2 0 0 0 1")
 
+   ;; Debug Hook
    :hook
    ((exwm-update-class-hook
      .
@@ -581,7 +546,7 @@
     (exwm-init-hook
      .
      (lambda ()
-       (my-exwm-autostart)
+       (message "EXWM init-hook fired, DISPLAY=%s" (getenv "DISPLAY"))
        (my-exwm-update-displays)
        (switch-to-buffer "*scratchtch*")
        (exwm-workspace-switch 0))))))
