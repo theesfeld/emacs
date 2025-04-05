@@ -229,13 +229,12 @@
    (setq mouse-autoselect-window t)
    (setq focus-follows-mouse t)
    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
-   (setq mouse-wheel-progressive-speed t) ; Disable progressive speed for reverse scroll
+   (setq mouse-wheel-progressive-speed t)
    (setq mouse-wheel-scroll-amount-horizontal nil) ; Optional: horizontal scroll amount
    (setq
     x-select-enable-clipboard t
     x-select-enable-primary t
     select-enable-clipboard t)
-   ;;(setq exwm-input-line-mode-passthrough t)
 
    ;; Reverse Mouse Scrolling
    (setq mouse-wheel-down-event 'wheel-up) ; Swap down to up
@@ -326,7 +325,7 @@
           (when (executable-find "systemctl")
             (start-process-shell-command
              "hibernate" nil "systemctl hibernate"))))
-       ;; Media Keys (unchanged from your original)
+       ;; Media Keys
        ([XF86AudioRaiseVolume]
         .
         (lambda ()
@@ -375,7 +374,7 @@
           (message "Brightness: %s"
                    (shell-command-to-string
                     "brightnessctl -m | cut -d, -f4")))))
-     ;; Workspace Switching and Moving (unchanged)
+     ;; Workspace Switching and Moving
      (mapcar
       (lambda (i)
         (cons
@@ -395,7 +394,7 @@
            (exwm-workspace-move-window i))))
       (number-sequence 0 9))))
 
-   ;; Simulation Keys (unchanged)
+   ;; Simulation Keys
    (setq exwm-input-simulation-keys
          '(([?\C-b] . [left])
            ([?\C-f] . [right])
@@ -410,7 +409,7 @@
            ([?\M-w] . [?\C-c])
            ([?\C-y] . [?\C-v])))
 
-   ;; Dynamic Multi-Monitor Setup (unchanged)
+   ;; Dynamic Multi-Monitor Setup
    (defun my-exwm-update-displays ()
      "Update workspace-to-monitor mapping with maximized frames."
      (interactive)
@@ -432,15 +431,12 @@
           (monitor-count (length monitors)))
        (if (> monitor-count 0)
            (progn
-             ;; Set workspace count
              (setq exwm-workspace-number monitor-count)
-             ;; Clear and recreate workspaces
              (while (> (length exwm-workspace--list) monitor-count)
                (exwm-workspace-delete
                 (1- (length exwm-workspace--list))))
              (while (< (length exwm-workspace--list) monitor-count)
                (exwm-workspace-add))
-             ;; Map workspaces to monitors and maximize frames
              (setq exwm-randr-workspace-monitor-plist nil)
              (dotimes (i monitor-count)
                (let* ((monitor (nth i monitors))
@@ -457,17 +453,16 @@
                        (plist-put
                         exwm-randr-workspace-monitor-plist i name))
                  (when frame
-                   (set-frame-parameter frame 'fullscreen 'maximized) ; Maximize to monitor size
+                   (set-frame-parameter frame 'fullscreen 'maximized)
                    (message "Frame %d maximized for %s (%dx%d)"
                             i
                             name
                             width
                             height))))
-             ;; Apply xrandr layout and refresh
              (start-process-shell-command
               "xrandr" nil "xrandr --auto")
              (exwm-randr-refresh)
-             (redisplay t) ; Force redraw
+             (redisplay t)
              (message "Updated %d monitors: %s"
                       monitor-count
                       monitors))
@@ -476,15 +471,14 @@
            (message
             "No monitors detected, defaulting to 1 workspace")))))
 
-   ;; Mode-line Marker Functions (unchanged)
+   ;; Mode-line Marker Functions
    (defun my-exwm-mode-line-marker (frame)
      "Return a colored marker for the mode-line of FRAME."
-     (propertize
-      " ● "
-      'face
-      (if (eq frame (selected-frame))
-          '(:foreground "#ffcc66" :weight bold) ; Active: yellow
-        '(:foreground "#a0a0a0" :weight normal)))) ; Inactive: gray
+     (propertize " ● "
+                 'face
+                 (if (eq frame (selected-frame))
+                     '(:foreground "#ffcc66" :weight bold)
+                   '(:foreground "#a0a0a0" :weight normal))))
 
    (defun my-exwm-update-mode-line-marker ()
      "Update the mode-line marker for all frames based on the active workspace."
@@ -499,9 +493,7 @@
                   (default-value 'mode-line-format))))))
      (force-mode-line-update t))
 
-   (setq-default mode-line-format
-                 (cons "" mode-line-format)) ; Placeholder to avoid conflicts
-
+   (setq-default mode-line-format (cons "" mode-line-format))
    (add-hook
     'exwm-workspace-switch-hook #'my-exwm-update-mode-line-marker)
    (my-exwm-update-mode-line-marker)
@@ -510,28 +502,39 @@
    (defun my-exwm-autostart ()
      "Start applications and services after EXWM initialization with error handling."
      (interactive)
-     (condition-case err
-         (progn
-           (start-process "udiskie" nil "udiskie"
-                          "-as"
-                          "2>/tmp/udiskie.log")
-           (start-process "blueman-applet" nil "blueman-applet")
-           (start-process "nm-applet" nil "nm-applet")
-           ;;(start-process "mullvad-vpn" nil "mullvad-vpn")
-           ;; Power Management Services
-           (when (executable-find "slock")
-             (start-process-shell-command
-              "xss-lock"
-              nil
-              "xss-lock --transfer-sleep-lock -- slock &"))
-           (when (and (executable-find "xautolock")
-                      (executable-find "slock"))
-             (start-process-shell-command
-              "xautolock" nil "xautolock -time 10 -locker 'slock'")))
-       (error
-        (message "Autostart failed: %s" (error-message-string err)))))
+     (run-with-idle-timer
+      1 nil ; Delay 1 second after idle to ensure X is ready
+      (lambda ()
+        (condition-case err
+            (progn
+              ;; GUI Applets
+              (when (executable-find "nm-applet")
+                (start-process-shell-command
+                 "nm-applet" nil "nm-applet &"))
+              (when (executable-find "blueman-applet")
+                (start-process-shell-command
+                 "blueman-applet" nil "blueman-applet &"))
+              (when (executable-find "udiskie")
+                (start-process-shell-command
+                 "udiskie" nil "udiskie -as 2>/tmp/udiskie.log &"))
+              ;; Power Management Services
+              (when (executable-find "slock")
+                (start-process-shell-command
+                 "xss-lock"
+                 nil
+                 "xss-lock --transfer-sleep-lock -- slock &"))
+              (when (and (executable-find "xautolock")
+                         (executable-find "slock"))
+                (start-process-shell-command
+                 "xautolock"
+                 nil
+                 "xautolock -time 10 -locker 'slock' &"))
+              (message "EXWM autostart completed"))
+          (error
+           (message "EXWM autostart failed: %s"
+                    (error-message-string err)))))))
 
-   ;; System Tray and Display Settings (unchanged)
+   ;; System Tray and Display Settings
    (setq exwm-systemtray-height 24)
    (exwm-systemtray-mode 1)
 
@@ -561,7 +564,7 @@
                                   'face
                                   'mode-line)))))
 
-   ;; RandR and EXWM Enable (unchanged)
+   ;; RandR and EXWM Enable
    (require 'exwm-randr)
    (add-hook 'exwm-randr-screen-change-hook #'my-exwm-update-displays)
    (exwm-randr-mode 1)
