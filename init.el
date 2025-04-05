@@ -225,11 +225,11 @@
    (setq exwm-workspace-number 1) ; Initial value, adjusted dynamically
    (setq exwm-workspace-show-all-buffers t)
    (setq exwm-layout-show-all-buffers t)
-   (setq exwm-manage-force-tiling nil) ; Allow modeline/minibuffer
-   (setq mouse-autoselect-window nil)
-   (setq focus-follows-mouse nil)
+   (setq exwm-manage-force-tiling t) ; Allow modeline/minibuffer
+   (setq mouse-autoselect-window t)
+   (setq focus-follows-mouse t)
    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
-   (setq mouse-wheel-progressive-speed nil) ; Disable progressive speed for reverse scroll
+   (setq mouse-wheel-progressive-speed t) ; Disable progressive speed for reverse scroll
    (setq mouse-wheel-scroll-amount-horizontal nil) ; Optional: horizontal scroll amount
    (setq
     x-select-enable-clipboard t
@@ -516,6 +516,10 @@
    (add-hook 'exwm-randr-screen-change-hook #'my-exwm-update-displays)
    (exwm-randr-mode 1)
    (exwm-init)
+   (start-process-shell-command
+    "xinput"
+    nil
+    "xinput set-prop 10 'Coordinate Transformation Matrix' 2 0 0 0 2 0 0 0 1")
 
    :hook
    ((exwm-update-class-hook
