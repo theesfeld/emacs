@@ -485,27 +485,27 @@
    (my-exwm-update-mode-line-marker)
 
    ;; Autostart Function
-   (defun my-exwm-autostart ()
-     "Start applications and services after EXWM initialization."
-     (interactive)
-     (setenv "DISPLAY" ":0") ; Ensure DISPLAY is set
-     (message "EXWM autostart: Starting with DISPLAY=%s"
-              (getenv "DISPLAY"))
-     (dolist (cmd
-              '(("nm-applet" . "nm-applet &")
-                ("blueman-applet" . "blueman-applet &")
-                ("udiskie" . "udiskie -as &")
-                ("xss-lock"
-                 .
-                 "xss-lock --transfer-sleep-lock -- slock &")
-                ("xautolock" . "xautolock -time 10 -locker slock &")))
-       (let ((bin (car cmd))
-             (full-cmd (cdr cmd)))
-         (when (executable-find bin)
-           (message "EXWM autostart: Launching %s" full-cmd)
-           (start-process-shell-command bin nil full-cmd)
-           (sleep-for 0.5) ; Brief delay to let it start
-           (message "EXWM autostart: Launched %s" bin)))))
+   ;; (defun my-exwm-autostart ()
+   ;;   "Start applications and services after EXWM initialization."
+   ;;   (interactive)
+   ;;   (setenv "DISPLAY" ":0") ; Ensure DISPLAY is set
+   ;;   (message "EXWM autostart: Starting with DISPLAY=%s"
+   ;;            (getenv "DISPLAY"))
+   ;;   (dolist (cmd
+   ;;            '(("nm-applet" . "nm-applet &")
+   ;;              ("blueman-applet" . "blueman-applet &")
+   ;;              ("udiskie" . "udiskie -as &")
+   ;;              ("xss-lock"
+   ;;               .
+   ;;               "xss-lock --transfer-sleep-lock -- slock &")
+   ;;              ("xautolock" . "xautolock -time 10 -locker slock &")))
+   ;;     (let ((bin (car cmd))
+   ;;           (full-cmd (cdr cmd)))
+   ;;       (when (executable-find bin)
+   ;;         (message "EXWM autostart: Launching %s" full-cmd)
+   ;;         (start-process-shell-command bin nil full-cmd)
+   ;;         (sleep-for 0.5) ; Brief delay to let it start
+   ;;         (message "EXWM autostart: Launched %s" bin)))))
 
    ;; System Tray and Display Settings
    (setq exwm-systemtray-height 24)
@@ -544,7 +544,7 @@
    (exwm-init)
 
    ;; Ensure autostart runs after full initialization
-   (run-with-timer 10 nil #'my-exwm-autostart)
+   ;;(run-with-timer 10 nil #'my-exwm-autostart)
 
    (start-process-shell-command
     "xinput"
