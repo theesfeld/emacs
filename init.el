@@ -317,14 +317,7 @@
           (when (and (executable-find "systemctl")
                      (executable-find "slock"))
             (start-process-shell-command
-             "suspend" nil "systemctl suspend"))))
-       ([?\s-XF86Sleep]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "systemctl")
-            (start-process-shell-command
-             "hibernate" nil "systemctl hibernate"))))
+             "suspend" nil "systemctl suspend-then-hibernate"))))
        ;; Media Keys
        ([XF86AudioRaiseVolume]
         .
