@@ -282,7 +282,51 @@
         (lambda ()
           (interactive)
           (kill-buffer-and-window)))
-       ;; Media Keys
+       ;; Screen Lock and Power Management
+       ([?\s-l]
+        .
+        (lambda ()
+          (interactive)
+          (when (executable-find "slock")
+            (start-process-shell-command "lock" nil "slock"))))
+       ([?\s-s]
+        .
+        (lambda ()
+          (interactive)
+          (when (executable-find "systemctl")
+            (start-process-shell-command
+             "suspend" nil "systemctl suspend"))))
+       ([?\s-h]
+        .
+        (lambda ()
+          (interactive)
+          (when (executable-find "systemctl")
+            (start-process-shell-command
+             "hibernate" nil "systemctl hibernate"))))
+       ;; XF86 Power Keys
+       ([XF86PowerOff]
+        .
+        (lambda ()
+          (interactive)
+          (when (executable-find "systemctl")
+            (start-process-shell-command
+             "poweroff" nil "systemctl poweroff"))))
+       ([XF86Sleep]
+        .
+        (lambda ()
+          (interactive)
+          (when (and (executable-find "systemctl")
+                     (executable-find "slock"))
+            (start-process-shell-command
+             "suspend" nil "systemctl suspend"))))
+       ([?\s-XF86Sleep]
+        .
+        (lambda ()
+          (interactive)
+          (when (executable-find "systemctl")
+            (start-process-shell-command
+             "hibernate" nil "systemctl hibernate"))))
+       ;; Media Keys (unchanged from your original)
        ([XF86AudioRaiseVolume]
         .
         (lambda ()
@@ -331,7 +375,7 @@
           (message "Brightness: %s"
                    (shell-command-to-string
                     "brightnessctl -m | cut -d, -f4")))))
-     ;; Workspace Switching and Moving
+     ;; Workspace Switching and Moving (unchanged)
      (mapcar
       (lambda (i)
         (cons
@@ -351,7 +395,7 @@
            (exwm-workspace-move-window i))))
       (number-sequence 0 9))))
 
-   ;; Simulation Keys
+   ;; Simulation Keys (unchanged)
    (setq exwm-input-simulation-keys
          '(([?\C-b] . [left])
            ([?\C-f] . [right])
@@ -366,7 +410,7 @@
            ([?\M-w] . [?\C-c])
            ([?\C-y] . [?\C-v])))
 
-   ;; Dynamic Multi-Monitor Setup
+   ;; Dynamic Multi-Monitor Setup (unchanged)
    (defun my-exwm-update-displays ()
      "Update workspace-to-monitor mapping with maximized frames."
      (interactive)
@@ -432,6 +476,7 @@
            (message
             "No monitors detected, defaulting to 1 workspace")))))
 
+   ;; Mode-line Marker Functions (unchanged)
    (defun my-exwm-mode-line-marker (frame)
      "Return a colored marker for the mode-line of FRAME."
      (propertize
@@ -441,36 +486,29 @@
           '(:foreground "#ffcc66" :weight bold) ; Active: yellow
         '(:foreground "#a0a0a0" :weight normal)))) ; Inactive: gray
 
-   ;; Function to update mode-line for all frames
    (defun my-exwm-update-mode-line-marker ()
      "Update the mode-line marker for all frames based on the active workspace."
      (dolist (frame (frame-list))
        (let ((marker (my-exwm-mode-line-marker frame)))
-         ;; Store the marker as a frame parameter
          (set-frame-parameter frame 'my-mode-line-marker marker)
-         ;; Update the mode-line-format for this frame
          (with-selected-frame frame
            (setq mode-line-format
                  (cons
                   '(:eval
                     (frame-parameter nil 'my-mode-line-marker))
                   (default-value 'mode-line-format))))))
-     (force-mode-line-update t)) ; Update all mode-lines
+     (force-mode-line-update t))
 
-   ;; Ensure the default mode-line-format doesn’t override our changes
    (setq-default mode-line-format
                  (cons "" mode-line-format)) ; Placeholder to avoid conflicts
 
-   ;; Hook into EXWM workspace switch
    (add-hook
     'exwm-workspace-switch-hook #'my-exwm-update-mode-line-marker)
-
-   ;; Initial call to set up all frames
    (my-exwm-update-mode-line-marker)
 
-   ;; Autostart Applications
+   ;; Autostart Applications with Power Management
    (defun my-exwm-autostart ()
-     "Start applications after EXWM initialization with error handling."
+     "Start applications and services after EXWM initialization with error handling."
      (interactive)
      (condition-case err
          (progn
@@ -480,38 +518,50 @@
            (start-process "blueman-applet" nil "blueman-applet")
            (start-process "nm-applet" nil "nm-applet")
            ;;(start-process "mullvad-vpn" nil "mullvad-vpn")
-           )
+           ;; Power Management Services
+           (when (executable-find "slock")
+             (start-process-shell-command
+              "xss-lock"
+              nil
+              "xss-lock --transfer-sleep-lock -- slock &"))
+           (when (and (executable-find "xautolock")
+                      (executable-find "slock"))
+             (start-process-shell-command
+              "xautolock" nil "xautolock -time 10 -locker 'slock'")))
        (error
         (message "Autostart failed: %s" (error-message-string err)))))
 
+   ;; System Tray and Display Settings (unchanged)
    (setq exwm-systemtray-height 24)
    (exwm-systemtray-mode 1)
 
    (display-time-mode 1)
-   (setq display-time-24hr-format t) ; 24-hour clock
-   (setq display-time-day-and-date t) ; Just time, no date
+   (setq display-time-24hr-format t)
+   (setq display-time-day-and-date t)
    (display-battery-mode 1)
 
-   ;; Append time and battery to the default mode-line, aligned right
-   (setq-default
-    mode-line-end-spaces
-    '("" (:eval
-       (propertize " " 'display '((space :align-to (- right 25))))) ; Space before right edge
-      (:eval
-       (when (and battery-status-function display-battery-mode)
-         (let ((status
-                (funcall battery-status-function)))
-           (propertize (concat "Bat: " (cdr (assoc ?p status)) "% ")
-                       'face 'mode-line))))
-      (:eval
-       (when display-time-mode
-         (propertize display-time-string 'face 'mode-line)))))
+   (setq-default mode-line-end-spaces
+                 '("" (:eval
+                    (propertize " "
+                                'display
+                                '((space :align-to (- right 25)))))
+                   (:eval
+                    (when (and battery-status-function
+                               display-battery-mode)
+                      (let ((status
+                             (funcall battery-status-function)))
+                        (propertize (concat
+                                     "Bat: "
+                                     (cdr (assoc ?p status))
+                                     "% ")
+                                    'face 'mode-line))))
+                   (:eval
+                    (when display-time-mode
+                      (propertize display-time-string
+                                  'face
+                                  'mode-line)))))
 
-   ;   (setq echo-area-clear-delay nil)
-   ;   (setq minibuffer-frame-alist
-   ;         '((top . 0) (left . 0) (width . 80) (height . 2)))
-
-   ;; RandR and EXWM Enable
+   ;; RandR and EXWM Enable (unchanged)
    (require 'exwm-randr)
    (add-hook 'exwm-randr-screen-change-hook #'my-exwm-update-displays)
    (exwm-randr-mode 1)
@@ -526,12 +576,12 @@
      .
      (lambda ()
        (exwm-workspace-rename-buffer
-        (or exwm-title exwm-class-name "*EXWM*")))) ; Use app title or class
+        (or exwm-title exwm-class-name "*EXWM*"))))
     (exwm-update-title-hook
      .
      (lambda ()
        (exwm-workspace-rename-buffer
-        (or exwm-title exwm-class-name "*EXWM*")))) ; Update with title
+        (or exwm-title exwm-class-name "*EXWM*"))))
     (exwm-init-hook
      .
      (lambda ()
