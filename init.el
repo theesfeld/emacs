@@ -294,14 +294,14 @@
           (interactive)
           (when (executable-find "systemctl")
             (start-process-shell-command
-             "suspend" nil "systemctl suspend-then-hibernate"))))
+             "suspend" nil "systemctl suspend"))))
        ([?\s-h]
         .
         (lambda ()
           (interactive)
           (when (executable-find "systemctl")
             (start-process-shell-command
-             "hibernate" nil "systemctl suspend-then-hibernate"))))
+             "hibernate" nil "systemctl hibernate"))))
        ;; XF86 Power Keys
        ([XF86PowerOff]
         .
@@ -317,7 +317,14 @@
           (when (and (executable-find "systemctl")
                      (executable-find "slock"))
             (start-process-shell-command
-             "suspend" nil "systemctl suspend-then-hibernate"))))
+             "suspend" nil "systemctl suspend"))))
+       ([?\s-XF86Sleep]
+        .
+        (lambda ()
+          (interactive)
+          (when (executable-find "systemctl")
+            (start-process-shell-command
+             "hibernate" nil "systemctl hibernate"))))
        ;; Media Keys
        ([XF86AudioRaiseVolume]
         .
@@ -491,6 +498,29 @@
     'exwm-workspace-switch-hook #'my-exwm-update-mode-line-marker)
    (my-exwm-update-mode-line-marker)
 
+   ;; Autostart Function
+   (defun my-exwm-autostart ()
+     "Start applications and services after EXWM initialization."
+     (interactive)
+     (setenv "DISPLAY" ":0") ; Ensure DISPLAY is set
+     (message "EXWM autostart: Starting with DISPLAY=%s"
+              (getenv "DISPLAY"))
+     (dolist (cmd
+              '(("nm-applet" . "nm-applet &")
+                ("blueman-applet" . "blueman-applet &")
+                ("udiskie" . "udiskie -as &")
+                ("xss-lock"
+                 .
+                 "xss-lock --transfer-sleep-lock -- slock &")
+                ("xautolock" . "xautolock -time 10 -locker slock &")))
+       (let ((bin (car cmd))
+             (full-cmd (cdr cmd)))
+         (when (executable-find bin)
+           (message "EXWM autostart: Launching %s" full-cmd)
+           (start-process-shell-command bin nil full-cmd)
+           (sleep-for 0.5) ; Brief delay to let it start
+           (message "EXWM autostart: Launched %s" bin)))))
+
    ;; System Tray and Display Settings
    (setq exwm-systemtray-height 24)
    (exwm-systemtray-mode 1)
@@ -526,12 +556,15 @@
    (add-hook 'exwm-randr-screen-change-hook #'my-exwm-update-displays)
    (exwm-randr-mode 1)
    (exwm-init)
+
+   ;; Ensure autostart runs after full initialization
+   (run-with-timer 3 nil #'my-exwm-autostart)
+
    (start-process-shell-command
     "xinput"
     nil
     "xinput set-prop 10 'Coordinate Transformation Matrix' 2 0 0 0 2 0 0 0 1")
 
-   ;; Debug Hook
    :hook
    ((exwm-update-class-hook
      .
