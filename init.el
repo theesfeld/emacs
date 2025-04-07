@@ -225,7 +225,7 @@
    (setq exwm-workspace-number 1)
    (setq exwm-workspace-show-all-buffers t)
    (setq exwm-layout-show-all-buffers t)
-   (setq exwm-manage-force-tiling t)
+   (setq exwm-manage-force-tiling t) ; Enforce tiling
    (setq mouse-autoselect-window t)
    (setq focus-follows-mouse t)
    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
@@ -249,135 +249,142 @@
          '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
 
    ;; Global Keybindings
-   (setq exwm-input-global-keys
-         (nconc
-          `(([?\s-r] . exwm-reset)
-            ([?\s-w] . exwm-workspace-switch)
-            ([?\s-&]
-             .
-             (lambda (cmd)
-               (interactive (list (read-shell-command "$ ")))
-               (start-process-shell-command cmd nil cmd)))
-            ([?\s-x]
-             .
-             (lambda ()
-               (interactive)
-               (save-buffers-kill-emacs)))
-            ([?\s-e]
-             .
-             (lambda ()
-               (interactive)
-               (start-process-shell-command
-                "yazi" nil "footclient -e yazi")))
-            ([?\s-\ ]
-             .
-             (lambda ()
-               (interactive)
-               (counsel-linux-app)))
-            ([?\s-v] . consult-yank-pop)
-            ([?\s-q]
-             .
-             (lambda ()
-               (interactive)
-               (kill-buffer-and-window)))
-            ;; Screen Lock and Power Management
-            ([?\s-l]
-             .
-             (lambda ()
-               (interactive)
-               (when (executable-find "slock")
-                 (start-process-shell-command "lock" nil "slock"))))
-            ([?\s-s]
-             .
-             (lambda ()
-               (interactive)
-               (when (executable-find "systemctl")
-                 (start-process-shell-command
-                  "suspend" nil "systemctl suspend-then-hibernate"))))
-            ;; XF86 Power Keys
-            ([XF86PowerOff]
-             .
-             (lambda ()
-               (interactive)
-               (when (executable-find "systemctl")
-                 (start-process-shell-command
-                  "poweroff" nil "systemctl poweroff"))))
-            ([XF86Sleep]
-             .
-             (lambda ()
-               (interactive)
-               (when (and (executable-find "systemctl")
-                          (executable-find "slock"))
-                 (start-process-shell-command
-                  "suspend" nil "systemctl suspend-then-hibernate"))))
-            ;; Media Keys
-            ([XF86AudioRaiseVolume]
-             .
-             (lambda ()
-               (interactive)
-               (shell-command
-                "pactl set-sink-volume @DEFAULT_SINK@ +5%")
-               (alert
-                "Volume increased"
-                :title "Media Control"
-                :severity 'normal)))
-            ([XF86AudioLowerVolume]
-             .
-             (lambda ()
-               (interactive)
-               (shell-command
-                "pactl set-sink-volume @DEFAULT_SINK@ -5%")
-               (alert
-                "Volume decreased"
-                :title "Media Control"
-                :severity 'normal)))
-            ([XF86AudioMute]
-             .
-             (lambda ()
-               (interactive)
-               (shell-command
-                "pactl set-sink-mute @DEFAULT_SINK@ toggle")
-               (alert
-                "Volume muted/unmuted"
-                :title "Media Control"
-                :severity 'normal)))
-            ([XF86MonBrightnessUp]
-             .
-             (lambda ()
-               (interactive)
-               (shell-command "brightnessctl set +10%")
-               (alert
-                "Brightness increased"
-                :title "Display Control"
-                :severity 'normal)))
-            ([XF86MonBrightnessDown]
-             .
-             (lambda ()
-               (interactive)
-               (shell-command "brightnessctl set 10%-")
-               (alert
-                "Brightness decreased"
-                :title "Display Control"
-                :severity 'normal))))
-          ;; Workspace Switching and Moving
-          (mapcar
-           (lambda (i)
-             (cons
-              (kbd (format "s-%d" i))
-              (lambda ()
-                (interactive)
-                (message "Switching to workspace %d" i)
-                (exwm-workspace-switch i))))
-           (number-sequence 0 9))
-          (mapcar
-           (lambda (i)
-             (cons
-              (kbd (format "M-s-%d" i))
-              (lambda ()
-                (interactive)
-                (message "Moving window to workspace %d" i)
-                (exwm-workspace-move-window i))))
-           (number-sequence 0 9))))
+   (setq
+    exwm-input-global-keys
+    (nconc
+     `(([?\s-r] . exwm-reset)
+       ([?\s-w] . exwm-workspace-switch)
+       ([?\s-&]
+        .
+        (lambda (cmd)
+          (interactive (list (read-shell-command "$ ")))
+          (start-process-shell-command cmd nil cmd)))
+       ([?\s-x]
+        .
+        (lambda ()
+          (interactive)
+          (save-buffers-kill-emacs)))
+       ([?\s-e]
+        .
+        (lambda ()
+          (interactive)
+          (start-process-shell-command
+           "yazi" nil "footclient -e yazi")))
+       ([?\s-\ ]
+        .
+        (lambda ()
+          (interactive)
+          (counsel-linux-app)))
+       ([?\s-v] . consult-yank-pop)
+       ([?\s-q]
+        .
+        (lambda ()
+          (interactive)
+          (kill-buffer-and-window)))
+       ;; Screen Lock and Power Management
+       ([?\s-l]
+        .
+        (lambda ()
+          (interactive)
+          (when (executable-find "slock")
+            (start-process-shell-command "lock" nil "slock"))))
+       ([?\s-s]
+        .
+        (lambda ()
+          (interactive)
+          (when (executable-find "systemctl")
+            (start-process-shell-command
+             "suspendd" nil "systemctl suspend-then-hibernate"))))
+       ;; XF86 Power Keys
+       ([XF86PowerOff]
+        .
+        (lambda ()
+          (interactive)
+          (when (executable-find "systemctl")
+            (start-process-shell-command
+             "poweroff" nil "systemctl poweroff"))))
+       ([XF86Sleep]
+        .
+        (lambda ()
+          (interactive)
+          (when (and (executable-find "systemctl")
+                     (executable-find "slock"))
+            (start-process-shell-command
+             "suspend" nil "systemctl suspend-then-hibernate"))))
+       ;; Media Keys with Percentage Display
+       ([XF86AudioRaiseVolume]
+        .
+        (lambda ()
+          (interactive)
+          (shell-command "pactl set-sink-volume @DEFAULT_SINK@ +5%")
+          (let ((volume (shell-command-to-string
+                         "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1")))
+            (alert (format "Volume: %s" volume)
+                   :title "Media Control"
+                   :severity 'normal))))
+       ([XF86AudioLowerVolume]
+        .
+        (lambda ()
+          (interactive)
+          (shell-command "pactl set-sink-volume @DEFAULT_SINK@ -5%")
+          (let ((volume (shell-command-to-string
+                         "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1")))
+            (alert (format "Volume: %s" volume)
+                   :title "Media Control"
+                   :severity 'normal))))
+       ([XF86AudioMute]
+        .
+        (lambda ()
+          (interactive)
+          (shell-command "pactl set-sink-mute @DEFAULT_SINK@ toggle")
+          (let ((mute-status (shell-command-to-string
+                              "pactl get-sink-mute @DEFAULT_SINK@ | grep -o 'yes\|no'"))
+                (volume (shell-command-to-string
+                         "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1")))
+            (alert (if (string= mute-status "yes")
+                       "Volume: Muted"
+                     (format "Volume: %s" volume))
+                   :title "Media Control"
+                   :severity 'normal))))
+       ([XF86MonBrightnessUp]
+        .
+        (lambda ()
+          (interactive)
+          (shell-command "brightnessctl set +10%")
+          (let ((brightness (shell-command-to-string
+                             "brightnessctl -m | cut -d, -f4")))
+            (alert (format "Brightness: %s" brightness)
+                   :title "Display Control"
+                   :severity 'normal))))
+       ([XF86MonBrightnessDown]
+        .
+        (lambda ()
+          (interactive)
+          (shell-command "brightnessctl set 10%-")
+          (let ((brightness (shell-command-to-string
+                             "brightnessctl -m | cut -d, -f4")))
+            (alert (format "Brightness: %s" brightness)
+                   :title "Display Control"
+                   :severity 'normal))))
+     ;; Workspace Switching and Moving
+     (mapcar
+      (lambda (i)
+        (cons
+         (kbd (format "s-%d" i))
+         (lambda ()
+           (interactive)
+           (message "Switching to workspace %d" i)
+           (exwm-workspace-switch i))))
+      (number-sequence 0 9))
+     (mapcar
+      (lambda (i)
+        (cons
+         (kbd (format "M-s-%d" i))
+         (lambda ()
+           (interactive)
+           (message "Moving window to workspace %d" i)
+           (exwm-workspace-move-window i))))
+      (number-sequence 0 9))))
 
    ;; Simulation Keys
    (setq exwm-input-simulation-keys
@@ -394,26 +401,25 @@
            ([?\M-w] . [?\C-c])
            ([?\C-y] . [?\C-v])))
 
-   ;; Dynamic Multi-Monitor Setup
+   ;; Dynamic Multi-Monitor Setup with System Tray on eDP-1
    (defun my-exwm-update-displays ()
-     "Update workspace-to-monitor mapping with maximized frames."
+     "Update workspace-to-monitor mapping with maximized frames and system tray on eDP-1."
      (interactive)
-     (let*
-         ((xrandr-output
-           (shell-command-to-string "xrandr --current"))
-          (monitors
-           (cl-loop
-            for line in (split-string xrandr-output "\n") when
-            (string-match
-             "\\([a-zA-Z0-9-]+\\) connected\\( primary\\)? \\([0-9]+x[0-9]+\\)\\+\\([-0-9]+\\)\\+\\([-0-9]+\\)"
-             line)
-            collect
-            (list
-             (match-string 1 line)
-             (match-string 3 line)
-             (string-to-number (match-string 4 line))
-             (string-to-number (match-string 5 line)))))
-          (monitor-count (length monitors)))
+     (let* ((xrandr-output
+             (shell-command-to-string "xrandr --current"))
+            (monitors
+             (cl-loop
+              for line in (split-string xrandr-output "\n") when
+              (string-match
+               "\\([a-zA-Z0-9-]+\\) connected\\( primary\\)? \\([0-9]+x[0-9]+\\)\\+\\([-0-9]+\\)\\+\\([-0-9]+\\)"
+               line)
+              collect
+              (list
+               (match-string 1 line)
+               (match-string 3 line)
+               (string-to-number (match-string 4 line))
+               (string-to-number (match-string 5 line)))))
+            (monitor-count (length monitors)))
        (if (> monitor-count 0)
            (progn
              (setq exwm-workspace-number monitor-count)
@@ -444,17 +450,27 @@
                             name
                             width
                             height))))
+             ;; Set system tray to eDP-1 if available
+             (when (member "eDP-1" (mapcar #'car monitors))
+               (setq exwm-systemtray-monitor "eDP-1"))
              (start-process-shell-command
               "xrandr" nil "xrandr --auto")
              (exwm-randr-refresh)
              (redisplay t)
-             (message "Updated %d monitors: %s"
-                      monitor-count
-                      monitors))
+             (message "Updated %d monitors: %s" monitor-count monitors))
          (progn
            (setq exwm-workspace-number 1)
-           (message
-            "No monitors detected, defaulting to 1 workspace")))))
+           (setq exwm-systemtray-monitor nil) ; Default to single monitor
+           (message "No monitors detected, defaulting to 1 workspace")))))
+
+   ;; Tiling Management
+   (defun my-exwm-tile-window ()
+     "Tile new windows horizontally unless floating or fullscreen."
+     (unless (or (exwm-floating--buffer-p (current-buffer))
+                 (exwm-workspace--fullscreen-p (selected-frame)))
+       (if (> (length (window-list)) 1)
+           (split-window-right) ; Split horizontally if other windows exist
+         (message "First window, keeping full size"))))
 
    ;; Mode-line Marker Functions
    (defun my-exwm-mode-line-marker (frame)
@@ -477,30 +493,6 @@
                     (frame-parameter nil 'my-mode-line-marker))
                   (default-value 'mode-line-format))))))
      (force-mode-line-update t))
-
-   ;; Autostart Function
-   ;; (defun my-exwm-autostart ()
-   ;;   "Start applications and services after EXWM initialization."
-   ;;   (interactive)
-   ;;   (setenv "DISPLAY" ":0") ; Ensure DISPLAY is set
-   ;;   (message "EXWM autostart: Starting with DISPLAY=%s"
-   ;;            (getenv "DISPLAY"))
-   ;;   (dolist (cmd
-   ;;            '(("nm-applet" . "nm-applet &")
-   ;;              ("blueman-applet" . "blueman-applet &")
-   ;;              ("udiskie" . "udiskie -as &")
-   ;;              ("xss-lock"
-   ;;               .
-   ;;               "xss-lock --transfer-sleep-lock -- slock &")
-   ;;              ("xautolock" . "xautolock -time 10 -locker slock &")))
-   ;;     (let ((bin (car cmd))
-   ;;           (full-cmd (cdr cmd)))
-   ;;       (when (executable-find bin)
-   ;;         (message "EXWM autostart: Launching %s" full-cmd)
-   ;;         (start-process-shell-command bin nil full-cmd)
-   ;;         (sleep-for 0.5) ; Brief delay to let it start
-   ;;         (message "EXWM autostart: Launched %s" bin)))))
-
 
    (setq-default mode-line-format (cons "" mode-line-format))
    (add-hook
@@ -559,6 +551,7 @@
      (lambda ()
        (exwm-workspace-rename-buffer
         (or exwm-title exwm-class-name "*EXWM*"))))
+    (exwm-manage-finish-hook . my-exwm-tile-window) ; Add tiling hook
     (exwm-init-hook
      .
      (lambda ()
@@ -567,50 +560,38 @@
        (switch-to-buffer "*scratch*")
        (exwm-workspace-switch 0)))))
 
-  ;; Alert Package for Notifications
+  ;; Alert Package for Notifications (unchanged)
   (use-package
    alert
    :ensure t
    :config
-   (setq alert-default-style
-         (if (eq system-type 'gnu/linux)
-             'libnotify
-           'message))
-   (setq alert-fade-time 10) ; Fade after 10 seconds
-   (setq alert-reveal-idle-time 5) ; Show after 5 seconds of idle
+   (setq alert-default-style (if (eq system-type 'gnu/linux) 'libnotify 'message))
+   (setq alert-fade-time 10)
+   (setq alert-reveal-idle-time 5)
    :init
-   (alert-add-rule
-    :category "EXWM"
-    :mode 'exwm-mode
-    :style 'libnotify))
+   (alert-add-rule :category "EXWM" :mode 'exwm-mode :style 'libnotify))
 
-  ;; EDNC (Emacs Desktop Notification Center) Package
+  ;; EDNC Package (unchanged)
   (use-package
    ednc
    :ensure t
    :config
-   (setq ednc-log-notifications t) ; Log notifications for debugging
-   (setq ednc-notification-timeout 10) ; Timeout after 10 seconds
-   (ednc-mode 1) ; Enable EDNC globally
-   ;; Define a custom notification handler for EXWM events
+   (setq ednc-log-notifications t)
+   (setq ednc-notification-timeout 10)
+   (ednc-mode 1)
    (defun my-ednc-notify (title message &optional urgency)
      "Send a desktop notification with TITLE and MESSAGE."
-     (ednc-notify
-      title message
-      (pcase urgency
-        ('low 0)
-        ('normal 1)
-        ('high 2)
-        (_ 1))))
-   ;; Example integration with workspace switch
-   (add-hook
-    'exwm-workspace-switch-hook
-    (lambda ()
-      (my-ednc-notify
-       "Workspace Switch"
-       (format "Switched to workspace %d"
-               exwm-workspace-current-index)
-       'normal)))))
+     (ednc-notify title message
+                  (pcase urgency
+                    ('low 0)
+                    ('normal 1)
+                    ('high 2)
+                    (_ 1))))
+   (add-hook 'exwm-workspace-switch-hook
+             (lambda ()
+               (my-ednc-notify "Workspace Switch"
+                               (format "Switched to workspace %d" exwm-workspace-current-index)
+                               'normal))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
