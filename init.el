@@ -212,10 +212,6 @@
  (unless (find-font (font-spec :name "all-the-icons"))
    (all-the-icons-install-fonts t)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                     EXWM                                  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (when (eq window-system 'x)
   (use-package
    exwm
@@ -225,7 +221,7 @@
    (setq exwm-workspace-number 1)
    (setq exwm-workspace-show-all-buffers t)
    (setq exwm-layout-show-all-buffers t)
-   (setq exwm-manage-force-tiling nil) ; Allow floating by default, manage tiling manually
+   (setq exwm-manage-force-tiling t) ; Changed to t for tiling by default
    (setq mouse-autoselect-window t)
    (setq focus-follows-mouse t)
    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
@@ -248,7 +244,7 @@
    (setq exwm-input-prefix-keys
          '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
 
-   ;; Global Keybindings
+   ;; Global Keybindings with Enhancements
    (setq
     exwm-input-global-keys
     (nconc
@@ -379,7 +375,16 @@
             (alert
              (format "Brightness: %s" brightness)
              :title "Display Control"
-             :severity 'normal)))))
+             :severity 'normal))))
+       ;; Enhancement 1: EXWM-Edit
+       ([?\C-c ?e] . exwm-edit-compose)
+       ;; Enhancement 2: Dynamic Workspace Switching
+       ([?\s-<left>] . exwm-workspace-switch-left)
+       ([?\s-<right>] . exwm-workspace-switch-right)
+       ;; Enhancement 3: Floating Toggle
+       ([?\s-f] . exwm-floating-toggle-floating)
+       ;; Enhancement 6: Input Mode Toggle
+       ([?\s-m] . my-exwm-toggle-input-mode))
      (mapcar
       (lambda (i)
         (cons
@@ -414,13 +419,18 @@
            ([?\M-w] . [?\C-c])
            ([?\C-y] . [?\C-v])))
 
-   ;; Dynamic Multi-Monitor Setup with System Tray on eDP-1
+   ;; Dynamic Multi-Monitor Setup with System Tray on eDP-1 and Error Handling (Enhancement 5)
    (defun my-exwm-update-displays ()
      "Update workspace-to-monitor mapping with maximized frames and system tray on eDP-1."
      (interactive)
      (let*
          ((xrandr-output
-           (shell-command-to-string "xrandr --current"))
+           (condition-case nil
+               (shell-command-to-string "xrandr --current")
+             (error
+              (message
+               "xrandr failed; defaulting to 1 workspace")
+              "")))
           (monitors
            (cl-loop
             for line in (split-string xrandr-output "\n") when
@@ -479,9 +489,9 @@
            (message
             "No monitors detected, defaulting to 1 workspace")))))
 
-   ;; Tiling Management with Floating Support
+   ;; Tiling Management with Automatic Floating
    (defun my-exwm-tile-window ()
-     "Tile new windows horizontally unless floating or fullscreen is requested."
+     "Tile new windows horizontally unless automatically set to float."
      (let ((buffer (current-buffer)))
        (unless (or (exwm-workspace--fullscreen-p (selected-frame))
                    (with-current-buffer buffer
@@ -490,7 +500,9 @@
                           exwm-window-type
                           '(?_NET_WM_WINDOW_TYPE_DIALOG
                             ?_NET_WM_WINDOW_TYPE_POPUP_MENU
-                            ?_NET_WM_WINDOW_TYPE_UTILITY)))))
+                            ?_NET_WM_WINDOW_TYPE_UTILITY
+                            ?_NET_WM_WINDOW_TYPE_SPLASH
+                            ?_NET_WM_WINDOW_TYPE_DROPDOWN_MENU)))))
          (if (> (length (window-list)) 1)
              (split-window-right)
            (message "First window, keeping full size")))))
@@ -504,6 +516,14 @@
          (switch-to-buffer buffer)
          (unless (exwm-floating--buffer-p buffer)
            (my-exwm-tile-window)))))
+
+   ;; Enhancement 6: Toggle Input Mode
+   (defun my-exwm-toggle-input-mode ()
+     "Toggle between char-mode and line-mode for specific apps."
+     (interactive)
+     (if (string-match-p "firefox" (or exwm-class-name ""))
+         (exwm-input-release-keyboard) ; Line-mode for Firefox
+       (exwm-input-grab-keyboard))) ; Back to char-mode
 
    ;; Mode-line Marker Functions
    (defun my-exwm-mode-line-marker (frame)
@@ -570,6 +590,13 @@
     nil
     "xinput set-prop 10 'Coordinate Transformation Matrix' 2 0 0 0 2 0 0 0 1")
 
+   ;; Enhancement 4: Idle Timeout Screen Lock
+   (add-hook
+    'exwm-init-hook
+    (lambda ()
+      (start-process-shell-command
+       "xautolock" nil "xautolock -time 10 -locker slock")))
+
    :hook
    ((exwm-update-class-hook
      .
@@ -590,47 +617,7 @@
        (message "EXWM init-hook fired, DISPLAY=%s" (getenv "DISPLAY"))
        (my-exwm-update-displays)
        (switch-to-buffer "*scratch*")
-       (exwm-workspace-switch 0)))))
-
-  (use-package
-   alert
-   :ensure t
-   :config
-   (setq alert-default-style
-         (if (eq system-type 'gnu/linux)
-             'libnotify
-           'message))
-   (setq alert-fade-time 10) (setq alert-reveal-idle-time 5)
-   :init
-   (alert-add-rule
-    :category "EXWM"
-    :mode 'exwm-mode
-    :style 'libnotify))
-
-  (use-package
-   ednc
-   :ensure t
-   :config
-   (setq ednc-log-notifications t)
-   (setq ednc-notification-timeout 10)
-   (ednc-mode 1)
-   (defun my-ednc-notify (title message &optional urgency)
-     "Send a desktop notification with TITLE and MESSAGE."
-     (ednc-notify
-      title message
-      (pcase urgency
-        ('low 0)
-        ('normal 1)
-        ('high 2)
-        (_ 1))))
-   (add-hook
-    'exwm-workspace-switch-hook
-    (lambda ()
-      (my-ednc-notify
-       "Workspace Switch"
-       (format "Switched to workspace %d"
-               exwm-workspace-current-index)
-       'normal))))) ;; Closing the `when` block
+       (exwm-workspace-switch 0))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
