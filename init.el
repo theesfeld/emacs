@@ -216,9 +216,6 @@
 ;;                                     EXWM                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                     EXWM                                  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (when (eq window-system 'x)
   (use-package
    exwm
@@ -228,7 +225,7 @@
    (setq exwm-workspace-number 1)
    (setq exwm-workspace-show-all-buffers t)
    (setq exwm-layout-show-all-buffers t)
-   (setq exwm-manage-force-tiling t) ; Enforce tiling
+   (setq exwm-manage-force-tiling nil) ; Allow floating by default, manage tiling manually
    (setq mouse-autoselect-window t)
    (setq focus-follows-mouse t)
    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
@@ -382,201 +379,219 @@
             (alert
              (format "Brightness: %s" brightness)
              :title "Display Control"
-             :severity 'normal))))
-       ;; Workspace Switching and Moving
-       (mapcar
-        (lambda (i)
-          (cons
-           (kbd (format "s-%d" i))
-           (lambda ()
-             (interactive)
-             (message "Switching to workspace %d" i)
-             (exwm-workspace-switch i))))
-        (number-sequence 0 9))
-       (mapcar
-        (lambda (i)
-          (cons
-           (kbd (format "M-s-%d" i))
-           (lambda ()
-             (interactive)
-             (message "Moving window to workspace %d" i)
-             (exwm-workspace-move-window i))))
-        (number-sequence 0 9))))
+             :severity 'normal)))))
+     (mapcar
+      (lambda (i)
+        (cons
+         (kbd (format "s-%d" i))
+         (lambda ()
+           (interactive)
+           (message "Switching to workspace %d" i)
+           (exwm-workspace-switch i))))
+      (number-sequence 0 9))
+     (mapcar
+      (lambda (i)
+        (cons
+         (kbd (format "M-s-%d" i))
+         (lambda ()
+           (interactive)
+           (message "Moving window to workspace %d" i)
+           (exwm-workspace-move-window i))))
+      (number-sequence 0 9))))
 
-    ;; Simulation Keys
-    (setq exwm-input-simulation-keys
-          '(([?\C-b] . [left])
-            ([?\C-f] . [right])
-            ([?\C-p] . [up])
-            ([?\C-n] . [down])
-            ([?\C-a] . [home])
-            ([?\C-e] . [end])
-            ([?\M-v] . [prior])
-            ([?\C-v] . [next])
-            ([?\C-d] . [delete])
-            ([?\C-k] . [S-end delete])
-            ([?\M-w] . [?\C-c])
-            ([?\C-y] . [?\C-v])))
+   ;; Simulation Keys
+   (setq exwm-input-simulation-keys
+         '(([?\C-b] . [left])
+           ([?\C-f] . [right])
+           ([?\C-p] . [up])
+           ([?\C-n] . [down])
+           ([?\C-a] . [home])
+           ([?\C-e] . [end])
+           ([?\M-v] . [prior])
+           ([?\C-v] . [next])
+           ([?\C-d] . [delete])
+           ([?\C-k] . [S-end delete])
+           ([?\M-w] . [?\C-c])
+           ([?\C-y] . [?\C-v])))
 
-    ;; Dynamic Multi-Monitor Setup with System Tray on eDP-1
-    (defun my-exwm-update-displays ()
-      "Update workspace-to-monitor mapping with maximized frames and system tray on eDP-1."
-      (interactive)
-      (let*
-          ((xrandr-output
-            (shell-command-to-string "xrandr --current"))
-           (monitors
-            (cl-loop
-             for line in (split-string xrandr-output "\n") when
-             (string-match
-              "\\([a-zA-Z0-9-]+\\) connected\\( primary\\)? \\([0-9]+x[0-9]+\\)\\+\\([-0-9]+\\)\\+\\([-0-9]+\\)"
-              line)
-             collect
-             (list
-              (match-string 1 line)
-              (match-string 3 line)
-              (string-to-number (match-string 4 line))
-              (string-to-number (match-string 5 line)))))
-           (monitor-count (length monitors)))
-        (if (> monitor-count 0)
-            (progn
-              (setq exwm-workspace-number monitor-count)
-              (while (> (length exwm-workspace--list) monitor-count)
-                (exwm-workspace-delete
-                 (1- (length exwm-workspace--list))))
-              (while (< (length exwm-workspace--list) monitor-count)
-                (exwm-workspace-add))
-              (setq exwm-randr-workspace-monitor-plist nil)
-              (dotimes (i monitor-count)
-                (let* ((monitor (nth i monitors))
-                       (name (nth 0 monitor))
-                       (resolution (nth 1 monitor))
-                       (width
-                        (string-to-number
-                         (car (split-string resolution "x"))))
-                       (height
-                        (string-to-number
-                         (cadr (split-string resolution "x"))))
-                       (frame (nth i exwm-workspace--list)))
-                  (setq exwm-randr-workspace-monitor-plist
-                        (plist-put
-                         exwm-randr-workspace-monitor-plist i name))
-                  (when frame
-                    (set-frame-parameter frame 'fullscreen 'maximized)
-                    (message "Frame %d maximized for %s (%dx%d)"
-                             i
-                             name
-                             width
-                             height))))
-              (when (member "eDP-1" (mapcar #'car monitors))
-                (setq exwm-systemtray-monitor "eDP-1"))
-              (start-process-shell-command
-               "xrandr" nil "xrandr --auto")
-              (exwm-randr-refresh)
-              (redisplay t)
-              (message "Updated %d monitors: %s"
-                       monitor-count
-                       monitors))
-          (progn
-            (setq exwm-workspace-number 1)
-            (setq exwm-systemtray-monitor nil)
-            (message
-             "No monitors detected, defaulting to 1 workspace")))))
+   ;; Dynamic Multi-Monitor Setup with System Tray on eDP-1
+   (defun my-exwm-update-displays ()
+     "Update workspace-to-monitor mapping with maximized frames and system tray on eDP-1."
+     (interactive)
+     (let*
+         ((xrandr-output
+           (shell-command-to-string "xrandr --current"))
+          (monitors
+           (cl-loop
+            for line in (split-string xrandr-output "\n") when
+            (string-match
+             "\\([a-zA-Z0-9-]+\\) connected\\( primary\\)? \\([0-9]+x[0-9]+\\)\\+\\([-0-9]+\\)\\+\\([-0-9]+\\)"
+             line)
+            collect
+            (list
+             (match-string 1 line)
+             (match-string 3 line)
+             (string-to-number (match-string 4 line))
+             (string-to-number (match-string 5 line)))))
+          (monitor-count (length monitors)))
+       (if (> monitor-count 0)
+           (progn
+             (setq exwm-workspace-number monitor-count)
+             (while (> (length exwm-workspace--list) monitor-count)
+               (exwm-workspace-delete
+                (1- (length exwm-workspace--list))))
+             (while (< (length exwm-workspace--list) monitor-count)
+               (exwm-workspace-add))
+             (setq exwm-randr-workspace-monitor-plist nil)
+             (dotimes (i monitor-count)
+               (let* ((monitor (nth i monitors))
+                      (name (nth 0 monitor))
+                      (resolution (nth 1 monitor))
+                      (width
+                       (string-to-number
+                        (car (split-string resolution "x"))))
+                      (height
+                       (string-to-number
+                        (cadr (split-string resolution "x"))))
+                      (frame (nth i exwm-workspace--list)))
+                 (setq exwm-randr-workspace-monitor-plist
+                       (plist-put
+                        exwm-randr-workspace-monitor-plist i name))
+                 (when frame
+                   (set-frame-parameter frame 'fullscreen 'maximized)
+                   (message "Frame %d maximized for %s (%dx%d)"
+                            i
+                            name
+                            width
+                            height))))
+             (when (member "eDP-1" (mapcar #'car monitors))
+               (setq exwm-systemtray-monitor "eDP-1"))
+             (start-process-shell-command
+              "xrandr" nil "xrandr --auto")
+             (exwm-randr-refresh)
+             (redisplay t)
+             (message "Updated %d monitors: %s"
+                      monitor-count
+                      monitors))
+         (progn
+           (setq exwm-workspace-number 1)
+           (setq exwm-systemtray-monitor nil)
+           (message
+            "No monitors detected, defaulting to 1 workspace")))))
 
-    ;; Tiling Management
-    (defun my-exwm-tile-window ()
-      "Tile new windows horizontally unless floating or fullscreen."
-      (unless (or (exwm-floating--buffer-p (current-buffer))
-                  (exwm-workspace--fullscreen-p (selected-frame)))
-        (if (> (length (window-list)) 1)
-            (split-window-right)
-          (message "First window, keeping full size"))))
+   ;; Tiling Management with Floating Support
+   (defun my-exwm-tile-window ()
+     "Tile new windows horizontally unless floating or fullscreen is requested."
+     (let ((buffer (current-buffer)))
+       (unless (or (exwm-workspace--fullscreen-p (selected-frame))
+                   (with-current-buffer buffer
+                     (or exwm-floating ;; Already marked as floating
+                         (memq
+                          exwm-window-type
+                          '(?_NET_WM_WINDOW_TYPE_DIALOG
+                            ?_NET_WM_WINDOW_TYPE_POPUP_MENU
+                            ?_NET_WM_WINDOW_TYPE_UTILITY)))))
+         (if (> (length (window-list)) 1)
+             (split-window-right)
+           (message "First window, keeping full size")))))
 
-    ;; Mode-line Marker Functions
-    (defun my-exwm-mode-line-marker (frame)
-      "Return a colored marker for the mode-line of FRAME."
-      (propertize " ● "
-                  'face
-                  (if (eq frame (selected-frame))
-                      '(:foreground "#ffcc66" :weight bold)
-                    '(:foreground "#a0a0a0" :weight normal))))
+   ;; Firefox Multi-Instance Fix
+   (defun my-exwm-manage-firefox (buffer)
+     "Ensure new Firefox instances are usable on different workspaces."
+     (when (string-match-p "firefox" (or exwm-class-name ""))
+       (let ((workspace (exwm-workspace--current-index)))
+         (exwm-workspace-switch-create workspace)
+         (switch-to-buffer buffer)
+         (unless (exwm-floating--buffer-p buffer)
+           (my-exwm-tile-window)))))
 
-    (defun my-exwm-update-mode-line-marker ()
-      "Update the mode-line marker for all frames based on the active workspace."
-      (dolist (frame (frame-list))
-        (let ((marker (my-exwm-mode-line-marker frame)))
-          (set-frame-parameter frame 'my-mode-line-marker marker)
-          (with-selected-frame frame
-            (setq mode-line-format
-                  (cons
-                   '(:eval
-                     (frame-parameter nil 'my-mode-line-marker))
-                   (default-value 'mode-line-format))))))
-      (force-mode-line-update t))
+   ;; Mode-line Marker Functions
+   (defun my-exwm-mode-line-marker (frame)
+     "Return a colored marker for the mode-line of FRAME."
+     (propertize " ● "
+                 'face
+                 (if (eq frame (selected-frame))
+                     '(:foreground "#ffcc66" :weight bold)
+                   '(:foreground "#a0a0a0" :weight normal))))
 
-    (setq-default mode-line-format (cons "" mode-line-format))
-    (add-hook
-     'exwm-workspace-switch-hook #'my-exwm-update-mode-line-marker)
-    (my-exwm-update-mode-line-marker)
+   (defun my-exwm-update-mode-line-marker ()
+     "Update the mode-line marker for all frames based on the active workspace."
+     (dolist (frame (frame-list))
+       (let ((marker (my-exwm-mode-line-marker frame)))
+         (set-frame-parameter frame 'my-mode-line-marker marker)
+         (with-selected-frame frame
+           (setq mode-line-format
+                 (cons
+                  '(:eval
+                    (frame-parameter nil 'my-mode-line-marker))
+                  (default-value 'mode-line-format))))))
+     (force-mode-line-update t))
 
-    ;; System Tray and Display Settings
-    (setq exwm-systemtray-height 24) (exwm-systemtray-mode 1)
-    (display-time-mode 1) (setq display-time-24hr-format t)
-    (setq display-time-day-and-date t) (display-battery-mode 1)
-    (setq-default mode-line-end-spaces
-                  '("" (:eval
-                     (propertize " "
-                                 'display
-                                 '((space :align-to (- right 25)))))
-                    (:eval
-                     (when (and battery-status-function
-                                display-battery-mode)
-                       (let ((status
-                              (funcall battery-status-function)))
-                         (propertize (concat
-                                      "Bat: "
-                                      (cdr (assoc ?p status))
-                                      "% ")
-                                     'face 'mode-line))))
-                    (:eval
-                     (when display-time-mode
-                       (propertize display-time-string
-                                   'face
-                                   'mode-line)))))
+   (setq-default mode-line-format (cons "" mode-line-format))
+   (add-hook
+    'exwm-workspace-switch-hook #'my-exwm-update-mode-line-marker)
+   (my-exwm-update-mode-line-marker)
 
-    ;; RandR and EXWM Enable
-    (require 'exwm-randr)
-    (add-hook
-     'exwm-randr-screen-change-hook #'my-exwm-update-displays)
-    (exwm-randr-mode 1)
-    (exwm-init)
-    (start-process-shell-command
-     "xinput"
-     nil
-     "xinput set-prop 10 'Coordinate Transformation Matrix' 2 0 0 0 2 0 0 0 1")
+   ;; System Tray and Display Settings
+   (setq exwm-systemtray-height 24)
+   (exwm-systemtray-mode 1)
+   (display-time-mode 1)
+   (setq display-time-24hr-format t)
+   (setq display-time-day-and-date t)
+   (display-battery-mode 1)
+   (setq-default mode-line-end-spaces
+                 '("" (:eval
+                    (propertize " "
+                                'display
+                                '((space :align-to (- right 25)))))
+                   (:eval
+                    (when (and battery-status-function
+                               display-battery-mode)
+                      (let ((status
+                             (funcall battery-status-function)))
+                        (propertize (concat
+                                     "Bat: "
+                                     (cdr (assoc ?p status))
+                                     "% ")
+                                    'face 'mode-line))))
+                   (:eval
+                    (when display-time-mode
+                      (propertize display-time-string
+                                  'face
+                                  'mode-line)))))
 
-    :hook
-    ((exwm-update-class-hook
-      .
-      (lambda ()
-        (exwm-workspace-rename-buffer
-         (or exwm-title exwm-class-name "*EXWM*"))))
-     (exwm-update-title-hook
-      .
-      (lambda ()
-        (exwm-workspace-rename-buffer
-         (or exwm-title exwm-class-name "*EXWM*"))))
-     (exwm-manage-finish-hook . my-exwm-tile-window)
-     (exwm-init-hook
-      .
-      (lambda ()
-        (message "EXWM init-hook fired, DISPLAY=%s"
-                 (getenv "DISPLAY"))
-        (my-exwm-update-displays)
-        (switch-to-buffer "*scratch*")
-        (exwm-workspace-switch 0))))))
+   ;; RandR and EXWM Enable
+   (require 'exwm-randr)
+   (add-hook 'exwm-randr-screen-change-hook #'my-exwm-update-displays)
+   (exwm-randr-mode 1)
+   (exwm-init)
+   (start-process-shell-command
+    "xinput"
+    nil
+    "xinput set-prop 10 'Coordinate Transformation Matrix' 2 0 0 0 2 0 0 0 1")
 
-  ;; Alert Package for Notifications
+   :hook
+   ((exwm-update-class-hook
+     .
+     (lambda ()
+       (exwm-workspace-rename-buffer
+        (or exwm-title exwm-class-name "*EXWM*"))))
+    (exwm-update-title-hook
+     .
+     (lambda ()
+       (exwm-workspace-rename-buffer
+        (or exwm-title exwm-class-name "*EXWM*"))))
+    (exwm-manage-finish-hook . my-exwm-tile-window)
+    (exwm-manage-start-hook
+     . (lambda () (my-exwm-manage-firefox (current-buffer))))
+    (exwm-init-hook
+     .
+     (lambda ()
+       (message "EXWM init-hook fired, DISPLAY=%s" (getenv "DISPLAY"))
+       (my-exwm-update-displays)
+       (switch-to-buffer "*scratch*")
+       (exwm-workspace-switch 0)))))
+
   (use-package
    alert
    :ensure t
@@ -592,7 +607,6 @@
     :mode 'exwm-mode
     :style 'libnotify))
 
-  ;; EDNC Package
   (use-package
    ednc
    :ensure t
@@ -616,7 +630,7 @@
        "Workspace Switch"
        (format "Switched to workspace %d"
                exwm-workspace-current-index)
-       'normal)))))
+       'normal))))) ;; Closing the `when` block
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
