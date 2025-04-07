@@ -21,4 +21,4 @@ if ! command -v emacs >/dev/null 2>&1; then
 fi
 
 # Start Emacs with EXWM, logging output
-exec emacs --eval "(shell-command \"~/.config/emacs/exwm-autostarts.sh &\")"
+exec emacs --debug-init > ~/.emacs-startup.log 2>&1 || exec xterm
