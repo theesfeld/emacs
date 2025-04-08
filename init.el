@@ -710,7 +710,7 @@
                    (:eval
                     (propertize " "
                                 'display
-                                '((space :align-to (- right 30)))))
+                                '((space :align-to (- right 35)))))
                    (:eval (my-battery-status))
                    " "
                    (:eval (my-network-status))
