@@ -212,10 +212,6 @@
  (unless (find-font (font-spec :name "all-the-icons"))
    (all-the-icons-install-fonts t)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                     EXWM                                  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (when (eq window-system 'x)
   (use-package
    exwm
@@ -409,16 +405,11 @@
 
    ;; Dynamic Multi-Monitor Setup
    (defun my-exwm-update-displays ()
-     "Update workspace-to-monitor mapping with maximized frames and store geometries."
+     "Update workspace-to-monitor mapping with accurate geometries."
      (interactive)
      (let*
          ((xrandr-output
-           (condition-case nil
-               (shell-command-to-string "xrandr --current")
-             (error
-              (message
-               "xrandr failed; defaulting to 1 workspace")
-              "")))
+           (shell-command-to-string "xrandr --current"))
           (monitors
            (cl-loop
             for line in (split-string xrandr-output "\n") when
@@ -462,16 +453,19 @@
                         name (list x-offset y-offset width height))
                        my-exwm-monitor-geometries)
                  (when frame
-                   (set-frame-parameter frame 'fullscreen 'maximized)
-                   (message
-                    "Frame %d maximized for %s (%dx%d at %d,%d)"
-                    i name width height x-offset y-offset))))
+                   (set-frame-parameter frame 'fullscreen nil) ; Reset first
+                   (set-frame-position frame x-offset y-offset)
+                   (set-frame-size frame width height t) ; Size in pixels
+                   (message "Frame %d set for %s (%dx%d at %d,%d)"
+                            i
+                            name
+                            width
+                            height
+                            x-offset
+                            y-offset))))
              (when (member "eDP-1" (mapcar #'car monitors))
                (setq exwm-systemtray-monitor "eDP-1"))
-             (start-process-shell-command
-              "xrandr" nil "xrandr --auto")
              (exwm-randr-refresh)
-             (redisplay t)
              (message "Updated %d monitors: %s"
                       monitor-count
                       monitors))
@@ -484,7 +478,7 @@
 
    ;; Mouse-Moving Function
    (defun my/exwm-move-mouse-to-current-monitor ()
-     "Move the mouse cursor to the center of the monitor displaying the current workspace."
+     "Move the mouse cursor to the center of the current workspace's monitor."
      (interactive)
      (let* ((workspace-index exwm-workspace-current-index)
             (monitor-name
@@ -513,7 +507,7 @@
                    '(:foreground "#a0a0a0" :weight normal))))
 
    (defun my-exwm-update-mode-line-marker ()
-     "Update the mode-line marker for all frames based on the active workspace."
+     "Update the mode-line marker for all frames."
      (dolist (frame (frame-list))
        (let ((marker (my-exwm-mode-line-marker frame)))
          (set-frame-parameter frame 'my-mode-line-marker marker)
@@ -525,6 +519,89 @@
                   (default-value 'mode-line-format))))))
      (force-mode-line-update t))
 
+   ;; Network Status with Mouse Bindings
+   (defun my-network-status ()
+     "Display clickable NetworkManager status in mode-line."
+     (if (executable-find "nmcli")
+         (let* ((status
+                 (shell-command-to-string
+                  "nmcli -t -f STATE general"))
+                (map (make-sparse-keymap)))
+           (define-key
+            map [mode-line mouse-1]
+            (lambda ()
+              (interactive)
+              (if (string-match "connected" status)
+                  (progn
+                    (shell-command "nmcli networking off")
+                    (message "Network disconnected"))
+                (shell-command "nmcli networking on")
+                (message "Network enabled"))
+              (force-mode-line-update)))
+           (define-key
+            map [mode-line mouse-3]
+            (lambda ()
+              (interactive)
+              (let* ((networks
+                      (shell-command-to-string
+                       "nmcli -t -f SSID,SECURITY dev wifi"))
+                     (network-list (split-string networks "\n" t))
+                     (formatted-list
+                      (mapcar
+                       (lambda (line)
+                         (let ((fields (split-string line ":")))
+                           (if (>= (length fields) 2)
+                               (format "%-32s [%s]"
+                                       (nth 0 fields)
+                                       (nth 1 fields))
+                             line)))
+                       network-list))
+                     (selected
+                      (completing-read
+                       "Select network: " formatted-list
+                       nil t)))
+                (when selected
+                  (let* ((ssid (car (split-string selected " \\[")))
+                         (security
+                          (cadr (split-string selected " \\[")))
+                         (needs-password
+                          (and
+                           (not (string= security "[--]"))
+                           (not
+                            (string-match-p
+                             (regexp-quote ssid)
+                             (shell-command-to-string
+                              "nmcli -t -f NAME connection show"))))))
+                    (if needs-password
+                        (let ((password
+                               (read-passwd
+                                (format "Password for %s: " ssid))))
+                          (shell-command
+                           (format
+                            "nmcli dev wifi connect %s password %s"
+                            (shell-quote-argument ssid)
+                            (shell-quote-argument password))))
+                      (shell-command
+                       (format "nmcli dev wifi connect %s"
+                               (shell-quote-argument ssid))))
+                    (message "Connecting to %s..." ssid)))
+                (force-mode-line-update))))
+           (propertize
+            (if (string-match "connected" status)
+                "🌐"
+              "❌")
+            'face
+            (if (string-match "connected" status)
+                '(:foreground "#00ff00")
+              '(:foreground "#ff0000"))
+            'mouse-face
+            'highlight
+            'help-echo
+            "Left-click: toggle network | Right-click: select network"
+            'keymap
+            map))
+       "N/A"))
+
    ;; Simplified Mode-Line Setup
    (display-time-mode 1)
    (setq
@@ -532,65 +609,8 @@
     display-time-day-and-date t)
    (display-battery-mode 1)
 
-   (defun my-network-status ()
-  "Display clickable NetworkManager status in modeline with connect/disconnect and network selection."
-  (if (executable-find "nmcli")
-      (let ((status (shell-command-to-string "nmcli -t -f STATE general")))
-        (propertize (if (string-match "connected" status) "🌐" "❌")
-                    'face (if (string-match "connected" status)
-                              '(:foreground "#00ff00")
-                            '(:foreground "#ff0000"))
-                    'mouse-face 'highlight
-                    'help-echo "Left-click: toggle network | Right-click: select network"
-                    'local-map (let ((map (make-mode-line-mouse-map)))
-                                 ;; Left-click: Toggle connect/disconnect
-                                 (define-key map [mode-line mouse-1]
-                                   (lambda ()
-                                     (interactive)
-                                     (if (string-match "connected" status)
-                                         (progn
-                                           (shell-command "nmcli networking off")
-                                           (message "Network disconnected"))
-                                       (shell-command "nmcli networking on")
-                                       (message "Network enabled"))
-                                     (force-mode-line-update)))
-                                 ;; Right-click: Network selection menu
-                                 (define-key map [mode-line mouse-3]
-                                   (lambda ()
-                                     (interactive)
-                                     (let* ((networks (shell-command-to-string
-                                                       "nmcli -t -f SSID,SECURITY dev wifi"))
-                                            (network-list (split-string networks "\n" t))
-                                            (formatted-list
-                                             (mapcar (lambda (line)
-                                                       (let ((fields (split-string line ":")))
-                                                         (if (>= (length fields) 2)
-                                                             (format "%-32s [%s]" (nth 0 fields) (nth 1 fields))
-                                                           line)))
-                                                     network-list))
-                                            (selected (completing-read "Select network: " formatted-list nil t)))
-                                       (when selected
-                                         (let* ((ssid (car (split-string selected " \\[")))
-                                                (security (cadr (split-string selected " \\[")))
-                                                (needs-password (and (not (string= security "[--]"))
-                                                                     (not (string-match-p
-                                                                           (regexp-quote ssid)
-                                                                           (shell-command-to-string
-                                                                            "nmcli -t -f NAME connection show"))))))
-                                           (if needs-password
-                                               (let ((password (read-passwd (format "Password for %s: " ssid))))
-                                                 (shell-command (format "nmcli dev wifi connect %s password %s"
-                                                                        (shell-quote-argument ssid)
-                                                                        (shell-quote-argument password))))
-                                               (shell-command (format "nmcli dev wifi connect %s"
-                                                                      (shell-quote-argument ssid))))
-                                           (message "Connecting to %s..." ssid)))
-                                       (force-mode-line-update))))
-                                 map))))
-    "N/A"))
-
    (defun my-bluetooth-status ()
-     "Display clickable Bluetooth status in modeline."
+     "Display clickable Bluetooth status in mode-line."
      (if (executable-find "bluetoothctl")
          (let ((status
                 (shell-command-to-string
@@ -618,7 +638,7 @@
        "N/A"))
 
    (defun my-disk-status ()
-     "Display clickable disk status in modeline."
+     "Display clickable disk status in mode-line."
      (if (executable-find "udiskie-info")
          (let ((mounted (shell-command-to-string "udiskie-info -a")))
            (propertize (if (string-empty-p mounted)
