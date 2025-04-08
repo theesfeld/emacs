@@ -240,157 +240,79 @@
    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
    (setq mouse-wheel-progressive-speed t)
    (setq mouse-wheel-scroll-amount-horizontal nil)
-   (setq
-    x-select-enable-clipboard t
-    x-select-enable-primary t
-    select-enable-clipboard t)
+   (setq x-select-enable-clipboard t
+         x-select-enable-primary t
+         select-enable-clipboard t)
 
    ;; Input Prefix Keys
    (setq exwm-input-prefix-keys
          '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
 
    ;; Global Keybindings
-   (setq
-    exwm-input-global-keys
-    (nconc
-     `(([?\s-r] . exwm-reset)
-       ([?\s-w] . exwm-workspace-switch)
-       ([?\s-&]
-        .
-        (lambda (cmd)
-          (interactive (list (read-shell-command "$ ")))
-          (start-process-shell-command cmd nil cmd)))
-       ([?\s-x]
-        .
-        (lambda ()
-          (interactive)
-          (save-buffers-kill-emacs)))
-       ([?\s-e]
-        .
-        (lambda ()
-          (interactive)
-          (start-process-shell-command
-           "yazi" nil "footclient -e yazi")))
-       ([?\s-\ ]
-        .
-        (lambda ()
-          (interactive)
-          (counsel-linux-app)))
-       ([?\s-v] . consult-yank-pop)
-       ([?\s-q]
-        .
-        (lambda ()
-          (interactive)
-          (kill-buffer-and-window)))
-       ([?\s-l]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "slock")
-            (start-process-shell-command "lock" nil "slock"))))
-       ([?\s-s]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "systemctl")
-            (start-process-shell-command
-             "suspend" nil "systemctl suspend-then-hibernate"))))
-       ([XF86PowerOff]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "systemctl")
-            (start-process-shell-command
-             "poweroff" nil "systemctl poweroff"))))
-       ([XF86Sleep]
-        .
-        (lambda ()
-          (interactive)
-          (when (and (executable-find "systemctl")
-                     (executable-find "slock"))
-            (start-process-shell-command
-             "suspend" nil "systemctl suspend-then-hibernate"))))
-       ([XF86AudioRaiseVolume]
-        .
-        (lambda ()
-          (interactive)
-          (shell-command "pactl set-sink-volume @DEFAULT_SINK@ +5%")
-          (alert
-           (format
-            "Volume: %s"
-            (shell-command-to-string
-             "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1"))
-           :title "Media Control"
-           :severity 'normal)))
-       ([XF86AudioLowerVolume]
-        .
-        (lambda ()
-          (interactive)
-          (shell-command "pactl set-sink-volume @DEFAULT_SINK@ -5%")
-          (alert
-           (format
-            "Volume: %s"
-            (shell-command-to-string
-             "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1"))
-           :title "Media Control"
-           :severity 'normal)))
-       ([XF86AudioMute]
-        .
-        (lambda ()
-          (interactive)
-          (shell-command "pactl set-sink-mute @DEFAULT_SINK@ toggle")
-          (alert
-           (if (string=
-                (shell-command-to-string
-                 "pactl get-sink-mute @DEFAULT_SINK@ | grep -o 'yes\\|no'")
-                "yes")
-               "Volume: Muted"
-             (format
-              "Volume: %s"
-              (shell-command-to-string
-               "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1")))
-           :title "Media Control"
-           :severity 'normal)))
-       ([XF86MonBrightnessUp]
-        .
-        (lambda ()
-          (interactive)
-          (shell-command "brightnessctl set +10%")
-          (alert
-           (format "Brightness: %s"
-                   (shell-command-to-string
-                    "brightnessctl -m | cut -d, -f4"))
-           :title "Display Control"
-           :severity 'normal)))
-       ([XF86MonBrightnessDown]
-        .
-        (lambda ()
-          (interactive)
-          (shell-command "brightnessctl set 10%-")
-          (alert
-           (format "Brightness: %s"
-                   (shell-command-to-string
-                    "brightnessctl -m | cut -d, -f4"))
-           :title "Display Control"
-           :severity 'normal))))
-     (mapcar
-      (lambda (i)
-        (cons
-         (kbd (format "s-%d" i))
-         (lambda ()
-           (interactive)
-           (message "Switching to workspace %d" i)
-           (exwm-workspace-switch i))))
-      (number-sequence 0 9))
-     (mapcar
-      (lambda (i)
-        (cons
-         (kbd (format "M-s-%d" i))
-         (lambda ()
-           (interactive)
-           (message "Moving window to workspace %d" i)
-           (exwm-workspace-move-window i))))
-      (number-sequence 0 9))))
+   (setq exwm-input-global-keys
+         (nconc
+          `(([?\s-r] . exwm-reset)
+            ([?\s-w] . exwm-workspace-switch)
+            ([?\s-&] . (lambda (cmd)
+                         (interactive (list (read-shell-command "$ ")))
+                         (start-process-shell-command cmd nil cmd)))
+            ([?\s-x] . (lambda () (interactive) (save-buffers-kill-emacs)))
+            ([?\s-e] . (lambda () (interactive)
+                         (start-process-shell-command "yazi" nil "footclient -e yazi")))
+            ([?\s-\ ] . (lambda () (interactive) (counsel-linux-app)))
+            ([?\s-v] . consult-yank-pop)
+            ([?\s-q] . (lambda () (interactive) (kill-buffer-and-window)))
+            ([?\s-l] . (lambda () (interactive)
+                         (when (executable-find "slock")
+                           (start-process-shell-command "lock" nil "slock"))))
+            ([?\s-s] . (lambda () (interactive)
+                         (when (executable-find "systemctl")
+                           (start-process-shell-command "suspend" nil "systemctl suspend-then-hibernate"))))
+            ([XF86PowerOff] . (lambda () (interactive)
+                                (when (executable-find "systemctl")
+                                  (start-process-shell-command "poweroff" nil "systemctl poweroff"))))
+            ([XF86Sleep] . (lambda () (interactive)
+                             (when (and (executable-find "systemctl") (executable-find "slock"))
+                               (start-process-shell-command "suspend" nil "systemctl suspend-then-hibernate"))))
+            ([XF86AudioRaiseVolume] . (lambda () (interactive)
+                                        (shell-command "pactl set-sink-volume @DEFAULT_SINK@ +5%")
+                                        (alert (format "Volume: %s"
+                                                       (shell-command-to-string "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1"))
+                                               :title "Media Control" :severity 'normal)))
+            ([XF86AudioLowerVolume] . (lambda () (interactive)
+                                        (shell-command "pactl set-sink-volume @DEFAULT_SINK@ -5%")
+                                        (alert (format "Volume: %s"
+                                                       (shell-command-to-string "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1"))
+                                               :title "Media Control" :severity 'normal)))
+            ([XF86AudioMute] . (lambda () (interactive)
+                                 (shell-command "pactl set-sink-mute @DEFAULT_SINK@ toggle")
+                                 (alert (if (string= (shell-command-to-string "pactl get-sink-mute @DEFAULT_SINK@ | grep -o 'yes\\|no'") "yes")
+                                            "Volume: Muted"
+                                          (format "Volume: %s"
+                                                  (shell-command-to-string "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1")))
+                                        :title "Media Control" :severity 'normal)))
+            ([XF86MonBrightnessUp] . (lambda () (interactive)
+                                       (shell-command "brightnessctl set +10%")
+                                       (alert (format "Brightness: %s"
+                                                      (shell-command-to-string "brightnessctl -m | cut -d, -f4"))
+                                              :title "Display Control" :severity 'normal)))
+            ([XF86MonBrightnessDown] . (lambda () (interactive)
+                                         (shell-command "brightnessctl set 10%-")
+                                         (alert (format "Brightness: %s"
+                                                        (shell-command-to-string "brightnessctl -m | cut -d, -f4"))
+                                                :title "Display Control" :severity 'normal))))
+          (mapcar (lambda (i)
+                    (cons (kbd (format "s-%d" i))
+                          (lambda () (interactive)
+                            (message "Switching to workspace %d" i)
+                            (exwm-workspace-switch i))))
+                  (number-sequence 0 9))
+          (mapcar (lambda (i)
+                    (cons (kbd (format "M-s-%d" i))
+                          (lambda () (interactive)
+                            (message "Moving window to workspace %d" i)
+                            (exwm-workspace-move-window i))))
+                  (number-sequence 0 9))))
 
    ;; Simulation Keys
    (setq exwm-input-simulation-keys
@@ -407,37 +329,27 @@
            ([?\M-w] . [?\C-c])
            ([?\C-y] . [?\C-v])))
 
-   ;; Dynamic Multi-Monitor Setup (from your working config, with geometry storage)
+   ;; Dynamic Multi-Monitor Setup (from your working config, with geometry storage only)
    (defun my-exwm-update-displays ()
      "Update workspace-to-monitor mapping with maximized frames and store geometries."
      (interactive)
-     (let*
-         ((xrandr-output
-           (condition-case nil
-               (shell-command-to-string "xrandr --current")
-             (error
-              (message
-               "xrandr failed; defaulting to 1 workspace")
-              "")))
-          (monitors
-           (cl-loop
-            for line in (split-string xrandr-output "\n") when
-            (string-match
-             "\\([a-zA-Z0-9-]+\\) connected\\( primary\\)? \\([0-9]+x[0-9]+\\)\\+\\([-0-9]+\\)\\+\\([-0-9]+\\)"
-             line)
-            collect
-            (list
-             (match-string 1 line) ; Name
-             (match-string 3 line) ; Resolution
-             (string-to-number (match-string 4 line)) ; X offset
-             (string-to-number (match-string 5 line))))) ; Y offset
-          (monitor-count (length monitors)))
+     (let* ((xrandr-output (condition-case nil
+                               (shell-command-to-string "xrandr --current")
+                             (error (message "xrandr failed; defaulting to 1 workspace") "")))
+            (monitors (cl-loop for line in (split-string xrandr-output "\n")
+                               when (string-match
+                                     "\\([a-zA-Z0-9-]+\\) connected\\( primary\\)? \\([0-9]+x[0-9]+\\)\\+\\([-0-9]+\\)\\+\\([-0-9]+\\)"
+                                     line)
+                               collect (list (match-string 1 line) ; Name
+                                             (match-string 3 line) ; Resolution
+                                             (string-to-number (match-string 4 line)) ; X offset
+                                             (string-to-number (match-string 5 line))))) ; Y offset
+            (monitor-count (length monitors)))
        (if (> monitor-count 0)
            (progn
              (setq exwm-workspace-number monitor-count)
              (while (> (length exwm-workspace--list) monitor-count)
-               (exwm-workspace-delete
-                (1- (length exwm-workspace--list))))
+               (exwm-workspace-delete (1- (length exwm-workspace--list))))
              (while (< (length exwm-workspace--list) monitor-count)
                (exwm-workspace-add))
              (setq exwm-randr-workspace-monitor-plist nil)
@@ -446,49 +358,35 @@
                (let* ((monitor (nth i monitors))
                       (name (nth 0 monitor))
                       (resolution (nth 1 monitor))
-                      (width
-                       (string-to-number
-                        (car (split-string resolution "x"))))
-                      (height
-                       (string-to-number
-                        (cadr (split-string resolution "x"))))
+                      (width (string-to-number (car (split-string resolution "x"))))
+                      (height (string-to-number (cadr (split-string resolution "x"))))
                       (x-offset (nth 2 monitor))
                       (y-offset (nth 3 monitor))
                       (frame (nth i exwm-workspace--list)))
                  (setq exwm-randr-workspace-monitor-plist
-                       (plist-put
-                        exwm-randr-workspace-monitor-plist i name))
-                 (push (cons
-                        name (list x-offset y-offset width height))
+                       (plist-put exwm-randr-workspace-monitor-plist i name))
+                 (push (cons name (list x-offset y-offset width height))
                        my-exwm-monitor-geometries)
                  (when frame
                    (set-frame-parameter frame 'fullscreen 'maximized)
-                   (message
-                    "Frame %d maximized for %s (%dx%d at %d,%d)"
-                    i name width height x-offset y-offset))))
-             (start-process-shell-command
-              "xrandr" nil "xrandr --auto")
+                   (message "Frame %d maximized for %s (%dx%d)"
+                            i name width height))))
+             (start-process-shell-command "xrandr" nil "xrandr --auto")
              (exwm-randr-refresh)
              (redisplay t)
-             (message "Updated %d monitors: %s"
-                      monitor-count
-                      monitors))
+             (message "Updated %d monitors: %s" monitor-count monitors))
          (progn
            (setq exwm-workspace-number 1)
            (setq my-exwm-monitor-geometries nil)
-           (message
-            "No monitors detected, defaulting to 1 workspace")))))
+           (message "No monitors detected, defaulting to 1 workspace")))))
 
    ;; Mouse-Moving Function
    (defun my/exwm-move-mouse-to-current-monitor ()
      "Move the mouse cursor to the center of the current workspace's monitor."
      (interactive)
      (let* ((workspace-index exwm-workspace-current-index)
-            (monitor-name
-             (plist-get
-              exwm-randr-workspace-monitor-plist workspace-index))
-            (geometry
-             (cdr (assoc monitor-name my-exwm-monitor-geometries)))
+            (monitor-name (plist-get exwm-randr-workspace-monitor-plist workspace-index))
+            (geometry (cdr (assoc monitor-name my-exwm-monitor-geometries)))
             (frame (nth workspace-index exwm-workspace--list)))
        (when (and geometry frame)
          (let* ((width (nth 2 geometry))
@@ -496,18 +394,16 @@
                 (x (/ width 2))
                 (y (/ height 2)))
            (set-mouse-pixel-position frame x y)
-           (message
-            "Mouse moved to monitor %s at (%d, %d) in frame %s"
-            monitor-name x y (frame-parameter frame 'name))))))
+           (message "Mouse moved to monitor %s at (%d, %d) in frame %s"
+                    monitor-name x y (frame-parameter frame 'name))))))
 
    ;; Mode-line Marker Functions
    (defun my-exwm-mode-line-marker (frame)
      "Return a colored marker for the mode-line of FRAME."
      (propertize " ● "
-                 'face
-                 (if (eq frame (selected-frame))
-                     '(:foreground "#ffcc66" :weight bold)
-                   '(:foreground "#a0a0a0" :weight normal))))
+                 'face (if (eq frame (selected-frame))
+                           '(:foreground "#ffcc66" :weight bold)
+                         '(:foreground "#a0a0a0" :weight normal))))
 
    (defun my-exwm-update-mode-line-marker ()
      "Update the mode-line marker for all frames."
@@ -516,127 +412,79 @@
          (set-frame-parameter frame 'my-mode-line-marker marker)
          (with-selected-frame frame
            (setq mode-line-format
-                 (cons
-                  '(:eval
-                    (frame-parameter nil 'my-mode-line-marker))
-                  (default-value 'mode-line-format))))))
+                 (cons '(:eval (frame-parameter nil 'my-mode-line-marker))
+                       (default-value 'mode-line-format))))))
      (force-mode-line-update t))
 
    ;; Mode-Line Status Functions with all-the-icons
    (defun my-network-status ()
      "Display clickable NetworkManager status in mode-line."
      (if (executable-find "nmcli")
-         (let* ((status
-                 (shell-command-to-string
-                  "nmcli -t -f STATE general"))
+         (let* ((status (shell-command-to-string "nmcli -t -f STATE general"))
                 (map (make-sparse-keymap)))
-           (define-key
-            map [mode-line mouse-1]
-            (lambda ()
-              (interactive)
-              (if (string-match "connected" status)
-                  (progn
-                    (shell-command "nmcli networking off")
-                    (message "Network disconnected"))
-                (shell-command "nmcli networking on")
-                (message "Network enabled"))
-              (force-mode-line-update)))
-           (define-key
-            map [mode-line mouse-3]
-            (lambda ()
-              (interactive)
-              (let* ((networks
-                      (shell-command-to-string
-                       "nmcli -t -f SSID,SECURITY dev wifi"))
-                     (network-list (split-string networks "\n" t))
-                     (formatted-list
-                      (mapcar
-                       (lambda (line)
-                         (let ((fields (split-string line ":")))
-                           (if (>= (length fields) 2)
-                               (format "%-32s [%s]"
-                                       (nth 0 fields)
-                                       (nth 1 fields))
-                             line)))
-                       network-list))
-                     (selected
-                      (completing-read
-                       "Select network: " formatted-list
-                       nil t)))
-                (when selected
-                  (let* ((ssid (car (split-string selected " \\[")))
-                         (security
-                          (cadr (split-string selected " \\[")))
-                         (needs-password
-                          (and
-                           (not (string= security "[--]"))
-                           (not
-                            (string-match-p
-                             (regexp-quote ssid)
-                             (shell-command-to-string
-                              "nmcli -t -f NAME connection show"))))))
-                    (if needs-password
-                        (let ((password
-                               (read-passwd
-                                (format "Password for %s: " ssid))))
-                          (shell-command
-                           (format
-                            "nmcli dev wifi connect %s password %s"
-                            (shell-quote-argument ssid)
-                            (shell-quote-argument password))))
-                      (shell-command
-                       (format "nmcli dev wifi connect %s"
-                               (shell-quote-argument ssid))))
-                    (message "Connecting to %s..." ssid)))
-                (force-mode-line-update))))
-           (propertize
-            (if (string-match "connected" status)
-                (all-the-icons-faicon
-                 "wifi"
-                 :face '(:foreground "#00ff00"))
-              (all-the-icons-faicon
-               "wifi"
-               :face '(:foreground "#ff0000")))
-            'mouse-face
-            'highlight
-            'help-echo
-            "Left-click: toggle network | Right-click: select network"
-            'keymap
-            map))
-       (propertize (all-the-icons-faicon
-                    "question"
-                    :face '(:foreground "#a0a0a0"))
+           (define-key map [mode-line mouse-1]
+             (lambda () (interactive)
+               (if (string-match "connected" status)
+                   (progn
+                     (shell-command "nmcli networking off")
+                     (message "Network disconnected"))
+                 (shell-command "nmcli networking on")
+                 (message "Network enabled"))
+               (force-mode-line-update)))
+           (define-key map [mode-line mouse-3]
+             (lambda () (interactive)
+               (let* ((networks (shell-command-to-string "nmcli -t -f SSID,SECURITY dev wifi"))
+                      (network-list (split-string networks "\n" t))
+                      (formatted-list
+                       (mapcar (lambda (line)
+                                 (let ((fields (split-string line ":")))
+                                   (if (>= (length fields) 2)
+                                       (format "%-32s [%s]" (nth 0 fields) (nth 1 fields))
+                                     line)))
+                               network-list))
+                      (selected (completing-read "Select network: " formatted-list nil t)))
+                 (when selected
+                   (let* ((ssid (car (split-string selected " \\[")))
+                          (security (cadr (split-string selected " \\[")))
+                          (needs-password (and (not (string= security "[--]"))
+                                               (not (string-match-p
+                                                     (regexp-quote ssid)
+                                                     (shell-command-to-string "nmcli -t -f NAME connection show"))))))
+                     (if needs-password
+                         (let ((password (read-passwd (format "Password for %s: " ssid))))
+                           (shell-command (format "nmcli dev wifi connect %s password %s"
+                                                  (shell-quote-argument ssid)
+                                                  (shell-quote-argument password))))
+                       (shell-command (format "nmcli dev wifi connect %s"
+                                              (shell-quote-argument ssid))))
+                     (message "Connecting to %s..." ssid)))
+                 (force-mode-line-update))))
+           (propertize (if (string-match "connected" status)
+                           (all-the-icons-faicon "wifi" :face '(:foreground "#00ff00"))
+                         (all-the-icons-faicon "wifi" :face '(:foreground "#ff0000")))
+                       'mouse-face 'highlight
+                       'help-echo "Left-click: toggle network | Right-click: select network"
+                       'keymap map))
+       (propertize (all-the-icons-faicon "question" :face '(:foreground "#a0a0a0"))
                    'help-echo "nmcli not found")))
 
    (defun my-bluetooth-status ()
      "Display clickable Bluetooth status in mode-line."
      (if (executable-find "bluetoothctl")
-         (let ((status
-                (shell-command-to-string
-                 "bluetoothctl show | grep Powered")))
+         (let ((status (shell-command-to-string "bluetoothctl show | grep Powered")))
            (propertize (if (string-match "yes" status)
-                           (all-the-icons-faicon
-                            "bluetooth"
-                            :face '(:foreground "#00b7eb"))
-                         (all-the-icons-faicon
-                          "bluetooth"
-                          :face '(:foreground "#a0a0a0")))
-                       'mouse-face
-                       'highlight
-                       'help-echo
-                       "Click to toggle Bluetooth"
-                       'local-map
-                       (make-mode-line-mouse-map
-                        'mouse-1
-                        (lambda ()
-                          (interactive)
-                          (if (string-match "yes" status)
-                              (shell-command "bluetoothctl power off")
-                            (shell-command "bluetoothctl power on"))
-                          (force-mode-line-update)))))
-       (propertize (all-the-icons-faicon
-                    "question"
-                    :face '(:foreground "#a0a0a0"))
+                           (all-the-icons-faicon "bluetooth" :face '(:foreground "#00b7eb"))
+                         (all-the-icons-faicon "bluetooth" :face '(:foreground "#a0a0a0")))
+                       'mouse-face 'highlight
+                       'help-echo "Click to toggle Bluetooth"
+                       'local-map (make-mode-line-mouse-map
+                                   'mouse-1
+                                   (lambda () (interactive)
+                                     (if (string-match "yes" status)
+                                         (shell-command "bluetoothctl power off")
+                                       (shell-command "bluetoothctl power on"))
+                                     (force-mode-line-update)))))
+       (propertize (all-the-icons-faicon "question" :face '(:foreground "#a0a0a0"))
                    'help-echo "bluetoothctl not found")))
 
    (defun my-disk-status ()
@@ -644,27 +492,16 @@
      (if (executable-find "udiskie-info")
          (let ((mounted (shell-command-to-string "udiskie-info -a")))
            (propertize (if (string-empty-p mounted)
-                           (all-the-icons-faicon
-                            "hdd-o"
-                            :face '(:foreground "#d8dee9"))
-                         (all-the-icons-faicon
-                          "hdd"
-                          :face '(:foreground "#d8dee9")))
-                       'mouse-face
-                       'highlight
-                       'help-echo
-                       "Click to list mounted disks"
-                       'local-map
-                       (make-mode-line-mouse-map
-                        'mouse-1
-                        (lambda ()
-                          (interactive)
-                          (message "Mounted disks: %s"
-                                   (shell-command-to-string
-                                    "udiskie-info -a"))))))
-       (propertize (all-the-icons-faicon
-                    "question"
-                    :face '(:foreground "#a0a0a0"))
+                           (all-the-icons-faicon "hdd-o" :face '(:foreground "#d8dee9"))
+                         (all-the-icons-faicon "hdd" :face '(:foreground "#d8dee9")))
+                       'mouse-face 'highlight
+                       'help-echo "Click to list mounted disks"
+                       'local-map (make-mode-line-mouse-map
+                                   'mouse-1
+                                   (lambda () (interactive)
+                                     (message "Mounted disks: %s"
+                                              (shell-command-to-string "udiskie-info -a"))))))
+       (propertize (all-the-icons-faicon "question" :face '(:foreground "#a0a0a0"))
                    'help-echo "udiskie-info not found")))
 
    (defun my-battery-status ()
@@ -673,22 +510,16 @@
        (let* ((data (funcall battery-status-function))
               (percent (cdr (assoc ?p data)))
               (charging (string= (cdr (assoc ?L data)) "AC")))
-         (propertize (concat
-                      (if charging
-                          (all-the-icons-faicon
-                           "bolt"
-                           :face '(:foreground "#88c0d0"))
-                        (all-the-icons-faicon
-                         "battery-full"
-                         :face '(:foreground "#88c0d0")))
-                      " " percent "%")
+         (propertize (concat (if charging
+                                 (all-the-icons-faicon "bolt" :face '(:foreground "#88c0d0"))
+                               (all-the-icons-faicon "battery-full" :face '(:foreground "#88c0d0")))
+                             " " percent "%")
                      'help-echo "Battery status"))))
 
    ;; Mode-Line Setup with Right Alignment
    (display-time-mode 1)
-   (setq
-    display-time-24hr-format t
-    display-time-day-and-date t)
+   (setq display-time-24hr-format t
+         display-time-day-and-date t)
    (display-battery-mode 1)
    (setq-default mode-line-format
                  `("%e"
@@ -705,10 +536,7 @@
                    "  "
                    mode-line-modes
                    mode-line-misc-info
-                   (:eval
-                    (propertize " "
-                                'display
-                                '((space :align-to (- right 20)))))
+                   (:eval (propertize " " 'display '((space :align-to (- right 20)))))
                    (:eval (my-battery-status))
                    " "
                    (:eval (my-network-status))
@@ -717,91 +545,79 @@
                    " "
                    (:eval (my-disk-status))
                    " "
-                   (:eval
-                    (when display-time-mode
-                      (propertize display-time-string
-                                  'face
-                                  '(:foreground "#ffcc66"))))))
+                   (:eval (when display-time-mode
+                            (propertize display-time-string 'face '(:foreground "#ffcc66"))))))
 
    ;; Hooks
-   (add-hook
-    'exwm-workspace-switch-hook #'my-exwm-update-mode-line-marker)
-   (add-hook
-    'exwm-workspace-switch-hook
-    (lambda ()
-      (when (fboundp 'notifications-notify)
-        (my-ednc-notify
-         "Workspace Switch"
-         (format "Switched to workspace %d"
-                 exwm-workspace-current-index)
-         'normal))))
-   (add-hook
-    'exwm-workspace-switch-hook
-    #'my/exwm-move-mouse-to-current-monitor)
+   (add-hook 'exwm-workspace-switch-hook #'my-exwm-update-mode-line-marker)
+   (add-hook 'exwm-workspace-switch-hook
+             (lambda ()
+               (when (fboundp 'notifications-notify)
+                 (my-ednc-notify "Workspace Switch"
+                                 (format "Switched to workspace %d" exwm-workspace-current-index)
+                                 'normal))))
+   (add-hook 'exwm-workspace-switch-hook #'my/exwm-move-mouse-to-current-monitor)
 
    ;; RandR and EXWM Enable
    (require 'exwm-randr)
    (add-hook 'exwm-randr-screen-change-hook #'my-exwm-update-displays)
    (exwm-randr-mode 1)
-   (add-hook 'exwm-init-hook #'my-exwm-update-displays)
    (exwm-init)
    (my-exwm-update-mode-line-marker) ; Ensure initial mode-line setup
-   (start-process-shell-command
-    "xinput"
-    nil
-    "xinput set-prop 10 'Coordinate Transformation Matrix' 2 0 0 0 2 0 0 0 1")
+   (start-process-shell-command "xinput" nil "xinput set-prop 10 'Coordinate Transformation Matrix' 2 0 0 0 2 0 0 0 1")
 
    ;; Buffer Naming
-   (add-hook
-    'exwm-update-class-hook
-    (lambda ()
-      (message "Class: %s, Title: %s" exwm-class-name exwm-title)
-      (when (and exwm-class-name
-                 (not (string-empty-p exwm-class-name)))
-        (exwm-workspace-rename-buffer exwm-class-name))))
-   (add-hook
-    'exwm-update-title-hook
-    (lambda ()
-      (when (and exwm-title (not (string-empty-p exwm-title)))
-        (exwm-workspace-rename-buffer exwm-title))))))
+   (add-hook 'exwm-update-class-hook
+             (lambda ()
+               (message "Class: %s, Title: %s" exwm-class-name exwm-title)
+               (when (and exwm-class-name (not (string-empty-p exwm-class-name)))
+                 (exwm-workspace-rename-buffer exwm-class-name))))
+   (add-hook 'exwm-update-title-hook
+             (lambda ()
+               (when (and exwm-title (not (string-empty-p exwm-title)))
+                 (exwm-workspace-rename-buffer exwm-title))))))
 
-(use-package pinentry :ensure t :config (pinentry-start))
+  (use-package pinentry :ensure t :config (pinentry-start))
 
-(use-package
- exwm-edit
- :ensure t
- :config
- (add-to-list
-  'exwm-input-global-keys `([,(kbd "C-c e")] . exwm-edit-compose)))
+  (use-package exwm-edit
+    :ensure t
+    :config
+    (add-to-list 'exwm-input-global-keys `([,(kbd "C-c e")] . exwm-edit-compose)))
 
-(use-package
- notifications
- :ensure t
- :config (message "notifications.el loaded successfully"))
+  (use-package notifications
+    :ensure t
+    :config (message "notifications.el loaded successfully"))
 
-(use-package
- ednc
- :ensure t
- :demand t
- :config
- (setq ednc-log-notifications t)
- (setq ednc-notification-timeout 10)
- (ednc-mode 1)
- (defun my-ednc-notify (title message &optional urgency)
-   "Send a desktop notification with TITLE and MESSAGE."
-   (notifications-notify
-    :title title
-    :body message
-    :urgency
-    (pcase urgency
-      ('low "low")
-      ('normal "normal")
-      ('high "critical")
-      (_ "normal"))
-    :app-name "EXWM"))
- :init
- (unless (fboundp 'notifications-notify)
-   (message "notifications.el not available; EDNC won’t work")))
+  (use-package alert
+    :ensure t
+    :config
+    (setq alert-default-style (if (eq system-type 'gnu/linux) 'libnotify 'message))
+    (setq alert-fade-time 10)
+    (setq alert-reveal-idle-time 5)
+    :init
+    (alert-add-rule :category "EXWM" :mode 'exwm-mode :style 'libnotify))
+
+  (use-package ednc
+    :ensure t
+    :demand t
+    :config
+    (setq ednc-log-notifications t)
+    (setq ednc-notification-timeout 10)
+    (ednc-mode 1)
+    (defun my-ednc-notify (title message &optional urgency)
+      "Send a desktop notification with TITLE and MESSAGE."
+      (notifications-notify
+       :title title
+       :body message
+       :urgency (pcase urgency
+                  ('low "low")
+                  ('normal "normal")
+                  ('high "critical")
+                  (_ "normal"))
+       :app-name "EXWM"))
+    :init
+    (unless (fboundp 'notifications-notify)
+      (message "notifications.el not available; EDNC won’t work"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
