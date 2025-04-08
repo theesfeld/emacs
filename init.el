@@ -533,32 +533,61 @@
    (display-battery-mode 1)
 
    (defun my-network-status ()
-     "Display clickable NetworkManager status in modeline."
-     (if (executable-find "nmcli")
-         (let ((status
-                (shell-command-to-string
-                 "nmcli -t -f STATE general")))
-           (propertize (if (string-match "connected" status)
-                           "🌐"
-                         "❌")
-                       'face
-                       (if (string-match "connected" status)
-                           '(:foreground "#00ff00")
-                         '(:foreground "#ff0000"))
-                       'mouse-face
-                       'highlight
-                       'help-echo
-                       "Click to toggle network"
-                       'local-map
-                       (make-mode-line-mouse-map
-                        'mouse-1
-                        (lambda ()
-                          (interactive)
-                          (shell-command "nmcli networking off")
-                          (sleep-for 1)
-                          (shell-command "nmcli networking on")
-                          (force-mode-line-update)))))
-       "N/A"))
+  "Display clickable NetworkManager status in modeline with connect/disconnect and network selection."
+  (if (executable-find "nmcli")
+      (let ((status (shell-command-to-string "nmcli -t -f STATE general")))
+        (propertize (if (string-match "connected" status) "🌐" "❌")
+                    'face (if (string-match "connected" status)
+                              '(:foreground "#00ff00")
+                            '(:foreground "#ff0000"))
+                    'mouse-face 'highlight
+                    'help-echo "Left-click: toggle network | Right-click: select network"
+                    'local-map (let ((map (make-mode-line-mouse-map)))
+                                 ;; Left-click: Toggle connect/disconnect
+                                 (define-key map [mode-line mouse-1]
+                                   (lambda ()
+                                     (interactive)
+                                     (if (string-match "connected" status)
+                                         (progn
+                                           (shell-command "nmcli networking off")
+                                           (message "Network disconnected"))
+                                       (shell-command "nmcli networking on")
+                                       (message "Network enabled"))
+                                     (force-mode-line-update)))
+                                 ;; Right-click: Network selection menu
+                                 (define-key map [mode-line mouse-3]
+                                   (lambda ()
+                                     (interactive)
+                                     (let* ((networks (shell-command-to-string
+                                                       "nmcli -t -f SSID,SECURITY dev wifi"))
+                                            (network-list (split-string networks "\n" t))
+                                            (formatted-list
+                                             (mapcar (lambda (line)
+                                                       (let ((fields (split-string line ":")))
+                                                         (if (>= (length fields) 2)
+                                                             (format "%-32s [%s]" (nth 0 fields) (nth 1 fields))
+                                                           line)))
+                                                     network-list))
+                                            (selected (completing-read "Select network: " formatted-list nil t)))
+                                       (when selected
+                                         (let* ((ssid (car (split-string selected " \\[")))
+                                                (security (cadr (split-string selected " \\[")))
+                                                (needs-password (and (not (string= security "[--]"))
+                                                                     (not (string-match-p
+                                                                           (regexp-quote ssid)
+                                                                           (shell-command-to-string
+                                                                            "nmcli -t -f NAME connection show"))))))
+                                           (if needs-password
+                                               (let ((password (read-passwd (format "Password for %s: " ssid))))
+                                                 (shell-command (format "nmcli dev wifi connect %s password %s"
+                                                                        (shell-quote-argument ssid)
+                                                                        (shell-quote-argument password))))
+                                               (shell-command (format "nmcli dev wifi connect %s"
+                                                                      (shell-quote-argument ssid))))
+                                           (message "Connecting to %s..." ssid)))
+                                       (force-mode-line-update))))
+                                 map))))
+    "N/A"))
 
    (defun my-bluetooth-status ()
      "Display clickable Bluetooth status in modeline."
