@@ -234,8 +234,8 @@
    (setq exwm-workspace-show-all-buffers t)
    (setq exwm-layout-show-all-buffers t)
    (setq exwm-manage-force-tiling nil) ; Allow floating by default, manage tiling manually
-   (setq mouse-autoselect-window t)
-   (setq focus-follows-mouse t)
+   (setq mouse-autoselect-window nil)
+   (setq focus-follows-mouse nil)
    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
    (setq mouse-wheel-progressive-speed t)
    (setq mouse-wheel-scroll-amount-horizontal nil)
@@ -243,10 +243,6 @@
     x-select-enable-clipboard t
     x-select-enable-primary t
     select-enable-clipboard t)
-
-   ;; Fix mouse cursor
-   (start-process-shell-command
-    "xsetroot" nil "xsetroot -cursor_name left_ptr")
 
    ;; Input Prefix Keys
    (setq exwm-input-prefix-keys
@@ -564,21 +560,19 @@
     "xinput set-prop 10 'Coordinate Transformation Matrix' 2 0 0 0 2 0 0 0 1")
 
    :hook
-   ((exwm-update-class-hook
-     .
-     (lambda ()
-       (exwm-workspace-rename-buffer
-        (or exwm-title exwm-class-name "*EXWM*"))))
-    (exwm-update-title-hook
-     . (lambda () (exwm-workspace-rename-buffer exwm-class-name)))
-
-    (exwm-init-hook
-     .
-     (lambda ()
-       (message "EXWM init-hook fired, DISPLAY=%s" (getenv "DISPLAY"))
-       (my-exwm-update-displays)
-       (switch-to-buffer "*scratch*")
-       (exwm-workspace-switch 0)))))
+   ;; Buffer Naming
+   (add-hook
+    'exwm-update-class-hook
+    (lambda ()
+      (message "Class: %s, Title: %s" exwm-class-name exwm-title)
+      (when (and exwm-class-name
+                 (not (string-empty-p exwm-class-name)))
+        (exwm-workspace-rename-buffer exwm-class-name))))
+   (add-hook
+    'exwm-update-title-hook
+    (lambda ()
+      (when (and exwm-title (not (string-empty-p exwm-title)))
+        (exwm-workspace-rename-buffer exwm-title)))))
 
   (use-package pinentry :ensure t :config (pinentry-start))
 
