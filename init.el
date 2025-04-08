@@ -365,12 +365,16 @@
      "Cache of the last known monitor configuration from xrandr.")
 
    (defun my-exwm-update-displays ()
-     "Update workspace-to-monitor mapping and maximize frames fullscreen."
+     "Update workspace-to-monitor mapping with maximized frames, geometry storage, and system tray on current workspace."
      (interactive)
      (let*
          ((xrandr-output
-           (shell-command-to-string "xrandr --current"))
-          (current-state (md5 xrandr-output))
+           (condition-case nil
+               (shell-command-to-string "xrandr --current")
+             (error
+              (message
+               "xrandr failed; defaulting to 1 workspace")
+              "")))
           (monitors
            (cl-loop
             for line in (split-string xrandr-output "\n") when
@@ -383,7 +387,8 @@
              (match-string 3 line) ; Resolution
              (string-to-number (match-string 4 line)) ; X offset
              (string-to-number (match-string 5 line))))) ; Y offset
-          (monitor-count (length monitors)))
+          (monitor-count (length monitors))
+          (current-state (md5 xrandr-output)))
        (when (not (equal current-state my-exwm-last-monitor-state))
          (setq my-exwm-last-monitor-state current-state)
          (if (> monitor-count 0)
@@ -395,10 +400,9 @@
                   (1- (length exwm-workspace--list))))
                (while (< (length exwm-workspace--list) monitor-count)
                  (exwm-workspace-add))
-               ;; Clear previous mappings
+               ;; Clear and update monitor mappings and geometries
                (setq exwm-randr-workspace-monitor-plist nil)
                (setq my-exwm-monitor-geometries nil)
-               ;; Assign each workspace to a monitor and maximize frame
                (dotimes (i monitor-count)
                  (let* ((monitor (nth i monitors))
                         (name (nth 0 monitor))
@@ -421,18 +425,30 @@
                    (when frame
                      (set-frame-parameter
                       frame 'fullscreen 'maximized)
-                     (set-frame-position frame x-offset y-offset)
+                     ;; Ensure mode-line and minibuffer are present
+                     (set-frame-parameter
+                      frame 'exwm-workspace-index i)
+                     (set-frame-parameter frame 'minibuffer t)
                      (message
-                      "Workspace %d assigned to %s (%dx%d at %d,%d)"
+                      "Workspace %d maximized on %s (%dx%d at %d,%d)"
                       i name width height x-offset y-offset))))
-               ;; Apply xrandr settings and refresh
+               ;; Update system tray to current workspace’s monitor
+               (let ((current-monitor
+                      (plist-get
+                       exwm-randr-workspace-monitor-plist
+                       exwm-workspace-current-index)))
+                 (when current-monitor
+                   (setq exwm-systemtray-monitor current-monitor)
+                   (exwm-systemtray--refresh)))
+               ;; Apply RandR settings and refresh
                (start-process-shell-command
                 "xrandr" nil "xrandr --auto")
                (exwm-randr-refresh)
+               (redisplay t)
                (message "Updated %d monitors: %s"
                         monitor-count
                         monitors))
-           ;; Fallback to single maximized workspace
+           ;; Fallback to single workspace
            (progn
              (setq exwm-workspace-number 1)
              (while (> (length exwm-workspace--list) 1)
@@ -443,14 +459,16 @@
              (let ((frame (car exwm-workspace--list)))
                (when frame
                  (set-frame-parameter frame 'fullscreen 'maximized)
-                 (set-frame-position frame 0 0)))
+                 (set-frame-parameter frame 'exwm-workspace-index 0)
+                 (set-frame-parameter frame 'minibuffer t)))
              (setq my-exwm-monitor-geometries nil)
+             (setq exwm-systemtray-monitor nil)
              (start-process-shell-command
               "xrandr" nil "xrandr --auto")
              (exwm-randr-refresh)
+             (redisplay t)
              (message
-              "No monitors detected, defaulting to 1 maximized workspace")))
-         (redisplay t))))
+              "No monitors detected, defaulting to 1 maximized workspace"))))))
 
    (defun my-exwm-update-displays-debounced ()
      "Debounced version of my-exwm-update-displays."
