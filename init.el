@@ -1735,7 +1735,7 @@
  (setq
   recentf-max-saved-items 100
   recentf-max-menu-items 25
-  recentf-exclude '("/tmp/" "/ssh:"))
+  recentf-exclude '("/ssh:"))
  :bind (("C-c r" . consult-recent-file)))
 
 (use-package
@@ -1761,9 +1761,9 @@
  :config
  (setq
   emacs-everywhere-app-info-function
-  #'grim/emacs-everywhere-wayland-app-info
-  emacs-everywhere-copy-command '("wl-copy")
-  emacs-everywhere-paste-command '("wl-paste"))
+  ;#'grim/emacs-everywhere-wayland-app-info
+  ;emacs-everywhere-copy-command '("wl-copy")
+  ;emacs-everywhere-paste-command '("wl-paste"))
  :hook (emacs-everywhere-init . whitespace-cleanup))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2962,10 +2962,10 @@
  (vterm-shell (or (getenv "SHELL") "/bin/bash")) ; Respect user’s shell
  :config
  ;; Ensure vterm-module compiles if needed
- (unless (file-exists-p
-          (expand-file-name "vterm-module.so"
-                            vterm-installation-directory))
-   (vterm-module-compile))
+; (unless (file-exists-p
+;          (expand-file-name "vterm-module.so"
+;                            vterm-installation-directory))
+;   (vterm-module-compile))
  ;; Add Emacs integration for finding files from vterm
  (add-to-list 'vterm-eval-cmds '("find-file" find-file))
  ;; Improve prompt detection for better interaction
