@@ -232,14 +232,6 @@
          (profiler-report)
          (profiler-stop)))))
 
-   ;; Disable pixel-scroll-precision-mode in EXWM buffers
-   (add-hook
-    'exwm-mode-hook (lambda () (pixel-scroll-precision-mode -1)))
-
-   ;; Store monitor geometries for mouse movement
-   (defvar my-exwm-monitor-geometries nil
-     "Alist of monitor names to their geometries (x y width height).")
-
    ;; Basic EXWM Settings
    (setq window-divider-default-bottom-width 2)
    (setq window-divider-default-right-width 2)
@@ -360,9 +352,10 @@
            ([?\M-w] . [?\C-c])
            ([?\C-y] . [?\C-v])))
 
-   ;; Dynamic Multi-Monitor Setup
    (defvar my-exwm-last-monitor-state nil
      "Cache of the last known monitor configuration from xrandr.")
+   (defvar my-exwm-monitor-geometries nil
+     "Alist of monitor names to their geometries (x y width height).")
 
    (defun my-exwm-update-displays ()
      "Update workspace-to-monitor mapping with maximized frames, geometry storage, and system tray on current workspace."
@@ -469,6 +462,38 @@
              (redisplay t)
              (message
               "No monitors detected, defaulting to 1 maximized workspace"))))))
+
+   (add-hook 'exwm-randr-screen-change-hook #'my-exwm-update-displays)
+   (add-hook
+    'exwm-workspace-switch-hook
+    #'my/exwm-move-mouse-to-current-monitor)
+
+   ;; Mode-line Marker Functions
+   (defun my-exwm-mode-line-marker (frame)
+     "Return a colored marker for the mode-line of FRAME."
+     (propertize " ● "
+                 'face
+                 (if (eq frame (selected-frame))
+                     '(:foreground "#ffcc66" :weight bold)
+                   '(:foreground "#a0a0a0" :weight normal))))
+
+   (defun my-exwm-update-mode-line-marker ()
+     "Update the mode-line marker for all frames based on the active workspace."
+     (dolist (frame (frame-list))
+       (let ((marker (my-exwm-mode-line-marker frame)))
+         (set-frame-parameter frame 'my-mode-line-marker marker)
+         (with-selected-frame frame
+           (setq mode-line-format
+                 (cons
+                  '(:eval
+                    (frame-parameter nil 'my-mode-line-marker))
+                  (default-value 'mode-line-format))))))
+     (force-mode-line-update t))
+
+   (setq-default mode-line-format (cons "" mode-line-format))
+   (add-hook
+    'exwm-workspace-switch-hook #'my-exwm-update-mode-line-marker)
+   (my-exwm-update-mode-line-marker)
 
    (defun my-exwm-update-displays-debounced ()
      "Debounced version of my-exwm-update-displays."
