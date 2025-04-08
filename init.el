@@ -212,13 +212,17 @@
  (unless (find-font (font-spec :name "all-the-icons"))
    (all-the-icons-install-fonts t)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                     EXWM                                  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (when (eq window-system 'x)
   (use-package
    exwm
    :ensure t
    :config
    (defvar my-exwm-monitor-geometries nil
-     "Alist of monitor names to their geometries (x y width height).")
+     "Alist of monitor names to their geometries (x y width height) for mouse movement.")
 
    ;; Basic EXWM Settings
    (setq window-divider-default-bottom-width 2)
@@ -403,13 +407,18 @@
            ([?\M-w] . [?\C-c])
            ([?\C-y] . [?\C-v])))
 
-   ;; Dynamic Multi-Monitor Setup
+   ;; Dynamic Multi-Monitor Setup (from your working config, with geometry storage)
    (defun my-exwm-update-displays ()
-     "Update workspace-to-monitor mapping with accurate geometries."
+     "Update workspace-to-monitor mapping with maximized frames and store geometries."
      (interactive)
      (let*
          ((xrandr-output
-           (shell-command-to-string "xrandr --current"))
+           (condition-case nil
+               (shell-command-to-string "xrandr --current")
+             (error
+              (message
+               "xrandr failed; defaulting to 1 workspace")
+              "")))
           (monitors
            (cl-loop
             for line in (split-string xrandr-output "\n") when
@@ -453,26 +462,20 @@
                         name (list x-offset y-offset width height))
                        my-exwm-monitor-geometries)
                  (when frame
-                   (set-frame-parameter frame 'fullscreen nil) ; Reset first
-                   (set-frame-position frame x-offset y-offset)
-                   (set-frame-size frame width height t) ; Size in pixels
-                   (message "Frame %d set for %s (%dx%d at %d,%d)"
-                            i
-                            name
-                            width
-                            height
-                            x-offset
-                            y-offset))))
-             (when (member "eDP-1" (mapcar #'car monitors))
-               (setq exwm-systemtray-monitor "eDP-1"))
+                   (set-frame-parameter frame 'fullscreen 'maximized)
+                   (message
+                    "Frame %d maximized for %s (%dx%d at %d,%d)"
+                    i name width height x-offset y-offset))))
+             (start-process-shell-command
+              "xrandr" nil "xrandr --auto")
              (exwm-randr-refresh)
+             (redisplay t)
              (message "Updated %d monitors: %s"
                       monitor-count
                       monitors))
          (progn
            (setq exwm-workspace-number 1)
            (setq my-exwm-monitor-geometries nil)
-           (setq exwm-systemtray-monitor nil)
            (message
             "No monitors detected, defaulting to 1 workspace")))))
 
@@ -519,7 +522,7 @@
                   (default-value 'mode-line-format))))))
      (force-mode-line-update t))
 
-   ;; Network Status with Mouse Bindings
+   ;; Mode-Line Status Functions with all-the-icons
    (defun my-network-status ()
      "Display clickable NetworkManager status in mode-line."
      (if (executable-find "nmcli")
@@ -588,26 +591,22 @@
                 (force-mode-line-update))))
            (propertize
             (if (string-match "connected" status)
-                "🌐"
-              "❌")
-            'face
-            (if (string-match "connected" status)
-                '(:foreground "#00ff00")
-              '(:foreground "#ff0000"))
+                (all-the-icons-faicon
+                 "wifi"
+                 :face '(:foreground "#00ff00"))
+              (all-the-icons-faicon
+               "wifi"
+               :face '(:foreground "#ff0000")))
             'mouse-face
             'highlight
             'help-echo
             "Left-click: toggle network | Right-click: select network"
             'keymap
             map))
-       "N/A"))
-
-   ;; Simplified Mode-Line Setup
-   (display-time-mode 1)
-   (setq
-    display-time-24hr-format t
-    display-time-day-and-date t)
-   (display-battery-mode 1)
+       (propertize (all-the-icons-faicon
+                    "question"
+                    :face '(:foreground "#a0a0a0"))
+                   'help-echo "nmcli not found")))
 
    (defun my-bluetooth-status ()
      "Display clickable Bluetooth status in mode-line."
@@ -616,12 +615,12 @@
                 (shell-command-to-string
                  "bluetoothctl show | grep Powered")))
            (propertize (if (string-match "yes" status)
-                           "🔵"
-                         "⚪")
-                       'face
-                       (if (string-match "yes" status)
-                           '(:foreground "#00b7eb")
-                         '(:foreground "#a0a0a0"))
+                           (all-the-icons-faicon
+                            "bluetooth"
+                            :face '(:foreground "#00b7eb"))
+                         (all-the-icons-faicon
+                          "bluetooth"
+                          :face '(:foreground "#a0a0a0")))
                        'mouse-face
                        'highlight
                        'help-echo
@@ -635,17 +634,22 @@
                               (shell-command "bluetoothctl power off")
                             (shell-command "bluetoothctl power on"))
                           (force-mode-line-update)))))
-       "N/A"))
+       (propertize (all-the-icons-faicon
+                    "question"
+                    :face '(:foreground "#a0a0a0"))
+                   'help-echo "bluetoothctl not found")))
 
    (defun my-disk-status ()
      "Display clickable disk status in mode-line."
      (if (executable-find "udiskie-info")
          (let ((mounted (shell-command-to-string "udiskie-info -a")))
            (propertize (if (string-empty-p mounted)
-                           "💾"
-                         "💿")
-                       'face
-                       '(:foreground "#d8dee9")
+                           (all-the-icons-faicon
+                            "hdd-o"
+                            :face '(:foreground "#d8dee9"))
+                         (all-the-icons-faicon
+                          "hdd"
+                          :face '(:foreground "#d8dee9")))
                        'mouse-face
                        'highlight
                        'help-echo
@@ -658,7 +662,10 @@
                           (message "Mounted disks: %s"
                                    (shell-command-to-string
                                     "udiskie-info -a"))))))
-       "N/A"))
+       (propertize (all-the-icons-faicon
+                    "question"
+                    :face '(:foreground "#a0a0a0"))
+                   'help-echo "udiskie-info not found")))
 
    (defun my-battery-status ()
      "Display battery status with icon and percentage."
@@ -668,14 +675,21 @@
               (charging (string= (cdr (assoc ?L data)) "AC")))
          (propertize (concat
                       (if charging
-                          "⚡"
-                        "🔋")
+                          (all-the-icons-faicon
+                           "bolt"
+                           :face '(:foreground "#88c0d0"))
+                        (all-the-icons-faicon
+                         "battery-full"
+                         :face '(:foreground "#88c0d0")))
                       " " percent "%")
-                     'face
-                     '(:foreground "#88c0d0")
-                     'help-echo
-                     "Battery status"))))
+                     'help-echo "Battery status"))))
 
+   ;; Mode-Line Setup with Right Alignment
+   (display-time-mode 1)
+   (setq
+    display-time-24hr-format t
+    display-time-day-and-date t)
+   (display-battery-mode 1)
    (setq-default mode-line-format
                  `("%e"
                    mode-line-front-space
@@ -691,20 +705,23 @@
                    "  "
                    mode-line-modes
                    mode-line-misc-info
-                   " "
                    (:eval
-                    (when display-time-mode
-                      (propertize display-time-string
-                                  'face
-                                  '(:foreground "#ffcc66"))))
-                   " "
+                    (propertize " "
+                                'display
+                                '((space :align-to (- right 20)))))
                    (:eval (my-battery-status))
                    " "
                    (:eval (my-network-status))
                    " "
                    (:eval (my-bluetooth-status))
                    " "
-                   (:eval (my-disk-status))))
+                   (:eval (my-disk-status))
+                   " "
+                   (:eval
+                    (when display-time-mode
+                      (propertize display-time-string
+                                  'face
+                                  '(:foreground "#ffcc66"))))))
 
    ;; Hooks
    (add-hook
@@ -724,12 +741,11 @@
 
    ;; RandR and EXWM Enable
    (require 'exwm-randr)
-   (setq exwm-systemtray-height 24)
-   (exwm-systemtray-mode 1)
    (add-hook 'exwm-randr-screen-change-hook #'my-exwm-update-displays)
    (exwm-randr-mode 1)
    (add-hook 'exwm-init-hook #'my-exwm-update-displays)
    (exwm-init)
+   (my-exwm-update-mode-line-marker) ; Ensure initial mode-line setup
    (start-process-shell-command
     "xinput"
     nil
