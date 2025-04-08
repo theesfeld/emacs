@@ -1758,12 +1758,10 @@
 (use-package
  emacs-everywhere
  :ensure t
- :config
- (setq
-  emacs-everywhere-app-info-function)
-  ;#'grim/emacs-everywhere-wayland-app-info
-  ;emacs-everywhere-copy-command '("wl-copy")
-  ;emacs-everywhere-paste-command '("wl-paste"))
+ :config (setq emacs-everywhere-app-info-function)
+ ;#'grim/emacs-everywhere-wayland-app-info
+ ;emacs-everywhere-copy-command '("wl-copy")
+ ;emacs-everywhere-paste-command '("wl-paste"))
  :hook (emacs-everywhere-init . whitespace-cleanup))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2775,7 +2773,6 @@
  :config
  (let ((templates-dir "~/.config/emacs/latex/templates/"))
    (when (file-exists-p templates-dir)
-     l
      (dolist (file
               (directory-files-recursively templates-dir "\\.el$"))
        (load-file file)))))
@@ -2962,10 +2959,10 @@
  (vterm-shell (or (getenv "SHELL") "/bin/bash")) ; Respect user’s shell
  :config
  ;; Ensure vterm-module compiles if needed
-; (unless (file-exists-p
-;          (expand-file-name "vterm-module.so"
-;                            vterm-installation-directory))
-;   (vterm-module-compile))
+ ; (unless (file-exists-p
+ ;          (expand-file-name "vterm-module.so"
+ ;                            vterm-installation-directory))
+ ;   (vterm-module-compile))
  ;; Add Emacs integration for finding files from vterm
  (add-to-list 'vterm-eval-cmds '("find-file" find-file))
  ;; Improve prompt detection for better interaction
