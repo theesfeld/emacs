@@ -409,7 +409,7 @@
 
    ;; Dynamic Multi-Monitor Setup
    (defun my-exwm-update-displays ()
-     "Update workspace-to-monitor mapping with maximized frames."
+     "Update workspace-to-monitor mapping with maximized frames and store geometries."
      (interactive)
      (let*
          ((xrandr-output
@@ -466,15 +466,19 @@
                    (message
                     "Frame %d maximized for %s (%dx%d at %d,%d)"
                     i name width height x-offset y-offset))))
+             (when (member "eDP-1" (mapcar #'car monitors))
+               (setq exwm-systemtray-monitor "eDP-1"))
              (start-process-shell-command
               "xrandr" nil "xrandr --auto")
              (exwm-randr-refresh)
+             (redisplay t)
              (message "Updated %d monitors: %s"
                       monitor-count
                       monitors))
          (progn
            (setq exwm-workspace-number 1)
            (setq my-exwm-monitor-geometries nil)
+           (setq exwm-systemtray-monitor nil)
            (message
             "No monitors detected, defaulting to 1 workspace")))))
 
@@ -521,7 +525,7 @@
                   (default-value 'mode-line-format))))))
      (force-mode-line-update t))
 
-   ;; Simplified Mode-Line Setup (moved out of init-hook to avoid early redraw)
+   ;; Simplified Mode-Line Setup
    (display-time-mode 1)
    (setq
     display-time-24hr-format t
@@ -671,9 +675,11 @@
 
    ;; RandR and EXWM Enable
    (require 'exwm-randr)
+   (setq exwm-systemtray-height 24)
+   (exwm-systemtray-mode 1)
    (add-hook 'exwm-randr-screen-change-hook #'my-exwm-update-displays)
    (exwm-randr-mode 1)
-   (add-hook 'exwm-init-hook #'my-exwm-update-displays) ; Ensure geometry is set early
+   (add-hook 'exwm-init-hook #'my-exwm-update-displays)
    (exwm-init)
    (start-process-shell-command
     "xinput"
@@ -702,6 +708,11 @@
  :config
  (add-to-list
   'exwm-input-global-keys `([,(kbd "C-c e")] . exwm-edit-compose)))
+
+(use-package
+ notifications
+ :ensure t
+ :config (message "notifications.el loaded successfully"))
 
 (use-package
  ednc
