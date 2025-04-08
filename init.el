@@ -522,7 +522,7 @@
    ;; RandR and EXWM Enable
    (require 'exwm-randr)
    (add-hook 'exwm-randr-screen-change-hook #'my-exwm-update-displays)
-   (exwm-randr-enable) ; Changed from exwm-randr-mode to enable
+   (exwm-randr-mode 1) ; Changed from exwm-randr-mode to enable
    (exwm-enable) ; Changed from exwm-init to enable
 
    ;; Buffer Naming
