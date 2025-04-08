@@ -221,6 +221,13 @@
    exwm
    :ensure t
    :config
+   (add-hook 'exwm-init-hook
+            (lambda ()
+              (profiler-start 'cpu)
+              (run-with-timer 10 nil
+                              (lambda ()
+                                (profiler-report)
+                                (profiler-stop))))))
    (add-hook
     'exwm-mode-hook (lambda () (pixel-scroll-precision-mode -1)))
    (defvar my-exwm-monitor-geometries nil
