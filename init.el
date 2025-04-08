@@ -416,7 +416,14 @@
                           exwm-randr-workspace-monitor-plist i name))
                    (push (cons
                           name (list x-offset y-offset width height))
-                         my-exwm-monitor-geometries)))
+                         my-exwm-monitor-geometries)
+                   (when frame
+                     (set-frame-parameter
+                      frame 'fullscreen 'maximized)
+                     (message
+                      "Frame %d maximized for %s (%dx%d at %d,%d)"
+                      i name width height x-offset y-offset))))
+
                (start-process-shell-command
                 "xrandr" nil "xrandr --auto")
                (exwm-randr-refresh)
