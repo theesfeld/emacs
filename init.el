@@ -223,8 +223,8 @@
    :config
    (defvar my-exwm-monitor-geometries nil
      "Alist of monitor names to their geometries (x y width height).")
+
    ;; Basic EXWM Settings
-   ;; Allow resizing with mouse, of non-floating windows.
    (setq window-divider-default-bottom-width 2)
    (setq ediff-window-setup-function #'ediff-setup-windows-plain)
    (setq window-divider-default-right-width 2)
@@ -234,7 +234,7 @@
    (setq exwm-workspace-number 1)
    (setq exwm-workspace-show-all-buffers t)
    (setq exwm-layout-show-all-buffers t)
-   (setq exwm-manage-force-tiling nil) ; Allow floating by default, manage tiling manually
+   (setq exwm-manage-force-tiling nil)
    (setq mouse-autoselect-window nil)
    (setq focus-follows-mouse nil)
    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
@@ -282,7 +282,6 @@
         (lambda ()
           (interactive)
           (kill-buffer-and-window)))
-       ;; Screen Lock and Power Management
        ([?\s-l]
         .
         (lambda ()
@@ -296,7 +295,6 @@
           (when (executable-find "systemctl")
             (start-process-shell-command
              "suspend" nil "systemctl suspend-then-hibernate"))))
-       ;; XF86 Power Keys
        ([XF86PowerOff]
         .
         (lambda ()
@@ -312,75 +310,69 @@
                      (executable-find "slock"))
             (start-process-shell-command
              "suspend" nil "systemctl suspend-then-hibernate"))))
-       ;; Media Keys with Percentage Display
        ([XF86AudioRaiseVolume]
         .
         (lambda ()
           (interactive)
           (shell-command "pactl set-sink-volume @DEFAULT_SINK@ +5%")
-          (let
-              ((volume
-                (shell-command-to-string
-                 "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1")))
-            (alert
-             (format "Volume: %s" volume)
-             :title "Media Control"
-             :severity 'normal))))
+          (alert
+           (format
+            "Volume: %s"
+            (shell-command-to-string
+             "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1"))
+           :title "Media Control"
+           :severity 'normal)))
        ([XF86AudioLowerVolume]
         .
         (lambda ()
           (interactive)
           (shell-command "pactl set-sink-volume @DEFAULT_SINK@ -5%")
-          (let
-              ((volume
-                (shell-command-to-string
-                 "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1")))
-            (alert
-             (format "Volume: %s" volume)
-             :title "Media Control"
-             :severity 'normal))))
+          (alert
+           (format
+            "Volume: %s"
+            (shell-command-to-string
+             "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1"))
+           :title "Media Control"
+           :severity 'normal)))
        ([XF86AudioMute]
         .
         (lambda ()
           (interactive)
           (shell-command "pactl set-sink-mute @DEFAULT_SINK@ toggle")
-          (let
-              ((mute-status
+          (alert
+           (if (string=
                 (shell-command-to-string
-                 "pactl get-sink-mute @DEFAULT_SINK@ | grep -o 'yes\\|no'"))
-               (volume
-                (shell-command-to-string
-                 "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1")))
-            (alert
-             (if (string= mute-status "yes")
-                 "Volume: Muted"
-               (format "Volume: %s" volume))
-             :title "Media Control"
-             :severity 'normal))))
+                 "pactl get-sink-mute @DEFAULT_SINK@ | grep -o 'yes\\|no'")
+                "yes")
+               "Volume: Muted"
+             (format
+              "Volume: %s"
+              (shell-command-to-string
+               "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1")))
+           :title "Media Control"
+           :severity 'normal)))
        ([XF86MonBrightnessUp]
         .
         (lambda ()
           (interactive)
           (shell-command "brightnessctl set +10%")
-          (let ((brightness
-                 (shell-command-to-string
-                  "brightnessctl -m | cut -d, -f4")))
-            (alert
-             (format "Brightness: %s" brightness)
-             :title "Display Control"
-             :severity 'normal))))
+          (alert
+           (format "Brightness: %s"
+                   (shell-command-to-string
+                    "brightnessctl -m | cut -d, -f4"))
+           :title "Display Control"
+           :severity 'normal)))
        ([XF86MonBrightnessDown]
         .
         (lambda ()
           (interactive)
           (shell-command "brightnessctl set 10%-")
-          (let ((brightness
-                 (shell-command-to-string
-                  "brightnessctl -m | cut -d, -f4")))
-            (alert
-             (format "Brightness: %s" brightness)
-             :title "Display Control"
-             :severity 'normal)))))
+          (alert
+           (format "Brightness: %s"
+                   (shell-command-to-string
+                    "brightnessctl -m | cut -d, -f4"))
+           :title "Display Control"
+           :severity 'normal))))
      (mapcar
       (lambda (i)
         (cons
@@ -415,7 +407,7 @@
            ([?\M-w] . [?\C-c])
            ([?\C-y] . [?\C-v])))
 
-   ;; Dynamic Multi-Monitor Setup (system tray reference removed)
+   ;; Dynamic Multi-Monitor Setup
    (defun my-exwm-update-displays ()
      "Update workspace-to-monitor mapping with maximized frames."
      (interactive)
@@ -449,7 +441,7 @@
              (while (< (length exwm-workspace--list) monitor-count)
                (exwm-workspace-add))
              (setq exwm-randr-workspace-monitor-plist nil)
-             (setq my-exwm-monitor-geometries nil) ; Reset geometry alist
+             (setq my-exwm-monitor-geometries nil)
              (dotimes (i monitor-count)
                (let* ((monitor (nth i monitors))
                       (name (nth 0 monitor))
@@ -477,15 +469,35 @@
              (start-process-shell-command
               "xrandr" nil "xrandr --auto")
              (exwm-randr-refresh)
-             (redisplay t)
              (message "Updated %d monitors: %s"
                       monitor-count
                       monitors))
          (progn
            (setq exwm-workspace-number 1)
-           (setq my-exwm-monitor-geometries nil) ; Reset for single monitor
+           (setq my-exwm-monitor-geometries nil)
            (message
             "No monitors detected, defaulting to 1 workspace")))))
+
+   ;; Mouse-Moving Function
+   (defun my/exwm-move-mouse-to-current-monitor ()
+     "Move the mouse cursor to the center of the monitor displaying the current workspace."
+     (interactive)
+     (let* ((workspace-index exwm-workspace-current-index)
+            (monitor-name
+             (plist-get
+              exwm-randr-workspace-monitor-plist workspace-index))
+            (geometry
+             (cdr (assoc monitor-name my-exwm-monitor-geometries)))
+            (frame (nth workspace-index exwm-workspace--list)))
+       (when (and geometry frame)
+         (let* ((width (nth 2 geometry))
+                (height (nth 3 geometry))
+                (x (/ width 2))
+                (y (/ height 2)))
+           (set-mouse-pixel-position frame x y)
+           (message
+            "Mouse moved to monitor %s at (%d, %d) in frame %s"
+            monitor-name x y (frame-parameter frame 'name))))))
 
    ;; Mode-line Marker Functions
    (defun my-exwm-mode-line-marker (frame)
@@ -509,14 +521,13 @@
                   (default-value 'mode-line-format))))))
      (force-mode-line-update t))
 
-   ;; New Interactive Modeline Setup
+   ;; Simplified Mode-Line Setup (moved out of init-hook to avoid early redraw)
    (display-time-mode 1)
    (setq
     display-time-24hr-format t
     display-time-day-and-date t)
    (display-battery-mode 1)
 
-   ;; Applet functions with interactivity
    (defun my-network-status ()
      "Display clickable NetworkManager status in modeline."
      (if (executable-find "nmcli")
@@ -593,43 +604,41 @@
                           (interactive)
                           (message "Mounted disks: %s"
                                    (shell-command-to-string
-                                    "udiskie-info -a")))))))
-     "N/A"))
+                                    "udiskie-info -a"))))))
+       "N/A"))
 
-  (defun my-battery-status ()
-    "Display battery status with icon and percentage."
-    (when (and battery-status-function display-battery-mode)
-      (let* ((data (funcall battery-status-function))
-             (percent (cdr (assoc ?p data)))
-             (charging (string= (cdr (assoc ?L data)) "AC")))
-        (propertize (concat
-                     (if charging
-                         "⚡"
-                       "🔋")
-                     " " percent "%")
-                    'face
-                    '(:foreground "#88c0d0")
-                    'help-echo
-                    "Battery status"))))
+   (defun my-battery-status ()
+     "Display battery status with icon and percentage."
+     (when (and battery-status-function display-battery-mode)
+       (let* ((data (funcall battery-status-function))
+              (percent (cdr (assoc ?p data)))
+              (charging (string= (cdr (assoc ?L data)) "AC")))
+         (propertize (concat
+                      (if charging
+                          "⚡"
+                        "🔋")
+                      " " percent "%")
+                     'face
+                     '(:foreground "#88c0d0")
+                     'help-echo
+                     "Battery status"))))
 
-  ;; Unified EXWM modeline
-  (setq-default mode-line-format
-                `("%e"
-                  mode-line-front-space
-                  mode-line-mule-info
-                  mode-line-client
-                  mode-line-modified
-                  mode-line-remote
-                  mode-line-frame-identification
-                  mode-line-buffer-identification
-                  "   "
-                  mode-line-position
-                  (vc-mode vc-mode)
-                  "  "
-                  mode-line-modes
-                  mode-line-misc-info
-                  mode-line-right-aligned-content
-                  (" "
+   (setq-default mode-line-format
+                 `("%e"
+                   mode-line-front-space
+                   mode-line-mule-info
+                   mode-line-client
+                   mode-line-modified
+                   mode-line-remote
+                   mode-line-frame-identification
+                   mode-line-buffer-identification
+                   "   "
+                   mode-line-position
+                   (vc-mode vc-mode)
+                   "  "
+                   mode-line-modes
+                   mode-line-misc-info
+                   " "
                    (:eval
                     (when display-time-mode
                       (propertize display-time-string
@@ -642,58 +651,48 @@
                    " "
                    (:eval (my-bluetooth-status))
                    " "
-                   (:eval (my-disk-status)))))
+                   (:eval (my-disk-status))))
 
-  (add-hook
-   'exwm-init-hook
-   (lambda ()
-     (dolist (frame (frame-list))
-       (with-selected-frame frame
-         (set-frame-parameter
-          frame 'mode-line-format mode-line-format)))))
-  (add-hook 'exwm-workspace-switch-hook #'force-mode-line-update)
+   ;; Hooks
+   (add-hook
+    'exwm-workspace-switch-hook #'my-exwm-update-mode-line-marker)
+   (add-hook
+    'exwm-workspace-switch-hook
+    (lambda ()
+      (when (fboundp 'notifications-notify)
+        (my-ednc-notify
+         "Workspace Switch"
+         (format "Switched to workspace %d"
+                 exwm-workspace-current-index)
+         'normal))))
+   (add-hook
+    'exwm-workspace-switch-hook
+    #'my/exwm-move-mouse-to-current-monitor)
 
-  ;; Hooks (adjusted to remove system tray dependency)
-  (setq-default mode-line-format (cons "" mode-line-format))
-  (add-hook
-   'exwm-workspace-switch-hook #'my-exwm-update-mode-line-marker)
-  (my-exwm-update-mode-line-marker)
-  (add-hook
-   'exwm-workspace-switch-hook
-   (lambda ()
-     (when (fboundp 'notifications-notify)
-       (my-ednc-notify
-        "Workspace Switch"
-        (format "Switched to workspace %d"
-                exwm-workspace-current-index)
-        'normal))))
-  (add-hook
-   'exwm-workspace-switch-hook
-   #'my/exwm-move-mouse-to-current-monitor)
+   ;; RandR and EXWM Enable
+   (require 'exwm-randr)
+   (add-hook 'exwm-randr-screen-change-hook #'my-exwm-update-displays)
+   (exwm-randr-mode 1)
+   (add-hook 'exwm-init-hook #'my-exwm-update-displays) ; Ensure geometry is set early
+   (exwm-init)
+   (start-process-shell-command
+    "xinput"
+    nil
+    "xinput set-prop 10 'Coordinate Transformation Matrix' 2 0 0 0 2 0 0 0 1")
 
-  ;; RandR and EXWM Enable
-  (require 'exwm-randr)
-  (add-hook 'exwm-randr-screen-change-hook #'my-exwm-update-displays)
-  (exwm-randr-mode 1)
-  (exwm-init)
-  (start-process-shell-command
-   "xinput"
-   nil
-   "xinput set-prop 10 'Coordinate Transformation Matrix' 2 0 0 0 2 0 0 0 1")
-
-  ;; Buffer Naming
-  (add-hook
-   'exwm-update-class-hook
-   (lambda ()
-     (message "Class: %s, Title: %s" exwm-class-name exwm-title)
-     (when (and exwm-class-name
-                (not (string-empty-p exwm-class-name)))
-       (exwm-workspace-rename-buffer exwm-class-name))))
-  (add-hook
-   'exwm-update-title-hook
-   (lambda ()
-     (when (and exwm-title (not (string-empty-p exwm-title)))
-       (exwm-workspace-rename-buffer exwm-title)))))
+   ;; Buffer Naming
+   (add-hook
+    'exwm-update-class-hook
+    (lambda ()
+      (message "Class: %s, Title: %s" exwm-class-name exwm-title)
+      (when (and exwm-class-name
+                 (not (string-empty-p exwm-class-name)))
+        (exwm-workspace-rename-buffer exwm-class-name))))
+   (add-hook
+    'exwm-update-title-hook
+    (lambda ()
+      (when (and exwm-title (not (string-empty-p exwm-title)))
+        (exwm-workspace-rename-buffer exwm-title))))))
 
 (use-package pinentry :ensure t :config (pinentry-start))
 
