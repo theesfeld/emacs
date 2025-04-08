@@ -222,21 +222,13 @@
    :ensure t
    :config
    ;; Basic EXWM Settings
-
    ;; Allow resizing with mouse, of non-floating windows.
    (setq window-divider-default-bottom-width 2)
    ;; do not open new frame for ediff, that would break
    (setq ediff-window-setup-function #'ediff-setup-windows-plain)
    (setq window-divider-default-right-width 2)
    (window-divider-mode)
-   ;; show the time in the modeline (also see the customization in the variables)
-   (display-time-mode)
-   ;; Make buffer name more meaningful
-   (add-hook
-    'exwm-update-class-hook
-    (lambda () (exwm-workspace-rename-buffer exwm-class-name)))
-   ;; disable CTRL-z (pause), because it breaks my workflows and exwm
-   (global-unset-key (kbd "C-z")))
+   (global-unset-key (kbd "C-z"))
 
   (setq exwm-workspace-number 1)
   (setq exwm-workspace-show-all-buffers t)
