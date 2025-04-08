@@ -2744,19 +2744,26 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun my-after-make-frame-setup (&optional frame)
-  "Initialize UI settings for new frames, including daemon clients."
-  (with-selected-frame (or frame (selected-frame))
-    (when (display-graphic-p) ; Only for graphical frames
+  "Initialize UI settings for new frames under Wayland, including daemon clients."
+  (when
+      (and (display-graphic-p) ; Only for graphical frames
+           (string= (getenv "XDG_SESSION_TYPE") "wayland")) ; Only under Wayland
+    (with-selected-frame (or frame (selected-frame))
       (menu-bar-mode -1)
       (tool-bar-mode -1)
       (scroll-bar-mode -1))))
 
-;; Run setup for the initial frame if not in daemon mode
+;; Run setup for the initial frame if not in daemon mode and under Wayland
 (unless (daemonp)
-  (my-after-make-frame-setup))
+  (when (string= (getenv "XDG_SESSION_TYPE") "wayland")
+    (my-after-make-frame-setup)))
 
-;; Hook for new frames created by emacsclient
-(add-hook 'after-make-frame-functions #'my-after-make-frame-setup)
+;; Hook for new frames created by emacsclient, only under Wayland
+(add-hook
+ 'after-make-frame-functions
+ (lambda (frame)
+   (when (string= (getenv "XDG_SESSION_TYPE") "wayland")
+     (my-after-make-frame-setup frame))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                 LaTeX templates                           ;;
@@ -2768,6 +2775,7 @@
  :config
  (let ((templates-dir "~/.config/emacs/latex/templates/"))
    (when (file-exists-p templates-dir)
+     l
      (dolist (file
               (directory-files-recursively templates-dir "\\.el$"))
        (load-file file)))))
