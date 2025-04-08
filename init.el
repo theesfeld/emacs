@@ -843,6 +843,8 @@
 (use-package
  ediff
  :ensure nil
+ ; defer
+ :defer t
  :config
  (setq
   ediff-split-window-function 'split-window-right
@@ -884,6 +886,8 @@
 (use-package
  tramp
  :ensure nil
+ ; defer
+ :defer t
  :config
  ;; Optimize TRAMP for auto-revert
  (setq tramp-auto-save-directory "~/.config/emacs/tramp-auto-save/")
@@ -953,6 +957,8 @@
 (use-package
  vundo
  :ensure t
+ ; defer
+ :defer t
  :bind ("C-x u" . vundo)
  :config (setq vundo-glyph-alist vundo-unicode-symbols))
 
@@ -963,6 +969,8 @@
 (use-package
  deadgrep
  :ensure t
+ ; defer
+ :defer t
  :bind
  (("C-c s" . deadgrep)
   :map
@@ -976,12 +984,16 @@
 ;; Rainbow Delimiters
 (use-package
  rainbow-delimiters
+ ; defer
+ :defer t
  :hook (prog-mode . rainbow-delimiters-mode))
 
 ;; Highlight Thing at Point
 (use-package
  highlight-thing
  :ensure t
+ ; defer
+ :defer t
  :custom
  (highlight-thing-delay-seconds 0.5) ; Delay before highlighting
  (highlight-thing-what-thing 'symbol) ; Highlight symbols
@@ -1050,6 +1062,8 @@
 (use-package
  smartparens
  :ensure t
+ ; defer
+ :defer t
  :hook
  ((prog-mode . smartparens-mode)
   (text-mode . smartparens-mode)
@@ -1161,6 +1175,8 @@
 (use-package
  diff-hl
  :ensure t
+ ; defer
+ :defer t
  :hook (magit-post-refresh . diff-hl-magit-post-refresh)
  :config (global-diff-hl-mode +1))
 
@@ -1172,6 +1188,8 @@
 (use-package
  avy
  :ensure t
+ ; defer
+ :defer t
  :bind (("M-j" . avy-goto-char-timer) ("C-’" . avy-goto-char-2))
  :init (avy-setup-default)
  :config
@@ -1192,8 +1210,9 @@
 (use-package
  avy-zap
  :ensure t
- :bind
- (("M-z" . avy-zap-up-to-char-dwim) ("M-Z" . avy-zap-to-char-dwim))
+ ; defer
+ :defer t
+ :bind (("M-z" . avy-zap-up-to-char-dwim) ("M-Z" . avy-zap-to-char-dwim))
  :config
  (setq avy-zap-forward-only t)
  (setq avy-keys '(?a ?o ?e ?u ?i ?d ?h ?t ?n ?s)))
@@ -1205,6 +1224,7 @@
 (use-package
  xkcd
  :ensure t
+ :defer t
  :config
  ;; Optional: Customize cache directory
  (setq xkcd-cache-dir "~/.config/emacs/xkcd/")
@@ -1648,7 +1668,7 @@
 
 (use-package forge :ensure t :defer t :after magit)
 
-(use-package magit-todos :ensure t :after magit)
+(use-package magit-todos :ensure t :defer t :after magit)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Grep Ignorance                              ;;
@@ -1693,6 +1713,8 @@
 (use-package
  aidermacs
  :ensure t
+ ; defer
+ :defer t
  :config
  (setq aidermacs-default-model "sonnet")
  (global-set-key (kbd "C-c A") 'aidermacs-transient-menu)
@@ -1845,6 +1867,7 @@
 (use-package
  eww
  :ensure nil
+ :defer t
  :commands (eww eww-browse-url)
  :init
  (setq browse-url-handlers
@@ -1901,6 +1924,8 @@
 (use-package
  denote
  :ensure t
+ ; defer
+ :defer t
  :hook
  ( ;; If you use Markdown or plain text files, then you want to make
   ;; the Denote links clickable (Org renders links as buttons right
@@ -1967,6 +1992,8 @@
 (use-package
  denote-org
  :ensure t
+ ; defer
+ :defer t
  ;; :command
  ;; ;; I list the commands here so that you can discover them more
  ;; ;; easily.  You might want to bind the most frequently used ones to
@@ -1989,6 +2016,8 @@
 (use-package
  denote-journal
  :ensure t
+ ; defer
+ :defer t
  ;; Bind those to some key for your convenience.
  ;; :commands ( denote-journal-new-entry
  ;;             denote-journal-new-or-existing-entry
@@ -2228,6 +2257,7 @@
 (use-package
  nov
  :ensure t
+ :defer t
  :after esxml
  :init (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
  :config
@@ -2334,6 +2364,8 @@
 (use-package
  elisp-demos
  :ensure t
+ ; defer
+ :defer t
  :config
  (advice-add
   'helpful-update
@@ -2342,6 +2374,8 @@
 (use-package
  elisp-autofmt
  :ensure t
+ ; defer
+ :defer t
  :commands (elisp-autofmt-mode elisp-autofmt-buffer)
  :hook
  ((emacs-lisp-mode . elisp-autofmt-mode)
@@ -2442,6 +2476,7 @@
 (use-package
  gnus
  :ensure nil
+ :defer t
  :commands (gnus gnus-unplugged)
  :init
  ;; Primary select method for mailbox.org IMAP
@@ -2666,6 +2701,7 @@
 (use-package
  gnus-art
  :ensure nil
+ :defer t
  :after gnus
  :config
  (setq gnus-inhibit-images nil) ; Show images
@@ -2684,6 +2720,7 @@
 (use-package
  message
  :ensure nil
+ :defer t
  :after gnus
  :config
  (setq message-citation-line-format "On %a, %b %d %Y, %N wrote:\n")
@@ -2742,6 +2779,7 @@
 (use-package
  mastodon
  :ensure t
+ :defer t
  :config
  ;; Core settings from latest mastodon.el README
  (setq
@@ -2788,6 +2826,7 @@
 (use-package
  pgmacs
  :vc (:url "https://github.com/emarsden/pgmacs" :rev :newest)
+ :defer t
  :init
  ;; Load dependency 'pg' from GitHub
  (use-package
@@ -2939,6 +2978,7 @@
 (use-package
  ses
  :ensure nil ; SES is built-in, no need to install
+ :defer t
  :commands (ses-mode new-ses)
  :init
  ;; Pre-configure SES defaults before loading
