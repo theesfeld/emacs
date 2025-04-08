@@ -1866,10 +1866,10 @@
 (use-package
  emacs-everywhere
  :ensure t
- :config (setq emacs-everywhere-app-info-function)
- ;#'grim/emacs-everywhere-wayland-app-info
- ;emacs-everywhere-copy-command '("wl-copy")
- ;emacs-everywhere-paste-command '("wl-paste"))
+ :config
+ (setq
+  emacs-everywhere-copy-command '("xclip" "-selection" "clipboard")
+  emacs-everywhere-paste-command '("xclip" "-selection" "clipboard" "-o"))
  :hook (emacs-everywhere-init . whitespace-cleanup))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
