@@ -1760,7 +1760,7 @@
  :ensure t
  :config
  (setq
-  emacs-everywhere-app-info-function
+  emacs-everywhere-app-info-function)
   ;#'grim/emacs-everywhere-wayland-app-info
   ;emacs-everywhere-copy-command '("wl-copy")
   ;emacs-everywhere-paste-command '("wl-paste"))
