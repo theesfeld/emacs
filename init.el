@@ -580,8 +580,8 @@
    exwm-edit
    :ensure t
    :config
-   (define-key
-    exwm-input-global-keys (kbd "C-c e") 'exwm-edit-compose))
+   (add-to-list
+    'exwm-input-global-keys `([,(kbd "C-c e")] . exwm-edit-compose)))
 
   (use-package
    alert
