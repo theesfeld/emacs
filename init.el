@@ -489,7 +489,7 @@
    ;; System Tray Setup
    (require 'exwm-systemtray)
    (exwm-systemtray-mode 1)
-   (setq exwm-systemtray-height 16) ; Adjust height as needed
+   (setq exwm-systemtray-height 24) ; Adjust height as needed
 
    ;; Hooks
    (add-hook
