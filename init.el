@@ -559,7 +559,7 @@
     nil
     "xinput set-prop 10 'Coordinate Transformation Matrix' 2 0 0 0 2 0 0 0 1")
 
-   :hook
+   ;:hook
    ;; Buffer Naming
    (add-hook
     'exwm-update-class-hook
