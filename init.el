@@ -221,6 +221,8 @@
    exwm
    :ensure t
    :config
+   (add-hook
+    'exwm-mode-hook (lambda () (pixel-scroll-precision-mode -1)))
    (defvar my-exwm-monitor-geometries nil
      "Alist of monitor names to their geometries (x y width height) for mouse movement.")
 
@@ -480,6 +482,15 @@
            (setq my-exwm-monitor-geometries nil)
            (message
             "No monitors detected, defaulting to 1 workspace")))))
+
+   (defun my-exwm-update-displays-debounced ()
+     "Debounced version of my-exwm-update-displays."
+     (interactive)
+     (run-with-idle-timer 0.5 nil #'my-exwm-update-displays))
+
+   (add-hook
+    'exwm-randr-screen-change-hook
+    #'my-exwm-update-displays-debounced)
 
    ;; Mouse-Moving Function
    (defun my/exwm-move-mouse-to-current-monitor ()
@@ -884,6 +895,9 @@
          search-ring regexp-search-ring extended-command-history)) ; Add command history
  (require 'all-the-icons)
  :config
+ (global-set-key (kbd "<up>") 'previous-line)
+ (global-set-key (kbd "<down>") 'next-line)
+ (setq scroll-conservatively 101) ; Scroll line-by-line without recentering
  (when (file-exists-p custom-file)
    (load custom-file))
  ;; Global Emacs Settings
