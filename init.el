@@ -410,17 +410,16 @@
            ([?\C-y] . [?\C-v])))
 
    ;; Dynamic Multi-Monitor Setup (from your working config, with geometry storage only)
+   (defvar my-exwm-last-monitor-state nil
+     "Cache of the last known monitor configuration from xrandr.")
+
    (defun my-exwm-update-displays ()
-     "Update workspace-to-monitor mapping with maximized frames and store geometries."
+     "Update workspace-to-monitor mapping only on significant changes."
      (interactive)
      (let*
          ((xrandr-output
-           (condition-case nil
-               (shell-command-to-string "xrandr --current")
-             (error
-              (message
-               "xrandr failed; defaulting to 1 workspace")
-              "")))
+           (shell-command-to-string "xrandr --current"))
+          (current-state (md5 xrandr-output)) ; Simple hash to detect changes
           (monitors
            (cl-loop
             for line in (split-string xrandr-output "\n") when
@@ -434,59 +433,62 @@
              (string-to-number (match-string 4 line)) ; X offset
              (string-to-number (match-string 5 line))))) ; Y offset
           (monitor-count (length monitors)))
-       (if (> monitor-count 0)
+       ;; Only proceed if the monitor state has changed
+       (unless (equal current-state my-exwm-last-monitor-state)
+         (setq my-exwm-last-monitor-state current-state)
+         (if (> monitor-count 0)
+             (progn
+               ;; Adjust workspace count only if necessary
+               (when (/= exwm-workspace-number monitor-count)
+                 (setq exwm-workspace-number monitor-count)
+                 (while (> (length exwm-workspace--list)
+                           monitor-count)
+                   (exwm-workspace-delete
+                    (1- (length exwm-workspace--list))))
+                 (while (< (length exwm-workspace--list)
+                           monitor-count)
+                   (exwm-workspace-add)))
+               ;; Update monitor mapping and geometries
+               (setq exwm-randr-workspace-monitor-plist nil)
+               (setq my-exwm-monitor-geometries nil)
+               (dotimes (i monitor-count)
+                 (let* ((monitor (nth i monitors))
+                        (name (nth 0 monitor))
+                        (resolution (nth 1 monitor))
+                        (width
+                         (string-to-number
+                          (car (split-string resolution "x"))))
+                        (height
+                         (string-to-number
+                          (cadr (split-string resolution "x"))))
+                        (x-offset (nth 2 monitor))
+                        (y-offset (nth 3 monitor)))
+                   (setq exwm-randr-workspace-monitor-plist
+                         (plist-put
+                          exwm-randr-workspace-monitor-plist i name))
+                   (push (cons
+                          name (list x-offset y-offset width height))
+                         my-exwm-monitor-geometries)))
+               ;; Apply xrandr settings once
+               (start-process-shell-command
+                "xrandr" nil "xrandr --auto")
+               (exwm-randr-refresh)
+               (message "Updated %d monitors: %s"
+                        monitor-count
+                        monitors))
+           ;; Fallback to single workspace
            (progn
-             (setq exwm-workspace-number monitor-count)
-             (while (> (length exwm-workspace--list) monitor-count)
-               (exwm-workspace-delete
-                (1- (length exwm-workspace--list))))
-             (while (< (length exwm-workspace--list) monitor-count)
-               (exwm-workspace-add))
-             (setq exwm-randr-workspace-monitor-plist nil)
+             (setq exwm-workspace-number 1)
              (setq my-exwm-monitor-geometries nil)
-             (dotimes (i monitor-count)
-               (let* ((monitor (nth i monitors))
-                      (name (nth 0 monitor))
-                      (resolution (nth 1 monitor))
-                      (width
-                       (string-to-number
-                        (car (split-string resolution "x"))))
-                      (height
-                       (string-to-number
-                        (cadr (split-string resolution "x"))))
-                      (x-offset (nth 2 monitor))
-                      (y-offset (nth 3 monitor))
-                      (frame (nth i exwm-workspace--list)))
-                 (setq exwm-randr-workspace-monitor-plist
-                       (plist-put
-                        exwm-randr-workspace-monitor-plist i name))
-                 (push (cons
-                        name (list x-offset y-offset width height))
-                       my-exwm-monitor-geometries)
-                 (when frame
-                   (set-frame-parameter frame 'fullscreen 'maximized)
-                   (message "Frame %d maximized for %s (%dx%d)"
-                            i
-                            name
-                            width
-                            height))))
-             (start-process-shell-command
-              "xrandr" nil "xrandr --auto")
-             (exwm-randr-refresh)
-             (redisplay t)
-             (message "Updated %d monitors: %s"
-                      monitor-count
-                      monitors))
-         (progn
-           (setq exwm-workspace-number 1)
-           (setq my-exwm-monitor-geometries nil)
-           (message
-            "No monitors detected, defaulting to 1 workspace")))))
+             (message
+              "No monitors detected, defaulting to 1 workspace")))
+         ;; Redisplay only if changes were applied
+         (redisplay t))))
 
    (defun my-exwm-update-displays-debounced ()
-     "Debounced version of my-exwm-update-displays."
+     "Debounced version of my-exwm-update-displays with longer delay."
      (interactive)
-     (run-with-idle-timer 0.5 nil #'my-exwm-update-displays))
+     (run-with-idle-timer 2.0 nil #'my-exwm-update-displays))
 
    (add-hook
     'exwm-randr-screen-change-hook
