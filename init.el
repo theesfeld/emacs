@@ -2394,11 +2394,6 @@
 (use-package
  eshell
  :ensure nil
- :bind
- (("C-`" .
-   (lambda ()
-     (interactive)
-     (my/toggle-buffer "*eshell*" 'eshell))))
  :init
  (setq
   eshell-scroll-to-bottom-on-input 'all
@@ -2885,6 +2880,57 @@
  :ensure nil ; Built-in, no need to install
  :hook
  (prog-mode . hl-line-mode)) ; Enable only in prog-mode derived modes
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                       vterm                               ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package
+ vterm
+ :ensure t
+ :defer t ; Load only when needed
+ :commands (vterm vterm-other-window)
+ :bind
+ (("C-c t" . vterm) ; Quick access to vterm
+  :map vterm-mode-map
+  ("C-c C-t" . vterm-copy-mode) ; Toggle copy mode for Emacs editing
+  ("C-q" . vterm-send-next-key)) ; Send literal key to terminal
+ :hook
+ ((vterm-mode
+   .
+   (lambda ()
+     (setq-local global-hl-line-mode nil) ; Disable line highlight
+     (display-line-numbers-mode -1))) ; No line numbers
+  (vterm-copy-mode
+   .
+   (lambda ()
+     (if vterm-copy-mode
+         (message "vterm-copy-mode enabled")
+       (message "vterm-copy-mode disabled")))))
+ :custom
+ (vterm-max-scrollback 10000) ; Keep a large scrollback buffer
+ (vterm-buffer-name-string "vterm-%s") ; Unique buffer names
+ (vterm-kill-buffer-on-exit t) ; Clean up on exit
+ (vterm-module-cmake-args "-DUSE_SYSTEM_LIBVTERM=ON") ; Use system libvterm
+ (vterm-shell (or (getenv "SHELL") "/bin/bash")) ; Respect user’s shell
+ :config
+ ;; Ensure vterm-module compiles if needed
+ (unless (file-exists-p
+          (expand-file-name "vterm-module.so"
+                            vterm-installation-directory))
+   (vterm-module-compile))
+ ;; Add Emacs integration for finding files from vterm
+ (add-to-list 'vterm-eval-cmds '("find-file" find-file))
+ ;; Improve prompt detection for better interaction
+ (setq vterm-use-vterm-prompt-detection-method t)
+ ;; Optimize performance
+ (setq vterm-timer-delay 0.01) ; Faster refresh rate
+ :init
+ ;; Preload directory for remote TRAMP support
+ (setq vterm-tramp-shells '(("ssh" "/bin/bash")))
+ ;; Autoload vterm for TRAMP if needed
+ (with-eval-after-load 'tramp
+   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  SES (Spreadsheet)                       ;;
