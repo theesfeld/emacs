@@ -580,6 +580,8 @@
       (switch-to-buffer "*scratch*")
       (exwm-workspace-switch 0)))))
 
+(use-package pinentry :ensure t :config (pinentry-start))
+
 (use-package
  exwm-edit
  :ensure t
