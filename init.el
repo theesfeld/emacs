@@ -422,107 +422,106 @@
                       frame 'fullscreen 'maximized)
                      (message
                       "Frame %d maximized for %s (%dx%d at %d,%d)"
-                      i name width height x-offset y-offset))))
+                      i name width height x-offset y-offset)))
 
-               (start-process-shell-command
-                "xrandr" nil "xrandr --auto")
-               (exwm-randr-refresh)
-               (message "Updated %d monitors: %s"
-                        monitor-count
-                        monitors))
-           (setq exwm-workspace-number 1)
-           (setq my-exwm-monitor-geometries nil)
-           (message
-            "No monitors detected, defaulting to 1 workspace"))
-         (redisplay t))))
+                 (start-process-shell-command
+                  "xrandr" nil "xrandr --auto")
+                 (exwm-randr-refresh)
+                 (message "Updated %d monitors: %s"
+                          monitor-count
+                          monitors))
+               (setq exwm-workspace-number 1)
+               (setq my-exwm-monitor-geometries nil)
+               (message
+                "No monitors detected, defaulting to 1 workspace"))
+           (redisplay t))))
 
-   (defun my-exwm-update-displays-debounced ()
-     "Debounced version of my-exwm-update-displays."
-     (interactive)
-     (run-with-idle-timer 2.0 nil #'my-exwm-update-displays))
+     (defun my-exwm-update-displays-debounced ()
+       "Debounced version of my-exwm-update-displays."
+       (interactive)
+       (run-with-idle-timer 2.0 nil #'my-exwm-update-displays))
 
-   (add-hook
-    'exwm-randr-screen-change-hook
-    #'my-exwm-update-displays-debounced)
+     (add-hook
+      'exwm-randr-screen-change-hook
+      #'my-exwm-update-displays-debounced)
 
-   ;; Mouse-Moving Function
-   (defun my/exwm-move-mouse-to-current-monitor ()
-     "Move the mouse cursor to the center of the current workspace's monitor."
-     (interactive)
-     (let* ((workspace-index exwm-workspace-current-index)
-            (monitor-name
-             (plist-get
-              exwm-randr-workspace-monitor-plist workspace-index))
-            (geometry
-             (cdr (assoc monitor-name my-exwm-monitor-geometries)))
-            (frame (nth workspace-index exwm-workspace--list)))
-       (when (and geometry frame)
-         (let* ((width (nth 2 geometry))
-                (height (nth 3 geometry))
-                (x (/ width 2))
-                (y (/ height 2)))
-           (set-mouse-pixel-position frame x y)
-           (message "Mouse moved to monitor %s at (%d, %d)"
-                    monitor-name
-                    x
-                    y)))))
+     ;; Mouse-Moving Function
+     (defun my/exwm-move-mouse-to-current-monitor ()
+       "Move the mouse cursor to the center of the current workspace's monitor."
+       (interactive)
+       (let* ((workspace-index exwm-workspace-current-index)
+              (monitor-name
+               (plist-get
+                exwm-randr-workspace-monitor-plist workspace-index))
+              (geometry
+               (cdr (assoc monitor-name my-exwm-monitor-geometries)))
+              (frame (nth workspace-index exwm-workspace--list)))
+         (when (and geometry frame)
+           (let* ((width (nth 2 geometry))
+                  (height (nth 3 geometry))
+                  (x (/ width 2))
+                  (y (/ height 2)))
+             (set-mouse-pixel-position frame x y)
+             (message "Mouse moved to monitor %s at (%d, %d)"
+                      monitor-name
+                      x
+                      y)))))
 
-   ;; Standard Emacs Mode-Line with Date/Time and Battery
-   (display-time-mode 1)
-   (setq
-    display-time-24hr-format t
-    display-time-day-and-date t)
-   (display-battery-mode 1)
-   (setq-default mode-line-format
-                 '("%e"
-                   mode-line-front-space
-                   mode-line-mule-info
-                   mode-line-client
-                   mode-line-modified
-                   mode-line-remote
-                   mode-line-frame-identification
-                   mode-line-buffer-identification
-                   "   "
-                   mode-line-position
-                   (vc-mode vc-mode)
-                   "  "
-                   mode-line-modes
-                   mode-line-misc-info
-                   "  "
-                   display-time-string
-                   "  "
-                   battery-mode-line-string))
+     ;; Standard Emacs Mode-Line with Date/Time and Battery
+     (display-time-mode 1)
+     (setq
+      display-time-24hr-format t
+      display-time-day-and-date t)
+     (display-battery-mode 1)
+     (setq-default mode-line-format
+                   '("%e"
+                     mode-line-front-space
+                     mode-line-mule-info
+                     mode-line-client
+                     mode-line-modified
+                     mode-line-remote
+                     mode-line-frame-identification
+                     mode-line-buffer-identification
+                     "   "
+                     mode-line-position
+                     (vc-mode vc-mode)
+                     "  "
+                     mode-line-modes
+                     mode-line-misc-info
+                     "  "
+                     display-time-string
+                     "  "
+                     battery-mode-line-string))
 
-   ;; System Tray Setup
-   (require 'exwm-systemtray)
-   (exwm-systemtray-mode 1)
-   (setq exwm-systemtray-height 24) ; Adjust height as needed
+     ;; System Tray Setup
+     (require 'exwm-systemtray)
+     (exwm-systemtray-mode 1)
+     (setq exwm-systemtray-height 24) ; Adjust height as needed
 
-   ;; Hooks
-   (add-hook
-    'exwm-workspace-switch-hook
-    #'my/exwm-move-mouse-to-current-monitor)
+     ;; Hooks
+     (add-hook
+      'exwm-workspace-switch-hook
+      #'my/exwm-move-mouse-to-current-monitor)
 
-   ;; RandR and EXWM Enable
-   (require 'exwm-randr)
-   (add-hook 'exwm-randr-screen-change-hook #'my-exwm-update-displays)
-   (exwm-randr-mode 1)
-   (exwm-init)
+     ;; RandR and EXWM Enable
+     (require 'exwm-randr)
+     (add-hook
+      'exwm-randr-screen-change-hook #'my-exwm-update-displays)
+     (exwm-randr-mode 1)
+     (exwm-init)
 
-   ;; Buffer Naming
-   (add-hook
-    'exwm-update-class-hook
-    (lambda ()
-      (when (and exwm-class-name
-                 (not (string-empty-p exwm-class-name)))
-        (exwm-workspace-rename-buffer exwm-class-name))))
-   (add-hook
-    'exwm-update-title-hook
-    (lambda ()
-      (when (and exwm-title (not (string-empty-p exwm-title)))
-        (exwm-workspace-rename-buffer exwm-title))))))
-
-(use-package pinentry :ensure t :config (pinentry-start))
+     ;; Buffer Naming
+     (add-hook
+      'exwm-update-class-hook
+      (lambda ()
+        (when (and exwm-class-name
+                   (not (string-empty-p exwm-class-name)))
+          (exwm-workspace-rename-buffer exwm-class-name))))
+     (add-hook
+      'exwm-update-title-hook
+      (lambda ()
+        (when (and exwm-title (not (string-empty-p exwm-title)))
+          (exwm-workspace-rename-buffer exwm-title)))))))
 
 (use-package
  exwm-edit
