@@ -244,10 +244,6 @@
     x-select-enable-primary t
     select-enable-clipboard t)
 
-   ;; Reverse Mouse Scrolling
-   (setq mouse-wheel-down-event 'wheel-up)
-   (setq mouse-wheel-up-event 'wheel-down)
-
    ;; Fix mouse cursor
    (start-process-shell-command
     "xsetroot" nil "xsetroot -cursor_name left_ptr")
@@ -519,6 +515,16 @@
     'exwm-workspace-switch-hook #'my-exwm-update-mode-line-marker)
    (my-exwm-update-mode-line-marker)
 
+   (add-hook
+    'exwm-workspace-switch-hook
+    (lambda ()
+      (when (fboundp 'notifications-notify)
+        (my-ednc-notify
+         "Workspace Switch"
+         (format "Switched to workspace %d"
+                 exwm-workspace-current-index)
+         'normal))))
+
    ;; System Tray and Display Settings
    (setq exwm-systemtray-height 24)
    (exwm-systemtray-mode 1)
@@ -586,6 +592,7 @@
   (use-package
    alert
    :ensure t
+
    :config
    (setq alert-default-style
          (if (eq system-type 'gnu/linux)
@@ -601,27 +608,26 @@
   (use-package
    ednc
    :ensure t
+   :demand t ; Load immediately to ensure availability
    :config
    (setq ednc-log-notifications t)
    (setq ednc-notification-timeout 10)
    (ednc-mode 1)
    (defun my-ednc-notify (title message &optional urgency)
      "Send a desktop notification with TITLE and MESSAGE."
-     (ednc-notify
-      title message
+     (notifications-notify
+      :title title
+      :body message
+      :urgency
       (pcase urgency
-        ('low 0)
-        ('normal 1)
-        ('high 2)
-        (_ 1))))
-   (add-hook
-    'exwm-workspace-switch-hook
-    (lambda ()
-      (my-ednc-notify
-       "Workspace Switch"
-       (format "Switched to workspace %d"
-               exwm-workspace-current-index)
-       'normal))))) ;; Closing the `when` block
+        ('low "low")
+        ('normal "normal")
+        ('high "critical")
+        (_ "normal"))
+      :app-name "EXWM")) ; Optional: Identify as EXWM
+   :init
+   (unless (fboundp 'notifications-notify)
+     (message "notifications.el not available; EDNC won’t work")))) ;; Closing the `when` block
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
