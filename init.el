@@ -350,227 +350,118 @@
    (setq exwm-input-prefix-keys
          '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
 
-   ;; Global Keybindings
-   (setq
-    exwm-input-global-keys
-    (nconc
-     `(([?\s-r] . exwm-reset)
-       ([s-left] . windmove-left)
-       ([s-right] . windmove-right)
-       ([s-up] . windmove-up)
-       ([s-down] . windmove-down)
-       ([?\s-w] . exwm-workspace-switch)
-       ([?\s-&]
-        .
-        (lambda (cmd)
-          (interactive (list (read-shell-command "$ ")))
-          (start-process-shell-command cmd nil cmd)))
-       ([?\s-x]
-        .
-        (lambda ()
-          (interactive)
-          (save-buffers-kill-emacs)))
-       ([?\s-\ ]
-        .
-        (lambda ()
-          (interactive)
-          (counsel-linux-app)))
-       ([?\s-v] . consult-yank-pop)
-       ([?\s-q]
-        .
-        (lambda ()
-          (interactive)
-          (kill-buffer-and-window)))
-       ([?\s-l]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "slock")
-            (start-process-shell-command "lock" nil "slock"))))
-       ([?\s-s]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "systemctl")
-            (start-process-shell-command
-             "suspend" nil "systemctl suspend-then-hibernate"))))
-       ([XF86PowerOff]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "systemctl")
-            (start-process-shell-command
-             "poweroff" nil "systemctl poweroff"))))
-       ([XF86Sleep]
-        .
-        (lambda ()
-          (interactive)
-          (when (and (executable-find "systemctl")
-                     (executable-find "slock"))
-            (start-process-shell-command
-             "suspend" nil "systemctl suspend-then-hibernate"))))
-       ;; Media key bindings for Arch Linux
-       ([XF86AudioPlay]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "playerctl")
-            (start-process-shell-command
-             "play" nil "playerctl play-pause"))))
-       ([XF86AudioPause]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "playerctl")
-            (start-process-shell-command
-             "pause" nil "playerctl play-pause"))))
-       ([XF86AudioNext]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "playerctl")
-            (start-process-shell-command
-             "next" nil "playerctl next"))))
-       ([XF86AudioPrev]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "playerctl")
-            (start-process-shell-command
-             "prev" nil "playerctl previous"))))
-       ([XF86AudioStop]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "playerctl")
-            (start-process-shell-command
-             "stop" nil "playerctl stop"))))
-       ;; ;; Volume control bindings
-       ;; ([XF86AudioRaiseVolume]
-       ;;  .
-       ;;  (lambda ()
-       ;;    (interactive)
-       ;;    (when (executable-find "amixer")
-       ;;      (start-process-shell-command
-       ;;       "vol-up" nil "amixer -q sset Master 5%+ unmute"))))
-       ;; ([XF86AudioLowerVolume]
-       ;;  .
-       ;;  (lambda ()
-       ;;    (interactive)
-       ;;    (when (executable-find "amixer")
-       ;;      (start-process-shell-command
-       ;;       "vol-down" nil "amixer -q sset Master 5%- unmute"))))
-       ;; ([XF86AudioMute]
-       ;;  .
-       ;;  (lambda ()
-       ;;    (interactive)
-       ;;    (when (executable-find "amixer")
-       ;;      (start-process-shell-command
-       ;;       "mute" nil "amixer -q sset Master toggle"))))
-       ;; ;; Brightness control bindings
-       ;; ([XF86MonBrightnessUp]
-       ;;  .
-       ;;  (lambda ()
-       ;;    (interactive)
-       ;;    (when (executable-find "brightnessctl")
-       ;;      (start-process-shell-command
-       ;;       "bright-up" nil "brightnessctl set +10%"))))
-       ;; ([XF86MonBrightnessDown]
-       ;;  .
-       ;;  (lambda ()
-       ;;    (interactive)
-       ;;    (when (executable-find "brightnessctl")
-       ;;      (start-process-shell-command
-       ;;       "bright-down" nil "brightnessctl set 10%-")))))
+   ;; xss-lock setup for autolock and suspend locking
+   (when (and (executable-find "xss-lock") (executable-find "slock"))
+     (start-process-shell-command "xss-lock" nil "xss-lock -- slock"))
+   (when (executable-find "xset")
+     (start-process-shell-command "xset" nil "xset s 300")) ; 5-minute inactivity
 
-       ;; Volume control with notifications
-       ([XF86AudioRaiseVolume]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "pactl")
-            (start-process-shell-command
-             "vol-up" nil "pactl set-sink-volume @DEFAULT_SINK@ +5%")
-            (let ((vol (my-get-volume)))
-              (my-ednc-notify
-               "Volume Up" (format "Volume: %d%%" vol) 'normal)))))
-       ([XF86AudioLowerVolume]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "pactl")
-            (start-process-shell-command
-             "vol-down"
-             nil
-             "pactl set-sink-volume @DEFAULT_SINK@ -5%")
-            (let ((vol (my-get-volume)))
-              (my-ednc-notify
-               "Volume Down" (format "Volume: %d%%" vol) 'normal)))))
-       ([XF86AudioMute]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "pactl")
-            (start-process-shell-command
-             "mute" nil "pactl set-sink-mute @DEFAULT_SINK@ toggle")
-            (let
-                ((muted
-                  (string=
-                   "yes"
-                   (string-trim
-                    (shell-command-to-string
-                     "pactl get-sink-mute @DEFAULT_SINK@ | grep -o 'yes\\|no'")))))
-              (my-ednc-notify
-               "Volume Mute"
-               (if muted
-                   "Muted"
-                 "Unmuted")
-               'normal)))))
-
-       ;; Brightness control with notifications
-       ([XF86MonBrightnessUp]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "brightnessctl")
-            (start-process-shell-command
-             "bright-up" nil "brightnessctl set +10%")
-            (let ((bright (my-get-brightness)))
-              (my-ednc-notify
-               "Brightness Up"
-               (format "Brightness: %d%%" bright)
-               'normal)))))
-       ([XF86MonBrightnessDown]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "brightnessctl")
-            (start-process-shell-command
-             "bright-down" nil "brightnessctl set 10%-")
-            (let ((bright (my-get-brightness)))
-              (my-ednc-notify
-               "Brightness Down"
-               (format "Brightness: %d%%" bright)
-               'normal))))))
-
-     (mapcar
-      (lambda (i)
-        (cons
-         (kbd (format "s-%d" i))
-         (lambda ()
-           (interactive)
-           (message "Switching to workspace %d" i)
-           (exwm-workspace-switch-create i))))
-      (number-sequence 0 9))
-     (mapcar
-      (lambda (i)
-        (cons
-         (kbd (format "M-s-%d" i))
-         (lambda ()
-           (interactive)
-           (message "Moving window to workspace %d" i)
-           (exwm-workspace-move-window i))))
-      (number-sequence 0 9))))
+   ;; Global keybindings
+   (setq exwm-input-global-keys
+         (nconc
+          `(([?\s-r] . exwm-reset)
+            ([s-left] . windmove-left)
+            ([s-right] . windmove-right)
+            ([s-up] . windmove-up)
+            ([s-down] . windmove-down)
+            ([?\s-w] . exwm-workspace-switch)
+            ([?\s-&]
+             .
+             (lambda (cmd)
+               (interactive (list (read-shell-command "$ ")))
+               (start-process-shell-command cmd nil cmd)))
+            ([?\s-x]
+             .
+             (lambda ()
+               (interactive)
+               (save-buffers-kill-emacs)))
+            ([?\s-\ ]
+             .
+             (lambda ()
+               (interactive)
+               (counsel-linux-app)))
+            ([?\s-v] . consult-yank-pop)
+            ([?\s-q]
+             .
+             (lambda ()
+               (interactive)
+               (kill-buffer-and-window)))
+            ([?\s-s]
+             .
+             (lambda ()
+               (interactive)
+               (when (executable-find "systemctl")
+                 (start-process-shell-command
+                  "suspend" nil "systemctl suspend-then-hibernate"))))
+            ;; Power and Sleep
+            ([XF86PowerOff]
+             .
+             (lambda ()
+               (interactive)
+               (when (executable-find "systemctl")
+                 (start-process-shell-command
+                  "poweroff" nil "systemctl poweroff"))))
+            ([XF86Sleep]
+             .
+             (lambda ()
+               (interactive)
+               (when (executable-find "systemctl")
+                 (start-process-shell-command
+                  "suspend" nil "systemctl suspend-then-hibernate"))))
+            ;; Media keys
+            ([XF86AudioPlay]
+             .
+             (lambda ()
+               (interactive)
+               (when (executable-find "playerctl")
+                 (start-process-shell-command
+                  "play" nil "playerctl play-pause"))))
+            ([XF86AudioPause]
+             .
+             (lambda ()
+               (interactive)
+               (when (executable-find "playerctl")
+                 (start-process-shell-command
+                  "pause" nil "playerctl play-pause"))))
+            ([XF86AudioNext]
+             .
+             (lambda ()
+               (interactive)
+               (when (executable-find "playerctl")
+                 (start-process-shell-command
+                  "next" nil "playerctl next"))))
+            ([XF86AudioPrev]
+             .
+             (lambda ()
+               (interactive)
+               (when (executable-find "playerctl")
+                 (start-process-shell-command
+                  "prev" nil "playerctl previous"))))
+            ([XF86AudioStop]
+             .
+             (lambda ()
+               (interactive)
+               (when (executable-find "playerctl")
+                 (start-process-shell-command
+                  "stop" nil "playerctl stop")))))
+          (mapcar
+           (lambda (i)
+             (cons
+              (kbd (format "s-%d" i))
+              (lambda ()
+                (interactive)
+                (message "Switching to workspace %d" i)
+                (exwm-workspace-switch-create i))))
+           (number-sequence 0 9))
+          (mapcar
+           (lambda (i)
+             (cons
+              (kbd (format "M-s-%d" i))
+              (lambda ()
+                (interactive)
+                (message "Moving window to workspace %d" i)
+                (exwm-workspace-move-window i))))
+           (number-sequence 0 9))))
 
    ;; Simulation Keys
    (setq exwm-input-simulation-keys
@@ -590,11 +481,161 @@
    (exwm-enable))
 
   (use-package
+   exwm-firefox-core
+   :ensure t
+   :after exwm
+   :init
+   ;; Pre-load settings
+   (setq exwm-firefox-core-classes
+         '("firefox" "firefoxdeveloperedition"))
+   :config
+   ;; Load package safely
+   (require 'exwm-firefox-core nil t)
+   (when (featurep 'exwm-firefox-core)
+     (message "exwm-firefox-core loaded"))
+   ;; Popular keybindings
+   :bind
+   (:map
+    exwm-mode-map
+    ("C-c f n" . exwm-firefox-core-tab-new)
+    ("C-c f t" . exwm-firefox-core-tab-close)
+    ("C-c f <right>" . exwm-firefox-core-tab-right)
+    ("C-c f <left>" . exwm-firefox-core-tab-left)
+    ("C-c f h" . exwm-firefox-core-back)
+    ("C-c f l" . exwm-firefox-core-forward))
+   :hook
+   ;; Rename buffers for Firefox windows
+   (exwm-update-title
+    .
+    (lambda ()
+      (when (string-match-p "firefox" (downcase exwm-class-name))
+        (exwm-workspace-rename-buffer exwm-title)))))
+
+  (use-package
+   helm-exwm
+   :ensure t
+   :after (exwm helm)
+   :init
+   ;; Configure Helm sources before loading
+   (setq helm-exwm-switch-to-running t) ; Prefer running buffers
+   (setq helm-exwm-include-floating nil) ; Exclude floating windows for clarity
+   :config
+   ;; Load helm-exwm and integrate with Helm
+   (require 'helm-exwm)
+   ;; Add EXWM sources to Helm
+   (add-to-list 'helm-source-names-using-follow "EXWM buffers")
+   (setq helm-exwm-emacs-buffers-source
+         (helm-exwm-build-emacs-buffers-source))
+   (setq helm-exwm-source (helm-exwm-build-source))
+   ;; Update helm-mini for EXWM integration
+   (setq helm-mini-default-sources
+         `(helm-exwm-emacs-buffers-source
+           helm-exwm-source
+           helm-source-recentf
+           helm-source-buffers-list
+           helm-source-buffer-not-found))
+   :bind
+   (:map
+    exwm-mode-map
+    ("C-c h" . helm-exwm) ; Quick access to EXWM buffer switcher
+    ("C-c b" . helm-mini)) ; Enhanced buffer menu with EXWM
+   :custom
+   ;; Common customizations
+   (helm-exwm-buffer-name-prefix "EXWM: ") ; Prefix for clarity
+   (helm-exwm-sort-by-title t) ; Sort buffers by window title
+   :hook
+   ;; Initialize with EXWM
+   (exwm-init . (lambda () (message "helm-exwm initialized"))))
+
+  (use-package
+   desktop-environment
+   :ensure t
+   :after exwm
+   :init
+   ;; Pre-configure notification and screenshot settings
+   (setq desktop-environment-notifications t) ; Enable notifications
+   (setq desktop-environment-screenshot-directory
+         "~/Pictures/Screenshots") ; Common screenshot path
+   :config
+   ;; Enable desktop-environment mode
+   (desktop-environment-mode 1)
+   ;; Configure popular settings
+   (setq desktop-environment-volume-normal-increment "5%+")
+   (setq desktop-environment-volume-normal-decrement "5%-")
+   (setq desktop-environment-brightness-normal-increment "10%+")
+   (setq desktop-environment-brightness-normal-decrement "10%-")
+   (setq desktop-environment-screenshot-command "scrot") ; Popular choice
+   :bind
+   (:map
+    desktop-environment-mode-map
+    ;; Standard media经典版 media keybindings
+    ("<XF86AudioRaiseVolume>" . desktop-environment-volume-increment)
+    ("<XF86AudioLowerVolume>" . desktop-environment-volume-decrement)
+    ("<XF86AudioMute>" . desktop-environment-toggle-mute)
+    ("<XF86MonBrightnessUp>"
+     .
+     desktop-environment-brightness-increment)
+    ("<XF86MonBrightnessDown>"
+     .
+     desktop-environment-brightness-decrement)
+    ("s-s" . desktop-environment-screenshot)
+    ("s-S" . desktop-environment-screenshot-partial))
+   :custom
+   ;; Popular customizations
+   ;; Use slock for desktop-environment's lock screen
+   (desktop-environment-screenlock-command "slock")
+   (desktop-environment-volume-get-command
+    "pactl get-sink-volume @DEFAULT_SINK@")
+   (desktop-environment-volume-set-command
+    "pactl set-sink-volume @DEFAULT_SINK@")
+   (desktop-environment-mute-get-command
+    "pactl get-sink-mute @DEFAULT_SINK@")
+   (desktop-environment-mute-set-command
+    "pactl set-sink-mute @DEFAULT_SINK@")
+   (desktop-environment-brightness-get-command "brightnessctl -m")
+   (desktop-environment-brightness-set-command "brightnessctl set")
+   :hook
+   ;; Notify on volume/brightness changes
+   (desktop-environment-volume-changed
+    .
+    (lambda ()
+      (let ((vol (desktop-environment--get-volume)))
+        (my-ednc-notify
+         "Volume" (format "Volume: %d%%" vol) 'normal))))
+   (desktop-environment-mute-changed
+    .
+    (lambda ()
+      (my-ednc-notify
+       "Volume Mute"
+       (if (desktop-environment--get-mute)
+           "Muted"
+         "Unmuted")
+       'normal)))
+   (desktop-environment-brightness-changed
+    .
+    (lambda ()
+      (let ((bright (desktop-environment--get-brightness)))
+        (my-ednc-notify
+         "Brightness" (format "Brightness: %d%%" bright) 'normal)))))
+
+  (use-package
    exwm-edit
    :ensure t
+   :after exwm
+   :init
+   ;; Define any pre-configuration setup if needed
+   (setq exwm-edit-default-major-mode 'text-mode)
    :config
-   (add-to-list
-    'exwm-input-global-keys `([,(kbd "C-c e")] . exwm-edit-compose)))
+   ;; Ensure exwm-edit is loaded after exwm
+   (require 'exwm-edit)
+   :bind
+   (:map
+    exwm-mode-map
+    ;; Bind C-c e in exwm-mode-map to avoid global conflicts
+    ("C-c e" . exwm-edit-compose))
+   :hook
+   ;; Optional: Add hooks for specific behaviors
+   (exwm-init . (lambda () (message "exwm-edit initialized"))))
 
   (use-package
    notifications
