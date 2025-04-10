@@ -233,17 +233,17 @@
                 command
                 (error-message-string err)))))
 
-  (defun grim/set-wallpaper ()
-    (interactive)
-    (when (and (executable-find "feh")
-               (file-exists-p
-                "~/Pictures/wallpaper/car-ice-road-red-moon.jpg"))
-      (start-process-shell-command
-       "feh"
-       nil
-       "feh --bg-scale ~/Pictures/wallpaper/car-ice-road-red-moon.jpg"))
-    (unless (executable-find "feh")
-      (message "feh not found; wallpaper not set")))
+  ;  (defun grim/set-wallpaper ()
+  ;    (interactive)
+  ;    (when (and (executable-find "feh")
+  ;               (file-exists-p
+  ;                "~/Pictures/wallpaper/car-ice-road-red-moon.jpg"))
+  ;      (start-process-shell-command
+  ;       "feh"
+  ;       nil
+  ;       "feh --bg-scale ~/Pictures/wallpaper/car-ice-road-red-moon.jpg"))
+  ;    (unless (executable-find "feh")
+  ;      (message "feh not found; wallpaper not set")))
 
   (defun grim/exwm-init-hook ()
     (exwm-workspace-switch-create 1)
@@ -257,34 +257,41 @@
     (run-at-time 2 nil #'grim/run-in-background
                  "mullvad-vpn --disable-gpu")
     (run-at-time 2 nil #'grim/run-in-background "blueman-applet")
-    ;; RandR setup for monitor management
-    (require 'exwm-randr)
-    ;; Set eDP-1 as the default monitor with 2880x1800@120Hz
-    (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
-    (when (executable-find "xrandr")
-      ;; Force eDP-1 as primary with specified resolution and refresh rate
-      (start-process-shell-command
-       "xrandr-init"
-       nil
-       "xrandr --output eDP-1 --mode 2880x1800 --rate 120 --primary"))
 
-    ;; Hook to handle screen changes (plug/unplug external monitors)
+    (require 'exwm-randr)
+    (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
     (add-hook
      'exwm-randr-screen-change-hook
      (lambda ()
-       (if (executable-find "autorandr")
-           ;; Use autorandr to detect and apply saved profiles
+       (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
+             connected-outputs)
+         (with-temp-buffer
+           (call-process "xrandr" nil t nil)
+           (goto-char (point-min))
+           (while (re-search-forward xrandr-output-regexp nil t)
+             (push (match-string 1) connected-outputs)))
+         (cond
+          ((= (length connected-outputs) 1)
            (start-process-shell-command
-            "autorandr" nil "autorandr --change --force")
-         ;; Fallback to manual xrandr if autorandr isn’t available
-         (when (executable-find "xrandr")
+            "xrandr" nil
+            (format "xrandr --output %s --primary --auto"
+                    (car connected-outputs))))
+          ((>= (length connected-outputs) 2)
            (start-process-shell-command
-            "xrandr-fallback" nil "xrandr --auto")))
-       ;; Set wallpaper after monitor setup
-       (grim/set-wallpaper)))
-
-    ;; Enable RandR mode
+            "xrandr" nil
+            (format
+             "xrandr --output %s --primary --auto --output %s --auto --right-of %s"
+             (car connected-outputs)
+             (cadr connected-outputs)
+             (car connected-outputs)))
+           (setq exwm-randr-workspace-monitor-plist
+                 (list
+                  0
+                  (car connected-outputs)
+                  1
+                  (cadr connected-outputs))))))))
     (exwm-randr-mode 1))
+
 
   (defun grim/exwm-update-class ()
     (exwm-workspace-rename-buffer exwm-class-name))
