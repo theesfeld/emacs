@@ -246,10 +246,15 @@
 
   (defun grim/set-wallpaper ()
     (interactive)
-    (start-process-shell-command
-     "feh"
-     nil
-     "feh --bg-scale ~/Pictures/wallpaper/car-ice-road-red-moon.jpg"))
+    (when (and (executable-find "feh")
+               (file-exists-p
+                "~/Pictures/wallpaper/car-ice-road-red-moon.jpg"))
+      (start-process-shell-command
+       "feh"
+       nil
+       "feh --bg-scale ~/Pictures/wallpaper/car-ice-road-red-moon.jpg"))
+    (unless (executable-find "feh")
+      (message "feh not found; wallpaper not set")))
 
   (defun grim/exwm-init-hook ()
     (exwm-workspace-switch-create 1)
