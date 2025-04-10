@@ -498,65 +498,73 @@
           (when (executable-find "amixer")
             (start-process-shell-command
              "mute" nil "amixer -q sset Master toggle"))))
-       ;; Brightness control bindings
+       ;; ;; Brightness control bindings
+       ;; ([XF86MonBrightnessUp]
+       ;;  .
+       ;;  (lambda ()
+       ;;    (interactive)
+       ;;    (when (executable-find "brightnessctl")
+       ;;      (start-process-shell-command
+       ;;       "bright-up" nil "brightnessctl set +10%"))))
+       ;; ([XF86MonBrightnessDown]
+       ;;  .
+       ;;  (lambda ()
+       ;;    (interactive)
+       ;;    (when (executable-find "brightnessctl")
+       ;;      (start-process-shell-command
+       ;;       "bright-down" nil "brightnessctl set 10%-")))))
+
+       ;; ;; Volume control with notifications
+       ;;        ([XF86AudioRaiseVolume]
+       ;;         .
+       ;;         (lambda ()
+       ;;           (interactive)
+       ;;           (when (executable-find "pactl")
+       ;;             (start-process-shell-command "vol-up" nil "pactl set-sink-volume @DEFAULT_SINK@ +5%")
+       ;;             (let ((vol (my-get-volume)))
+       ;;               (my-ednc-notify "Volume Up" (format "Volume: %d%%" vol) 'normal)))))
+       ;;        ([XF86AudioLowerVolume]
+       ;;         .
+       ;;         (lambda ()
+       ;;           (interactive)
+       ;;           (when (executable-find "pactl")
+       ;;             (start-process-shell-command "vol-down" nil "pactl set-sink-volume @DEFAULT_SINK@ -5%")
+       ;;             (let ((vol (my-get-volume)))
+       ;;               (my-ednc-notify "Volume Down" (format "Volume: %d%%" vol) 'normal)))))
+       ;;        ([XF86AudioMute]
+       ;;         .
+       ;;         (lambda ()
+       ;;           (interactive)
+       ;;           (when (executable-find "pactl")
+       ;;             (start-process-shell-command "mute" nil "pactl set-sink-mute @DEFAULT_SINK@ toggle")
+       ;;             (let ((muted (string= "yes" (string-trim (shell-command-to-string "pactl get-sink-mute @DEFAULT_SINK@ | grep -o 'yes\\|no'")))))
+       ;;               (my-ednc-notify "Volume Mute" (if muted "Muted" "Unmuted") 'normal)))))
+
+       ;; Brightness control with notifications
        ([XF86MonBrightnessUp]
         .
         (lambda ()
           (interactive)
           (when (executable-find "brightnessctl")
             (start-process-shell-command
-             "bright-up" nil "brightnessctl set +10%"))))
+             "bright-up" nil "brightnessctl set +10%")
+            (let ((bright (my-get-brightness)))
+              (my-ednc-notify
+               "Brightness Up"
+               (format "Brightness: %d%%" bright)
+               'normal)))))
        ([XF86MonBrightnessDown]
         .
         (lambda ()
           (interactive)
           (when (executable-find "brightnessctl")
             (start-process-shell-command
-             "bright-down" nil "brightnessctl set 10%-")))))
-
-     ;; ;; Volume control with notifications
-     ;;        ([XF86AudioRaiseVolume]
-     ;;         .
-     ;;         (lambda ()
-     ;;           (interactive)
-     ;;           (when (executable-find "pactl")
-     ;;             (start-process-shell-command "vol-up" nil "pactl set-sink-volume @DEFAULT_SINK@ +5%")
-     ;;             (let ((vol (my-get-volume)))
-     ;;               (my-ednc-notify "Volume Up" (format "Volume: %d%%" vol) 'normal)))))
-     ;;        ([XF86AudioLowerVolume]
-     ;;         .
-     ;;         (lambda ()
-     ;;           (interactive)
-     ;;           (when (executable-find "pactl")
-     ;;             (start-process-shell-command "vol-down" nil "pactl set-sink-volume @DEFAULT_SINK@ -5%")
-     ;;             (let ((vol (my-get-volume)))
-     ;;               (my-ednc-notify "Volume Down" (format "Volume: %d%%" vol) 'normal)))))
-     ;;        ([XF86AudioMute]
-     ;;         .
-     ;;         (lambda ()
-     ;;           (interactive)
-     ;;           (when (executable-find "pactl")
-     ;;             (start-process-shell-command "mute" nil "pactl set-sink-mute @DEFAULT_SINK@ toggle")
-     ;;             (let ((muted (string= "yes" (string-trim (shell-command-to-string "pactl get-sink-mute @DEFAULT_SINK@ | grep -o 'yes\\|no'")))))
-     ;;               (my-ednc-notify "Volume Mute" (if muted "Muted" "Unmuted") 'normal)))))
-
-     ;;        ;; Brightness control with notifications
-     ;;        ([XF86MonBrightnessUp]
-     ;;         .
-     ;;         (lambda ()
-     ;;           (interactive)
-     ;;           (when (executable-find "brightnessctl")
-     ;;             (start-process-shell-command "bright-up" nil "brightnessctl set +10%")
-     ;;             (let ((bright (my-get-brightness)))
-     ;;               (my-ednc-notify "Brightness Up" (format "Brightness: %d%%" bright) 'normal)))))
-     ;;        ([XF86MonBrightnessDown]
-     ;;         .
-     ;;         (lambda ()
-     ;;           (interactive)
-     ;;           (when (executable-find "brightnessctl")
-     ;;             (start-process-shell-command "bright-down" nil "brightnessctl set 10%-")
-     ;;             (let ((bright (my-get-brightness)))
-     ;;               (my-ednc-notify "Brightness Down" (format "Brightness: %d%%" bright) 'normal)))))
+             "bright-down" nil "brightnessctl set 10%-")
+            (let ((bright (my-get-brightness)))
+              (my-ednc-notify
+               "Brightness Down"
+               (format "Brightness: %d%%" bright)
+               'normal))))))
 
      (mapcar
       (lambda (i)
