@@ -332,10 +332,33 @@
    (add-hook
     'exwm-randr-screen-change-hook
     (lambda ()
-      (start-process-shell-command
-       "xrandr"
-       nil
-       "xrandr --output eDP-1 --primary --mode 2880x1800 --refresh 120 --pos 0x0 --rotate normal")))
+      (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
+            connected-outputs)
+        (with-temp-buffer
+          (call-process "xrandr" nil t nil)
+          (goto-char (point-min))
+          (while (re-search-forward xrandr-output-regexp nil t)
+            (push (match-string 1) connected-outputs)))
+        (cond
+         ((= (length connected-outputs) 1)
+          (start-process-shell-command
+           "xrandr" nil
+           (format "xrandr --output %s --primary --auto"
+                   (car connected-outputs))))
+         ((>= (length connected-outputs) 2)
+          (start-process-shell-command
+           "xrandr" nil
+           (format
+            "xrandr --output %s --primary --auto --output %s --auto --right-of %s"
+            (car connected-outputs)
+            (cadr connected-outputs)
+            (car connected-outputs)))
+          (setq exwm-randr-workspace-monitor-plist
+                (list
+                 0
+                 (car connected-outputs)
+                 1
+                 (cadr connected-outputs))))))))
    (exwm-randr-mode 1)
 
 
@@ -599,6 +622,7 @@
    :init
    (unless (fboundp 'notifications-notify)
      (message "notifications.el not available; EDNC won’t work"))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
