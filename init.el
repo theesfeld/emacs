@@ -237,17 +237,16 @@
 
   (defun grim/exwm-init-hook ()
     (exwm-workspace-switch-create 1)
-    ;; Show battery status in the mode line
-    (display-battery-mode 1)
 
-    ;; Show the time and date in modeline
-    (setq display-time-day-and-date t)
+    (display-battery-mode 1)
+    (setq
+     display-time-24hr-format t
+     display-time-day-and-date t)
     (display-time-mode 1)
-    ;; Also take a look at display-time-format and format-time-string
 
     ;; Launch apps that will run in the background
     (grim/run-in-background "nm-applet")
-    ;(grim/run-in-background "pasystray")
+    (grim/run-in-background "pasystray")
     (grim/run-in-background "mullvad-vpn --disable-gpu")
     (grim/run-in-background "blueman-applet"))
 
