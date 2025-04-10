@@ -340,7 +340,7 @@
           (start-process-shell-command
            "xrandr" nil
            (format
-            "xrandr --output %s --primary --auto --output %s --auto --right-of %s"
+            "xrandr --output %s --primary --auto --output %s --auto --left-of %s"
             (car connected-outputs)
             (cadr connected-outputs)
             (car connected-outputs)))
