@@ -256,42 +256,7 @@
     (run-at-time 2 nil #'grim/run-in-background "pasystray")
     (run-at-time 2 nil #'grim/run-in-background
                  "mullvad-vpn --disable-gpu")
-    (run-at-time 2 nil #'grim/run-in-background "blueman-applet")
-
-    (require 'exwm-randr)
-    (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
-    (add-hook
-     'exwm-randr-screen-change-hook
-     (lambda ()
-       (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
-             connected-outputs)
-         (with-temp-buffer
-           (call-process "xrandr" nil t nil)
-           (goto-char (point-min))
-           (while (re-search-forward xrandr-output-regexp nil t)
-             (push (match-string 1) connected-outputs)))
-         (cond
-          ((= (length connected-outputs) 1)
-           (start-process-shell-command
-            "xrandr" nil
-            (format "xrandr --output %s --primary --auto"
-                    (car connected-outputs))))
-          ((>= (length connected-outputs) 2)
-           (start-process-shell-command
-            "xrandr" nil
-            (format
-             "xrandr --output %s --primary --auto --output %s --auto --right-of %s"
-             (car connected-outputs)
-             (cadr connected-outputs)
-             (car connected-outputs)))
-           (setq exwm-randr-workspace-monitor-plist
-                 (list
-                  0
-                  (car connected-outputs)
-                  1
-                  (cadr connected-outputs))))))))
-    (exwm-randr-mode 1))
-
+    (run-at-time 2 nil #'grim/run-in-background "blueman-applet"))
 
   (defun grim/exwm-update-class ()
     (exwm-workspace-rename-buffer exwm-class-name))
@@ -321,6 +286,40 @@
     x-select-enable-clipboard t
     x-select-enable-primary t
     select-enable-clipboard t)
+
+   (require 'exwm-randr)
+   (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
+   (add-hook
+    'exwm-randr-screen-change-hook
+    (lambda ()
+      (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
+            connected-outputs)
+        (with-temp-buffer
+          (call-process "xrandr" nil t nil)
+          (goto-char (point-min))
+          (while (re-search-forward xrandr-output-regexp nil t)
+            (push (match-string 1) connected-outputs)))
+        (cond
+         ((= (length connected-outputs) 1)
+          (start-process-shell-command
+           "xrandr" nil
+           (format "xrandr --output %s --primary --auto"
+                   (car connected-outputs))))
+         ((>= (length connected-outputs) 2)
+          (start-process-shell-command
+           "xrandr" nil
+           (format
+            "xrandr --output %s --primary --auto --output %s --auto --right-of %s"
+            (car connected-outputs)
+            (cadr connected-outputs)
+            (car connected-outputs)))
+          (setq exwm-randr-workspace-monitor-plist
+                (list
+                 0
+                 (car connected-outputs)
+                 1
+                 (cadr connected-outputs))))))))
+   (exwm-randr-mode 1)
 
    ;; Load the system tray before exwm-init
    (require 'exwm-systemtray)
