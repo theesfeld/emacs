@@ -339,10 +339,8 @@
    (exwm-randr-mode 1)
 
 
-   ;; NOTE: Uncomment these lines after setting up autorandr!
-   ;; React to display connectivity changes, do initial display update
-   ;; (add-hook 'exwm-randr-screen-change-hook #'efs/update-displays)
-   ;; (efs/update-displays)
+   ;;(add-hook 'exwm-randr-screen-change-hook #'grim/update-displays)
+   ;;(grim/update-displays)
 
    ;; Set the wallpaper after changing the resolution
    (efs/set-wallpaper)
