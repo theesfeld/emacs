@@ -282,38 +282,6 @@
       ("Firefox" (exwm-workspace-rename-buffer
         (format "Firefox: %s" exwm-title)))))
 
-  ;; (defun exwm-change-screen-hook ()
-  ;;   (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
-  ;;         default-output)
-  ;;     (with-temp-buffer
-  ;;       (call-process "xrandr" nil t nil)
-  ;;       (goto-char (point-min))
-  ;;       (re-search-forward xrandr-output-regexp nil 'noerror)
-  ;;       (setq default-output (match-string 1))
-  ;;       (forward-line)
-  ;;       (if (not
-  ;;            (re-search-forward xrandr-output-regexp nil 'noerror))
-  ;;           (call-process "xrandr"
-  ;;                         nil
-  ;;                         nil
-  ;;                         nil
-  ;;                         "--output"
-  ;;                         default-output
-  ;;                         "--auto")
-  ;;         (call-process "xrandr"
-  ;;                       nil
-  ;;                       nil
-  ;;                       nil
-  ;;                       "--output"
-  ;;                       (match-string 1)
-  ;;                       "--primary"
-  ;;                       "--auto"
-  ;;                       "--output"
-  ;;                       default-output
-  ;;                       "--off")
-  ;;         (setq exwm-randr-workspace-monitor-plist
-  ;;               (list 0 (match-string 1)))))))
-
   (use-package
    exwm
    :ensure t
@@ -334,17 +302,6 @@
     x-select-enable-clipboard t
     x-select-enable-primary t
     select-enable-clipboard t)
-
-   ;; (require 'exwm-randr)
-   ;; (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
-   ;; (add-hook
-   ;;  'exwm-randr-screen-change-hook
-   ;;  (lambda ()
-   ;;    (when (executable-find "autorandr")
-   ;;      (start-process-shell-command
-   ;;       "autorandr" nil "autorandr --change --force"))
-   ;;    (grim/set-wallpaper)))
-   ;; (exwm-randr-mode 1)
 
    (require 'exwm-randr)
    (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
@@ -380,7 +337,6 @@
                  (cadr connected-outputs))))))))
    (grim/set-wallpaper)
    (exwm-randr-mode 1)
-
 
    ;; Set the wallpaper after changing the resolution
    (grim/set-wallpaper)
