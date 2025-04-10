@@ -476,21 +476,21 @@
           (when (executable-find "playerctl")
             (start-process-shell-command
              "stop" nil "playerctl stop"))))
-       ;; Volume control bindings
-       ([XF86AudioRaiseVolume]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "amixer")
-            (start-process-shell-command
-             "vol-up" nil "amixer -q sset Master 5%+ unmute"))))
-       ([XF86AudioLowerVolume]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "amixer")
-            (start-process-shell-command
-             "vol-down" nil "amixer -q sset Master 5%- unmute"))))
+       ;; ;; Volume control bindings
+       ;; ([XF86AudioRaiseVolume]
+       ;;  .
+       ;;  (lambda ()
+       ;;    (interactive)
+       ;;    (when (executable-find "amixer")
+       ;;      (start-process-shell-command
+       ;;       "vol-up" nil "amixer -q sset Master 5%+ unmute"))))
+       ;; ([XF86AudioLowerVolume]
+       ;;  .
+       ;;  (lambda ()
+       ;;    (interactive)
+       ;;    (when (executable-find "amixer")
+       ;;      (start-process-shell-command
+       ;;       "vol-down" nil "amixer -q sset Master 5%- unmute"))))
        ;; ([XF86AudioMute]
        ;;  .
        ;;  (lambda ()
@@ -514,23 +514,29 @@
        ;;      (start-process-shell-command
        ;;       "bright-down" nil "brightnessctl set 10%-")))))
 
-       ;; ;; Volume control with notifications
-       ;;        ([XF86AudioRaiseVolume]
-       ;;         .
-       ;;         (lambda ()
-       ;;           (interactive)
-       ;;           (when (executable-find "pactl")
-       ;;             (start-process-shell-command "vol-up" nil "pactl set-sink-volume @DEFAULT_SINK@ +5%")
-       ;;             (let ((vol (my-get-volume)))
-       ;;               (my-ednc-notify "Volume Up" (format "Volume: %d%%" vol) 'normal)))))
-       ;;        ([XF86AudioLowerVolume]
-       ;;         .
-       ;;         (lambda ()
-       ;;           (interactive)
-       ;;           (when (executable-find "pactl")
-       ;;             (start-process-shell-command "vol-down" nil "pactl set-sink-volume @DEFAULT_SINK@ -5%")
-       ;;             (let ((vol (my-get-volume)))
-       ;;               (my-ednc-notify "Volume Down" (format "Volume: %d%%" vol) 'normal)))))
+       ;; Volume control with notifications
+       ([XF86AudioRaiseVolume]
+        .
+        (lambda ()
+          (interactive)
+          (when (executable-find "pactl")
+            (start-process-shell-command
+             "vol-up" nil "pactl set-sink-volume @DEFAULT_SINK@ +5%")
+            (let ((vol (my-get-volume)))
+              (my-ednc-notify
+               "Volume Up" (format "Volume: %d%%" vol) 'normal)))))
+       ([XF86AudioLowerVolume]
+        .
+        (lambda ()
+          (interactive)
+          (when (executable-find "pactl")
+            (start-process-shell-command
+             "vol-down"
+             nil
+             "pactl set-sink-volume @DEFAULT_SINK@ -5%")
+            (let ((vol (my-get-volume)))
+              (my-ednc-notify
+               "Volume Down" (format "Volume: %d%%" vol) 'normal)))))
        ([XF86AudioMute]
         .
         (lambda ()
