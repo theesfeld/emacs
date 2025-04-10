@@ -563,7 +563,7 @@
             (interactive)
             (message "Moving window to workspace %d" i)
             (exwm-workspace-move-window i))))
-       (number-sequence 0 9))))
+       (number-sequence 0 9)))))
 
    ;; Simulation Keys
    (setq exwm-input-simulation-keys
