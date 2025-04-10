@@ -314,6 +314,24 @@
     'exwm-manage-finish-hook #'grim/configure-window-by-class)
    (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
 
+   (add-hook
+    'exwm-workspace-switch-hook
+    (lambda ()
+      (let ((frame
+             (exwm-workspace--get-frame
+              (exwm-workspace--current-index))))
+        (when frame
+          (xlib:XWarpPointer
+           (exwm--connection)
+           0
+           (frame-parameter frame 'exwm-window-id)
+           0
+           0
+           0
+           0
+           (/ (frame-pixel-width frame) 2)
+           (/ (frame-pixel-height frame) 2))))))
+
    (setq exwm-workspace-show-all-buffers t)
    (setq exwm-layout-show-all-buffers t)
    (setq exwm-manage-force-tiling nil)
