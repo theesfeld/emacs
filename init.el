@@ -624,21 +624,82 @@
    (setq ednc-log-notifications t)
    (setq ednc-notification-timeout 10)
    (ednc-mode 1)
+
+
+   (defun my-ednc-display-popup (title message &optional urgency)
+     "Display a notification in a temporary pop-up window with TITLE and MESSAGE.
+URGENCY is used to set the face (low, normal, high)."
+     (let*
+         ((buffer-name "*EDNC Notification*")
+          (buffer (get-buffer-create buffer-name))
+          (window-height 5) ; Height of the popup (lines)
+          (window-width 50) ; Width of the popup (characters)
+          (timeout 5) ; Seconds before auto-dismiss
+          (face
+           (pcase urgency
+             ('low '(:foreground "#88c0d0" :weight normal)) ; Modus Vivendi cyan
+             ('high '(:foreground "#ff5555" :weight bold)) ; Modus Vivendi red
+             (_ '(:foreground "#f9e2af" :weight normal)))) ; Modus Vivendi yellow
+          (formatted-message
+           (with-temp-buffer
+             (insert (propertize title 'face `(:weight bold ,@face)))
+             (insert "\n")
+             (insert (propertize message 'face face))
+             (fill-region (point-min) (point-max))
+             (buffer-string))))
+       ;; Clear the buffer
+       (with-current-buffer buffer
+         (let ((inhibit-read-only t))
+           (erase-buffer)
+           (insert formatted-message)
+           (setq buffer-read-only t)))
+       ;; Create or reuse the window
+       (let ((window
+              (display-buffer buffer
+                              `(display-buffer-in-side-window
+                                (side . top)
+                                (slot . 1)
+                                (window-height . ,window-height)
+                                (window-width . ,window-width)
+                                (window-parameters
+                                 (no-other-window . t)
+                                 (no-delete-other-windows . t)
+                                 (mode-line-format . none))))))
+         ;; Ensure the window is floating in EXWM
+         (when (and window (featurep 'exwm))
+           (exwm-layout-set-window-floating (window-id window)))
+         ;; Set a timer to delete the window
+         (run-at-time
+          timeout nil
+          (lambda ()
+            (when (window-live-p window)
+              (delete-window window))
+            (when (buffer-live-p buffer)
+              (kill-buffer buffer)))))))
+
+   ;; Override my-ednc-notify to use the pop-up instead of notifications-notify
    (defun my-ednc-notify (title message &optional urgency)
-     "Send a desktop notification with TITLE and MESSAGE."
-     (notifications-notify
-      :title title
-      :body message
-      :urgency
-      (pcase urgency
-        ('low "low")
-        ('normal "normal")
-        ('high "critical")
-        (_ "normal"))
-      :app-name "EXWM"))
+     "Send a desktop notification with TITLE and MESSAGE using a pop-up window."
+     (my-ednc-display-popup title message urgency)
+     ;; Optionally log to EDNC buffer as before
+     (when ednc-log-notifications
+       (ednc-log-notification
+        `(:title
+          ,title
+          :body ,message
+          :urgency
+          ,(pcase urgency
+             ('low "low")
+             ('normal "normal")
+             ('high "critical")
+             (_ "normal"))
+          :app-name "EXWM"))))
+
+   ;; Ensure notifications.el is not used
    :init
    (unless (fboundp 'notifications-notify)
-     (message "notifications.el not available; EDNC won’t work"))))
+     (message
+      "notifications.el not available; using pop-up notifications"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
