@@ -497,12 +497,12 @@
    :bind
    (:map
     exwm-mode-map
-    ("C-c f n" . exwm-firefox-core-tab-new)
-    ("C-c f t" . exwm-firefox-core-tab-close)
-    ("C-c f <right>" . exwm-firefox-core-tab-right)
-    ("C-c f <left>" . exwm-firefox-core-tab-left)
-    ("C-c f h" . exwm-firefox-core-back)
-    ("C-c f l" . exwm-firefox-core-forward))
+    ("C-c w n" . exwm-firefox-core-tab-new)
+    ("C-c w t" . exwm-firefox-core-tab-close)
+    ("C-c w <right>" . exwm-firefox-core-tab-right)
+    ("C-c w <left>" . exwm-firefox-core-tab-left)
+    ("C-c w h" . exwm-firefox-core-back)
+    ("C-c w l" . exwm-firefox-core-forward))
    :hook
    ;; Rename buffers for Firefox windows
    (exwm-update-title
