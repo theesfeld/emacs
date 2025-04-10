@@ -2965,25 +2965,6 @@
  (eat-enable-yank-to-terminal t) ;; Enable yanking directly to terminal
  (eat-term-name "xterm-256color") ;; Support full color range
 
- :config
- ;; Ensure Eat inherits modus-vivendi theme colors dynamically
- (defun my-eat-inherit-theme ()
-   "Configure Eat to inherit colors from the current theme (modus-vivendi)."
-   (when (eq (car custom-enabled-themes) 'modus-vivendi)
-     (set-face-attribute 'eat-term-background nil :inherit 'default)
-     (set-face-attribute 'eat-term-foreground nil :inherit 'default)
-     (set-face-attribute 'eat-term-bold nil :inherit 'bold)
-     (set-face-attribute 'eat-term-italic nil :inherit 'italic)
-     (set-face-attribute 'eat-term-underline nil :inherit 'underline)
-     ;; Inherit cursor for consistency
-     (set-face-attribute 'eat-term-cursor nil :inherit 'cursor)
-     ;; Use subtle region styling from theme
-     (set-face-attribute 'eat-term-region nil :inherit 'region)))
-
- ;; Apply theme inheritance on load and theme change
- (add-hook 'eat-mode-hook #'my-eat-inherit-theme)
- (add-hook 'enable-theme-hook #'my-eat-inherit-theme)
-
  ;; Keybindings for convenience
  :bind
  (("C-c t" . eat) ;; Open Eat in current buffer
