@@ -573,7 +573,7 @@
   (use-package
    desktop-environment
    :ensure t
-   :after exwm
+   ;   :after exwm
    :init
    ;; Pre-configure notification and screenshot settings
    (setq desktop-environment-notifications t) ; Enable notifications
