@@ -233,17 +233,50 @@
                 command
                 (error-message-string err)))))
 
-  ;  (defun grim/set-wallpaper ()
-  ;    (interactive)
-  ;    (when (and (executable-find "feh")
-  ;               (file-exists-p
-  ;                "~/Pictures/wallpaper/car-ice-road-red-moon.jpg"))
-  ;      (start-process-shell-command
-  ;       "feh"
-  ;       nil
-  ;       "feh --bg-scale ~/Pictures/wallpaper/car-ice-road-red-moon.jpg"))
-  ;    (unless (executable-find "feh")
-  ;      (message "feh not found; wallpaper not set")))
+  (defun grim/set-wallpaper ()
+    (interactive)
+    (when (and (executable-find "feh")
+               (file-exists-p
+                "~/Pictures/wallpaper/car-ice-road-red-moon.jpg"))
+      (start-process-shell-command
+       "feh"
+       nil
+       "feh --bg-scale ~/Pictures/wallpaper/car-ice-road-red-moon.jpg"))
+    (unless (executable-find "feh")
+      (message "feh not found; wallpaper not set")))
+
+  (defun exwm-change-screen-hook ()
+    (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
+          default-output)
+      (with-temp-buffer
+        (call-process "xrandr" nil t nil)
+        (goto-char (point-min))
+        (re-search-forward xrandr-output-regexp nil 'noerror)
+        (setq default-output (match-string 1))
+        (forward-line)
+        (if (not
+             (re-search-forward xrandr-output-regexp nil 'noerror))
+            (call-process "xrandr"
+                          nil
+                          nil
+                          nil
+                          "--output"
+                          default-output
+                          "--auto")
+          (call-process "xrandr"
+                        nil
+                        nil
+                        nil
+                        "--output"
+                        (match-string 1)
+                        "--primary"
+                        "--auto"
+                        "--output"
+                        default-output
+                        "--off")
+          (setq exwm-randr-workspace-monitor-plist
+                (list 0 (match-string 1)))))))
+
 
   (defun grim/exwm-init-hook ()
     (exwm-workspace-switch-create 1)
@@ -320,7 +353,6 @@
                  1
                  (cadr connected-outputs))))))))
    (exwm-randr-mode 1)
-
 
    ;; Load the system tray before exwm-init
    (require 'exwm-systemtray)
