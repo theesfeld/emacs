@@ -219,36 +219,44 @@
 (when (eq window-system 'x)
 
   (defun grim/run-in-background (command)
-    (let ((command-parts (split-string command "[ ]+")))
-      (apply #'call-process
-             `(,(car command-parts)
-               nil
-               0
-               nil
-               ,@
-               (cdr command-parts)))))
+    (condition-case err
+        (let ((command-parts (split-string command "[ ]+")))
+          (apply #'call-process
+                 `(,(car command-parts)
+                   nil
+                   0
+                   nil
+                   ,@
+                   (cdr command-parts))))
+      (error
+       (message "Failed to run %s: %s"
+                command
+                (error-message-string err)))))
 
   (defun grim/set-wallpaper ()
     (interactive)
-    (start-process-shell-command
-     "feh"
-     nil
-     "feh --bg-scale ~/Pictures/wallpaper/car-ice-road-red-moon.jpg"))
+    (when (and (executable-find "feh")
+               (file-exists-p
+                "~/Pictures/wallpaper/car-ice-road-red-moon.jpg"))
+      (start-process-shell-command
+       "feh"
+       nil
+       "feh --bg-scale ~/Pictures/wallpaper/car-ice-road-red-moon.jpg"))
+    (unless (executable-find "feh")
+      (message "feh not found; wallpaper not set")))
 
   (defun grim/exwm-init-hook ()
     (exwm-workspace-switch-create 1)
-
     (display-battery-mode 1)
     (setq
      display-time-24hr-format t
      display-time-day-and-date t)
     (display-time-mode 1)
-
-    ;; Launch apps that will run in the background
-    (grim/run-in-background "nm-applet")
-    (grim/run-in-background "pasystray")
-    (grim/run-in-background "mullvad-vpn --disable-gpu")
-    (grim/run-in-background "blueman-applet"))
+    (run-at-time 2 nil #'grim/run-in-background "nm-applet")
+    (run-at-time 2 nil #'grim/run-in-background "pasystray")
+    (run-at-time 2 nil #'grim/run-in-background
+                 "mullvad-vpn --disable-gpu")
+    (run-at-time 2 nil #'grim/run-in-background "blueman-applet"))
 
 
   (defun grim/exwm-update-class ()
@@ -259,50 +267,6 @@
       ("Firefox" (exwm-workspace-rename-buffer
         (format "Firefox: %s" exwm-title)))))
 
-  (defun grim/update-displays ()
-    (grim/run-in-background "autorandr --change --force")
-    (grim/set-wallpaper)
-    (message "Display config: %s"
-             (string-trim
-              (shell-command-to-string "autorandr --current"))))
-
-  (defun grim/configure-window-by-class ()
-    (interactive)
-    (pcase exwm-class-name
-      ("Firefox" (exwm-workspace-move-window 2))))
-
-  (defun exwm-change-screen-hook ()
-    (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
-          default-output)
-      (with-temp-buffer
-        (call-process "xrandr" nil t nil)
-        (goto-char (point-min))
-        (re-search-forward xrandr-output-regexp nil 'noerror)
-        (setq default-output (match-string 1))
-        (forward-line)
-        (if (not
-             (re-search-forward xrandr-output-regexp nil 'noerror))
-            (call-process "xrandr"
-                          nil
-                          nil
-                          nil
-                          "--output"
-                          default-output
-                          "--auto")
-          (call-process "xrandr"
-                        nil
-                        nil
-                        nil
-                        "--output"
-                        (match-string 1)
-                        "--primary"
-                        "--auto"
-                        "--output"
-                        default-output
-                        "--off")
-          (setq exwm-randr-workspace-monitor-plist
-                (list 0 (match-string 1)))))))
-
   (use-package
    exwm
    :ensure t
@@ -310,8 +274,6 @@
    (setq exwm-workspace-number 5)
    (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
    (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
-   (add-hook
-    'exwm-manage-finish-hook #'grim/configure-window-by-class)
    (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
 
    (setq exwm-workspace-show-all-buffers t)
@@ -331,42 +293,11 @@
    (add-hook
     'exwm-randr-screen-change-hook
     (lambda ()
-      (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
-            connected-outputs)
-        (with-temp-buffer
-          (call-process "xrandr" nil t nil)
-          (goto-char (point-min))
-          (while (re-search-forward xrandr-output-regexp nil t)
-            (push (match-string 1) connected-outputs)))
-        (cond
-         ((= (length connected-outputs) 1)
-          (start-process-shell-command
-           "xrandr" nil
-           (format "xrandr --output %s --primary --auto"
-                   (car connected-outputs))))
-         ((>= (length connected-outputs) 2)
-          (start-process-shell-command
-           "xrandr" nil
-           (format
-            "xrandr --output %s --primary --auto --output %s --auto --right-of %s"
-            (car connected-outputs)
-            (cadr connected-outputs)
-            (car connected-outputs)))
-          (setq exwm-randr-workspace-monitor-plist
-                (list
-                 0
-                 (car connected-outputs)
-                 1
-                 (cadr connected-outputs))))))))
-
+      (when (executable-find "autorandr")
+        (start-process-shell-command
+         "autorandr" nil "autorandr --change --force"))
+      (grim/set-wallpaper)))
    (exwm-randr-mode 1)
-
-
-   ;;(add-hook 'exwm-randr-screen-change-hook #'grim/update-displays)
-   ;;(grim/update-displays)
-
-   ;; Set the wallpaper after changing the resolution
-   (grim/set-wallpaper)
 
    ;; Load the system tray before exwm-init
    (require 'exwm-systemtray)
