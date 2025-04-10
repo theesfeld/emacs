@@ -205,12 +205,10 @@
 (use-package
  all-the-icons
  :ensure t
- ;; :if (display-graphic-p) ; Only load in GUI mode
+ :if (display-graphic-p) ; Only load in GUI mode
  :config
  (setq all-the-icons-scale-factor 1.1) ; Similar to your nerd-icons setting
- ;; Install fonts if not already present (run once manually if needed)
- (unless (find-font (font-spec :name "all-the-icons"))
-   (all-the-icons-install-fonts t)))
+ )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     EXWM                                  ;;
@@ -276,7 +274,6 @@
                         "--off")
           (setq exwm-randr-workspace-monitor-plist
                 (list 0 (match-string 1)))))))
-
 
   (defun grim/exwm-init-hook ()
     (exwm-workspace-switch-create 1)
