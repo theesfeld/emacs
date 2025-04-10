@@ -362,7 +362,6 @@
             ([s-right] . windmove-right)
             ([s-up] . windmove-up)
             ([s-down] . windmove-down)
-
             ([?\s-w] . exwm-workspace-switch)
             ([?\s-&]
              .
@@ -374,12 +373,6 @@
              (lambda ()
                (interactive)
                (save-buffers-kill-emacs)))
-            ([?\s-e]
-             .
-             (lambda ()
-               (interactive)
-               (start-process-shell-command
-                "yazi" nil "footclient -e yazi")))
             ([?\s-\ ]
              .
              (lambda ()
