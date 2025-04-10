@@ -411,9 +411,82 @@
                (when (and (executable-find "systemctl")
                           (executable-find "slock"))
                  (start-process-shell-command
-                  "suspend"
+                  "suspend" nil "systemctl suspend-then-hibernate"))))
+            ;; Media key bindings for Arch Linux
+            ([XF86AudioPlay]
+             .
+             (lambda ()
+               (interactive)
+               (when (executable-find "playerctl")
+                 (start-process-shell-command
+                  "play" nil "playerctl play-pause"))))
+            ([XF86AudioPause]
+             .
+             (lambda ()
+               (interactive)
+               (when (executable-find "playerctl")
+                 (start-process-shell-command
+                  "pause" nil "playerctl play-pause"))))
+            ([XF86AudioNext]
+             .
+             (lambda ()
+               (interactive)
+               (when (executable-find "playerctl")
+                 (start-process-shell-command
+                  "next" nil "playerctl next"))))
+            ([XF86AudioPrev]
+             .
+             (lambda ()
+               (interactive)
+               (when (executable-find "playerctl")
+                 (start-process-shell-command
+                  "prev" nil "playerctl previous"))))
+            ([XF86AudioStop]
+             .
+             (lambda ()
+               (interactive)
+               (when (executable-find "playerctl")
+                 (start-process-shell-command
+                  "stop" nil "playerctl stop"))))
+            ;; Volume control bindings
+            ([XF86AudioRaiseVolume]
+             .
+             (lambda ()
+               (interactive)
+               (when (executable-find "amixer")
+                 (start-process-shell-command
+                  "vol-up" nil "amixer -q sset Master 5%+ unmute"))))
+            ([XF86AudioLowerVolume]
+             .
+             (lambda ()
+               (interactive)
+               (when (executable-find "amixer")
+                 (start-process-shell-command
+                  "vol-down"
                   nil
-                  "systemctl suspend-then-hibernate")))))
+                  "amixer -q sset Master 5%- unmute"))))
+            ([XF86AudioMute]
+             .
+             (lambda ()
+               (interactive)
+               (when (executable-find "amixer")
+                 (start-process-shell-command
+                  "mute" nil "amixer -q sset Master toggle"))))
+            ;; Brightness control bindings
+            ([XF86MonBrightnessUp]
+             .
+             (lambda ()
+               (interactive)
+               (when (executable-find "brightnessctl")
+                 (start-process-shell-command
+                  "bright-up" nil "brightnessctl set +10%"))))
+            ([XF86MonBrightnessDown]
+             .
+             (lambda ()
+               (interactive)
+               (when (executable-find "brightnessctl")
+                 (start-process-shell-command
+                  "bright-down" nil "brightnessctl set 10%-")))))
           (mapcar
            (lambda (i)
              (cons
