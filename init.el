@@ -250,7 +250,6 @@
     (grim/run-in-background "mullvad-vpn --disable-gpu")
     (grim/run-in-background "blueman-applet"))
 
-
   (defun grim/exwm-update-class ()
     (exwm-workspace-rename-buffer exwm-class-name))
 
@@ -258,13 +257,6 @@
     (pcase exwm-class-name
       ("Firefox" (exwm-workspace-rename-buffer
         (format "Firefox: %s" exwm-title)))))
-
-  (defun grim/update-displays ()
-    (grim/run-in-background "autorandr --change --force")
-    (grim/set-wallpaper)
-    (message "Display config: %s"
-             (string-trim
-              (shell-command-to-string "autorandr --current"))))
 
   (defun grim/configure-window-by-class ()
     (interactive)
@@ -360,9 +352,6 @@
                  (cadr connected-outputs))))))))
    (exwm-randr-mode 1)
 
-
-   ;;(add-hook 'exwm-randr-screen-change-hook #'grim/update-displays)
-   ;;(grim/update-displays)
 
    ;; Set the wallpaper after changing the resolution
    (grim/set-wallpaper)
