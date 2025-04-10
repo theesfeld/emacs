@@ -481,6 +481,29 @@
    (exwm-enable))
 
   (use-package
+   exwm-edit
+   :ensure t
+   :after exwm
+   :init
+   ;; Pre-load settings
+   (setq exwm-edit-default-major-mode 'text-mode) ; Default mode for editing
+   :config
+   ;; Explicitly load exwm-edit
+   (require 'exwm-edit nil t)
+   (when (featurep 'exwm-edit)
+     (message "exwm-edit loaded successfully"))
+   ;; Optional: Customize split behavior
+   ;(setq exwm-edit-split 'below) ; Open edit buffer below current window
+   :bind (:map exwm-mode-map ("C-c e" . exwm-edit-compose))
+   :hook
+   ;; Log initialization
+   (exwm-init
+    .
+    (lambda ()
+      (when (featurep 'exwm-edit)
+        (message "exwm-edit initialized")))))
+
+  (use-package
    exwm-firefox-core
    :ensure t
    :after exwm
@@ -497,12 +520,12 @@
    :bind
    (:map
     exwm-mode-map
-    ("C-c w n" . exwm-firefox-core-tab-new)
-    ("C-c w t" . exwm-firefox-core-tab-close)
-    ("C-c w <right>" . exwm-firefox-core-tab-right)
-    ("C-c w <left>" . exwm-firefox-core-tab-left)
-    ("C-c w h" . exwm-firefox-core-back)
-    ("C-c w l" . exwm-firefox-core-forward))
+    ("C-c f n" . exwm-firefox-core-tab-new)
+    ("C-c f t" . exwm-firefox-core-tab-close)
+    ("C-c f <right>" . exwm-firefox-core-tab-right)
+    ("C-c f <left>" . exwm-firefox-core-tab-left)
+    ("C-c f h" . exwm-firefox-core-back)
+    ("C-c f l" . exwm-firefox-core-forward))
    :hook
    ;; Rename buffers for Firefox windows
    (exwm-update-title
@@ -617,25 +640,6 @@
       (let ((bright (desktop-environment--get-brightness)))
         (my-ednc-notify
          "Brightness" (format "Brightness: %d%%" bright) 'normal)))))
-
-  (use-package
-   exwm-edit
-   :ensure t
-   :after exwm
-   :init
-   ;; Define any pre-configuration setup if needed
-   (setq exwm-edit-default-major-mode 'text-mode)
-   :config
-   ;; Ensure exwm-edit is loaded after exwm
-   (require 'exwm-edit)
-   :bind
-   (:map
-    exwm-mode-map
-    ;; Bind C-c e in exwm-mode-map to avoid global conflicts
-    ("C-c e" . exwm-edit-compose))
-   :hook
-   ;; Optional: Add hooks for specific behaviors
-   (exwm-init . (lambda () (message "exwm-edit initialized"))))
 
   (use-package
    notifications
