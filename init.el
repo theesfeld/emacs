@@ -532,32 +532,6 @@
            ([?\M-w] . [?\C-c])
            ([?\C-y] . [?\C-v])))
 
-   ;; Standard Emacs Mode-Line with Date/Time and Battery
-   (display-time-mode 1)
-   (setq
-    display-time-24hr-format t
-    display-time-day-and-date t)
-   (display-battery-mode 1)
-   (setq-default mode-line-format
-                 '("%e"
-                   mode-line-front-space
-                   mode-line-mule-info
-                   mode-line-client
-                   mode-line-modified
-                   mode-line-remote
-                   mode-line-frame-identification
-                   mode-line-buffer-identification
-                   "   "
-                   mode-line-position
-                   (vc-mode vc-mode)
-                   "  "
-                   mode-line-modes
-                   mode-line-misc-info
-                   "  "
-                   display-time-string
-                   "  "
-                   battery-mode-line-string))
-
    (exwm-enable))
 
   (use-package
