@@ -2949,55 +2949,65 @@
  (prog-mode . hl-line-mode)) ; Enable only in prog-mode derived modes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                       vterm                               ;;
+;;                                    eat terminal                           ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- vterm
+ eat
  :ensure t
- :defer t ; Load only when needed
- :commands (vterm vterm-other-window)
- :bind
- (("C-c t" . vterm) ; Quick access to vterm
-  :map vterm-mode-map
-  ("C-c C-t" . vterm-copy-mode) ; Toggle copy mode for Emacs editing
-  ("C-q" . vterm-send-next-key)) ; Send literal key to terminal
- :hook
- ((vterm-mode
-   .
-   (lambda ()
-     (setq-local global-hl-line-mode nil) ; Disable line highlight
-     (display-line-numbers-mode -1))) ; No line numbers
-  (vterm-copy-mode
-   .
-   (lambda ()
-     (if vterm-copy-mode
-         (message "vterm-copy-mode enabled")
-       (message "vterm-copy-mode disabled")))))
+ :defer t
+ :commands (eat eat-project)
  :custom
- (vterm-max-scrollback 10000) ; Keep a large scrollback buffer
- (vterm-buffer-name-string "vterm-%s") ; Unique buffer names
- (vterm-kill-buffer-on-exit t) ; Clean up on exit
- (vterm-module-cmake-args "-DUSE_SYSTEM_LIBVTERM=ON") ; Use system libvterm
- (vterm-shell (or (getenv "SHELL") "/bin/bash")) ; Respect user’s shell
+ ;; General settings for performance and usability
+ (eat-term-scrollback-size (* 1024 1024)) ;; 1MB scrollback buffer
+ (eat-kill-buffer-on-exit t) ;; Clean up when terminal exits
+ (eat-enable-blinking-text t) ;; Allow blinking text for emphasis
+ (eat-enable-yank-to-terminal t) ;; Enable yanking directly to terminal
+ (eat-term-name "xterm-256color") ;; Support full color range
+
  :config
- ;; Ensure vterm-module compiles if needed
- ; (unless (file-exists-p
- ;          (expand-file-name "vterm-module.so"
- ;                            vterm-installation-directory))
- ;   (vterm-module-compile))
- ;; Add Emacs integration for finding files from vterm
- (add-to-list 'vterm-eval-cmds '("find-file" find-file))
- ;; Improve prompt detection for better interaction
- (setq vterm-use-vterm-prompt-detection-method t)
- ;; Optimize performance
- (setq vterm-timer-delay 0.01) ; Faster refresh rate
- :init
- ;; Preload directory for remote TRAMP support
- (setq vterm-tramp-shells '(("ssh" "/bin/bash")))
- ;; Autoload vterm for TRAMP if needed
- (with-eval-after-load 'tramp
-   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)))
+ ;; Ensure Eat inherits modus-vivendi theme colors dynamically
+ (defun my-eat-inherit-theme ()
+   "Configure Eat to inherit colors from the current theme (modus-vivendi)."
+   (when (eq (car custom-enabled-themes) 'modus-vivendi)
+     (set-face-attribute 'eat-term-background nil :inherit 'default)
+     (set-face-attribute 'eat-term-foreground nil :inherit 'default)
+     (set-face-attribute 'eat-term-bold nil :inherit 'bold)
+     (set-face-attribute 'eat-term-italic nil :inherit 'italic)
+     (set-face-attribute 'eat-term-underline nil :inherit 'underline)
+     ;; Inherit cursor for consistency
+     (set-face-attribute 'eat-term-cursor nil :inherit 'cursor)
+     ;; Use subtle region styling from theme
+     (set-face-attribute 'eat-term-region nil :inherit 'region)))
+
+ ;; Apply theme inheritance on load and theme change
+ (add-hook 'eat-mode-hook #'my-eat-inherit-theme)
+ (add-hook 'enable-theme-hook #'my-eat-inherit-theme)
+
+ ;; Keybindings for convenience
+ :bind
+ (("C-c t" . eat) ;; Open Eat in current buffer
+  ("C-c p t" . eat-project) ;; Open Eat in project root
+  :map eat-mode-map
+  ("C-c C-k" . eat-kill-process) ;; Kill terminal process
+  ("C-c C-r" . eat-reset)) ;; Reset terminal
+
+ ;; Visual enhancements
+ :hook
+ (eat-mode-hook
+  .
+  (lambda ()
+    ;; Disable distractions for a clean look
+    (setq-local mode-line-format nil)
+    (setq-local header-line-format nil)
+    (setq-local truncate-lines t)
+    ;; Add some padding for aesthetics
+    (set-window-margins nil 1 1)
+    ;; Ensure font consistency
+    (face-remap-add-relative
+     'default
+     :family "Berkeley Mono"
+     :height 110))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  SES (Spreadsheet)                       ;;
