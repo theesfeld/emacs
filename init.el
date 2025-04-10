@@ -580,9 +580,20 @@
    (setq desktop-environment-screenshot-directory
          "~/Pictures/Screenshots") ; Common screenshot path
    :config
-   ;; Enable desktop-environment mode
    (desktop-environment-mode 1)
-   ;; Configure popular settings
+   (setq desktop-environment-screenlock-command "slock")
+   (setq desktop-environment-volume-get-command
+         "pactl get-sink-volume @DEFAULT_SINK@")
+   (setq desktop-environment-volume-set-command
+         "pactl set-sink-volume @DEFAULT_SINK@")
+   (setq desktop-environment-mute-get-command
+         "pactl get-sink-mute @DEFAULT_SINK@")
+   (setq desktop-environment-mute-set-command
+         "pactl set-sink-mute @DEFAULT_SINK@")
+   (setq desktop-environment-brightness-get-command
+         "brightnessctl -m")
+   (setq desktop-environment-brightness-set-command
+         "brightnessctl set")
    (setq desktop-environment-volume-normal-increment "5%+")
    (setq desktop-environment-volume-normal-decrement "5%-")
    (setq desktop-environment-brightness-normal-increment "10%+")
@@ -603,20 +614,7 @@
      desktop-environment-brightness-decrement)
     ("s-s" . desktop-environment-screenshot)
     ("s-S" . desktop-environment-screenshot-partial))
-   :custom
-   ;; Popular customizations
-   ;; Use slock for desktop-environment's lock screen
-   (desktop-environment-screenlock-command "slock")
-   (desktop-environment-volume-get-command
-    "pactl get-sink-volume @DEFAULT_SINK@")
-   (desktop-environment-volume-set-command
-    "pactl set-sink-volume @DEFAULT_SINK@")
-   (desktop-environment-mute-get-command
-    "pactl get-sink-mute @DEFAULT_SINK@")
-   (desktop-environment-mute-set-command
-    "pactl set-sink-mute @DEFAULT_SINK@")
-   (desktop-environment-brightness-get-command "brightnessctl -m")
-   (desktop-environment-brightness-set-command "brightnessctl set")
+
    :hook
    ;; Notify on volume/brightness changes
    (desktop-environment-volume-changed
