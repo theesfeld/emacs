@@ -580,7 +580,7 @@
    (setq desktop-environment-screenshot-directory
          "~/Pictures/Screenshots") ; Screenshot path
    (setq desktop-environment-screenshot-command "maim") ; Use maim for full screenshots
-   (setq desktop-environment-screenshot-partial-command "maim -s") ; Use maim with slop for partial screenshots
+   (setq desktop-environment-screenshot-part-command "maim -s") ; Use maim with slop for partial screenshots
    (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
    (setq
     desktop-environment-volume-get-command
@@ -629,7 +629,7 @@
      desktop-environment-brightness-decrement)
     ;; Screenshot bindings
     ("s-s" . desktop-environment-screenshot)
-    ("s-S" . desktop-environment-screenshot-partial))
+    ("s-S" . desktop-environment-screenshot-part))
 
    :hook
    ;; Notification hooks for volume and brightness changes
