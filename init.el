@@ -321,6 +321,7 @@
                  (cadr connected-outputs))))))))
    (exwm-randr-mode 1)
 
+
    ;; Load the system tray before exwm-init
    (require 'exwm-systemtray)
    (setq exwm-systemtray-height 24)
