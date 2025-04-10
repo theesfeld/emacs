@@ -959,7 +959,7 @@
     ("\\bINFO\\b" . 'font-lock-string-face)
     ("\\bWARN\\b" . 'font-lock-warning-face)
     ("\\bERROR\\b" . 'font-lock-function-name-face))
-  "Font-lock keywords for log-mode highlighting.")
+  "Font-lock keywords for `log-mode' highlighting.")
 
 ;; Associate .log files with log-mode
 (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
@@ -2765,7 +2765,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun my-after-make-frame-setup (&optional frame)
-  "Initialize UI settings for new frames under Wayland, including daemon clients."
+  "Initialize UI settings for new FRAMEs under Wayland, including daemon clients."
   (when
       (and (display-graphic-p) ; Only for graphical frames
            (string= (getenv "XDG_SESSION_TYPE") "wayland")) ; Only under Wayland
