@@ -491,13 +491,13 @@
           (when (executable-find "amixer")
             (start-process-shell-command
              "vol-down" nil "amixer -q sset Master 5%- unmute"))))
-       ([XF86AudioMute]
-        .
-        (lambda ()
-          (interactive)
-          (when (executable-find "amixer")
-            (start-process-shell-command
-             "mute" nil "amixer -q sset Master toggle"))))
+       ;; ([XF86AudioMute]
+       ;;  .
+       ;;  (lambda ()
+       ;;    (interactive)
+       ;;    (when (executable-find "amixer")
+       ;;      (start-process-shell-command
+       ;;       "mute" nil "amixer -q sset Master toggle"))))
        ;; ;; Brightness control bindings
        ;; ([XF86MonBrightnessUp]
        ;;  .
@@ -531,14 +531,26 @@
        ;;             (start-process-shell-command "vol-down" nil "pactl set-sink-volume @DEFAULT_SINK@ -5%")
        ;;             (let ((vol (my-get-volume)))
        ;;               (my-ednc-notify "Volume Down" (format "Volume: %d%%" vol) 'normal)))))
-       ;;        ([XF86AudioMute]
-       ;;         .
-       ;;         (lambda ()
-       ;;           (interactive)
-       ;;           (when (executable-find "pactl")
-       ;;             (start-process-shell-command "mute" nil "pactl set-sink-mute @DEFAULT_SINK@ toggle")
-       ;;             (let ((muted (string= "yes" (string-trim (shell-command-to-string "pactl get-sink-mute @DEFAULT_SINK@ | grep -o 'yes\\|no'")))))
-       ;;               (my-ednc-notify "Volume Mute" (if muted "Muted" "Unmuted") 'normal)))))
+       ([XF86AudioMute]
+        .
+        (lambda ()
+          (interactive)
+          (when (executable-find "pactl")
+            (start-process-shell-command
+             "mute" nil "pactl set-sink-mute @DEFAULT_SINK@ toggle")
+            (let
+                ((muted
+                  (string=
+                   "yes"
+                   (string-trim
+                    (shell-command-to-string
+                     "pactl get-sink-mute @DEFAULT_SINK@ | grep -o 'yes\\|no'")))))
+              (my-ednc-notify
+               "Volume Mute"
+               (if muted
+                   "Muted"
+                 "Unmuted")
+               'normal)))))
 
        ;; Brightness control with notifications
        ([XF86MonBrightnessUp]
