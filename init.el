@@ -343,7 +343,7 @@
    ;;(grim/update-displays)
 
    ;; Set the wallpaper after changing the resolution
-   (efs/set-wallpaper)
+   (grim/set-wallpaper)
 
    ;; Load the system tray before exwm-init
    (require 'exwm-systemtray)
