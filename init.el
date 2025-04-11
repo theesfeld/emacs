@@ -479,6 +479,40 @@
            ([?\M-w] . [?\C-c])
            ([?\C-y] . [?\C-v])))
 
+   (defun my-exwm-auto-tile-fullscreen ()
+     "Automatically tile windows that request full-screen or maximized states, keep others floating if appropriate."
+     (when (and (boundp 'exwm--id) exwm--id)
+       (let* ((window-id exwm--id)
+              (hints (exwm--get-window-hints window-id))
+              (class (exwm--get-window-class window-id))
+              (name (exwm--get-window-name window-id))
+              (is-fullscreen
+               (or (and hints (member 'fullscreen hints))
+                   (and hints (member 'maximized hints))))
+              (is-dialog (and hints (member 'dialog hints)))
+              (is-popup (and hints (member 'popup hints))))
+         ;; Tile windows that are full-screen or maximized, unless they are dialogs/popups
+         (cond
+          ((or is-fullscreen
+               ;; Optionally add specific apps by class/name
+               (string-equal class "firefox")
+               (string-equal class "chromium"))
+           (unless (or is-dialog is-popup)
+             (exwm-layout-set-mode window-id 'tile)))
+          ;; Explicitly float dialogs and popups
+          ((or is-dialog is-popup)
+           (exwm-layout-set-mode window-id 'float))
+          ;; Default: respect the window's natural state
+          (t
+           ;; If no specific hints, check if it’s a transient window
+           (if (exwm--get-window-transient-for window-id)
+               (exwm-layout-set-mode window-id 'float)
+             ;; Otherwise, let EXWM decide (usually tiles unless overridden)
+             ))))))
+
+   ;; Add the function to the manage hook
+   (add-hook 'exwm-manage-finish-hook #'my-exwm-auto-tile-fullscreen)
+
    (exwm-enable))
 
   (use-package
