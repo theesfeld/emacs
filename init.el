@@ -856,7 +856,8 @@
  :bind
  (("C-x k" . kill-current-buffer)
   ("C-x K" . kill-buffer)
-  ("H-s" . #'grim/screenshot)))
+  ("H-s" . #'grim/screenshot)
+  ("s-<tab>" . #'previous-buffer)))
 
 (use-package
  windmove
