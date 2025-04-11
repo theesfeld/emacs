@@ -365,7 +365,6 @@
             ([s-up] . windmove-up)
             ([s-down] . windmove-down)
             ([?\s-w] . exwm-workspace-switch)
-            ([?\s-<tab>] . previous-buffer)
             ([?\s-&]
              .
              (lambda (cmd)
