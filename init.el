@@ -386,7 +386,7 @@
              (lambda ()
                (interactive)
                (kill-buffer-and-window)))
-            ([?\s-s]
+            ([?\s-l]
              .
              (lambda ()
                (interactive)
