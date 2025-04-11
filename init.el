@@ -573,7 +573,6 @@
   (use-package
    desktop-environment
    :ensure t
-   :after exwm ; Defer loading until mode is activated
    :init
    ;; Pre-configure settings before mode activation
    (setq desktop-environment-notifications t) ; Enable notifications
