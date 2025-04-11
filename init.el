@@ -494,7 +494,7 @@
      (message "exwm-edit loaded successfully"))
    ;; Optional: Customize split behavior
    ;(setq exwm-edit-split 'below) ; Open edit buffer below current window
-   :bind (:map exwm-mode-map ("C-c e" . exwm-edit-compose))
+   :bind (:map exwm-mode-map ("C-c e" . exwm-edit--compose))
    :hook
    ;; Log initialization
    (exwm-init
