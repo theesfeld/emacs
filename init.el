@@ -573,46 +573,44 @@
   (use-package
    desktop-environment
    :ensure t
-   :defer t ; Defer loading until mode is activated
+   :after exwm ; Defer loading until mode is activated
    :init
    ;; Pre-configure settings before mode activation
    (setq desktop-environment-notifications t) ; Enable notifications
    (setq desktop-environment-screenshot-directory
          "~/Pictures/Screenshots") ; Screenshot path
    (setq desktop-environment-screenshot-command "maim") ; Use maim for full screenshots
-   (setq desktop-environment-screenshot-part-command "maim -s") ; Use maim with slop for partial screenshots
+   (setq desktop-environment-screenshot-partial-command "maim -s") ; Use maim with slop for partial screenshots
    (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
    (setq
     desktop-environment-volume-get-command
     "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1 | tr -d '%'")
    ; Extract volume percentage
    (setq desktop-environment-volume-set-command
-         "pactl set-sink-volume @DEFAULT_SINK@ %s%") ; Set volume
+         "pactl set-sink-volume @DEFAULT_SINK@ %s%%") ; Set volume
    (setq
     desktop-environment-mute-get-command
     "pactl get-sink-mute @DEFAULT_SINK@ | grep -q 'yes' && echo true || echo false")
    ; Check mute status
-   (setq desktop-environment-mute-set-command
+   (setq desktop-environment-volume-toggle-command
          "pactl set-sink-mute @DEFAULT_SINK@ toggle") ; Toggle mute
    (setq desktop-environment-brightness-get-command
          "brightnessctl get") ; Get brightness
    (setq desktop-environment-brightness-set-command
-         "brightnessctl set %s%") ; Set brightness
-   (setq desktop-environment-brightness-normal-increment "10%+") ; Brightness step up
-   (setq desktop-environment-brightness-normal-decrement "10%-") ; Brightness step down
+         "brightnessctl set %s%%") ; Set brightness
+   (setq desktop-environment-brightness-normal-increment "10+") ; Brightness step up
+   (setq desktop-environment-brightness-normal-decrement "10-") ; Brightness step down
    (setq desktop-environment-volume-normal-increment "5%+") ; Volume step up
    (setq desktop-environment-volume-normal-decrement "5%-") ; Volume step down
 
    :config
    ;; Ensure dependencies are installed
+   (desktop-environment-mode 1)
    (dolist (cmd '("maim" "slop" "slock" "pactl" "brightnessctl"))
      (unless (executable-find cmd)
        (message
         "Warning: %s not found; desktop-environment may not work fully"
         cmd)))
-
-   ;; Activate mode after EXWM initialization
-   (add-hook 'exwm-init-hook (lambda () (desktop-environment-mode 1)))
 
    :bind
    (:map
