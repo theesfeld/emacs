@@ -1166,6 +1166,45 @@
 (use-package marginalia :ensure t :init (marginalia-mode 1))
 
 (use-package
+ corfu
+ :ensure t
+ :init
+ (global-corfu-mode 1) ; Enable Corfu globally
+ (corfu-popupinfo-mode 1) ; Show documentation in popups
+ :custom
+ (corfu-cycle t) ; Cycle through candidates
+ (corfu-auto t) ; Auto-show completions after typing
+ (corfu-auto-prefix 2) ; Show completions after 2 characters
+ (corfu-auto-delay 0.1) ; Fast popup display
+ (corfu-quit-at-boundary t) ; Quit if no match at word boundary
+ (corfu-quit-no-match t) ; Quit if no matches
+ (corfu-preselect-first t) ; Preselect first candidate
+ (corfu-popupinfo-delay '(0.5 . 0.2)) ; Delay for documentation popup
+ :bind
+ (:map
+  corfu-map
+  ("TAB" . corfu-next) ; Navigate down
+  ([tab] . corfu-next)
+  ("S-TAB" . corfu-previous) ; Navigate up
+  ([backtab] . corfu-previous)
+  ("RET" . corfu-complete) ; Select candidate with Enter
+  ("M-d" . corfu-popupinfo-toggle)) ; Toggle documentation
+ :config
+ ;; Ensure Orderless works with Corfu
+ (defun corfu-enable-orderless ()
+   "Enable Orderless completion style for Corfu."
+   (setq-local
+    completion-styles '(orderless basic)
+    completion-category-defaults nil))
+ (add-hook 'corfu-mode-hook #'corfu-enable-orderless)
+ ;; Disable Corfu in minibuffer to avoid conflicts with Vertico
+ (defun corfu-disable-in-minibuffer ()
+   "Disable Corfu in minibuffer."
+   (when (minibufferp)
+     (corfu-mode -1)))
+ (add-hook 'minibuffer-setup-hook #'corfu-disable-in-minibuffer))
+
+(use-package
  all-the-icons-completion
  :ensure t
  :after (all-the-icons marginalia)
@@ -1256,18 +1295,18 @@
  ;; Hook to set cursor-type to a non-blinking state in xkcd buffers
  :hook (xkcd-mode . (lambda () (setq-local cursor-type '(bar . 0)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                 Popup Setup
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;;                                 Popup Setup
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package
- popup
- :config
- ;; If you want the popup library to compute columns more optimally:
- (setq popup-use-optimized-column-computation t)
+;; (use-package
+;;  popup
+;;  :config
+;;  ;; If you want the popup library to compute columns more optimally:
+;;  (setq popup-use-optimized-column-computation t)
 
- ;; Example: limit maximum width of a popup-tip
- (setq popup-tip-max-width 80))
+;;  ;; Example: limit maximum width of a popup-tip
+;;  (setq popup-tip-max-width 80))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
