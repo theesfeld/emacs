@@ -31,61 +31,6 @@
 ;;                                CUSTOM FUNCTIONS                           ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun my-avy-jump-highlighted-thing (forward)
-  "Jump to occurrences of the highlighted thing using avy.
-If FORWARD is non-nil, prioritize forward jumps; otherwise, backward."
-  (interactive "P")
-  (let* ((thing
-          (when (bound-and-true-p highlight-thing-mode)
-            (thing-at-point 'symbol t)))
-         (case-fold-search nil)
-         (avy-keys (append avy-keys nil))) ; Ensure avy-keys is a list
-    (if (and thing (stringp thing) (> (length thing) 0))
-        (let ((char (string-to-char thing))
-              (candidates))
-          ;; Collect candidates manually
-          (save-excursion
-            (goto-char
-             (if forward
-                 (point-min)
-               (point-max)))
-            (while (funcall (if forward
-                                #'re-search-forward
-                              #'re-search-backward)
-                            (concat "\\<" (regexp-quote thing) "\\>")
-                            nil
-                            t)
-              (when (string= (thing-at-point 'symbol t) thing)
-                (push (point) candidates))))
-          (if candidates
-              (avy-process
-               (if forward
-                   candidates
-                 (nreverse candidates))
-               (avy--style-fn avy-style)
-               (lambda (pt _w)
-                 (save-excursion
-                   (goto-char pt)
-                   (let ((current-thing (thing-at-point 'symbol t)))
-                     (and current-thing
-                          (string= current-thing thing))))))
-            (message "No matching symbols found")))
-      (message "No valid symbol under cursor"))))
-
-(defun my-avy-jump-highlighted-thing-forward ()
-  "Jump to the next occurrence of the highlighted thing using avy."
-  (interactive)
-  (my-avy-jump-highlighted-thing t))
-
-(defun my-avy-jump-highlighted-thing-backward ()
-  "Jump to the previous occurrence of the highlighted thing using avy."
-  (interactive)
-  (my-avy-jump-highlighted-thing nil))
-
-;; Keybindings
-(global-set-key (kbd "C-c ]") 'my-avy-jump-highlighted-thing-forward)
-(global-set-key (kbd "C-c [") 'my-avy-jump-highlighted-thing-backward)
-
 ;; Function to translate C-M-S-s-<key> to H-<key>
 (defun my-hyper-translate (key)
   "Translate C-M-S-s-<key> to H-<key>, handling any key type."
