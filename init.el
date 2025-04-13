@@ -35,16 +35,19 @@
   "Jump to occurrences of the highlighted thing using avy.
 If FORWARD is non-nil, prioritize forward jumps; otherwise, backward."
   (interactive "P")
-  (let* ((thing (thing-at-point 'symbol t))
-         (case-fold-search nil)) ; Respect case sensitivity
-    (if (and thing (bound-and-true-p highlight-thing-mode))
+  (let* ((thing
+          (when (bound-and-true-p highlight-thing-mode)
+            (thing-at-point 'symbol t)))
+         (case-fold-search nil))
+    (if (and thing (stringp thing) (> (length thing) 0))
         (avy-goto-word-1
          (string-to-char thing) forward
-         (lambda (pt _)
+         (lambda (pt)
            (save-excursion
              (goto-char pt)
-             (string= (thing-at-point 'symbol t) thing))))
-      (message "No highlighted thing under cursor"))))
+             (let ((current-thing (thing-at-point 'symbol t)))
+               (and current-thing (string= current-thing thing))))))
+      (message "No valid symbol under cursor"))))
 
 (defun my-avy-jump-highlighted-thing-forward ()
   "Jump to the next occurrence of the highlighted thing using avy."
