@@ -1013,15 +1013,17 @@
  :diminish indent-bars-mode
  :hook
  ((prog-mode . indent-bars-mode)
-  (emacs-lisp-mode . indent-bars-mode)) ;; Explicit for .el files
+  (emacs-lisp-mode . indent-bars-mode)) ;; Ensure .el files work
  :custom
  ;; Appearance
  (indent-bars-pattern ".") ;; Solid bars
  (indent-bars-width-frac 0.2) ;; Thin bars
  (indent-bars-pad-frac 0.1) ;; Minimal padding
  (indent-bars-zigzag nil) ;; Straight bars
- (indent-bars-display-on-blank-lines t) ;; Show on blank lines
+ (indent-bars-display-on-blank-lines t) ;; Bars on blank lines (required)
  (indent-bars-prefer-character nil) ;; Stipples for speed
+ ;; Highlight current level (required)
+ (indent-bars-highlight-current-depth '(:blend 0.6)) ;; Brighter current bar
  ;; Behavior
  (indent-bars-no-descend-strings t) ;; Lock depth in strings
  (indent-bars-no-descend-lists t) ;; Lock depth in lists
@@ -1033,7 +1035,7 @@
     (emacs-lisp function_definition)
     (c function_declarator compound_statement)))
  :config
- ;; Force font-lock refresh to ensure bars display
+ ;; Force font-lock refresh for .el files
  (defun indent-bars-refresh-font-lock ()
    (when indent-bars-mode
      (font-lock-flush)
