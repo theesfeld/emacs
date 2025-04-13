@@ -1000,20 +1000,19 @@
  :hook (prog-mode . highlight-thing-mode))
 
 (use-package
- highlight-indent-guides
+ indent-bars
  :ensure t
- :diminish highlight-indent-guides-mode
- :hook (prog-mode . highlight-indent-guides-mode)
+ :diminish indent-bars-mode
+ :hook (prog-mode . indent-bars-mode)
  :custom
- (highlight-indent-guides-method 'column) ;; Vertical lines, less intrusive
- (highlight-indent-guides-responsive 'top) ;; Highlight current indent level
- (highlight-indent-guides-delay 0.1) ;; Fast updates
- (highlight-indent-guides-auto-enabled nil) ;; Manual colors for modus-vivendi
- ;:custom-face
- (highlight-indent-guides-odd-face ((t (:foreground "#4f4f4f")))) ;; Subtle gray
- (highlight-indent-guides-even-face ((t (:foreground "#6a6a6a")))) ;; Lighter gray
- (highlight-indent-guides-character-face
-  ((t (:foreground "#8b8b8b"))))) ;; Bright for lines
+ (indent-bars-color "#787878") ;; Medium gray for modus-vivendi
+ (indent-bars-pattern ".") ;; Solid thin bars
+ (indent-bars-width-frac 0.2) ;; Narrow bars
+ (indent-bars-pad-frac 0.1) ;; Minimal padding
+ (indent-bars-zigzag nil) ;; Straight bars
+ (indent-bars-display-on-blank-lines t) ;; Show on blank lines
+ (indent-bars-highlight-current-depth '(:foreground "#a9a9a9")) ;; Bright gray for current indent
+ (indent-bars-prefer-character nil)) ;; Use stipples for speed
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Mode Line Cleanup                           ;;
