@@ -1206,10 +1206,9 @@
 (use-package
  all-the-icons-completion
  :ensure t
- :after (all-the-icons marginalia)
+ ;:after (all-the-icons marginalia)
  :config (all-the-icons-completion-mode)
- :hook
- (marginalia-mode . all-the-icons-completion-marginalia-setup))
+ :hook (marginalia-mode . all-the-icons-completion-marginalia-setup))
 
 (use-package
  alert
