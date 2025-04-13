@@ -149,14 +149,6 @@
                   (window-width)
                 (min 80 (window-width)))))
 
-(defun grim/emacs-everywhere-wayland-app-info ()
-  "Return a dummy app info struct for Wayland."
-  (make-emacs-everywhere-app
-   :id "wayland"
-   :class "wayland-app"
-   :title "Unknown"
-   :geometry '(0 0 800 600)))
-
 ;; Basic screenshot function (Wayland example) - Untouched core with enhancements
 (defun grim/screenshot (&optional type)
   "Export current frame as screenshot to clipboard using TYPE format (png/svg/pdf/postscript)."
@@ -175,25 +167,21 @@
          (data (x-export-frames nil type)))
     (with-temp-file filename
       (insert data))
-    (cond
-     ((executable-find "wl-copy") ; Wayland
-      (with-temp-buffer
-        (insert-file-contents filename)
-        (call-process-region (point-min) (point-max) "wl-copy"
-                             nil nil nil "-t"
-                             (format "image/%s"
-                                     (substring extension 1)))))
-     ((executable-find "xclip") ; X11 fallback
-      (with-temp-buffer
-        (insert-file-contents filename)
-        (call-process-region (point-min) (point-max) "xclip"
-                             nil nil nil "-selection" "clipboard" "-t"
-                             (format "image/%s"
-                                     (substring extension 1)))))
-     (t
-      (message "No clipboard tool found (wl-copy/xclip)")))
+    (if (executable-find "xclip")
+        (with-temp-buffer
+          (insert-file-contents filename)
+          (call-process-region (point-min) (point-max) "xclip"
+                               nil
+                               nil
+                               nil
+                               "-selection"
+                               "clipboard"
+                               "-t"
+                               (format "image/%s"
+                                       (substring extension 1))))
+      (message "No clipboard tool found (xclip)"))
     (set-register ?s filename)
-    (when (or (executable-find "wl-copy") (executable-find "xclip"))
+    (when (executable-find "xclip")
       (alert
        (format "Screenshot (%s) copied to clipboard and saved to %s"
                type filename)
@@ -2804,25 +2792,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun my-after-make-frame-setup (&optional frame)
-  "Initialize UI settings for new FRAMEs under Wayland, including daemon clients."
-  (when
-      (and (display-graphic-p) ; Only for graphical frames
-           (string= (getenv "XDG_SESSION_TYPE") "wayland")) ; Only under Wayland
+  "Initialize UI settings for new FRAMEs on Xorg, including daemon clients."
+  (when (display-graphic-p) ; Only for graphical frames
     (with-selected-frame (or frame (selected-frame))
       (menu-bar-mode -1)
       (tool-bar-mode -1)
       (scroll-bar-mode -1))))
 
-;; Run setup for the initial frame if not in daemon mode and under Wayland
 (unless (daemonp)
-  (when (string= (getenv "XDG_SESSION_TYPE") "wayland")
+  (when (display-graphic-p)
     (my-after-make-frame-setup)))
-
-;; Hook for new frames created by emacsclient, only under Wayland
 (add-hook
  'after-make-frame-functions
  (lambda (frame)
-   (when (string= (getenv "XDG_SESSION_TYPE") "wayland")
+   (when (display-graphic-p frame)
      (my-after-make-frame-setup frame))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
