@@ -999,20 +999,60 @@
                      :weight 'normal)
  :hook (prog-mode . highlight-thing-mode))
 
-(use-package
- indent-bars
- :ensure t
- :diminish indent-bars-mode
- :hook (prog-mode . indent-bars-mode)
- :custom
- (indent-bars-color "#787878") ;; Medium gray for modus-vivendi
- (indent-bars-pattern ".") ;; Solid thin bars
- (indent-bars-width-frac 0.2) ;; Narrow bars
- (indent-bars-pad-frac 0.1) ;; Minimal padding
- (indent-bars-zigzag nil) ;; Straight bars
- (indent-bars-display-on-blank-lines t) ;; Show on blank lines
- (indent-bars-highlight-current-depth '(:foreground "#a9a9a9")) ;; Bright gray for current indent
- (indent-bars-prefer-character nil)) ;; Use stipples for speed
+(use-package rainbow-delimiters
+  :ensure t
+  :diminish rainbow-delimiters-mode
+  :hook (prog-mode . rainbow-delimiters-mode)
+  :custom
+  (rainbow-delimiters-max-face-count 9)) ;; Default 9 faces
+
+(use-package indent-bars
+  :ensure t
+  :diminish indent-bars-mode
+  :hook (prog-mode . indent-bars-mode)
+  :custom
+  ;; Appearance (defaults from docs, optimized for clarity)
+  (indent-bars-pattern ".")               ;; Solid bars
+  (indent-bars-width-frac 0.2)           ;; Thin bars
+  (indent-bars-pad-frac 0.1)             ;; Minimal padding
+  (indent-bars-zigzag nil)               ;; Straight bars
+  (indent-bars-display-on-blank-lines t) ;; Show on blank lines
+  (indent-bars-prefer-character nil)     ;; Stipples for speed
+  ;; Behavior
+  (indent-bars-no-descend-strings t)     ;; Lock depth in strings
+  (indent-bars-no-descend-lists t)       ;; Lock depth in lists
+  (indent-bars-depth-update-delay 0.05)  ;; Fast updates
+  ;; Tree-sitter (optional, enabled for precision)
+  (indent-bars-treesit-support t)
+  (indent-bars-treesit-scope
+   '((python function_definition class_definition)
+     (emacs-lisp function_definition)
+     (c function_declarator compound_statement)))
+  ;:config
+  ;; ;; Sync indent-bars with rainbow-delimiters in Lisp modes
+  ;; (defun indent-bars-sync-rainbow-colors ()
+  ;;   "Set indent-bars colors to match rainbow-delimiters faces in Lisp modes."
+  ;;   (if (and (bound-and-true-p rainbow-delimiters-mode)
+  ;;            (derived-mode-p 'emacs-lisp-mode 'lisp-mode))
+  ;;       (let* ((depth-faces
+  ;;               (cl-loop for i from 1 to 9
+  ;;                        for face = (intern-soft
+  ;;                                    (format "rainbow-delimiters-depth-%d-face" i))
+  ;;                        when (facep face)
+  ;;                        collect (face-foreground face nil t))))
+  ;;         (when depth-faces
+  ;;           (setq-local indent-bars-color-by-depth
+  ;;                       (mapcar (lambda (color)
+  ;;                                 (list :foreground color :blend 0.8))
+  ;;                               depth-faces))
+  ;;           (setq-local indent-bars-highlight-current-depth
+  ;;                       `(:foreground ,(car (last depth-faces)) :blend 1.0))))
+  ;;     ;; Fallback to defaults (theme-aware)
+  ;;     (setq-local indent-bars-color-by-depth nil
+  ;;                 indent-bars-highlight-current-depth '(:blend 0.4))))
+  ;; ;; Run sync on mode enable and theme change
+  ;; (add-hook 'indent-bars-mode-hook #'indent-bars-sync-rainbow-colors)
+  ;; (add-hook 'after-load-theme-hook #'indent-bars-sync-rainbow-colors))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Mode Line Cleanup                           ;;
