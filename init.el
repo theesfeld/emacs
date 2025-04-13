@@ -38,15 +38,38 @@ If FORWARD is non-nil, prioritize forward jumps; otherwise, backward."
   (let* ((thing
           (when (bound-and-true-p highlight-thing-mode)
             (thing-at-point 'symbol t)))
-         (case-fold-search nil))
+         (case-fold-search nil)
+         (avy-keys (append avy-keys nil))) ; Ensure avy-keys is a list
     (if (and thing (stringp thing) (> (length thing) 0))
-        (avy-goto-word-1
-         (string-to-char thing) forward
-         (lambda (pt)
-           (save-excursion
-             (goto-char pt)
-             (let ((current-thing (thing-at-point 'symbol t)))
-               (and current-thing (string= current-thing thing))))))
+        (let ((char (string-to-char thing))
+              (candidates))
+          ;; Collect candidates manually
+          (save-excursion
+            (goto-char
+             (if forward
+                 (point-min)
+               (point-max)))
+            (while (funcall (if forward
+                                #'re-search-forward
+                              #'re-search-backward)
+                            (concat "\\<" (regexp-quote thing) "\\>")
+                            nil
+                            t)
+              (when (string= (thing-at-point 'symbol t) thing)
+                (push (point) candidates))))
+          (if candidates
+              (avy-process
+               (if forward
+                   candidates
+                 (nreverse candidates))
+               (avy--style-fn avy-style)
+               (lambda (pt _w)
+                 (save-excursion
+                   (goto-char pt)
+                   (let ((current-thing (thing-at-point 'symbol t)))
+                     (and current-thing
+                          (string= current-thing thing))))))
+            (message "No matching symbols found")))
       (message "No valid symbol under cursor"))))
 
 (defun my-avy-jump-highlighted-thing-forward ()
