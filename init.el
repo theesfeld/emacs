@@ -1027,7 +1027,7 @@
   (indent-bars-treesit-scope
    '((python function_definition class_definition)
      (emacs-lisp function_definition)
-     (c function_declarator compound_statement)))
+     (c function_declarator compound_statement))))
   ;:config
   ;; ;; Sync indent-bars with rainbow-delimiters in Lisp modes
   ;; (defun indent-bars-sync-rainbow-colors ()
