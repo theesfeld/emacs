@@ -31,6 +31,35 @@
 ;;                                CUSTOM FUNCTIONS                           ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defun my-avy-jump-highlighted-thing (forward)
+  "Jump to occurrences of the highlighted thing using avy.
+If FORWARD is non-nil, prioritize forward jumps; otherwise, backward."
+  (interactive "P")
+  (let* ((thing (thing-at-point 'symbol t))
+         (case-fold-search nil)) ; Respect case sensitivity
+    (if (and thing (bound-and-true-p highlight-thing-mode))
+        (avy-goto-word-1
+         (string-to-char thing) forward
+         (lambda (pt _)
+           (save-excursion
+             (goto-char pt)
+             (string= (thing-at-point 'symbol t) thing))))
+      (message "No highlighted thing under cursor"))))
+
+(defun my-avy-jump-highlighted-thing-forward ()
+  "Jump to the next occurrence of the highlighted thing using avy."
+  (interactive)
+  (my-avy-jump-highlighted-thing t))
+
+(defun my-avy-jump-highlighted-thing-backward ()
+  "Jump to the previous occurrence of the highlighted thing using avy."
+  (interactive)
+  (my-avy-jump-highlighted-thing nil))
+
+;; Keybindings
+(global-set-key (kbd "C-c ]") 'my-avy-jump-highlighted-thing-forward)
+(global-set-key (kbd "C-c [") 'my-avy-jump-highlighted-thing-backward)
+
 ;; Function to translate C-M-S-s-<key> to H-<key>
 (defun my-hyper-translate (key)
   "Translate C-M-S-s-<key> to H-<key>, handling any key type."
