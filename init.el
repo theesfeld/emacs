@@ -999,29 +999,21 @@
                      :weight 'normal)
  :hook (prog-mode . highlight-thing-mode))
 
-;; Indent bars
 (use-package
- indent-bars
+ highlight-indent-guides
+ :ensure t
+ :diminish highlight-indent-guides-mode
+ :hook (prog-mode . highlight-indent-guides-mode)
  :custom
- (indent-bars-no-descend-lists t)
- (indent-bars-treesit-support t)
- (indent-bars-prefer-character t)
- (indent-bars-treesit-scope
-  '((python
-     function_definition
-     class_definition
-     for_statement
-     if_statement
-     with_statement
-     while_statement)))
- (indent-bars-color '(highlight :face-bg t :blend 0.15))
- (indent-bars-starting-column 0)
- (indent-bars-color-by-depth
-  '(:regexp "outline-\\([0-9]+\\)" :blend 1))
- (indent-bars-highlight-current-depth '(:blend 0.5))
- (indent-bars-display-on-blank-lines t)
- :hook (prog-mode . indent-bars-mode))
-
+ (highlight-indent-guides-method 'column) ;; Vertical lines, less intrusive
+ (highlight-indent-guides-responsive 'top) ;; Highlight current indent level
+ (highlight-indent-guides-delay 0.1) ;; Fast updates
+ (highlight-indent-guides-auto-enabled t) ;; Manual colors for modus-vivendi
+ ;:custom-face
+ ;(highlight-indent-guides-odd-face ((t (:foreground "#4f4f4f"))))  ;; Subtle gray
+ ;(highlight-indent-guides-even-face ((t (:foreground "#6a6a6a")))) ;; Lighter gray
+ ;(highlight-indent-guides-character-face ((t (:foreground "#8b8b8b"))))) ;; Bright for lines
+ )
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Mode Line Cleanup                           ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
