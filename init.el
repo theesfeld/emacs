@@ -1183,11 +1183,10 @@
  :bind
  (:map
   corfu-map
-  ("TAB" . corfu-next) ; Navigate down
-  ([tab] . corfu-next)
-  ("S-TAB" . corfu-previous) ; Navigate up
-  ([backtab] . corfu-previous)
-  ("RET" . corfu-complete) ; Select candidate with Enter
+  ("TAB" . corfu-complete) ; Accept current suggestion
+  ([tab] . corfu-complete) ; Ensure both TAB forms work
+  ("<down>" . corfu-next) ; Cycle down with down arrow
+  ("<up>" . corfu-previous) ; Cycle up with up arrow
   ("M-d" . corfu-popupinfo-toggle)) ; Toggle documentation
  :config
  ;; Ensure Orderless works with Corfu
