@@ -386,64 +386,13 @@
              (lambda ()
                (interactive)
                (kill-buffer-and-window)))
-            ([?\s-l]
-             .
-             (lambda ()
-               (interactive)
-               (when (executable-find "systemctl")
-                 (start-process-shell-command
-                  "suspend" nil "systemctl suspend-then-hibernate"))))
-            ;; Power and Sleep
             ([XF86PowerOff]
              .
              (lambda ()
                (interactive)
                (when (executable-find "systemctl")
                  (start-process-shell-command
-                  "poweroff" nil "systemctl poweroff"))))
-            ([XF86Sleep]
-             .
-             (lambda ()
-               (interactive)
-               (when (executable-find "systemctl")
-                 (start-process-shell-command
-                  "suspend" nil "systemctl suspend-then-hibernate"))))
-            ;; Media keys
-            ([XF86AudioPlay]
-             .
-             (lambda ()
-               (interactive)
-               (when (executable-find "playerctl")
-                 (start-process-shell-command
-                  "play" nil "playerctl play-pause"))))
-            ([XF86AudioPause]
-             .
-             (lambda ()
-               (interactive)
-               (when (executable-find "playerctl")
-                 (start-process-shell-command
-                  "pause" nil "playerctl play-pause"))))
-            ([XF86AudioNext]
-             .
-             (lambda ()
-               (interactive)
-               (when (executable-find "playerctl")
-                 (start-process-shell-command
-                  "next" nil "playerctl next"))))
-            ([XF86AudioPrev]
-             .
-             (lambda ()
-               (interactive)
-               (when (executable-find "playerctl")
-                 (start-process-shell-command
-                  "prev" nil "playerctl previous"))))
-            ([XF86AudioStop]
-             .
-             (lambda ()
-               (interactive)
-               (when (executable-find "playerctl")
-                 (start-process-shell-command
-                  "stop" nil "playerctl stop")))))
+                  "poweroff" nil "systemctl poweroff")))))
           (mapcar
            (lambda (i)
              (cons
@@ -477,40 +426,6 @@
            ([?\C-k] . [S-end delete])
            ([?\M-w] . [?\C-c])
            ([?\C-y] . [?\C-v])))
-
-   (defun my-exwm-auto-tile-fullscreen ()
-     "Automatically tile windows that request full-screen or maximized states, keep others floating if appropriate."
-     (when (and (boundp 'exwm--id) exwm--id)
-       (let* ((window-id exwm--id)
-              (hints (exwm--get-window-hints window-id))
-              (class (exwm--get-window-class window-id))
-              (name (exwm--get-window-name window-id))
-              (is-fullscreen
-               (or (and hints (member 'fullscreen hints))
-                   (and hints (member 'maximized hints))))
-              (is-dialog (and hints (member 'dialog hints)))
-              (is-popup (and hints (member 'popup hints))))
-         ;; Tile windows that are full-screen or maximized, unless they are dialogs/popups
-         (cond
-          ((or is-fullscreen
-               ;; Optionally add specific apps by class/name
-               (string-equal class "firefox")
-               (string-equal class "chromium"))
-           (unless (or is-dialog is-popup)
-             (exwm-layout-set-mode window-id 'tile)))
-          ;; Explicitly float dialogs and popups
-          ((or is-dialog is-popup)
-           (exwm-layout-set-mode window-id 'float))
-          ;; Default: respect the window's natural state
-          (t
-           ;; If no specific hints, check if it’s a transient window
-           (if (exwm--get-window-transient-for window-id)
-               (exwm-layout-set-mode window-id 'float)
-             ;; Otherwise, let EXWM decide (usually tiles unless overridden)
-             ))))))
-
-   ;; Add the function to the manage hook
-   (add-hook 'exwm-manage-finish-hook #'my-exwm-auto-tile-fullscreen)
 
    (exwm-enable))
 
@@ -644,23 +559,6 @@
        (message
         "Warning: %s not found; desktop-environment may not work fully"
         cmd)))
-
-   :bind
-   (:map
-    desktop-environment-mode-map
-    ;; Media keybindings
-    ("<XF86AudioRaiseVolume>" . desktop-environment-volume-increment)
-    ("<XF86AudioLowerVolume>" . desktop-environment-volume-decrement)
-    ("<XF86AudioMute>" . desktop-environment-toggle-mute)
-    ("<XF86MonBrightnessUp>"
-     .
-     desktop-environment-brightness-increment)
-    ("<XF86MonBrightnessDown>"
-     .
-     desktop-environment-brightness-decrement)
-    ;; Screenshot bindings
-    ("s-s" . desktop-environment-screenshot)
-    ("s-S" . desktop-environment-screenshot-part))
 
    :hook
    ;; Notification hooks for volume and brightness changes
