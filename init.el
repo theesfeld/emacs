@@ -542,12 +542,6 @@
    ; Check mute status
    (setq desktop-environment-volume-toggle-command
          "pactl set-sink-mute @DEFAULT_SINK@ toggle") ; Toggle mute
-   (setq desktop-environment-brightness-get-command
-         "brightnessctl get") ; Get brightness
-   (setq desktop-environment-brightness-set-command
-         "brightnessctl set %s%%") ; Set brightness
-   (setq desktop-environment-brightness-normal-increment "10+") ; Brightness step up
-   (setq desktop-environment-brightness-normal-decrement "10-") ; Brightness step down
    (setq desktop-environment-volume-normal-increment "5%+") ; Volume step up
    (setq desktop-environment-volume-normal-decrement "5%-") ; Volume step down
 
