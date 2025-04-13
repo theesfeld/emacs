@@ -532,18 +532,17 @@
    (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
    (setq
     desktop-environment-volume-get-command
-    "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1 | tr -d '%'")
-   ; Extract volume percentage
+    "pactl get-sink-volume @DEFAULT_SINK@ | awk '/Volume:/ {print $5}'")
+   (setq desktop-environment-volume-get-regexp "\\([0-9]+%\\)")
    (setq desktop-environment-volume-set-command
          "pactl set-sink-volume @DEFAULT_SINK@ %s%%") ; Set volume
    (setq
     desktop-environment-mute-get-command
-    "pactl get-sink-mute @DEFAULT_SINK@ | grep -q 'yes' && echo true || echo false")
-   ; Check mute status
+    "pactl get-sink-mute @DEFAULT_SINK@ | awk '{print ($2 == \"yes\") ? \"true\" : \"false\"}'")
    (setq desktop-environment-volume-toggle-command
          "pactl set-sink-mute @DEFAULT_SINK@ toggle") ; Toggle mute
-   (setq desktop-environment-volume-normal-increment "5%+") ; Volume step up
-   (setq desktop-environment-volume-normal-decrement "5%-") ; Volume step down
+   (setq desktop-environment-volume-normal-increment "+5") ; Volume step up
+   (setq desktop-environment-volume-normal-decrement "-5") ; Volume step down
 
    :config
    ;; Ensure dependencies are installed
