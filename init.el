@@ -257,7 +257,6 @@
      display-time-day-and-date t)
     (display-time-mode 1)
     (run-at-time 2 nil #'grim/run-in-background "nm-applet")
-    (run-at-time 2 nil #'grim/run-in-background "pasystray")
     (run-at-time 2 nil #'grim/run-in-background "udiskie -at")
     (run-at-time 2 nil #'grim/run-in-background
                  "mullvad-vpn --disable-gpu")
