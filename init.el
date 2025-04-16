@@ -2285,37 +2285,6 @@
  (electric-quote-mode 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                           calibre / nov.el                                ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package
- calibredb
- :ensure t
- :defer t
- :config
- (setq calibredb-format-all-the-icons t)
- (setq calibredb-format-character-icons t)
- (setq calibredb-root-dir "~/.calibre-library")
- (setq calibredb-db-dir
-       (expand-file-name "metadata.db" calibredb-root-dir))
- (setq calibredb-library-alist
-       '(("~/.calibre-library" (name . "Calibre")))))
-
-(use-package esxml :ensure t)
-
-(use-package
- nov
- :ensure t
- :defer t
- :after esxml
- :init (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
- :config
- (setq
-  nov-unzip-program (executable-find "bsdtar")
-  nov-unzip-args '("-xC" directory "-f" filename))
- (setq nov-verbose t))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                 Flymake Setup                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
