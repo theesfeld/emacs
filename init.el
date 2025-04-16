@@ -1633,15 +1633,11 @@
       ,(expand-file-name "tasks.org" org-directory) "Tasks")
      "* TODO %:subject\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:EMAIL_LINK: %:link\n:END:\n\n%:initial\n"
      :immediate-finish t)
-    ("r" "Read Later (RSS)" entry
-     (file+headline
-      ,(expand-file-name "tasks.org" org-directory) "Read Later")
-     "* TODO Read: %:description\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:LINK: %:link\n:END:\n"
-     :immediate-finish t)
-    ("e" "Email TODO" entry
-     (file+headline
-      ,(expand-file-name "tasks.org" org-directory) "Tasks")
-     "* TODO %:subject\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:EMAIL_LINK: %:link\n:END:\n"
+    ("e" "Email" entry (file+headline "~/org/inbox.org" "Emails")
+         "* TODO %:subject\n:PROPERTIES:\n:EMAIL: %:message-id\n:END:\n%?"
+         :immediate-finish t)
+    ("r" "RSS" entry (file+headline "~/org/inbox.org" "RSS")
+     "* TODO %:title\n:PROPERTIES:\n:URL: %:url\n:END:\n%?"
      :immediate-finish t)))
  :hook
  (org-capture-after-finalize
@@ -2519,6 +2515,10 @@
   (define-key my-gnus-map (kbd "g") 'gnus)
   (define-key my-gnus-map (kbd "u") 'gnus-unplugged)
 
+  ;; Ensure directories exist
+  (make-directory "~/.config/emacs/gnus/News/rss/" t)
+  (make-directory "~/.config/emacs/gnus/cache/" t)
+
   :hook
   ;; Enable topic mode
   (gnus-group-mode . (lambda ()
@@ -2526,7 +2526,7 @@
                          (gnus-topic-mode))))
   ;; Load RSS feeds and list groups
   (gnus-started-hook . (lambda ()
-                         ;; Load all .el files in nnrss-directory
+                         (require 'nnrss)
                          (dolist (file (directory-files
                                         "~/.config/emacs/gnus/News/rss/"
                                         t "\\.el$"))
@@ -2562,18 +2562,23 @@
 
   :custom-face
   ;; Dynamic faces for Modus Vivendi or fallback
-  (gnus-group-mail-3 ((t (:foreground ,(if (facep 'modus-themes-fg-blue) "#00bcff" "cyan") :weight bold))))
-  (gnus-group-mail-3-empty ((t (:foreground ,(if (facep 'modus-themes-fg-dim) "#666699" "gray")))))
-  (gnus-summary-normal-unread ((t (:foreground ,(if (facep 'modus-themes-fg-yellow) "#ffcc66" "yellow") :weight bold))))
-  (gnus-summary-normal-read ((t (:foreground ,(if (facep 'modus-themes-fg-alt) "#a0a0a0" "light gray")))))
-  (gnus-header-name ((t (:foreground ,(if (facep 'modus-themes-fg-magenta) "#ff66ff" "magenta") :weight bold))))
-  (gnus-header-content ((t (:foreground ,(if (facep 'modus-themes-fg-cyan) "#88c0d0" "cyan")))))
+  (gnus-group-mail-3
+   ((t (:foreground ,(if (facep 'modus-themes-fg-blue) "#00bcff" "cyan")
+        :weight bold))))
+  (gnus-group-mail-3-empty
+   ((t (:foreground ,(if (facep 'modus-themes-fg-dim) "#666699" "gray")))))
+  (gnus-summary-normal-unread
+   ((t (:foreground ,(if (facep 'modus-themes-fg-yellow) "#ffcc66" "yellow")
+        :weight bold))))
+  (gnus-summary-normal-read
+   ((t (:foreground ,(if (facep 'modus-themes-fg-alt) "#a0a0a0" "light gray")))))
+  (gnus-header-name
+   ((t (:foreground ,(if (facep 'modus-themes-fg-magenta) "#ff66ff" "magenta")
+        :weight bold))))
+  (gnus-header-content
+   ((t (:foreground ,(if (facep 'modus-themes-fg-cyan) "#88c0d0" "cyan")))))
 
   :config
-  ;; Ensure cache and RSS directories exist
-  (make-directory gnus-cache-directory t)
-  (make-directory nnrss-directory t)
-
   ;; Posting styles
   (setq gnus-posting-styles
         '((".*"
