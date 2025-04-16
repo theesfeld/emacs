@@ -515,9 +515,7 @@
    (setq desktop-environment-notifications t) ; Enable notifications
    (setq desktop-environment-screenshot-directory
          "~/Pictures/Screenshots") ; Screenshot path
-   (setq desktop-environment-screenshot-command "maim") ; Use maim for full screenshots
-   (setq desktop-environment-screenshot-partial-command "maim -s") ; Use maim with slop for partial screenshots
-   (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
+      (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
    (setq
     desktop-environment-volume-get-command
     "pactl get-sink-volume @DEFAULT_SINK@ | awk '/Volume:/ {print $5}'")
@@ -535,7 +533,7 @@
    :config
    ;; Ensure dependencies are installed
    (desktop-environment-mode 1)
-   (dolist (cmd '("maim" "slop" "slock" "pactl" "brightnessctl"))
+   (dolist (cmd '("scrot" "slock" "pactl" "brightnessctl"))
      (unless (executable-find cmd)
        (message
         "Warning: %s not found; desktop-environment may not work fully"
