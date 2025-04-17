@@ -327,6 +327,55 @@
    ;; (grim/set-wallpaper)
    ;; (exwm-randr-mode 1)
 
+   ;; 2222222
+   ;; (require 'exwm-randr)
+   ;; (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
+   ;; (add-hook
+   ;;  'exwm-randr-screen-change-hook
+   ;;  (lambda ()
+   ;;    (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
+   ;;          connected-outputs)
+   ;;      (with-temp-buffer
+   ;;        (call-process "xrandr" nil t nil)
+   ;;        (goto-char (point-min))
+   ;;        (while (re-search-forward xrandr-output-regexp nil t)
+   ;;          (push (match-string 1) connected-outputs)))
+   ;;      (cond
+   ;;       ;; Single monitor or only eDP-1 connected
+   ;;       ((or (= (length connected-outputs) 1)
+   ;;            (and (member "eDP-1" connected-outputs)
+   ;;                 (= (length (remove "eDP-1" connected-outputs)) 0)))
+   ;;        (start-process-shell-command
+   ;;         "xrandr"
+   ;;         nil
+   ;;         "xrandr --output eDP-1 --primary --auto --scale .75")
+   ;;        (dolist (output (remove "eDP-1" connected-outputs))
+   ;;          (start-process-shell-command
+   ;;           "xrandr" nil
+   ;;           (format "xrandr --output %s --off" output)))
+   ;;        (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1")))
+   ;;       ;; One or more external monitors
+   ;;       ((>= (length (remove "eDP-1" connected-outputs)) 1)
+   ;;        (let ((primary (car (remove "eDP-1" connected-outputs)))
+   ;;              (secondary (cadr (remove "eDP-1" connected-outputs))))
+   ;;          (if secondary
+   ;;              (start-process-shell-command
+   ;;               "xrandr" nil
+   ;;               (format
+   ;;                "xrandr --output %s --primary --auto --output %s --auto --left-of %s --output eDP-1 --off"
+   ;;                primary secondary primary))
+   ;;            (start-process-shell-command
+   ;;             "xrandr" nil
+   ;;             (format
+   ;;              "xrandr --output %s --primary --auto --output eDP-1 --off"
+   ;;              primary)))
+   ;;          (setq exwm-randr-workspace-monitor-plist
+   ;;                (if secondary
+   ;;                    `(0 ,primary 1 ,secondary)
+   ;;                  `(0 ,primary)))))))))
+   ;; (grim/set-wallpaper)
+   ;; (exwm-randr-mode 1)
+
    (require 'exwm-randr)
    (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
    (add-hook
@@ -347,7 +396,9 @@
           (start-process-shell-command
            "xrandr"
            nil
-           "xrandr --output eDP-1 --primary --auto --scale .75")
+           "xrandr --output eDP-1 --primary --auto --scale 1 --dpi 192")
+          (start-process-shell-command
+           "xrdb" nil "echo 'Xft.dpi: 120' | xrdb -merge")
           (dolist (output (remove "eDP-1" connected-outputs))
             (start-process-shell-command
              "xrandr" nil
@@ -368,10 +419,14 @@
                (format
                 "xrandr --output %s --primary --auto --output eDP-1 --off"
                 primary)))
+            ;; Reset DPI to default (96) for external monitors
+            (start-process-shell-command
+             "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
             (setq exwm-randr-workspace-monitor-plist
                   (if secondary
                       `(0 ,primary 1 ,secondary)
                     `(0 ,primary)))))))))
+   ;; (set-face-attribute 'default nil :height 120)
    (grim/set-wallpaper)
    (exwm-randr-mode 1)
 
