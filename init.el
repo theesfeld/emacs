@@ -258,9 +258,10 @@
     (display-time-mode 1)
     (run-at-time 2 nil #'grim/run-in-background "nm-applet")
     (run-at-time 2 nil #'grim/run-in-background "udiskie -at")
-    (run-at-time 2 nil #'grim/run-in-background
-                 "mullvad-vpn --disable-gpu")
     (run-at-time 2 nil #'grim/run-in-background "blueman-applet"))
+  (run-at-time 5 nil #'grim/run-in-background
+               "mullvad-vpn --disable-gpu")
+
 
   (defun grim/exwm-update-class ()
     (exwm-workspace-rename-buffer exwm-class-name))
