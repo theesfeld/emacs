@@ -403,7 +403,7 @@
            nil
            "xrandr --output eDP-1 --primary --auto --scale .75 --dpi 192")
           (start-process-shell-command
-           "xrdb" nil "echo 'Xft.dpi: 192' | xrdb -merge")
+           "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
           (dolist (output (remove "eDP-1" connected-outputs))
             (start-process-shell-command
              "xrandr" nil
