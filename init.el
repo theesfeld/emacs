@@ -377,8 +377,6 @@
    ;; (exwm-randr-mode 1)
 
    (require 'exwm-randr)
-   (setenv "GDK_SCALE" "1.25")
-   (setenv "QT_SCALE_FACTOR" "1.25")
    (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
    (add-hook
     'exwm-randr-screen-change-hook
