@@ -291,6 +291,41 @@
     x-select-enable-primary t
     select-enable-clipboard t)
 
+   ;; (require 'exwm-randr)
+   ;; (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
+   ;; (add-hook
+   ;;  'exwm-randr-screen-change-hook
+   ;;  (lambda ()
+   ;;    (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
+   ;;          connected-outputs)
+   ;;      (with-temp-buffer
+   ;;        (call-process "xrandr" nil t nil)
+   ;;        (goto-char (point-min))
+   ;;        (while (re-search-forward xrandr-output-regexp nil t)
+   ;;          (push (match-string 1) connected-outputs)))
+   ;;      (cond
+   ;;       ((= (length connected-outputs) 1)
+   ;;        (start-process-shell-command
+   ;;         "xrandr" nil
+   ;;         (format "xrandr --output %s --primary --auto"
+   ;;                 (car connected-outputs))))
+   ;;       ((>= (length connected-outputs) 2)
+   ;;        (start-process-shell-command
+   ;;         "xrandr" nil
+   ;;         (format
+   ;;          "xrandr --output %s --primary --auto --output %s --auto --left-of %s"
+   ;;          (car connected-outputs)
+   ;;          (cadr connected-outputs)
+   ;;          (car connected-outputs)))
+   ;;        (setq exwm-randr-workspace-monitor-plist
+   ;;              (list
+   ;;               0
+   ;;               (car connected-outputs)
+   ;;               1
+   ;;               (cadr connected-outputs))))))))
+   ;; (grim/set-wallpaper)
+   ;; (exwm-randr-mode 1)
+
    (require 'exwm-randr)
    (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
    (add-hook
@@ -304,25 +339,38 @@
           (while (re-search-forward xrandr-output-regexp nil t)
             (push (match-string 1) connected-outputs)))
         (cond
-         ((= (length connected-outputs) 1)
+         ;; Single monitor or only eDP-1 connected
+         ((or (= (length connected-outputs) 1)
+              (and (member "eDP-1" connected-outputs)
+                   (= (length (remove "eDP-1" connected-outputs)) 0)))
           (start-process-shell-command
-           "xrandr" nil
-           (format "xrandr --output %s --primary --auto"
-                   (car connected-outputs))))
-         ((>= (length connected-outputs) 2)
-          (start-process-shell-command
-           "xrandr" nil
-           (format
-            "xrandr --output %s --primary --auto --output %s --auto --left-of %s"
-            (car connected-outputs)
-            (cadr connected-outputs)
-            (car connected-outputs)))
-          (setq exwm-randr-workspace-monitor-plist
-                (list
-                 0
-                 (car connected-outputs)
-                 1
-                 (cadr connected-outputs))))))))
+           "xrandr"
+           nil
+           "xrandr --output eDP-1 --primary --auto --scale 1.25x1.25")
+          (dolist (output (remove "eDP-1" connected-outputs))
+            (start-process-shell-command
+             "xrandr" nil
+             (format "xrandr --output %s --off" output)))
+          (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1")))
+         ;; One or more external monitors
+         ((>= (length (remove "eDP-1" connected-outputs)) 1)
+          (let ((primary (car (remove "eDP-1" connected-outputs)))
+                (secondary (cadr (remove "eDP-1" connected-outputs))))
+            (if secondary
+                (start-process-shell-command
+                 "xrandr" nil
+                 (format
+                  "xrandr --output %s --primary --auto --output %s --auto --left-of %s --output eDP-1 --off"
+                  primary secondary primary))
+              (start-process-shell-command
+               "xrandr" nil
+               (format
+                "xrandr --output %s --primary --auto --output eDP-1 --off"
+                primary)))
+            (setq exwm-randr-workspace-monitor-plist
+                  (if secondary
+                      `(0 ,primary 1 ,secondary)
+                    `(0 ,primary)))))))))
    (grim/set-wallpaper)
    (exwm-randr-mode 1)
 
@@ -515,7 +563,7 @@
    (setq desktop-environment-notifications t) ; Enable notifications
    (setq desktop-environment-screenshot-directory
          "~/Pictures/Screenshots") ; Screenshot path
-      (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
+   (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
    (setq
     desktop-environment-volume-get-command
     "pactl get-sink-volume @DEFAULT_SINK@ | awk '/Volume:/ {print $5}'")
@@ -1633,10 +1681,16 @@
       ,(expand-file-name "tasks.org" org-directory) "Tasks")
      "* TODO %:subject\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:EMAIL_LINK: %:link\n:END:\n\n%:initial\n"
      :immediate-finish t)
-    ("e" "Email" entry (file+headline "~/org/inbox.org" "Emails")
-         "* TODO %:subject\n:PROPERTIES:\n:EMAIL: %:message-id\n:END:\n%?"
-         :immediate-finish t)
-    ("r" "RSS" entry (file+headline "~/org/inbox.org" "RSS")
+    ("e"
+     "Email"
+     entry
+     (file+headline "~/org/inbox.org" "Emails")
+     "* TODO %:subject\n:PROPERTIES:\n:EMAIL: %:message-id\n:END:\n%?"
+     :immediate-finish t)
+    ("r"
+     "RSS"
+     entry
+     (file+headline "~/org/inbox.org" "RSS")
      "* TODO %:title\n:PROPERTIES:\n:URL: %:url\n:END:\n%?"
      :immediate-finish t)))
  :hook
@@ -1963,89 +2017,97 @@
 ;;                                  DENOTE                                   ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package denote
-  :ensure t
-  :hook
-  ( ;; If you use Markdown or plain text files, then you want to make
-   ;; the Denote links clickable (Org renders links as buttons right
-   ;; away)
-   (text-mode . denote-fontify-links-mode-maybe)
-   ;; Apply colours to Denote names in Dired.  This applies to all
-   ;; directories.  Check `denote-dired-directories' for the specific
-   ;; directories you may prefer instead.  Then, instead of
-   ;; `denote-dired-mode', use `denote-dired-mode-in-directories'.
-   (dired-mode . denote-dired-mode))
-  :bind
-  ;; Denote DOES NOT define any key bindings.  This is for the user to
-  ;; decide.  For example:
-  ( :map global-map
-    ("C-c n n" . denote)
-    ("C-c n d" . denote-dired)
-    ;; ("C-c n g" . denote-grep)
-    ;; If you intend to use Denote with a variety of file types, it is
-    ;; easier to bind the link-related commands to the `global-map', as
-    ;; shown here.  Otherwise follow the same pattern for `org-mode-map',
-    ;; `markdown-mode-map', and/or `text-mode-map'.
-    ("C-c n l" . denote-link)
-    ("C-c n L" . denote-add-links)
-    ("C-c n b" . denote-backlinks)
-    ("C-c n q c" . denote-query-contents-link) ; create link that triggers a grep
-    ("C-c n q f" . denote-query-filenames-link) ; create link that triggers a dired
-    ;; Note that `denote-rename-file' can work from any context, not just
-    ;; Dired bufffers.  That is why we bind it here to the `global-map'.
-    ("C-c n r" . denote-rename-file)
-    ("C-c n R" . denote-rename-file-using-front-matter)
+(use-package
+ denote
+ :ensure t
+ :hook
+ ( ;; If you use Markdown or plain text files, then you want to make
+  ;; the Denote links clickable (Org renders links as buttons right
+  ;; away)
+  (text-mode . denote-fontify-links-mode-maybe)
+  ;; Apply colours to Denote names in Dired.  This applies to all
+  ;; directories.  Check `denote-dired-directories' for the specific
+  ;; directories you may prefer instead.  Then, instead of
+  ;; `denote-dired-mode', use `denote-dired-mode-in-directories'.
+  (dired-mode . denote-dired-mode))
+ :bind
+ ;; Denote DOES NOT define any key bindings.  This is for the user to
+ ;; decide.  For example:
+ (:map
+  global-map
+  ("C-c n n" . denote)
+  ("C-c n d" . denote-dired)
+  ;; ("C-c n g" . denote-grep)
+  ;; If you intend to use Denote with a variety of file types, it is
+  ;; easier to bind the link-related commands to the `global-map', as
+  ;; shown here.  Otherwise follow the same pattern for `org-mode-map',
+  ;; `markdown-mode-map', and/or `text-mode-map'.
+  ("C-c n l" . denote-link)
+  ("C-c n L" . denote-add-links)
+  ("C-c n b" . denote-backlinks)
+  ("C-c n q c" . denote-query-contents-link) ; create link that triggers a grep
+  ("C-c n q f" . denote-query-filenames-link) ; create link that triggers a dired
+  ;; Note that `denote-rename-file' can work from any context, not just
+  ;; Dired bufffers.  That is why we bind it here to the `global-map'.
+  ("C-c n r" . denote-rename-file)
+  ("C-c n R" . denote-rename-file-using-front-matter)
 
-    ;; Key bindings specifically for Dired.
-    :map dired-mode-map
-    ("C-c C-d C-i" . denote-dired-link-marked-notes)
-    ("C-c C-d C-r" . denote-dired-rename-files)
-    ("C-c C-d C-k" . denote-dired-rename-marked-files-with-keywords)
-    ("C-c C-d C-R" . denote-dired-rename-marked-files-using-front-matter))
+  ;; Key bindings specifically for Dired.
+  :map
+  dired-mode-map
+  ("C-c C-d C-i" . denote-dired-link-marked-notes)
+  ("C-c C-d C-r" . denote-dired-rename-files)
+  ("C-c C-d C-k" . denote-dired-rename-marked-files-with-keywords)
+  ("C-c C-d C-R"
+   .
+   denote-dired-rename-marked-files-using-front-matter))
 
-  :config
-  ;; Remember to check the doc string of each of those variables.
-  (setq denote-directory (expand-file-name "~/Documents/notes/"))
-  (setq denote-save-buffers nil)
-  (setq denote-known-keywords '("emacs" "philosophy" "politics" "economics"))
-  (setq denote-infer-keywords t)
-  (setq denote-sort-keywords t)
-  (setq denote-prompts '(title keywords))
-  (setq denote-excluded-directories-regexp nil)
-  (setq denote-excluded-keywords-regexp nil)
-  (setq denote-rename-confirmations '(rewrite-front-matter modify-file-name))
+ :config
+ ;; Remember to check the doc string of each of those variables.
+ (setq denote-directory (expand-file-name "~/Documents/notes/"))
+ (setq denote-save-buffers nil)
+ (setq denote-known-keywords
+       '("emacs" "philosophy" "politics" "economics"))
+ (setq denote-infer-keywords t)
+ (setq denote-sort-keywords t)
+ (setq denote-prompts '(title keywords))
+ (setq denote-excluded-directories-regexp nil)
+ (setq denote-excluded-keywords-regexp nil)
+ (setq denote-rename-confirmations
+       '(rewrite-front-matter modify-file-name))
 
-  ;; Pick dates, where relevant, with Org's advanced interface:
-  (setq denote-date-prompt-use-org-read-date t)
+ ;; Pick dates, where relevant, with Org's advanced interface:
+ (setq denote-date-prompt-use-org-read-date t)
 
-  ;; Automatically rename Denote buffers using the `denote-rename-buffer-format'.
-  (denote-rename-buffer-mode 1))
+ ;; Automatically rename Denote buffers using the `denote-rename-buffer-format'.
+ (denote-rename-buffer-mode 1))
 
-(use-package consult-denote
-  :ensure t
-  :bind
-  (("C-c n f" . consult-denote-find)
-   ("C-c n g" . consult-denote-grep))
-  :config
-  (consult-denote-mode 1))
+(use-package
+ consult-denote
+ :ensure t
+ :bind
+ (("C-c n f" . consult-denote-find) ("C-c n g" . consult-denote-grep))
+ :config (consult-denote-mode 1))
 
-(use-package denote-journal
-  :ensure t
-  ;; Bind those to some key for your convenience.
-  :commands ( denote-journal-new-entry
-              denote-journal-new-or-existing-entry
-              denote-journal-link-or-create-entry )
-  :hook (calendar-mode . denote-journal-calendar-mode)
-  :config
-  ;; Use the "journal" subdirectory of the `denote-directory'.  Set this
-  ;; to nil to use the `denote-directory' instead.
-  (setq denote-journal-directory
-        (expand-file-name "journal" denote-directory))
-  ;; Default keyword for new journal entries. It can also be a list of
-  ;; strings.
-  (setq denote-journal-keyword "journal")
-  ;; Read the doc string of `denote-journal-title-format'.
-  (setq denote-journal-title-format 'day-date-month-year))
+(use-package
+ denote-journal
+ :ensure t
+ ;; Bind those to some key for your convenience.
+ :commands
+ (denote-journal-new-entry
+  denote-journal-new-or-existing-entry
+  denote-journal-link-or-create-entry)
+ :hook (calendar-mode . denote-journal-calendar-mode)
+ :config
+ ;; Use the "journal" subdirectory of the `denote-directory'.  Set this
+ ;; to nil to use the `denote-directory' instead.
+ (setq denote-journal-directory
+       (expand-file-name "journal" denote-directory))
+ ;; Default keyword for new journal entries. It can also be a list of
+ ;; strings.
+ (setq denote-journal-keyword "journal")
+ ;; Read the doc string of `denote-journal-title-format'.
+ (setq denote-journal-title-format 'day-date-month-year))
 
 (use-package
  denote-org
@@ -2480,211 +2542,254 @@
 ;; Gnus Setup
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package gnus
-  :ensure nil
-  :defer t
-  :commands (gnus gnus-unplugged)
-  :init
-  ;; Primary IMAP select method for mailbox.org
-  (setq gnus-select-method
-        '(nnimap "mailbox.org"
-                 (nnimap-address "imap.mailbox.org")
-                 (nnimap-server-port 993)
-                 (nnimap-stream ssl)))
+(use-package
+ gnus
+ :ensure nil
+ :defer t
+ :commands (gnus gnus-unplugged)
+ :init
+ ;; Primary IMAP select method for mailbox.org
+ (setq gnus-select-method
+       '(nnimap
+         "mailbox.org"
+         (nnimap-address "imap.mailbox.org")
+         (nnimap-server-port 993)
+         (nnimap-stream ssl)))
 
-  ;; Secondary select method for RSS
-  (setq gnus-secondary-select-methods
-        '((nnrss "rss"
-                 (nnrss-directory "~/.config/emacs/gnus/News/rss/"))))
+ ;; Secondary select method for RSS
+ (setq gnus-secondary-select-methods
+       '((nnrss
+          "rss" (nnrss-directory "~/.config/emacs/gnus/News/rss/"))))
 
-  ;; SMTP configuration
-  (setq smtpmail-smtp-server "smtp.mailbox.org"
-        smtpmail-smtp-service 587
-        smtpmail-stream-type 'starttls
-        smtpmail-default-smtp-server "smtp.mailbox.org"
-        smtpmail-smtp-user "theesfeld@mailbox.org"
-        send-mail-function 'smtpmail-send-it
-        message-send-mail-function 'smtpmail-send-it)
+ ;; SMTP configuration
+ (setq
+  smtpmail-smtp-server "smtp.mailbox.org"
+  smtpmail-smtp-service 587
+  smtpmail-stream-type 'starttls
+  smtpmail-default-smtp-server "smtp.mailbox.org"
+  smtpmail-smtp-user "theesfeld@mailbox.org"
+  send-mail-function 'smtpmail-send-it
+  message-send-mail-function 'smtpmail-send-it)
 
-  ;; Use auth-source for credentials
-  (setq auth-sources '("~/.authinfo.gpg"))
+ ;; Use auth-source for credentials
+ (setq auth-sources '("~/.authinfo.gpg"))
 
-  ;; Custom keymap
-  (defvar my-gnus-map (make-sparse-keymap) "Keymap for Gnus commands.")
-  (global-set-key (kbd "C-c g") my-gnus-map)
-  (define-key my-gnus-map (kbd "g") 'gnus)
-  (define-key my-gnus-map (kbd "u") 'gnus-unplugged)
+ ;; Custom keymap
+ (defvar my-gnus-map (make-sparse-keymap)
+   "Keymap for Gnus commands.")
+ (global-set-key (kbd "C-c g") my-gnus-map)
+ (define-key my-gnus-map (kbd "g") 'gnus)
+ (define-key my-gnus-map (kbd "u") 'gnus-unplugged)
 
-  ;; Ensure directories exist
-  (make-directory "~/.config/emacs/gnus/News/rss/" t)
-  (make-directory "~/.config/emacs/gnus/cache/" t)
+ ;; Ensure directories exist
+ (make-directory "~/.config/emacs/gnus/News/rss/" t)
+ (make-directory "~/.config/emacs/gnus/cache/" t)
 
-  :hook
-  ;; Enable topic mode
-  (gnus-group-mode . (lambda ()
-                       (when (require 'gnus-topic nil t)
-                         (gnus-topic-mode))))
-  ;; Load RSS feeds and list groups
-  (gnus-started-hook . (lambda ()
-                         (require 'nnrss)
-                         (dolist (file (directory-files
-                                        "~/.config/emacs/gnus/News/rss/"
-                                        t "\\.el$"))
-                           (load file nil t))
-                         (gnus-group-list-groups 5 t)))
+ :hook
+ ;; Enable topic mode
+ (gnus-group-mode
+  .
+  (lambda ()
+    (when (require 'gnus-topic nil t)
+      (gnus-topic-mode))))
+ ;; Load RSS feeds and list groups
+ (gnus-started-hook
+  .
+  (lambda ()
+    (require 'nnrss)
+    (dolist (file
+             (directory-files "~/.config/emacs/gnus/News/rss/"
+                              t
+                              "\\.el$"))
+      (load file nil t))
+    (gnus-group-list-groups 5 t)))
 
-  :custom
-  ;; Directories
-  (gnus-home-directory (expand-file-name "~/.config/emacs/gnus/"))
-  (gnus-startup-file (expand-file-name "~/.config/emacs/gnus/.newsrc"))
-  (gnus-cache-directory (expand-file-name "~/.config/emacs/gnus/cache/"))
-  (gnus-cache-active-file (expand-file-name "~/.config/emacs/gnus/cache/active"))
-  (nnrss-directory (expand-file-name "~/.config/emacs/gnus/News/rss/"))
+ :custom
+ ;; Directories
+ (gnus-home-directory (expand-file-name "~/.config/emacs/gnus/"))
+ (gnus-startup-file (expand-file-name "~/.config/emacs/gnus/.newsrc"))
+ (gnus-cache-directory
+  (expand-file-name "~/.config/emacs/gnus/cache/"))
+ (gnus-cache-active-file
+  (expand-file-name "~/.config/emacs/gnus/cache/active"))
+ (nnrss-directory (expand-file-name "~/.config/emacs/gnus/News/rss/"))
 
-  ;; Performance
-  (gnus-asynchronous t)
-  (gnus-use-cache t)
+ ;; Performance
+ (gnus-asynchronous t)
+ (gnus-use-cache t)
 
-  ;; Display
-  (gnus-use-full-window nil)
-  (gnus-group-line-format "%M%S%p%P%5y:%B%(%g%)\n")
-  (gnus-summary-line-format "%U%R %B %s\n")
-  (gnus-thread-sort-functions '(gnus-thread-sort-by-date))
-  (gnus-sum-thread-tree-indent "  ")
-  (gnus-sum-thread-tree-root "├▶ ")
-  (gnus-sum-thread-tree-leaf-with-child "├▶ ")
-  (gnus-sum-thread-tree-single-leaf "└▶ ")
-  (gnus-sum-thread-tree-vertical "│")
+ ;; Display
+ (gnus-use-full-window nil)
+ (gnus-group-line-format "%M%S%p%P%5y:%B%(%g%)\n")
+ (gnus-summary-line-format "%U%R %B %s\n")
+ (gnus-thread-sort-functions '(gnus-thread-sort-by-date))
+ (gnus-sum-thread-tree-indent "  ")
+ (gnus-sum-thread-tree-root "├▶ ")
+ (gnus-sum-thread-tree-leaf-with-child "├▶ ")
+ (gnus-sum-thread-tree-single-leaf "└▶ ")
+ (gnus-sum-thread-tree-vertical "│")
 
-  ;; Group visibility
-  (gnus-level-subscribed 5)
-  (gnus-level-unsubscribed 6)
+ ;; Group visibility
+ (gnus-level-subscribed 5)
+ (gnus-level-unsubscribed 6)
 
-  :custom-face
-  ;; Dynamic faces for Modus Vivendi or fallback
-  (gnus-group-mail-3
-   ((t (:foreground ,(if (facep 'modus-themes-fg-blue) "#00bcff" "cyan")
-        :weight bold))))
-  (gnus-group-mail-3-empty
-   ((t (:foreground ,(if (facep 'modus-themes-fg-dim) "#666699" "gray")))))
-  (gnus-summary-normal-unread
-   ((t (:foreground ,(if (facep 'modus-themes-fg-yellow) "#ffcc66" "yellow")
-        :weight bold))))
-  (gnus-summary-normal-read
-   ((t (:foreground ,(if (facep 'modus-themes-fg-alt) "#a0a0a0" "light gray")))))
-  (gnus-header-name
-   ((t (:foreground ,(if (facep 'modus-themes-fg-magenta) "#ff66ff" "magenta")
-        :weight bold))))
-  (gnus-header-content
-   ((t (:foreground ,(if (facep 'modus-themes-fg-cyan) "#88c0d0" "cyan")))))
+ :custom-face
+ ;; Dynamic faces for Modus Vivendi or fallback
+ (gnus-group-mail-3
+  ((t
+    (:foreground
+     ,(if (facep 'modus-themes-fg-blue)
+          "#00bcff"
+        "cyan")
+     :weight bold))))
+ (gnus-group-mail-3-empty
+  ((t
+    (:foreground
+     ,(if (facep 'modus-themes-fg-dim)
+          "#666699"
+        "gray")))))
+ (gnus-summary-normal-unread
+  ((t
+    (:foreground
+     ,(if (facep 'modus-themes-fg-yellow)
+          "#ffcc66"
+        "yellow")
+     :weight bold))))
+ (gnus-summary-normal-read
+  ((t
+    (:foreground
+     ,(if (facep 'modus-themes-fg-alt)
+          "#a0a0a0"
+        "light gray")))))
+ (gnus-header-name
+  ((t
+    (:foreground
+     ,(if (facep 'modus-themes-fg-magenta)
+          "#ff66ff"
+        "magenta")
+     :weight bold))))
+ (gnus-header-content
+  ((t
+    (:foreground
+     ,(if (facep 'modus-themes-fg-cyan)
+          "#88c0d0"
+        "cyan")))))
 
-  :config
-  ;; Posting styles
-  (setq gnus-posting-styles
-        '((".*"
-           (address "theesfeld@mailbox.org")
-           (signature "Best,\nWilliam"))
-          ("nnimap\\+mailbox\\.org:INBOX/SAMHAIN.*"
-           (address "grim@samhain.su")
-           (signature "Regards,\nGrim"))
-          ("nnimap\\+mailbox\\.org:INBOX/THEESFELD.*"
-           (address "william@theesfeld.net")
-           (signature "Cheers,\nTJ"))))
+ :config
+ ;; Posting styles
+ (setq gnus-posting-styles
+       '((".*"
+          (address "theesfeld@mailbox.org")
+          (signature "Best,\nWilliam"))
+         ("nnimap\\+mailbox\\.org:INBOX/SAMHAIN.*"
+          (address "grim@samhain.su")
+          (signature "Regards,\nGrim"))
+         ("nnimap\\+mailbox\\.org:INBOX/THEESFELD.*"
+          (address "william@theesfeld.net")
+          (signature "Cheers,\nTJ"))))
 
-  ;; Group parameters
-  (setq gnus-parameters
-        '(("nnimap\\+mailbox\\.org:.*"
-           (display . all)
-           (visible . t)
-           (level . 2))
-          ("nnimap\\+mailbox\\.org:Junk"
-           (display . nil)
-           (visible . nil)
-           (level . 6))
-          ("nnrss:.*"
-           (display . all)
-           (visible . t)
-           (level . 2))))
+ ;; Group parameters
+ (setq gnus-parameters
+       '(("nnimap\\+mailbox\\.org:.*"
+          (display . all)
+          (visible . t)
+          (level . 2))
+         ("nnimap\\+mailbox\\.org:Junk"
+          (display . nil)
+          (visible . nil)
+          (level . 6))
+         ("nnrss:.*" (display . all) (visible . t) (level . 2))))
 
-  ;; Custom quit
-  (defun my-gnus-group-quit ()
-    "Quit Gnus and switch to a valid buffer."
-    (interactive)
-    (gnus-group-quit)
-    (switch-to-buffer (or (get-buffer "*scratch*") (other-buffer))))
+ ;; Custom quit
+ (defun my-gnus-group-quit ()
+   "Quit Gnus and switch to a valid buffer."
+   (interactive)
+   (gnus-group-quit)
+   (switch-to-buffer (or (get-buffer "*scratch*") (other-buffer))))
 
-  ;; Org capture for emails
-  (defun my-gnus-capture-email-to-org ()
-    "Capture current email as an Org TODO."
-    (interactive)
-    (when (eq major-mode 'gnus-article-mode)
-      (let* ((message-id (gnus-fetch-field "Message-ID"))
-             (subject (gnus-fetch-field "Subject"))
-             (org-entry (format "* TODO %s\n:PROPERTIES:\n:EMAIL: %s\n:END:\n"
-                                (or subject "No subject")
-                                (or message-id "No message ID"))))
-        (org-capture nil "e")
-        (with-current-buffer (get-buffer "*Org Capture*")
-          (insert org-entry))
-        (message "Captured email: %s" subject))))
+ ;; Org capture for emails
+ (defun my-gnus-capture-email-to-org ()
+   "Capture current email as an Org TODO."
+   (interactive)
+   (when (eq major-mode 'gnus-article-mode)
+     (let* ((message-id (gnus-fetch-field "Message-ID"))
+            (subject (gnus-fetch-field "Subject"))
+            (org-entry
+             (format "* TODO %s\n:PROPERTIES:\n:EMAIL: %s\n:END:\n"
+                     (or subject "No subject")
+                     (or message-id "No message ID"))))
+       (org-capture nil "e")
+       (with-current-buffer (get-buffer "*Org Capture*")
+         (insert org-entry))
+       (message "Captured email: %s" subject))))
 
-  ;; Org capture for RSS
-  (defun my-gnus-capture-rss-to-org ()
-    "Capture current RSS article as an Org TODO."
-    (interactive)
-    (when (eq major-mode 'gnus-article-mode)
-      (let* ((url (or (gnus-article-get-field "Link")
-                      (save-excursion
-                        (goto-char (point-min))
-                        (when (re-search-forward "<a href=\"\\(http[^\"]+\\)\"" nil t)
-                          (match-string 1)))))
-             (title (or (gnus-article-get-field "Subject")
-                        (gnus-article-get-field "title")
-                        "No title"))
-             (org-entry (format "* TODO %s\n:PROPERTIES:\n:URL: %s\n:END:\n"
-                                title
-                                (or url "No URL"))))
-        (if (and url title)
-            (progn
-              (org-capture nil "r")
-              (with-current-buffer (get-buffer "*Org Capture*")
-                (insert org-entry))
-              (message "Captured RSS: %s" title))
-          (user-error "Failed to capture RSS: missing %s"
-                      (cond ((not url) "URL") ((not title) "title")))))))
+ ;; Org capture for RSS
+ (defun my-gnus-capture-rss-to-org ()
+   "Capture current RSS article as an Org TODO."
+   (interactive)
+   (when (eq major-mode 'gnus-article-mode)
+     (let* ((url
+             (or (gnus-article-get-field "Link")
+                 (save-excursion
+                   (goto-char (point-min))
+                   (when (re-search-forward
+                          "<a href=\"\\(http[^\"]+\\)\""
+                          nil t)
+                     (match-string 1)))))
+            (title
+             (or (gnus-article-get-field "Subject")
+                 (gnus-article-get-field "title")
+                 "No title"))
+            (org-entry
+             (format "* TODO %s\n:PROPERTIES:\n:URL: %s\n:END:\n"
+                     title (or url "No URL"))))
+       (if (and url title)
+           (progn
+             (org-capture nil "r")
+             (with-current-buffer (get-buffer "*Org Capture*")
+               (insert org-entry))
+             (message "Captured RSS: %s" title))
+         (user-error "Failed to capture RSS: missing %s"
+                     (cond
+                      ((not url)
+                       "URL")
+                      ((not title)
+                       "title")))))))
 
-  ;; Helper to get article fields
-  (defun gnus-article-get-field (field)
-    "Get FIELD from current article headers."
-    (when (eq major-mode 'gnus-article-mode)
-      (gnus-fetch-field field)))
+ ;; Helper to get article fields
+ (defun gnus-article-get-field (field)
+   "Get FIELD from current article headers."
+   (when (eq major-mode 'gnus-article-mode)
+     (gnus-fetch-field field)))
 
-  :bind
-  (:map gnus-group-mode-map
-        ("q" . my-gnus-group-quit))
-  (:map gnus-article-mode-map
-        ("C-c e" . my-gnus-capture-email-to-org)
-        ("C-c r" . my-gnus-capture-rss-to-org)))
+ :bind
+ (:map gnus-group-mode-map ("q" . my-gnus-group-quit))
+ (:map
+  gnus-article-mode-map
+  ("C-c e" . my-gnus-capture-email-to-org)
+  ("C-c r" . my-gnus-capture-rss-to-org)))
 
-(use-package gnus-art
-  :ensure nil
-  :defer t
-  :after gnus
-  :config
-  (setq gnus-inhibit-images nil)
-  (setq gnus-visible-headers
-        '("^From:" "^Subject:" "^To:" "^Cc:" "^Date:" "^Link:"))
-  (setq gnus-article-sort-functions '(gnus-article-sort-by-date)))
+(use-package
+ gnus-art
+ :ensure nil
+ :defer t
+ :after gnus
+ :config (setq gnus-inhibit-images nil)
+ (setq gnus-visible-headers
+       '("^From:" "^Subject:" "^To:" "^Cc:" "^Date:" "^Link:"))
+ (setq gnus-article-sort-functions '(gnus-article-sort-by-date)))
 
-(use-package message
-  :ensure nil
-  :defer t
-  :after gnus
-  :config
-  (setq message-citation-line-format "On %a, %b %d %Y, %N wrote:\n")
-  (setq message-citation-line-function 'message-insert-formatted-citation-line)
-  (setq message-kill-buffer-on-exit t)
-  (setq message-default-charset 'utf-8))
+(use-package
+ message
+ :ensure nil
+ :defer t
+ :after gnus
+ :config
+ (setq message-citation-line-format "On %a, %b %d %Y, %N wrote:\n")
+ (setq message-citation-line-function
+       'message-insert-formatted-citation-line)
+ (setq message-kill-buffer-on-exit t)
+ (setq message-default-charset 'utf-8))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                   calc                                    ;;
