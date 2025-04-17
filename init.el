@@ -346,7 +346,7 @@
           (start-process-shell-command
            "xrandr"
            nil
-           "xrandr --output eDP-1 --primary --auto --scale 1.25x1.25")
+           "xrandr --output eDP-1 --primary --auto --scale 1.5")
           (dolist (output (remove "eDP-1" connected-outputs))
             (start-process-shell-command
              "xrandr" nil
