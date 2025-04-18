@@ -377,7 +377,6 @@
    ;; (exwm-randr-mode 1)
 
    (setenv "GDK_SCALE" "1")
-
    (setenv "QT_AUTO_SCREEN_SCALE_FACTOR" "1")
    (setenv "QT_ENABLE_HIGHDPI_SCALING" "1")
 
