@@ -107,6 +107,22 @@
    'org-capture-after-finalize-hook
    #'my-org-download-images-from-capture))
 
+(defun my-get-volume ()
+  "Return the current volume percentage using pactl."
+  (let
+      ((output
+        (shell-command-to-string
+         "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1")))
+    (string-to-number (string-trim output "%"))))
+
+;; Helper function to get current brightness from brightnessctl
+(defun my-get-brightness ()
+  "Return the current brightness percentage using brightnessctl."
+  (let ((output (shell-command-to-string "brightnessctl get")))
+    (max (string-to-number
+          (shell-command-to-string "brightnessctl max"))))
+  (round (* 100.0 (/ (string-to-number (string-trim output)) max))))
+
 (defun my/toggle-buffer (buffer-name command)
   "Toggle a buffer with BUFFER-NAME, running COMMAND if it doesn't exist."
   (interactive)
@@ -133,14 +149,6 @@
                   (window-width)
                 (min 80 (window-width)))))
 
-(defun grim/emacs-everywhere-wayland-app-info ()
-  "Return a dummy app info struct for Wayland."
-  (make-emacs-everywhere-app
-   :id "wayland"
-   :class "wayland-app"
-   :title "Unknown"
-   :geometry '(0 0 800 600)))
-
 ;; Basic screenshot function (Wayland example) - Untouched core with enhancements
 (defun grim/screenshot (&optional type)
   "Export current frame as screenshot to clipboard using TYPE format (png/svg/pdf/postscript)."
@@ -159,25 +167,21 @@
          (data (x-export-frames nil type)))
     (with-temp-file filename
       (insert data))
-    (cond
-     ((executable-find "wl-copy") ; Wayland
-      (with-temp-buffer
-        (insert-file-contents filename)
-        (call-process-region (point-min) (point-max) "wl-copy"
-                             nil nil nil "-t"
-                             (format "image/%s"
-                                     (substring extension 1)))))
-     ((executable-find "xclip") ; X11 fallback
-      (with-temp-buffer
-        (insert-file-contents filename)
-        (call-process-region (point-min) (point-max) "xclip"
-                             nil nil nil "-selection" "clipboard" "-t"
-                             (format "image/%s"
-                                     (substring extension 1)))))
-     (t
-      (message "No clipboard tool found (wl-copy/xclip)")))
+    (if (executable-find "xclip")
+        (with-temp-buffer
+          (insert-file-contents filename)
+          (call-process-region (point-min) (point-max) "xclip"
+                               nil
+                               nil
+                               nil
+                               "-selection"
+                               "clipboard"
+                               "-t"
+                               (format "image/%s"
+                                       (substring extension 1))))
+      (message "No clipboard tool found (xclip)"))
     (set-register ?s filename)
-    (when (or (executable-find "wl-copy") (executable-find "xclip"))
+    (when (executable-find "xclip")
       (alert
        (format "Screenshot (%s) copied to clipboard and saved to %s"
                type filename)
@@ -205,7 +209,7 @@
 (use-package
  all-the-icons
  :ensure t
- :if (display-graphic-p) ; Only load in GUI mode
+ ;; :if (display-graphic-p) ; Only load in GUI mode
  :config
  (setq all-the-icons-scale-factor 1.1) ; Similar to your nerd-icons setting
  ;; Install fonts if not already present (run once manually if needed)
@@ -217,41 +221,241 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (when (eq window-system 'x)
+
+  (defun grim/run-in-background (command)
+    (condition-case err
+        (let ((command-parts (split-string command "[ ]+")))
+          (apply #'call-process
+                 `(,(car command-parts)
+                   nil
+                   0
+                   nil
+                   ,@
+                   (cdr command-parts))))
+      (error
+       (message "Failed to run %s: %s"
+                command
+                (error-message-string err)))))
+
+  (defun grim/set-wallpaper ()
+    (interactive)
+    (when (and (executable-find "feh")
+               (file-exists-p
+                "~/Pictures/wallpaper/car-ice-road-red-moon.jpg"))
+      (start-process-shell-command
+       "feh"
+       nil
+       "feh --bg-scale ~/Pictures/wallpaper/car-ice-road-red-moon.jpg"))
+    (unless (executable-find "feh")
+      (message "feh not found; wallpaper not set")))
+
+  (defun grim/exwm-init-hook ()
+    (exwm-workspace-switch-create 1)
+    (display-battery-mode 1)
+    (setq
+     display-time-24hr-format t
+     display-time-day-and-date t)
+    (display-time-mode 1)
+    (run-at-time 2 nil #'grim/run-in-background "nm-applet")
+    (run-at-time 2 nil #'grim/run-in-background "udiskie -at")
+    (run-at-time 2 nil #'grim/run-in-background "blueman-applet"))
+  (run-at-time 5 nil #'grim/run-in-background
+               "mullvad-vpn --disable-gpu")
+
+
+  (defun grim/exwm-update-class ()
+    (exwm-workspace-rename-buffer exwm-class-name))
+
+  (defun grim/exwm-update-title ()
+    (pcase exwm-class-name
+      ("Firefox" (exwm-workspace-rename-buffer
+        (format "Firefox: %s" exwm-title)))))
+
   (use-package
    exwm
    :ensure t
-   :config
-   ;; Basic EXWM Settings
-   (setq exwm-workspace-number 1)
+   :config (setq exwm-workspace-number 5)
+
+   (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
+   (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
+   (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
+
    (setq exwm-workspace-show-all-buffers t)
    (setq exwm-layout-show-all-buffers t)
-   (setq exwm-manage-force-tiling t)
-   (setq mouse-autoselect-window t)
-   (setq focus-follows-mouse t)
+   (setq exwm-manage-force-tiling nil)
+   (setq mouse-autoselect-window nil)
+   (setq focus-follows-mouse nil)
    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
    (setq mouse-wheel-progressive-speed t)
-   (setq mouse-wheel-scroll-amount-horizontal nil)
    (setq
     x-select-enable-clipboard t
     x-select-enable-primary t
     select-enable-clipboard t)
 
-   ;; Reverse Mouse Scrolling
-   (setq mouse-wheel-down-event 'wheel-up)
-   (setq mouse-wheel-up-event 'wheel-down)
+   ;; (require 'exwm-randr)
+   ;; (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
+   ;; (add-hook
+   ;;  'exwm-randr-screen-change-hook
+   ;;  (lambda ()
+   ;;    (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
+   ;;          connected-outputs)
+   ;;      (with-temp-buffer
+   ;;        (call-process "xrandr" nil t nil)
+   ;;        (goto-char (point-min))
+   ;;        (while (re-search-forward xrandr-output-regexp nil t)
+   ;;          (push (match-string 1) connected-outputs)))
+   ;;      (cond
+   ;;       ((= (length connected-outputs) 1)
+   ;;        (start-process-shell-command
+   ;;         "xrandr" nil
+   ;;         (format "xrandr --output %s --primary --auto"
+   ;;                 (car connected-outputs))))
+   ;;       ((>= (length connected-outputs) 2)
+   ;;        (start-process-shell-command
+   ;;         "xrandr" nil
+   ;;         (format
+   ;;          "xrandr --output %s --primary --auto --output %s --auto --left-of %s"
+   ;;          (car connected-outputs)
+   ;;          (cadr connected-outputs)
+   ;;          (car connected-outputs)))
+   ;;        (setq exwm-randr-workspace-monitor-plist
+   ;;              (list
+   ;;               0
+   ;;               (car connected-outputs)
+   ;;               1
+   ;;               (cadr connected-outputs))))))))
+   ;; (grim/set-wallpaper)
+   ;; (exwm-randr-mode 1)
 
-   ;; Fix mouse cursor
-   (start-process-shell-command
-    "xsetroot" nil "xsetroot -cursor_name left_ptr")
+   ;; 2222222
+   ;; (require 'exwm-randr)
+   ;; (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
+   ;; (add-hook
+   ;;  'exwm-randr-screen-change-hook
+   ;;  (lambda ()
+   ;;    (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
+   ;;          connected-outputs)
+   ;;      (with-temp-buffer
+   ;;        (call-process "xrandr" nil t nil)
+   ;;        (goto-char (point-min))
+   ;;        (while (re-search-forward xrandr-output-regexp nil t)
+   ;;          (push (match-string 1) connected-outputs)))
+   ;;      (cond
+   ;;       ;; Single monitor or only eDP-1 connected
+   ;;       ((or (= (length connected-outputs) 1)
+   ;;            (and (member "eDP-1" connected-outputs)
+   ;;                 (= (length (remove "eDP-1" connected-outputs)) 0)))
+   ;;        (start-process-shell-command
+   ;;         "xrandr"
+   ;;         nil
+   ;;         "xrandr --output eDP-1 --primary --auto --scale .75")
+   ;;        (dolist (output (remove "eDP-1" connected-outputs))
+   ;;          (start-process-shell-command
+   ;;           "xrandr" nil
+   ;;           (format "xrandr --output %s --off" output)))
+   ;;        (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1")))
+   ;;       ;; One or more external monitors
+   ;;       ((>= (length (remove "eDP-1" connected-outputs)) 1)
+   ;;        (let ((primary (car (remove "eDP-1" connected-outputs)))
+   ;;              (secondary (cadr (remove "eDP-1" connected-outputs))))
+   ;;          (if secondary
+   ;;              (start-process-shell-command
+   ;;               "xrandr" nil
+   ;;               (format
+   ;;                "xrandr --output %s --primary --auto --output %s --auto --left-of %s --output eDP-1 --off"
+   ;;                primary secondary primary))
+   ;;            (start-process-shell-command
+   ;;             "xrandr" nil
+   ;;             (format
+   ;;              "xrandr --output %s --primary --auto --output eDP-1 --off"
+   ;;              primary)))
+   ;;          (setq exwm-randr-workspace-monitor-plist
+   ;;                (if secondary
+   ;;                    `(0 ,primary 1 ,secondary)
+   ;;                  `(0 ,primary)))))))))
+   ;; (grim/set-wallpaper)
+   ;; (exwm-randr-mode 1)
+
+   (setenv "GDK_SCALE" "1")
+   (setenv "QT_AUTO_SCREEN_SCALE_FACTOR" "1")
+   (setenv "QT_ENABLE_HIGHDPI_SCALING" "1")
+
+   (require 'exwm-randr)
+   (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
+   (add-hook
+    'exwm-randr-screen-change-hook
+    (lambda ()
+      (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
+            connected-outputs)
+        (with-temp-buffer
+          (call-process "xrandr" nil t nil)
+          (goto-char (point-min))
+          (while (re-search-forward xrandr-output-regexp nil t)
+            (push (match-string 1) connected-outputs)))
+        (cond
+         ;; Single monitor or only eDP-1 connected
+         ((or (= (length connected-outputs) 1)
+              (and (member "eDP-1" connected-outputs)
+                   (= (length (remove "eDP-1" connected-outputs)) 0)))
+          (start-process-shell-command
+           "xrandr"
+           nil
+           "xrandr --output eDP-1 --primary --auto --scale .75 --dpi 192")
+          (start-process-shell-command
+           "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
+          (dolist (output (remove "eDP-1" connected-outputs))
+            (start-process-shell-command
+             "xrandr" nil
+             (format "xrandr --output %s --off" output)))
+          (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1")))
+         ;; One or more external monitors
+         ((>= (length (remove "eDP-1" connected-outputs)) 1)
+          (let ((primary (car (remove "eDP-1" connected-outputs)))
+                (secondary (cadr (remove "eDP-1" connected-outputs))))
+            (if secondary
+                (start-process-shell-command
+                 "xrandr" nil
+                 (format
+                  "xrandr --output %s --primary --auto --output %s --auto --left-of %s --output eDP-1 --off"
+                  primary secondary primary))
+              (start-process-shell-command
+               "xrandr" nil
+               (format
+                "xrandr --output %s --primary --auto --output eDP-1 --off"
+                primary)))
+            ;; Reset DPI to default (96) for external monitors
+            (start-process-shell-command
+             "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
+            (setq exwm-randr-workspace-monitor-plist
+                  (if secondary
+                      `(0 ,primary 1 ,secondary)
+                    `(0 ,primary)))))))))
+
+   (exwm-randr-mode 1)
+   (grim/set-wallpaper)
+   ;; Load the system tray before exwm-init
+   (require 'exwm-systemtray)
+   (setq exwm-systemtray-height 24)
+   (exwm-systemtray-mode 1)
 
    ;; Input Prefix Keys
    (setq exwm-input-prefix-keys
          '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
 
-   ;; Global Keybindings
+   ;; xss-lock setup for autolock and suspend locking
+   (when (and (executable-find "xss-lock") (executable-find "slock"))
+     (start-process-shell-command "xss-lock" nil "xss-lock -- slock"))
+   (when (executable-find "xset")
+     (start-process-shell-command "xset" nil "xset s 300")) ; 5-minute inactivity
+
+   ;; Global keybindings
    (setq exwm-input-global-keys
          (nconc
           `(([?\s-r] . exwm-reset)
+            ([s-left] . windmove-left)
+            ([s-right] . windmove-right)
+            ([s-up] . windmove-up)
+            ([s-down] . windmove-down)
             ([?\s-w] . exwm-workspace-switch)
             ([?\s-&]
              .
@@ -263,12 +467,6 @@
              (lambda ()
                (interactive)
                (save-buffers-kill-emacs)))
-            ([?\s-e]
-             .
-             (lambda ()
-               (interactive)
-               (start-process-shell-command
-                "yazi" nil "footclient -e yazi")))
             ([?\s-\ ]
              .
              (lambda ()
@@ -280,86 +478,13 @@
              (lambda ()
                (interactive)
                (kill-buffer-and-window)))
-            ;; Screen Lock and Power Management
-            ([?\s-l]
-             .
-             (lambda ()
-               (interactive)
-               (when (executable-find "slock")
-                 (start-process-shell-command "lock" nil "slock"))))
-            ([?\s-s]
-             .
-             (lambda ()
-               (interactive)
-               (when (executable-find "systemctl")
-                 (start-process-shell-command
-                  "suspend" nil "systemctl suspend-then-hibernate"))))
-            ;; XF86 Power Keys
             ([XF86PowerOff]
              .
              (lambda ()
                (interactive)
                (when (executable-find "systemctl")
                  (start-process-shell-command
-                  "poweroff" nil "systemctl poweroff"))))
-            ([XF86Sleep]
-             .
-             (lambda ()
-               (interactive)
-               (when (and (executable-find "systemctl")
-                          (executable-find "slock"))
-                 (start-process-shell-command
-                  "suspend" nil "systemctl suspend-then-hibernate"))))
-            ;; Media Keys
-            ([XF86AudioRaiseVolume]
-             .
-             (lambda ()
-               (interactive)
-               (shell-command
-                "pactl set-sink-volume @DEFAULT_SINK@ +5%")
-               (alert
-                "Volume increased"
-                :title "Media Control"
-                :severity 'normal)))
-            ([XF86AudioLowerVolume]
-             .
-             (lambda ()
-               (interactive)
-               (shell-command
-                "pactl set-sink-volume @DEFAULT_SINK@ -5%")
-               (alert
-                "Volume decreased"
-                :title "Media Control"
-                :severity 'normal)))
-            ([XF86AudioMute]
-             .
-             (lambda ()
-               (interactive)
-               (shell-command
-                "pactl set-sink-mute @DEFAULT_SINK@ toggle")
-               (alert
-                "Volume muted/unmuted"
-                :title "Media Control"
-                :severity 'normal)))
-            ([XF86MonBrightnessUp]
-             .
-             (lambda ()
-               (interactive)
-               (shell-command "brightnessctl set +10%")
-               (alert
-                "Brightness increased"
-                :title "Display Control"
-                :severity 'normal)))
-            ([XF86MonBrightnessDown]
-             .
-             (lambda ()
-               (interactive)
-               (shell-command "brightnessctl set 10%-")
-               (alert
-                "Brightness decreased"
-                :title "Display Control"
-                :severity 'normal))))
-          ;; Workspace Switching and Moving
+                  "poweroff" nil "systemctl poweroff")))))
           (mapcar
            (lambda (i)
              (cons
@@ -367,7 +492,7 @@
               (lambda ()
                 (interactive)
                 (message "Switching to workspace %d" i)
-                (exwm-workspace-switch i))))
+                (exwm-workspace-switch-create i))))
            (number-sequence 0 9))
           (mapcar
            (lambda (i)
@@ -394,180 +519,159 @@
            ([?\M-w] . [?\C-c])
            ([?\C-y] . [?\C-v])))
 
-   ;; Dynamic Multi-Monitor Setup
-   (defun my-exwm-update-displays ()
-     "Update workspace-to-monitor mapping with maximized frames."
-     (interactive)
-     (let*
-         ((xrandr-output
-           (shell-command-to-string "xrandr --current"))
-          (monitors
-           (cl-loop
-            for line in (split-string xrandr-output "\n") when
-            (string-match
-             "\\([a-zA-Z0-9-]+\\) connected\\( primary\\)? \\([0-9]+x[0-9]+\\)\\+\\([-0-9]+\\)\\+\\([-0-9]+\\)"
-             line)
-            collect
-            (list
-             (match-string 1 line)
-             (match-string 3 line)
-             (string-to-number (match-string 4 line))
-             (string-to-number (match-string 5 line)))))
-          (monitor-count (length monitors)))
-       (if (> monitor-count 0)
-           (progn
-             (setq exwm-workspace-number monitor-count)
-             (while (> (length exwm-workspace--list) monitor-count)
-               (exwm-workspace-delete
-                (1- (length exwm-workspace--list))))
-             (while (< (length exwm-workspace--list) monitor-count)
-               (exwm-workspace-add))
-             (setq exwm-randr-workspace-monitor-plist nil)
-             (dotimes (i monitor-count)
-               (let* ((monitor (nth i monitors))
-                      (name (nth 0 monitor))
-                      (resolution (nth 1 monitor))
-                      (width
-                       (string-to-number
-                        (car (split-string resolution "x"))))
-                      (height
-                       (string-to-number
-                        (cadr (split-string resolution "x"))))
-                      (frame (nth i exwm-workspace--list)))
-                 (setq exwm-randr-workspace-monitor-plist
-                       (plist-put
-                        exwm-randr-workspace-monitor-plist i name))
-                 (when frame
-                   (set-frame-parameter frame 'fullscreen 'maximized)
-                   (message "Frame %d maximized for %s (%dx%d)"
-                            i
-                            name
-                            width
-                            height))))
-             (start-process-shell-command
-              "xrandr" nil "xrandr --auto")
-             (exwm-randr-refresh)
-             (redisplay t)
-             (message "Updated %d monitors: %s"
-                      monitor-count
-                      monitors))
-         (progn
-           (setq exwm-workspace-number 1)
-           (message
-            "No monitors detected, defaulting to 1 workspace")))))
+   (exwm-enable))
 
-   ;; Mode-line Marker Functions
-   (defun my-exwm-mode-line-marker (frame)
-     "Return a colored marker for the mode-line of FRAME."
-     (propertize " ● "
-                 'face
-                 (if (eq frame (selected-frame))
-                     '(:foreground "#ffcc66" :weight bold)
-                   '(:foreground "#a0a0a0" :weight normal))))
+  (use-package
+   exwm-edit
+   :ensure t
+   :after exwm
+   :init
+   ;; Pre-load settings
+   (setq exwm-edit-default-major-mode 'text-mode) ; Default mode for editing
+   :config
+   ;; Explicitly load exwm-edit
+   (require 'exwm-edit nil t)
+   (when (featurep 'exwm-edit)
+     (message "exwm-edit loaded successfully"))
+   ;; Optional: Customize split behavior
+   ;(setq exwm-edit-split 'below) ; Open edit buffer below current window
+   :bind (:map exwm-mode-map ("C-c e" . exwm-edit--compose))
+   :hook
+   ;; Log initialization
+   (exwm-init
+    .
+    (lambda ()
+      (when (featurep 'exwm-edit)
+        (message "exwm-edit initialized")))))
 
-   (defun my-exwm-update-mode-line-marker ()
-     "Update the mode-line marker for all frames based on the active workspace."
-     (dolist (frame (frame-list))
-       (let ((marker (my-exwm-mode-line-marker frame)))
-         (set-frame-parameter frame 'my-mode-line-marker marker)
-         (with-selected-frame frame
-           (setq mode-line-format
-                 (cons
-                  '(:eval
-                    (frame-parameter nil 'my-mode-line-marker))
-                  (default-value 'mode-line-format))))))
-     (force-mode-line-update t))
+  (use-package
+   exwm-firefox-core
+   :ensure t
+   :after exwm
+   :init
+   ;; Pre-load settings
+   (setq exwm-firefox-core-classes
+         '("firefox" "firefoxdeveloperedition"))
+   :config
+   ;; Load package safely
+   (require 'exwm-firefox-core nil t)
+   (when (featurep 'exwm-firefox-core)
+     (message "exwm-firefox-core loaded"))
+   ;; Popular keybindings
+   :bind
+   (:map
+    exwm-mode-map
+    ("C-c f n" . exwm-firefox-core-tab-new)
+    ("C-c f t" . exwm-firefox-core-tab-close)
+    ("C-c f <right>" . exwm-firefox-core-tab-right)
+    ("C-c f <left>" . exwm-firefox-core-tab-left)
+    ("C-c f h" . exwm-firefox-core-back)
+    ("C-c f l" . exwm-firefox-core-forward))
+   :hook
+   ;; Rename buffers for Firefox windows
+   (exwm-update-title
+    .
+    (lambda ()
+      (when (string-match-p "firefox" (downcase exwm-class-name))
+        (exwm-workspace-rename-buffer exwm-title)))))
 
-   ;; Autostart Function
-   ;; (defun my-exwm-autostart ()
-   ;;   "Start applications and services after EXWM initialization."
-   ;;   (interactive)
-   ;;   (setenv "DISPLAY" ":0") ; Ensure DISPLAY is set
-   ;;   (message "EXWM autostart: Starting with DISPLAY=%s"
-   ;;            (getenv "DISPLAY"))
-   ;;   (dolist (cmd
-   ;;            '(("nm-applet" . "nm-applet &")
-   ;;              ("blueman-applet" . "blueman-applet &")
-   ;;              ("udiskie" . "udiskie -as &")
-   ;;              ("xss-lock"
-   ;;               .
-   ;;               "xss-lock --transfer-sleep-lock -- slock &")
-   ;;              ("xautolock" . "xautolock -time 10 -locker slock &")))
-   ;;     (let ((bin (car cmd))
-   ;;           (full-cmd (cdr cmd)))
-   ;;       (when (executable-find bin)
-   ;;         (message "EXWM autostart: Launching %s" full-cmd)
-   ;;         (start-process-shell-command bin nil full-cmd)
-   ;;         (sleep-for 0.5) ; Brief delay to let it start
-   ;;         (message "EXWM autostart: Launched %s" bin)))))
+  (use-package
+   helm-exwm
+   :ensure t
+   :after (exwm helm)
+   :init
+   ;; Configure Helm sources before loading
+   (setq helm-exwm-switch-to-running t) ; Prefer running buffers
+   (setq helm-exwm-include-floating nil) ; Exclude floating windows for clarity
+   :config
+   ;; Load helm-exwm and integrate with Helm
+   (require 'helm-exwm)
+   ;; Add EXWM sources to Helm
+   (add-to-list 'helm-source-names-using-follow "EXWM buffers")
+   (setq helm-exwm-emacs-buffers-source
+         (helm-exwm-build-emacs-buffers-source))
+   (setq helm-exwm-source (helm-exwm-build-source))
+   ;; Update helm-mini for EXWM integration
+   (setq helm-mini-default-sources
+         `(helm-exwm-emacs-buffers-source
+           helm-exwm-source
+           helm-source-recentf
+           helm-source-buffers-list
+           helm-source-buffer-not-found))
+   :bind
+   (:map
+    exwm-mode-map
+    ("C-c h" . helm-exwm) ; Quick access to EXWM buffer switcher
+    ("C-c b" . helm-mini)) ; Enhanced buffer menu with EXWM
+   :custom
+   ;; Common customizations
+   (helm-exwm-buffer-name-prefix "EXWM: ") ; Prefix for clarity
+   (helm-exwm-sort-by-title t) ; Sort buffers by window title
+   :hook
+   ;; Initialize with EXWM
+   (exwm-init . (lambda () (message "helm-exwm initialized"))))
 
+  (use-package
+   desktop-environment
+   :ensure t
+   :init
+   ;; Pre-configure settings before mode activation
+   (setq desktop-environment-notifications t) ; Enable notifications
+   (setq desktop-environment-screenshot-directory
+         "~/Pictures/Screenshots") ; Screenshot path
+   (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
+   (setq
+    desktop-environment-volume-get-command
+    "pactl get-sink-volume @DEFAULT_SINK@ | awk '/Volume:/ {print $5}'")
+   (setq desktop-environment-volume-get-regexp "\\([0-9]+%\\)")
+   (setq desktop-environment-volume-set-command
+         "pactl set-sink-volume @DEFAULT_SINK@ %s%%") ; Set volume
+   (setq
+    desktop-environment-mute-get-command
+    "pactl get-sink-mute @DEFAULT_SINK@ | awk '{print ($2 == \"yes\") ? \"true\" : \"false\"}'")
+   (setq desktop-environment-volume-toggle-command
+         "pactl set-sink-mute @DEFAULT_SINK@ toggle") ; Toggle mute
+   (setq desktop-environment-volume-normal-increment "+5") ; Volume step up
+   (setq desktop-environment-volume-normal-decrement "-5") ; Volume step down
 
-   (setq-default mode-line-format (cons "" mode-line-format))
-   (add-hook
-    'exwm-workspace-switch-hook #'my-exwm-update-mode-line-marker)
-   (my-exwm-update-mode-line-marker)
-
-   ;; System Tray and Display Settings
-   (setq exwm-systemtray-height 24)
-   (exwm-systemtray-mode 1)
-
-   (display-time-mode 1)
-   (setq display-time-24hr-format t)
-   (setq display-time-day-and-date t)
-   (display-battery-mode 1)
-
-   (setq-default mode-line-end-spaces
-                 '("" (:eval
-                    (propertize " "
-                                'display
-                                '((space :align-to (- right 25)))))
-                   (:eval
-                    (when (and battery-status-function
-                               display-battery-mode)
-                      (let ((status
-                             (funcall battery-status-function)))
-                        (propertize (concat
-                                     "Bat: "
-                                     (cdr (assoc ?p status))
-                                     "% ")
-                                    'face 'mode-line))))
-                   (:eval
-                    (when display-time-mode
-                      (propertize display-time-string
-                                  'face
-                                  'mode-line)))))
-
-   ;; RandR and EXWM Enable
-   (require 'exwm-randr)
-   (add-hook 'exwm-randr-screen-change-hook #'my-exwm-update-displays)
-   (exwm-randr-mode 1)
-   (exwm-init)
-
-   (start-process-shell-command
-    "xinput"
-    nil
-    "xinput set-prop 10 'Coordinate Transformation Matrix' 2 0 0 0 2 0 0 0 1")
+   :config
+   ;; Ensure dependencies are installed
+   (desktop-environment-mode 1)
+   (dolist (cmd '("scrot" "slock" "pactl" "brightnessctl"))
+     (unless (executable-find cmd)
+       (message
+        "Warning: %s not found; desktop-environment may not work fully"
+        cmd)))
 
    :hook
-   ((exwm-update-class-hook
-     .
-     (lambda ()
-       (exwm-workspace-rename-buffer
-        (or exwm-title exwm-class-name "*EXWM*"))))
-    (exwm-update-title-hook
-     .
-     (lambda ()
-       (exwm-workspace-rename-buffer
-        (or exwm-title exwm-class-name "*EXWM*"))))
-    (exwm-init-hook
-     .
-     (lambda ()
-       (message "EXWM init-hook fired, DISPLAY=%s" (getenv "DISPLAY"))
-       (my-exwm-update-displays)
-       (switch-to-buffer "*scratch*")
-       (exwm-workspace-switch 0)))))
+   ;; Notification hooks for volume and brightness changes
+   (desktop-environment-volume-changed
+    .
+    (lambda ()
+      (let ((vol (desktop-environment--get-volume)))
+        (my-ednc-notify
+         "Volume" (format "Volume: %d%%" vol) 'normal))))
+   (desktop-environment-mute-changed
+    .
+    (lambda ()
+      (my-ednc-notify
+       "Volume Mute"
+       (if (desktop-environment--get-mute)
+           "Muted"
+         "Unmuted")
+       'normal)))
+   (desktop-environment-brightness-changed
+    .
+    (lambda ()
+      (let ((bright (desktop-environment--get-brightness)))
+        (my-ednc-notify
+         "Brightness" (format "Brightness: %d%%" bright) 'normal)))))
 
-  ;; Alert Package for Notifications
+  (use-package
+   notifications
+   :ensure t
+   :config (message "notifications.el loaded successfully"))
+
   (use-package
    alert
    :ensure t
@@ -576,41 +680,36 @@
          (if (eq system-type 'gnu/linux)
              'libnotify
            'message))
-   (setq alert-fade-time 10) ; Fade after 10 seconds
-   (setq alert-reveal-idle-time 5) ; Show after 5 seconds of idle
+   (setq alert-fade-time 10) (setq alert-reveal-idle-time 5)
    :init
    (alert-add-rule
     :category "EXWM"
     :mode 'exwm-mode
     :style 'libnotify))
 
-  ;; EDNC (Emacs Desktop Notification Center) Package
   (use-package
    ednc
    :ensure t
+   :demand t
    :config
-   (setq ednc-log-notifications t) ; Log notifications for debugging
-   (setq ednc-notification-timeout 10) ; Timeout after 10 seconds
-   (ednc-mode 1) ; Enable EDNC globally
-   ;; Define a custom notification handler for EXWM events
+   (setq ednc-log-notifications t)
+   (setq ednc-notification-timeout 10)
+   (ednc-mode 1)
    (defun my-ednc-notify (title message &optional urgency)
      "Send a desktop notification with TITLE and MESSAGE."
-     (ednc-notify
-      title message
+     (notifications-notify
+      :title title
+      :body message
+      :urgency
       (pcase urgency
-        ('low 0)
-        ('normal 1)
-        ('high 2)
-        (_ 1))))
-   ;; Example integration with workspace switch
-   (add-hook
-    'exwm-workspace-switch-hook
-    (lambda ()
-      (my-ednc-notify
-       "Workspace Switch"
-       (format "Switched to workspace %d"
-               exwm-workspace-current-index)
-       'normal)))))
+        ('low "low")
+        ('normal "normal")
+        ('high "critical")
+        (_ "normal"))
+      :app-name "EXWM"))
+   :init
+   (unless (fboundp 'notifications-notify)
+     (message "notifications.el not available; EDNC won’t work"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
@@ -681,6 +780,9 @@
          search-ring regexp-search-ring extended-command-history)) ; Add command history
  (require 'all-the-icons)
  :config
+ (global-set-key (kbd "<up>") 'previous-line)
+ (global-set-key (kbd "<down>") 'next-line)
+ (setq scroll-conservatively 101) ; Scroll line-by-line without recentering
  (when (file-exists-p custom-file)
    (load custom-file))
  ;; Global Emacs Settings
@@ -769,7 +871,8 @@
  :bind
  (("C-x k" . kill-current-buffer)
   ("C-x K" . kill-buffer)
-  ("H-s" . #'grim/screenshot)))
+  ("H-s" . #'grim/screenshot)
+  ("s-<tab>" . #'previous-buffer)))
 
 (use-package
  windmove
@@ -826,6 +929,8 @@
 (use-package
  ediff
  :ensure nil
+ ; defer
+ :defer t
  :config
  (setq
   ediff-split-window-function 'split-window-right
@@ -867,6 +972,8 @@
 (use-package
  tramp
  :ensure nil
+ ; defer
+ :defer t
  :config
  ;; Optimize TRAMP for auto-revert
  (setq tramp-auto-save-directory "~/.config/emacs/tramp-auto-save/")
@@ -924,7 +1031,7 @@
     ("\\bINFO\\b" . 'font-lock-string-face)
     ("\\bWARN\\b" . 'font-lock-warning-face)
     ("\\bERROR\\b" . 'font-lock-function-name-face))
-  "Font-lock keywords for log-mode highlighting.")
+  "Font-lock keywords for `log-mode' highlighting.")
 
 ;; Associate .log files with log-mode
 (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
@@ -936,6 +1043,8 @@
 (use-package
  vundo
  :ensure t
+ ; defer
+ :defer t
  :bind ("C-x u" . vundo)
  :config (setq vundo-glyph-alist vundo-unicode-symbols))
 
@@ -946,6 +1055,8 @@
 (use-package
  deadgrep
  :ensure t
+ ; defer
+ :defer t
  :bind
  (("C-c s" . deadgrep)
   :map
@@ -959,12 +1070,16 @@
 ;; Rainbow Delimiters
 (use-package
  rainbow-delimiters
+ ; defer
+ :defer t
  :hook (prog-mode . rainbow-delimiters-mode))
 
 ;; Highlight Thing at Point
 (use-package
  highlight-thing
  :ensure t
+ ; defer
+ :defer t
  :custom
  (highlight-thing-delay-seconds 0.5) ; Delay before highlighting
  (highlight-thing-what-thing 'symbol) ; Highlight symbols
@@ -974,28 +1089,48 @@
                      :weight 'normal)
  :hook (prog-mode . highlight-thing-mode))
 
-;; Indent bars
+(use-package
+ rainbow-delimiters
+ :ensure t
+ :diminish rainbow-delimiters-mode
+ :hook (prog-mode . rainbow-delimiters-mode)
+ :custom
+ (rainbow-delimiters-max-face-count 9)) ;; Default 9 faces
+
 (use-package
  indent-bars
+ :ensure t
+ :diminish indent-bars-mode
+ :hook
+ ((prog-mode . indent-bars-mode)
+  (emacs-lisp-mode . indent-bars-mode)) ;; Ensure .el files work
  :custom
- (indent-bars-no-descend-lists t)
+ ;; Appearance
+ (indent-bars-pattern ".") ;; Solid bars
+ (indent-bars-width-frac 0.2) ;; Thin bars
+ (indent-bars-pad-frac 0.1) ;; Minimal padding
+ (indent-bars-zigzag nil) ;; Straight bars
+ (indent-bars-display-on-blank-lines t) ;; Bars on blank lines (required)
+ (indent-bars-prefer-character nil) ;; Stipples for speed
+ ;; Highlight current level (required)
+ (indent-bars-highlight-current-depth '(:blend 0.6)) ;; Brighter current bar
+ ;; Behavior
+ (indent-bars-no-descend-strings t) ;; Lock depth in strings
+ (indent-bars-no-descend-lists t) ;; Lock depth in lists
+ (indent-bars-depth-update-delay 0.05) ;; Fast updates
+ ;; Tree-sitter
  (indent-bars-treesit-support t)
- (indent-bars-prefer-character t)
  (indent-bars-treesit-scope
-  '((python
-     function_definition
-     class_definition
-     for_statement
-     if_statement
-     with_statement
-     while_statement)))
- (indent-bars-color '(highlight :face-bg t :blend 0.15))
- (indent-bars-starting-column 0)
- (indent-bars-color-by-depth
-  '(:regexp "outline-\\([0-9]+\\)" :blend 1))
- (indent-bars-highlight-current-depth '(:blend 0.5))
- (indent-bars-display-on-blank-lines t)
- :hook (prog-mode . indent-bars-mode))
+  '((python function_definition class_definition)
+    (emacs-lisp function_definition)
+    (c function_declarator compound_statement)))
+ :config
+ ;; Force font-lock refresh for .el files
+ (defun indent-bars-refresh-font-lock ()
+   (when indent-bars-mode
+     (font-lock-flush)
+     (font-lock-ensure)))
+ (add-hook 'indent-bars-mode-hook #'indent-bars-refresh-font-lock))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Mode Line Cleanup                           ;;
@@ -1033,6 +1168,8 @@
 (use-package
  smartparens
  :ensure t
+ ; defer
+ :defer t
  :hook
  ((prog-mode . smartparens-mode)
   (text-mode . smartparens-mode)
@@ -1119,18 +1256,64 @@
 (use-package marginalia :ensure t :init (marginalia-mode 1))
 
 (use-package
+ corfu
+ :ensure t
+ :init
+ (global-corfu-mode 1) ; Enable Corfu globally
+ (corfu-popupinfo-mode 1) ; Show documentation in popups
+ :custom
+ (corfu-cycle t) ; Cycle through candidates
+ (corfu-auto t) ; Auto-show completions after typing
+ (corfu-auto-prefix 2) ; Show completions after 2 characters
+ (corfu-auto-delay 0.1) ; Fast popup display
+ (corfu-quit-at-boundary t) ; Quit if no match at word boundary
+ (corfu-quit-no-match t) ; Quit if no matches
+ (corfu-preselect-first t) ; Preselect first candidate
+ (corfu-popupinfo-delay '(0.5 . 0.2)) ; Delay for documentation popup
+ :bind
+ (:map
+  corfu-map
+  ("TAB" . corfu-complete) ; Accept current suggestion
+  ([tab] . corfu-complete) ; Ensure both TAB forms work
+  ("<down>" . corfu-next) ; Cycle down with down arrow
+  ("<up>" . corfu-previous) ; Cycle up with up arrow
+  ("M-d" . corfu-popupinfo-toggle)) ; Toggle documentation
+ :config
+ ;; Ensure Orderless works with Corfu
+ (defun corfu-enable-orderless ()
+   "Enable Orderless completion style for Corfu."
+   (setq-local
+    completion-styles '(orderless basic)
+    completion-category-defaults nil))
+ (add-hook 'corfu-mode-hook #'corfu-enable-orderless)
+ ;; Disable Corfu in minibuffer to avoid conflicts with Vertico
+ (defun corfu-disable-in-minibuffer ()
+   "Disable Corfu in minibuffer."
+   (when (minibufferp)
+     (corfu-mode -1)))
+ (add-hook 'minibuffer-setup-hook #'corfu-disable-in-minibuffer))
+
+(use-package
  all-the-icons-completion
  :ensure t
- :after (all-the-icons marginalia)
+ ;:after (all-the-icons marginalia)
  :config (all-the-icons-completion-mode)
- :hook
- (marginalia-mode . all-the-icons-completion-marginalia-setup))
+ :hook (marginalia-mode . all-the-icons-completion-marginalia-setup))
 
 (use-package
  alert
  :ensure t
  :commands (alert)
- :init (setq alert-default-style 'notifier))
+ :init
+ (setq alert-default-style
+       (if (eq system-type 'gnu/linux)
+           'libnotify
+         'message)) ; Prioritize libnotify on Linux
+ (alert-add-rule :category "EXWM" :mode 'exwm-mode :style 'libnotify) ; EXWM-specific rule
+ :config
+ (setq
+  alert-fade-time 10
+  alert-reveal-idle-time 5))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Editing Helpers                              ;;
@@ -1144,6 +1327,8 @@
 (use-package
  diff-hl
  :ensure t
+ ; defer
+ :defer t
  :hook (magit-post-refresh . diff-hl-magit-post-refresh)
  :config (global-diff-hl-mode +1))
 
@@ -1155,6 +1340,8 @@
 (use-package
  avy
  :ensure t
+ ; defer
+ :defer t
  :bind (("M-j" . avy-goto-char-timer) ("C-’" . avy-goto-char-2))
  :init (avy-setup-default)
  :config
@@ -1175,8 +1362,9 @@
 (use-package
  avy-zap
  :ensure t
- :bind
- (("M-z" . avy-zap-up-to-char-dwim) ("M-Z" . avy-zap-to-char-dwim))
+ ; defer
+ :defer t
+ :bind (("M-z" . avy-zap-up-to-char-dwim) ("M-Z" . avy-zap-to-char-dwim))
  :config
  (setq avy-zap-forward-only t)
  (setq avy-keys '(?a ?o ?e ?u ?i ?d ?h ?t ?n ?s)))
@@ -1188,24 +1376,25 @@
 (use-package
  xkcd
  :ensure t
+ :defer t
  :config
  ;; Optional: Customize cache directory
  (setq xkcd-cache-dir "~/.config/emacs/xkcd/")
  ;; Hook to set cursor-type to a non-blinking state in xkcd buffers
  :hook (xkcd-mode . (lambda () (setq-local cursor-type '(bar . 0)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                 Popup Setup
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;;                                 Popup Setup
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package
- popup
- :config
- ;; If you want the popup library to compute columns more optimally:
- (setq popup-use-optimized-column-computation t)
+;; (use-package
+;;  popup
+;;  :config
+;;  ;; If you want the popup library to compute columns more optimally:
+;;  (setq popup-use-optimized-column-computation t)
 
- ;; Example: limit maximum width of a popup-tip
- (setq popup-tip-max-width 80))
+;;  ;; Example: limit maximum width of a popup-tip
+;;  (setq popup-tip-max-width 80))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1548,15 +1737,17 @@
       ,(expand-file-name "tasks.org" org-directory) "Tasks")
      "* TODO %:subject\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:EMAIL_LINK: %:link\n:END:\n\n%:initial\n"
      :immediate-finish t)
-    ("r" "Read Later (RSS)" entry
-     (file+headline
-      ,(expand-file-name "tasks.org" org-directory) "Read Later")
-     "* TODO Read: %:description\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:LINK: %:link\n:END:\n"
+    ("e"
+     "Email"
+     entry
+     (file+headline "~/org/inbox.org" "Emails")
+     "* TODO %:subject\n:PROPERTIES:\n:EMAIL: %:message-id\n:END:\n%?"
      :immediate-finish t)
-    ("e" "Email TODO" entry
-     (file+headline
-      ,(expand-file-name "tasks.org" org-directory) "Tasks")
-     "* TODO %:subject\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:EMAIL_LINK: %:link\n:END:\n"
+    ("r"
+     "RSS"
+     entry
+     (file+headline "~/org/inbox.org" "RSS")
+     "* TODO %:title\n:PROPERTIES:\n:URL: %:url\n:END:\n%?"
      :immediate-finish t)))
  :hook
  (org-capture-after-finalize
@@ -1631,7 +1822,7 @@
 
 (use-package forge :ensure t :defer t :after magit)
 
-(use-package magit-todos :ensure t :after magit)
+(use-package magit-todos :ensure t :defer t :after magit)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Grep Ignorance                              ;;
@@ -1676,6 +1867,8 @@
 (use-package
  aidermacs
  :ensure t
+ ; defer
+ :defer t
  :config
  (setq aidermacs-default-model "sonnet")
  (global-set-key (kbd "C-c A") 'aidermacs-transient-menu)
@@ -1696,7 +1889,7 @@
  (setq
   recentf-max-saved-items 100
   recentf-max-menu-items 25
-  recentf-exclude '("/tmp/" "/ssh:"))
+  recentf-exclude '("/ssh:"))
  :bind (("C-c r" . consult-recent-file)))
 
 (use-package
@@ -1721,10 +1914,8 @@
  :ensure t
  :config
  (setq
-  emacs-everywhere-app-info-function
-  #'grim/emacs-everywhere-wayland-app-info
-  emacs-everywhere-copy-command '("wl-copy")
-  emacs-everywhere-paste-command '("wl-paste"))
+  emacs-everywhere-copy-command '("xclip" "-selection" "clipboard")
+  emacs-everywhere-paste-command '("xclip" "-selection" "clipboard" "-o"))
  :hook (emacs-everywhere-init . whitespace-cleanup))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1828,6 +2019,7 @@
 (use-package
  eww
  :ensure nil
+ :defer t
  :commands (eww eww-browse-url)
  :init
  (setq browse-url-handlers
@@ -1900,8 +2092,8 @@
  (:map
   global-map
   ("C-c n n" . denote)
-  ("C-c n d" . denote-sort-dired)
-  ("C-c n s" . denote-search)
+  ("C-c n d" . denote-dired)
+  ;; ("C-c n g" . denote-grep)
   ;; If you intend to use Denote with a variety of file types, it is
   ;; easier to bind the link-related commands to the `global-map', as
   ;; shown here.  Otherwise follow the same pattern for `org-mode-map',
@@ -1909,6 +2101,8 @@
   ("C-c n l" . denote-link)
   ("C-c n L" . denote-add-links)
   ("C-c n b" . denote-backlinks)
+  ("C-c n q c" . denote-query-contents-link) ; create link that triggers a grep
+  ("C-c n q f" . denote-query-filenames-link) ; create link that triggers a dired
   ;; Note that `denote-rename-file' can work from any context, not just
   ;; Dired bufffers.  That is why we bind it here to the `global-map'.
   ("C-c n r" . denote-rename-file)
@@ -1926,9 +2120,10 @@
 
  :config
  ;; Remember to check the doc string of each of those variables.
- (setq denote-directory (expand-file-name "~/.org/notes"))
+ (setq denote-directory (expand-file-name "~/Documents/notes/"))
  (setq denote-save-buffers nil)
- (setq denote-known-keywords '("emacs" "research"))
+ (setq denote-known-keywords
+       '("emacs" "philosophy" "politics" "economics"))
  (setq denote-infer-keywords t)
  (setq denote-sort-keywords t)
  (setq denote-prompts '(title keywords))
@@ -1940,16 +2135,41 @@
  ;; Pick dates, where relevant, with Org's advanced interface:
  (setq denote-date-prompt-use-org-read-date t)
 
- ;; By default, we do not show the context of links.  We just display
- ;; file names.  This provides a more informative view.
- (setq denote-backlinks-show-context t)
-
  ;; Automatically rename Denote buffers using the `denote-rename-buffer-format'.
  (denote-rename-buffer-mode 1))
 
 (use-package
+ consult-denote
+ :ensure t
+ :bind
+ (("C-c n f" . consult-denote-find) ("C-c n g" . consult-denote-grep))
+ :config (consult-denote-mode 1))
+
+(use-package
+ denote-journal
+ :ensure t
+ ;; Bind those to some key for your convenience.
+ :commands
+ (denote-journal-new-entry
+  denote-journal-new-or-existing-entry
+  denote-journal-link-or-create-entry)
+ :hook (calendar-mode . denote-journal-calendar-mode)
+ :config
+ ;; Use the "journal" subdirectory of the `denote-directory'.  Set this
+ ;; to nil to use the `denote-directory' instead.
+ (setq denote-journal-directory
+       (expand-file-name "journal" denote-directory))
+ ;; Default keyword for new journal entries. It can also be a list of
+ ;; strings.
+ (setq denote-journal-keyword "journal")
+ ;; Read the doc string of `denote-journal-title-format'.
+ (setq denote-journal-title-format 'day-date-month-year))
+
+(use-package
  denote-org
  :ensure t
+ ; defer
+ :defer t
  ;; :command
  ;; ;; I list the commands here so that you can discover them more
  ;; ;; easily.  You might want to bind the most frequently used ones to
@@ -1968,24 +2188,6 @@
  ;;   denote-org-dblock-insert-missing-links
  ;;   denote-org-dblock-insert-files-as-headings))
  )
-
-(use-package
- denote-journal
- :ensure t
- ;; Bind those to some key for your convenience.
- ;; :commands ( denote-journal-new-entry
- ;;             denote-journal-new-or-existing-entry
- ;;             denote-journal-link-or-create-entry )
- :config
- ;; Use the "journal" subdirectory of the `denote-directory'.  Set this
- ;; to nil to use the `denote-directory' instead.
- (setq denote-journal-directory
-       (expand-file-name "journal" denote-directory))
- ;; Default keyword for new journal entries. It can also be a list of
- ;; strings.
- (setq denote-journal-keyword "journal")
- ;; Read the doc string of `denote-journal-title-format'.
- (setq denote-journal-title-format 'day-date-month-year))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              ERC (IRC Client)                             ;;
@@ -2190,36 +2392,6 @@
  (electric-quote-mode 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                           calibre / nov.el                                ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package
- calibredb
- :ensure t
- :defer t
- :config
- (setq calibredb-format-all-the-icons t)
- (setq calibredb-format-character-icons t)
- (setq calibredb-root-dir "~/.calibre-library")
- (setq calibredb-db-dir
-       (expand-file-name "metadata.db" calibredb-root-dir))
- (setq calibredb-library-alist
-       '(("~/.calibre-library" (name . "Calibre")))))
-
-(use-package esxml :ensure t)
-
-(use-package
- nov
- :ensure t
- :after esxml
- :init (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
- :config
- (setq
-  nov-unzip-program (executable-find "bsdtar")
-  nov-unzip-args '("-xC" directory "-f" filename))
- (setq nov-verbose t))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                 Flymake Setup                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -2317,6 +2489,8 @@
 (use-package
  elisp-demos
  :ensure t
+ ; defer
+ :defer t
  :config
  (advice-add
   'helpful-update
@@ -2325,6 +2499,8 @@
 (use-package
  elisp-autofmt
  :ensure t
+ ; defer
+ :defer t
  :commands (elisp-autofmt-mode elisp-autofmt-buffer)
  :hook
  ((emacs-lisp-mode . elisp-autofmt-mode)
@@ -2377,11 +2553,6 @@
 (use-package
  eshell
  :ensure nil
- :bind
- (("C-`" .
-   (lambda ()
-     (interactive)
-     (my/toggle-buffer "*eshell*" 'eshell))))
  :init
  (setq
   eshell-scroll-to-bottom-on-input 'all
@@ -2424,134 +2595,144 @@
   (eshell-visual-subprocess-hook . my-eshell-disable-distractions)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                  Gnus Setup                                ;;
+;; Gnus Setup
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
  gnus
  :ensure nil
+ :defer t
  :commands (gnus gnus-unplugged)
  :init
- ;; Primary select method for mailbox.org IMAP
+ ;; Primary IMAP select method for mailbox.org
  (setq gnus-select-method
        '(nnimap
          "mailbox.org"
          (nnimap-address "imap.mailbox.org")
          (nnimap-server-port 993)
-         (nnimap-stream ssl)
-         (nnimap-authenticator login)))
+         (nnimap-stream ssl)))
 
- ;; No secondary methods by default; RSS added manually with G R
- (setq gnus-secondary-select-methods nil)
+ ;; Secondary select method for RSS
+ (setq gnus-secondary-select-methods
+       '((nnrss
+          "rss" (nnrss-directory "~/.config/emacs/gnus/News/rss/"))))
 
- ;; SMTP configuration for sending mail
+ ;; SMTP configuration
  (setq
   smtpmail-smtp-server "smtp.mailbox.org"
   smtpmail-smtp-service 587
-  smtpmail-stream 'starttls
+  smtpmail-stream-type 'starttls
+  smtpmail-default-smtp-server "smtp.mailbox.org"
   smtpmail-smtp-user "theesfeld@mailbox.org"
   send-mail-function 'smtpmail-send-it
   message-send-mail-function 'smtpmail-send-it)
 
  ;; Use auth-source for credentials
- (setq
-  auth-sources '("~/.authinfo.gpg")
-  smtpmail-auth-credentials 'auth-source)
+ (setq auth-sources '("~/.authinfo.gpg"))
 
- ;; Custom keymap for Gnus commands
+ ;; Custom keymap
  (defvar my-gnus-map (make-sparse-keymap)
    "Keymap for Gnus commands.")
  (global-set-key (kbd "C-c g") my-gnus-map)
  (define-key my-gnus-map (kbd "g") 'gnus)
  (define-key my-gnus-map (kbd "u") 'gnus-unplugged)
 
+ ;; Ensure directories exist
+ (make-directory "~/.config/emacs/gnus/News/rss/" t)
+ (make-directory "~/.config/emacs/gnus/cache/" t)
+
  :hook
- ;; Enable topic mode if available
+ ;; Enable topic mode
  (gnus-group-mode
   .
   (lambda ()
     (when (require 'gnus-topic nil t)
-      (gnus-topic-mode)
-      (message "Gnus topic mode enabled"))))
-
- ;; Initial setup on startup
+      (gnus-topic-mode))))
+ ;; Load RSS feeds and list groups
  (gnus-started-hook
   .
   (lambda ()
-    ;; Subscribe to all mailbox.org groups at level 2, except Junk at 6
-    (dolist (group (gnus-group-list-all-groups 6))
-      (when (string-match-p "^nnimap\\+mailbox\\.org:" group)
-        (if (string-match-p "Junk$" group)
-            (gnus-group-change-level group 6)
-          (gnus-group-change-level group 2)
-          (gnus-activate-group group t)
-          (unless (gnus-group-subscribed-p group)
-            (gnus-subscribe-group group)))))
-    ;; Fetch new news
-    (gnus-group-get-new-news)
-    ;; Show all subscribed groups (up to level 5) in the main view
-    (gnus-group-list-groups 5 t))) ; 5 includes all typical mail levels, t forces update
+    (require 'nnrss)
+    (dolist (file
+             (directory-files "~/.config/emacs/gnus/News/rss/"
+                              t
+                              "\\.el$"))
+      (load file nil t))
+    (gnus-group-list-groups 5 t)))
 
  :custom
- ;; Directory and file settings
- (gnus-home-directory "~/.config/emacs/gnus/")
- (gnus-startup-file "~/.config/emacs/gnus/.newsrc")
- (gnus-cache-directory "~/.config/emacs/gnus/cache/")
- (gnus-cache-active-file "~/.config/emacs/gnus/cache/active")
- (gnus-use-dribble-file nil)
- (gnus-always-read-dribble-file nil)
+ ;; Directories
+ (gnus-home-directory (expand-file-name "~/.config/emacs/gnus/"))
+ (gnus-startup-file (expand-file-name "~/.config/emacs/gnus/.newsrc"))
+ (gnus-cache-directory
+  (expand-file-name "~/.config/emacs/gnus/cache/"))
+ (gnus-cache-active-file
+  (expand-file-name "~/.config/emacs/gnus/cache/active"))
+ (nnrss-directory (expand-file-name "~/.config/emacs/gnus/News/rss/"))
 
- ;; Performance and behavior
- (gnus-check-new-newsgroups 'always)
+ ;; Performance
  (gnus-asynchronous t)
  (gnus-use-cache t)
- (gnus-use-header-prefetch t)
 
- ;; Display settings
+ ;; Display
  (gnus-use-full-window nil)
  (gnus-group-line-format "%M%S%p%P%5y:%B%(%g%)\n")
- (gnus-group-sort-function
-  '(gnus-group-sort-by-alphabet gnus-group-sort-by-rank))
  (gnus-summary-line-format "%U%R %B %s\n")
- (gnus-summary-display-arrow t)
- (gnus-generate-tree-function 'gnus-generate-horizontal-tree)
- (gnus-tree-minimize-window nil)
-
- ;; Threading
- (gnus-show-threads t)
- (gnus-fetch-old-headers nil)
- (gnus-build-sparse-threads 'some)
- (gnus-summary-thread-gathering-function
-  'gnus-gather-threads-by-subject)
  (gnus-thread-sort-functions '(gnus-thread-sort-by-date))
- (gnus-sum-thread-tree-root "├▶")
- (gnus-sum-thread-tree-false-root " ◇ ")
- (gnus-sum-thread-tree-single-indent "")
- (gnus-sum-thread-tree-vertical "│")
- (gnus-sum-thread-tree-leaf-with-child "├▶")
  (gnus-sum-thread-tree-indent "  ")
- (gnus-sum-thread-tree-single-leaf "└▶")
+ (gnus-sum-thread-tree-root "├▶ ")
+ (gnus-sum-thread-tree-leaf-with-child "├▶ ")
+ (gnus-sum-thread-tree-single-leaf "└▶ ")
+ (gnus-sum-thread-tree-vertical "│")
 
- ;; Ensure all subscribed groups are visible by default
- (gnus-level-subscribed 5) ; Show groups up to level 5 in main view
- (gnus-level-unsubscribed 6) ; Hide unsubscribed groups (e.g., Junk) unless explicitly requested
- (gnus-level-zombie 7) ; Higher levels for zombie/dead groups
+ ;; Group visibility
+ (gnus-level-subscribed 5)
+ (gnus-level-unsubscribed 6)
 
  :custom-face
- ;; Faces aligned with Modus Vivendi theme
- (gnus-group-mail-3 ((t (:foreground "#00bcff" :weight bold))))
- (gnus-group-mail-3-empty ((t (:foreground "#666699"))))
+ ;; Dynamic faces for Modus Vivendi or fallback
+ (gnus-group-mail-3
+  ((t
+    (:foreground
+     ,(if (facep 'modus-themes-fg-blue)
+          "#00bcff"
+        "cyan")
+     :weight bold))))
+ (gnus-group-mail-3-empty
+  ((t
+    (:foreground
+     ,(if (facep 'modus-themes-fg-dim)
+          "#666699"
+        "gray")))))
  (gnus-summary-normal-unread
-  ((t (:foreground "#ffcc66" :weight bold))))
- (gnus-summary-normal-read ((t (:foreground "#a0a0a0"))))
- (gnus-header-name ((t (:foreground "#ff66ff" :weight bold))))
- (gnus-header-content ((t (:foreground "#88c0d0"))))
+  ((t
+    (:foreground
+     ,(if (facep 'modus-themes-fg-yellow)
+          "#ffcc66"
+        "yellow")
+     :weight bold))))
+ (gnus-summary-normal-read
+  ((t
+    (:foreground
+     ,(if (facep 'modus-themes-fg-alt)
+          "#a0a0a0"
+        "light gray")))))
+ (gnus-header-name
+  ((t
+    (:foreground
+     ,(if (facep 'modus-themes-fg-magenta)
+          "#ff66ff"
+        "magenta")
+     :weight bold))))
+ (gnus-header-content
+  ((t
+    (:foreground
+     ,(if (facep 'modus-themes-fg-cyan)
+          "#88c0d0"
+        "cyan")))))
 
  :config
- ;; Ensure cache directory exists
- (make-directory gnus-cache-directory t)
-
- ;; Posting styles for different contexts
+ ;; Posting styles
  (setq gnus-posting-styles
        '((".*"
           (address "theesfeld@mailbox.org")
@@ -2575,110 +2756,95 @@
           (level . 6))
          ("nnrss:.*" (display . all) (visible . t) (level . 2))))
 
- ;; Behavioral tweaks
- (setq gnus-article-browse-delete-temp 'ask)
- (setq gnus-expert-user t)
-
- ;; Custom quit function
+ ;; Custom quit
  (defun my-gnus-group-quit ()
    "Quit Gnus and switch to a valid buffer."
    (interactive)
    (gnus-group-quit)
-   (if (get-buffer "*scratch*")
-       (switch-to-buffer "*scratch*")
-     (switch-to-buffer (other-buffer))))
+   (switch-to-buffer (or (get-buffer "*scratch*") (other-buffer))))
 
- ;; RSS and email capture functions
- (defun my-gnus-capture-rss-to-org ()
-   "Capture current Gnus RSS article as an Org TODO."
-   (interactive)
-   (when (eq major-mode 'gnus-article-mode)
-     (let*
-         ((url (gnus-article-get-url))
-          (title (gnus-article-get-title))
-          (org-capture-link
-           (when (and url title)
-             (format
-              "org-protocol://capture?template=r&link=%s&description=%s"
-              (url-encode-url url) (url-encode-url title)))))
-       (if org-capture-link
-           (progn
-             (org-protocol-capture org-capture-link)
-             (message "Captured RSS: %s" title))
-         (message "No URL or title found in this article")))))
-
+ ;; Org capture for emails
  (defun my-gnus-capture-email-to-org ()
-   "Capture current Gnus email as an Org TODO."
+   "Capture current email as an Org TODO."
    (interactive)
    (when (eq major-mode 'gnus-article-mode)
      (let* ((message-id (gnus-fetch-field "Message-ID"))
             (subject (gnus-fetch-field "Subject"))
-            (email-link
-             (when message-id
-               (format "gnus:nnimap+mailbox.org:INBOX#%s"
-                       (substring message-id 1 -1))))
-            (org-capture-link
-             (when (and email-link subject)
-               (format
-                "org-protocol://capture?template=e&link=%s&subject=%s"
-                (url-encode-url email-link)
-                (url-encode-url subject)))))
-       (if org-capture-link
+            (org-entry
+             (format "* TODO %s\n:PROPERTIES:\n:EMAIL: %s\n:END:\n"
+                     (or subject "No subject")
+                     (or message-id "No message ID"))))
+       (org-capture nil "e")
+       (with-current-buffer (get-buffer "*Org Capture*")
+         (insert org-entry))
+       (message "Captured email: %s" subject))))
+
+ ;; Org capture for RSS
+ (defun my-gnus-capture-rss-to-org ()
+   "Capture current RSS article as an Org TODO."
+   (interactive)
+   (when (eq major-mode 'gnus-article-mode)
+     (let* ((url
+             (or (gnus-article-get-field "Link")
+                 (save-excursion
+                   (goto-char (point-min))
+                   (when (re-search-forward
+                          "<a href=\"\\(http[^\"]+\\)\""
+                          nil t)
+                     (match-string 1)))))
+            (title
+             (or (gnus-article-get-field "Subject")
+                 (gnus-article-get-field "title")
+                 "No title"))
+            (org-entry
+             (format "* TODO %s\n:PROPERTIES:\n:URL: %s\n:END:\n"
+                     title (or url "No URL"))))
+       (if (and url title)
            (progn
-             (org-protocol-capture org-capture-link)
-             (message "Captured email: %s" subject))
-         (message "No Message-ID or subject found in this email")))))
+             (org-capture nil "r")
+             (with-current-buffer (get-buffer "*Org Capture*")
+               (insert org-entry))
+             (message "Captured RSS: %s" title))
+         (user-error "Failed to capture RSS: missing %s"
+                     (cond
+                      ((not url)
+                       "URL")
+                      ((not title)
+                       "title")))))))
 
- ;; Helper functions for URL and title extraction
- (defun gnus-article-get-url ()
-   "Extract URL from the current Gnus article."
-   (save-excursion
-     (goto-char (point-min))
-     (when (re-search-forward "<a href=\"\\(http[^\"]+\\)\"" nil t)
-       (match-string 1))))
-
- (defun gnus-article-get-title ()
-   "Extract title from the current Gnus article."
-   (save-excursion
-     (goto-char (point-min))
-     (when (re-search-forward "^Subject: \\(.*\\)$" nil t)
-       (match-string 1))))
+ ;; Helper to get article fields
+ (defun gnus-article-get-field (field)
+   "Get FIELD from current article headers."
+   (when (eq major-mode 'gnus-article-mode)
+     (gnus-fetch-field field)))
 
  :bind
  (:map gnus-group-mode-map ("q" . my-gnus-group-quit))
  (:map
   gnus-article-mode-map
-  ("C-c r" . my-gnus-capture-rss-to-org)
-  ("C-c e" . my-gnus-capture-email-to-org)))
+  ("C-c e" . my-gnus-capture-email-to-org)
+  ("C-c r" . my-gnus-capture-rss-to-org)))
 
 (use-package
  gnus-art
  :ensure nil
+ :defer t
  :after gnus
- :config
- (setq gnus-inhibit-images nil) ; Show images
- (setq gnus-blocked-images nil) ; Don’t block any images
- (setq gnus-article-mode-line-format "Gnus: %S")
+ :config (setq gnus-inhibit-images nil)
  (setq gnus-visible-headers
-       '("^From:"
-         "^Subject:"
-         "^To:"
-         "^Cc:"
-         "^Date:"
-         "^Newsgroups:"
-         "^Followup-To:"))
+       '("^From:" "^Subject:" "^To:" "^Cc:" "^Date:" "^Link:"))
  (setq gnus-article-sort-functions '(gnus-article-sort-by-date)))
 
 (use-package
  message
  :ensure nil
+ :defer t
  :after gnus
  :config
  (setq message-citation-line-format "On %a, %b %d %Y, %N wrote:\n")
  (setq message-citation-line-function
        'message-insert-formatted-citation-line)
  (setq message-kill-buffer-on-exit t)
- (setq message-wide-reply-confirm-recipients t)
  (setq message-default-charset 'utf-8))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2695,19 +2861,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun my-after-make-frame-setup (&optional frame)
-  "Initialize UI settings for new frames, including daemon clients."
-  (with-selected-frame (or frame (selected-frame))
-    (when (display-graphic-p) ; Only for graphical frames
+  "Initialize UI settings for new FRAMEs on Xorg, including daemon clients."
+  (when (display-graphic-p) ; Only for graphical frames
+    (with-selected-frame (or frame (selected-frame))
       (menu-bar-mode -1)
       (tool-bar-mode -1)
       (scroll-bar-mode -1))))
 
-;; Run setup for the initial frame if not in daemon mode
 (unless (daemonp)
-  (my-after-make-frame-setup))
-
-;; Hook for new frames created by emacsclient
-(add-hook 'after-make-frame-functions #'my-after-make-frame-setup)
+  (when (display-graphic-p)
+    (my-after-make-frame-setup)))
+(add-hook
+ 'after-make-frame-functions
+ (lambda (frame)
+   (when (display-graphic-p frame)
+     (my-after-make-frame-setup frame))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                 LaTeX templates                           ;;
@@ -2730,6 +2898,7 @@
 (use-package
  mastodon
  :ensure t
+ :defer t
  :config
  ;; Core settings from latest mastodon.el README
  (setq
@@ -2776,6 +2945,7 @@
 (use-package
  pgmacs
  :vc (:url "https://github.com/emarsden/pgmacs" :rev :newest)
+ :defer t
  :init
  ;; Load dependency 'pg' from GitHub
  (use-package
@@ -2870,12 +3040,55 @@
  (prog-mode . hl-line-mode)) ; Enable only in prog-mode derived modes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                    eat terminal                           ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package
+ eat
+ :ensure t
+ :defer t
+ :commands (eat eat-project)
+ :custom
+ ;; General settings for performance and usability
+ (eat-term-scrollback-size (* 1024 1024)) ;; 1MB scrollback buffer
+ (eat-kill-buffer-on-exit t) ;; Clean up when terminal exits
+ (eat-enable-blinking-text t) ;; Allow blinking text for emphasis
+ (eat-enable-yank-to-terminal t) ;; Enable yanking directly to terminal
+ (eat-term-name "xterm-256color") ;; Support full color range
+
+ ;; Keybindings for convenience
+ :bind
+ (("C-c t" . eat) ;; Open Eat in current buffer
+  ("C-c p t" . eat-project) ;; Open Eat in project root
+  :map eat-mode-map
+  ("C-c C-k" . eat-kill-process) ;; Kill terminal process
+  ("C-c C-r" . eat-reset)) ;; Reset terminal
+
+ ;; Visual enhancements
+ :hook
+ (eat-mode-hook
+  .
+  (lambda ()
+    ;; Disable distractions for a clean look
+    (setq-local mode-line-format nil)
+    (setq-local header-line-format nil)
+    (setq-local truncate-lines t)
+    ;; Add some padding for aesthetics
+    (set-window-margins nil 1 1)
+    ;; Ensure font consistency
+    (face-remap-add-relative
+     'default
+     :family "Berkeley Mono"
+     :height 110))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  SES (Spreadsheet)                       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
  ses
  :ensure nil ; SES is built-in, no need to install
+ :defer t
  :commands (ses-mode new-ses)
  :init
  ;; Pre-configure SES defaults before loading
