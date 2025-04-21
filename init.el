@@ -432,93 +432,99 @@
    ;;                  `(0 ,primary)))))))))
    ;; (set-face-attribute 'default nil :height 120)
 
-(require 'exwm-randr)
-(setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
+   (require 'exwm-randr)
+   (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
 
-(defun my-exwm-get-edid (output)
-  "Retrieve the EDID for a given OUTPUT using xrandr."
-  (with-temp-buffer
-    (call-process "xrandr" nil t nil "--prop")
-    (goto-char (point-min))
-    (when (re-search-forward (concat output " connected") nil t)
-      (re-search-forward "EDID:" nil t)
-      (let ((edid ""))
-        (while (re-search-forward "\\s-+\\([0-9a-f]+\\)" nil t)
-          (setq edid (concat edid (match-string 1)))
-          (if (> (length edid) 255) ; EDID is typically 128 or 256 bytes
-              (setq edid (substring edid 0 256))))
-        (string-trim edid)))))
-
-(defun my-exwm-monitor-needs-rotation (edid)
-  "Check if the EDID matches the LG ULTRAFINE monitor requiring 270-degree rotation."
-  (string-equal
-   (downcase edid)
-   "00ffffffffffff001e6dc25b23ad0000031f0104b5462878fa40b5ae5142ad260f5054210800d1c06140010101010101010101010101e2ca0038f0703e8018103500b9882100001a000000fd00283c1e873c000a202020202020000000fc004c4720554c54524146494e450a000000ff003130334e54464131413332330a019402031f7223090707830100004401030410e2006ae305c000e606050160605004740030f2705a80b0588a00b9882100001e565e00a0a0a0295030203500b9882100001a1a3680a070381f402a263500b9882100001a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000de"))
-
-(add-hook
- 'exwm-randr-screen-change-hook
- (lambda ()
-   (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
-         connected-outputs
-         output-edids)
-     ;; Get connected outputs
+   (defun my-exwm-get-edid (output)
+     "Retrieve the EDID for a given OUTPUT using xrandr."
      (with-temp-buffer
-       (call-process "xrandr" nil t nil)
+       (call-process "xrandr" nil t nil "--prop")
        (goto-char (point-min))
-       (while (re-search-forward xrandr-output-regexp nil t)
-         (push (match-string 1) connected-outputs)))
-     ;; Get EDID for each output
-     (dolist (output connected-outputs)
-       (let ((edid (my-exwm-get-edid output)))
-         (push (cons output edid) output-edids)))
-     (cond
-      ;; Single monitor or only eDP-1 connected
-      ((or (= (length connected-outputs) 1)
-           (and (member "eDP-1" connected-outputs)
-                (= (length (remove "eDP-1" connected-outputs)) 0)))
-       (start-process-shell-command
-        "xrandr"
-        nil
-        "xrandr --output eDP-1 --primary --auto --scale .75 --dpi 192")
-       (start-process-shell-command
-        "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
-       (dolist (output (remove "eDP-1" connected-outputs))
-         (start-process-shell-command
-          "xrandr" nil
-          (format "xrandr --output %s --off" output)))
-       (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1")))
-      ;; One or more external monitors
-      ((>= (length (remove "eDP-1" connected-outputs)) 1)
-       (let* ((external-outputs (remove "eDP-1" connected-outputs))
-              (primary (car external-outputs))
-              (secondary (cadr external-outputs))
-              (primary-rotate (if (my-exwm-monitor-needs-rotation
-                                   (cdr (assoc primary output-edids)))
-                                  "--rotate right" ""))
-              (secondary-rotate (if (and secondary
-                                        (my-exwm-monitor-needs-rotation
-                                         (cdr (assoc secondary output-edids))))
-                                   "--rotate right" "")))
-         (if secondary
-             (start-process-shell-command
-              "xrandr" nil
-              (format
-               "xrandr --output %s --primary --auto %s --output %s --auto %s --left-of %s --output eDP-1 --off"
-               primary primary-rotate secondary secondary-rotate primary))
-           (start-process-shell-command
-            "xrandr" nil
-            (format
-             "xrandr --output %s --primary --auto %s --output eDP-1 --off"
-             primary primary-rotate)))
-         ;; Reset DPI to default (96) for external monitors
-         (start-process-shell-command
-          "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
-         (setq exwm-randr-workspace-monitor-plist
-               (if secondary
-                   `(0 ,primary 1 ,secondary)
-                 `(0 ,primary)))))))))
-(exwm-randr-enable)
+       (when (re-search-forward (concat output " connected") nil t)
+         (re-search-forward "EDID:" nil t)
+         (let ((edid ""))
+           (while (re-search-forward "\\s-+\\([0-9a-f]+\\)" nil t)
+             (setq edid (concat edid (match-string 1)))
+             (if (> (length edid) 255) ; EDID is typically 128 or 256 bytes
+                 (setq edid (substring edid 0 256))))
+           (string-trim edid)))))
 
+   (defun my-exwm-monitor-needs-rotation (edid)
+     "Check if the EDID matches the LG ULTRAFINE monitor requiring 270-degree rotation."
+     (string-equal
+      (downcase edid)
+      "00ffffffffffff001e6dc25b23ad0000031f0104b5462878fa40b5ae5142ad260f5054210800d1c06140010101010101010101010101e2ca0038f0703e8018103500b9882100001a000000fd00283c1e873c000a202020202020000000fc004c4720554c54524146494e450a000000ff003130334e54464131413332330a019402031f7223090707830100004401030410e2006ae305c000e606050160605004740030f2705a80b0588a00b9882100001e565e00a0a0a0295030203500b9882100001a1a3680a070381f402a263500b9882100001a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000de"))
+
+   (add-hook
+    'exwm-randr-screen-change-hook
+    (lambda ()
+      (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
+            connected-outputs
+            output-edids)
+        ;; Get connected outputs
+        (with-temp-buffer
+          (call-process "xrandr" nil t nil)
+          (goto-char (point-min))
+          (while (re-search-forward xrandr-output-regexp nil t)
+            (push (match-string 1) connected-outputs)))
+        ;; Get EDID for each output
+        (dolist (output connected-outputs)
+          (let ((edid (my-exwm-get-edid output)))
+            (push (cons output edid) output-edids)))
+        (cond
+         ;; Single monitor or only eDP-1 connected
+         ((or (= (length connected-outputs) 1)
+              (and (member "eDP-1" connected-outputs)
+                   (= (length (remove "eDP-1" connected-outputs)) 0)))
+          (start-process-shell-command
+           "xrandr"
+           nil
+           "xrandr --output eDP-1 --primary --auto --scale .75 --dpi 192")
+          (start-process-shell-command
+           "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
+          (dolist (output (remove "eDP-1" connected-outputs))
+            (start-process-shell-command
+             "xrandr" nil
+             (format "xrandr --output %s --off" output)))
+          (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1")))
+         ;; One or more external monitors
+         ((>= (length (remove "eDP-1" connected-outputs)) 1)
+          (let* ((external-outputs (remove "eDP-1" connected-outputs))
+                 (primary (car external-outputs))
+                 (secondary (cadr external-outputs))
+                 (primary-rotate
+                  (if (my-exwm-monitor-needs-rotation
+                       (cdr (assoc primary output-edids)))
+                      "--rotate right"
+                    ""))
+                 (secondary-rotate
+                  (if (and secondary
+                           (my-exwm-monitor-needs-rotation
+                            (cdr (assoc secondary output-edids))))
+                      "--rotate right"
+                    "")))
+            (if secondary
+                (start-process-shell-command
+                 "xrandr" nil
+                 (format
+                  "xrandr --output %s --primary --auto %s --output %s --auto %s --left-of %s --output eDP-1 --off"
+                  primary
+                  primary-rotate
+                  secondary
+                  secondary-rotate
+                  primary))
+              (start-process-shell-command
+               "xrandr" nil
+               (format
+                "xrandr --output %s --primary --auto %s --output eDP-1 --off"
+                primary primary-rotate)))
+            ;; Reset DPI to default (96) for external monitors
+            (start-process-shell-command
+             "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
+            (setq exwm-randr-workspace-monitor-plist
+                  (if secondary
+                      `(0 ,primary 1 ,secondary)
+                    `(0 ,primary)))))))))
    (grim/set-wallpaper)
    (exwm-randr-mode 1)
 
