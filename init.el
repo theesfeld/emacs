@@ -1860,6 +1860,13 @@
           "workbench.xmi")
         grep-find-ignored-files)))
 
+;; DOOM MODELINE
+
+(use-package
+ doom-modeline
+ :ensure t
+ :hook (after-init . doom-modeline-mode))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                           Aidermacs (Anthropic)                           ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
