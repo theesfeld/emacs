@@ -450,9 +450,10 @@
    (defun my-exwm-monitor-needs-rotation (edid)
      "Check if the EDID matches the LG ULTRAFINE monitor requiring 90-degree left rotation."
      (when edid
-       (string-equal
-        (downcase edid)
-        "00ffffffffffff001e6dc25b23ad0000031f0104b5462878fa40b5ae5142ad260f5054210800d1c06140010101010101010101010101e2ca0038f0703e8018103500b9882100001a000000fd00283c1e873c000a202020202020000000fc004c4720554c54524146494e450a000000ff003130334e54464131413332330a019402031f7223090707830100004401030410e2006ae305c000e606050160605004740030f2705a80b0588a00b9882100001e565e00a0a0a0295030203500b9882100001a1a3680a070381f402a263500b9882100001a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000de")))
+       (string-match-p
+        (regexp-quote
+         "00ffffffffffff001e6dc25b23ad0000031f0104b5462878fa40b5ae5142ad260f5054210800d1c06140010101010101010101010101e2ca0038f0703e8018103500b9882100001a000000fd00283c1e873c000a202020202020000000fc004c4720554c54524146494e450a000000ff003130334e54464131413332330a019402031f7223090707830100004401030410e2006ae305c000e606050160605004740030f2705a80b0588a00b9882100001e565e00a0a0a0295030203500b9882100001a1a3680a070381f402a263500b9882100001a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000de")
+        (downcase edid))))
 
    (defun my-exwm-apply-rotation ()
      "Check connected outputs for LG ULTRAFINE EDID and apply 90-degree left rotation."
@@ -467,6 +468,9 @@
        ;; Check EDID for each output and rotate if needed
        (dolist (output connected-outputs)
          (let ((edid (my-exwm-get-edid output)))
+           (message "Checking output %s, EDID: %s"
+                    output
+                    (or edid "nil"))
            (when (my-exwm-monitor-needs-rotation edid)
              (message
               "Rotating monitor %s (LG ULTRAFINE) 90 degrees left"
@@ -474,19 +478,46 @@
              (start-process-shell-command
               "xrandr"
               nil
-              (format "xrandr --output %s --rotate left" output)))))))
+              (format "xrandr --output %s --rotate left" output))
+             ;; Retry rotation after a short delay to handle Xorg quirks
+             (run-at-time 1 nil
+                          (lambda (out)
+                            (message "Retrying rotation for %s" out)
+                            (start-process-shell-command
+                             "xrandr" nil
+                             (format
+                              "xrandr --output %s --rotate left"
+                              out)))
+                          output))))))
 
    (add-hook
     'exwm-randr-screen-change-hook
     (lambda ()
       (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
-            connected-outputs)
+            connected-outputs
+            lg-output
+            dell-output)
         ;; Get connected outputs
         (with-temp-buffer
           (call-process "xrandr" nil t nil)
           (goto-char (point-min))
           (while (re-search-forward xrandr-output-regexp nil t)
             (push (match-string 1) connected-outputs)))
+        ;; Identify LG ULTRAFINE and Dell UP3216Q by EDID
+        (dolist (output connected-outputs)
+          (let ((edid (my-exwm-get-edid output)))
+            (cond
+             ((my-exwm-monitor-needs-rotation edid)
+              (setq lg-output output))
+             ((and edid
+                   (string-match-p
+                    "00ffffffffffff0010acc14050353032"
+                    (downcase edid)))
+              (setq dell-output output)))))
+        (message "Connected outputs: %s, LG: %s, Dell: %s"
+                 connected-outputs
+                 lg-output
+                 dell-output)
         (cond
          ;; Single monitor or only eDP-1 connected
          ((or (= (length connected-outputs) 1)
@@ -495,7 +526,7 @@
           (start-process-shell-command
            "xrandr"
            nil
-           "xrandr --output eDP-1 --primary --auto --scale .75 --dpi 192")
+           "xrandr --output eDP-1 --primary --mode 2880x1800 --rate 120 --scale 0.75 --dpi 192 --set \"Broadcast RGB\" Full")
           (start-process-shell-command
            "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
           (dolist (output (remove "eDP-1" connected-outputs))
@@ -506,18 +537,20 @@
          ;; One or more external monitors
          ((>= (length (remove "eDP-1" connected-outputs)) 1)
           (let* ((external-outputs (remove "eDP-1" connected-outputs))
-                 (primary (car external-outputs))
-                 (secondary (cadr external-outputs)))
+                 (primary (or lg-output (car external-outputs)))
+                 (secondary
+                  (and (> (length external-outputs) 1)
+                       (or dell-output (cadr external-outputs)))))
             (if secondary
                 (start-process-shell-command
                  "xrandr" nil
                  (format
-                  "xrandr --output %s --primary --auto --output %s --auto --left-of %s --output eDP-1 --off"
+                  "xrandr --output %s --primary --mode 3840x2160 --rate 60 --set \"Broadcast RGB\" Full --output %s --mode 3840x2160 --rate 60 --set \"Broadcast RGB\" Full --left-of %s --output eDP-1 --off"
                   primary secondary primary))
               (start-process-shell-command
                "xrandr" nil
                (format
-                "xrandr --output %s --primary --auto --output eDP-1 --off"
+                "xrandr --output %s --primary --mode 3840x2160 --rate 60 --set \"Broadcast RGB\" Full --output eDP-1 --off"
                 primary)))
             ;; Reset DPI to default (96) for external monitors
             (start-process-shell-command
