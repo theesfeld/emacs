@@ -532,10 +532,6 @@
    :ensure t
    :init
    ;; Pre-configure settings before mode activation
-   (setq desktop-environment-screenshot-command
-         "scrot - | xclip -selection clipboard -target image/png")
-   (setq desktop-environment-screenshot-partial-command
-         "scrot -s | xclip -selection clipboard -target image/png")
    (setq desktop-environment-notifications t) ; Enable notifications
    (setq desktop-environment-screenshot-directory
          "~/Pictures/Screenshots") ; Screenshot path
