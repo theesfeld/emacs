@@ -1790,8 +1790,6 @@
 (use-package
  aidermacs
  :ensure t
- ; defer
- :defer t
  :config
  (setq aidermacs-default-model "sonnet")
  (global-set-key (kbd "C-c A") 'aidermacs-transient-menu)
