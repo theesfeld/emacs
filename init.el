@@ -283,10 +283,11 @@
    (setq mouse-autoselect-window nil)
    (setq focus-follows-mouse nil)
    
-   ;; Improved mouse wheel scrolling for smoother experience
-   (setq mouse-wheel-scroll-amount '(1 ((shift) . 5) ((control) . 10)))
+   ;; Optimized mouse wheel scrolling for maximum speed
+   (setq mouse-wheel-scroll-amount '(3 ((shift) . 10) ((control) . 20)))
    (setq mouse-wheel-progressive-speed nil)
    (setq mouse-wheel-follow-mouse t)
+   (setq mouse-wheel-inhibit-click-time nil) ; No delay after wheel events
    
    ;; Add hooks after setting variables
    (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
@@ -299,8 +300,10 @@
 
    ;; X11 performance optimizations
    (setq x-no-window-manager t)  ; Tell Emacs it's managing windows
-   (setq x-wait-for-event-timeout 0.001) ; Faster X event processing
+   (setq x-wait-for-event-timeout 0.0001) ; Much faster X event processing
    (setq exwm-debug nil) ; Disable debug for better performance
+   (setq exwm-input-event-queue-max-size 1024) ; Larger event queue for smoother input
+   (setq exwm-workspace-minibuffer-position nil) ; Disable workspace minibuffer for performance
    
    ;; Environment variables for better scaling and performance
    (setenv "GDK_SCALE" "1")
@@ -457,13 +460,16 @@
    
    ;; Performance optimizations before enabling EXWM
    (setq redisplay-dont-pause t)  ; Don't pause display updates during input
-   (setq jit-lock-defer-time 0)   ; Fontification without delay
+   (setq jit-lock-defer-time 0.05)   ; Slight delay for better responsiveness
    (setq fast-but-imprecise-scrolling t) ; Faster scrolling
    (setq inhibit-compacting-font-caches t) ; Don't compact font caches during GC
    (setq scroll-conservatively 101) ; Smoother scrolling
    (setq scroll-margin 0) ; No scroll margin for better performance
    (setq auto-window-vscroll nil) ; Disable automatic vertical scroll
    (setq mouse-wheel-tilt-scroll t) ; Enable horizontal scrolling with tilting
+   (setq mouse-wheel-inhibit-click-time nil) ; No delay after wheel events
+   (setq redisplay-skip-fontification-on-input t) ; Skip fontification during input
+   (setq redisplay-skip-invisible-layouts t) ; Skip invisible layouts for speed
    
    ;; X resources settings for better rendering
    (when (executable-find "xrdb")
@@ -476,6 +482,22 @@
        (insert "Xft.lcdfilter: lcddefault\n")
        (insert "Xcursor.size: 24\n")
        (call-process-region (point-min) (point-max) "xrdb" nil nil nil "-merge")))
+   
+   ;; Add scrolling optimization hook
+   (add-hook 'exwm-init-hook
+             (lambda ()
+               ;; Force fast scrolling mode when EXWM starts
+               (setq mouse-wheel-scroll-amount '(3 ((shift) . 10) ((control) . 20)))
+               (setq pixel-scroll-precision-use-momentum nil)
+               (setq pixel-scroll-precision-interpolate-mice nil)
+               ;; Increase GC threshold during scrolling
+               (add-function :before pre-redisplay-function
+                            (lambda (_)
+                              (when (or (memq this-command
+                                             '(next-line previous-line))
+                                       (and (symbolp this-command)
+                                            (string-match-p "scroll" (symbol-name this-command))))
+                                (setq gc-cons-threshold most-positive-fixnum))))))
    
    (exwm-enable))
 
@@ -704,11 +726,14 @@
  (setq inhibit-startup-message t)
  (setq custom-file
        (expand-file-name "custom.el" user-emacs-directory))
- 
+  
  ;; EXWM performance optimizations
  (setq frame-inhibit-implied-resize t) ; Avoid resizing frames
- (setq idle-update-delay 1.0) ; Reduce frequency of idle updates
- (setq pgtk-wait-for-event-timeout 0.001) ; Faster event processing
+ (setq idle-update-delay 0.5) ; More responsive idle updates
+ (setq pgtk-wait-for-event-timeout 0.0001) ; Much faster event processing
+ (setq x-wait-for-event-timeout 0.0001) ; Faster X event processing
+ (setq double-buffering t) ; Enable double buffering for smoother display
+ (setq redisplay-dont-pause t) ; Don't pause display updates
  ;; Basic Emacs Information and pre-load settings
  (setq
   user-full-name "TJ"
@@ -748,13 +773,18 @@
  (global-set-key (kbd "<up>") 'previous-line)
  (global-set-key (kbd "<down>") 'next-line)
  
- ;; Enhanced scrolling settings for EXWM
+ ;; Enhanced scrolling settings for EXWM - optimized for speed
  (setq scroll-conservatively 101) ; Scroll line-by-line without recentering
- (setq pixel-scroll-precision-use-momentum t) ; Use momentum for smoother scrolling
- (setq pixel-scroll-precision-interpolate-mice t) ; Interpolate mouse scrolling
- (setq pixel-scroll-precision-interpolation-factor 1.0) ; Balanced interpolation
- (setq pixel-scroll-precision-initial-velocity-factor 0.02) ; Faster initial scroll
- (setq pixel-scroll-precision-momentum-min-velocity 0.01) ; Lower minimum velocity
+ (setq scroll-margin 0) ; No scroll margin for better performance
+ (setq scroll-step 1) ; Minimal scroll step for responsiveness
+ (setq scroll-preserve-screen-position t) ; Preserve position when scrolling
+ (setq auto-window-vscroll nil) ; Disable automatic vertical scroll adjustment
+ (setq fast-but-imprecise-scrolling t) ; Prioritize speed over precision
+ (setq mouse-wheel-scroll-amount '(1 ((shift) . 5) ((control) . 10))) ; Smaller increments
+ (setq mouse-wheel-progressive-speed nil) ; Disable progressive speed
+ (setq mouse-wheel-follow-mouse t) ; Scroll window under mouse
+ (setq pixel-scroll-precision-use-momentum nil) ; Disable momentum for immediate response
+ (setq pixel-scroll-precision-interpolate-mice nil) ; Disable interpolation for speed
  (when (file-exists-p custom-file)
    (load custom-file))
  ;; Global Emacs Settings
@@ -821,6 +851,24 @@
  (defun my-restore-gc-after-minibuffer ()
    "Restore GC threshold after exiting minibuffer."
    (setq gc-cons-threshold (* 100 1024 1024)))
+
+ ;; Scrolling optimization functions
+ (defun my-toggle-fast-scrolling ()
+   "Toggle between smooth and fast scrolling modes."
+   (interactive)
+   (if (eq mouse-wheel-scroll-amount '(3 ((shift) . 10) ((control) . 20)))
+       (progn
+         (setq mouse-wheel-scroll-amount '(1 ((shift) . 5) ((control) . 10)))
+         (setq pixel-scroll-precision-use-momentum t)
+         (setq pixel-scroll-precision-interpolate-mice t)
+         (message "Smooth scrolling enabled"))
+     (setq mouse-wheel-scroll-amount '(3 ((shift) . 10) ((control) . 20)))
+     (setq pixel-scroll-precision-use-momentum nil)
+     (setq pixel-scroll-precision-interpolate-mice nil)
+     (message "Fast scrolling enabled")))
+ 
+ ;; Bind the toggle function to a key
+ (global-set-key (kbd "C-c s s") 'my-toggle-fast-scrolling)
 
  :hook
  ((text-mode . visual-wrap-prefix-mode)
