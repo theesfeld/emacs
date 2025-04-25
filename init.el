@@ -276,12 +276,12 @@
    :ensure t
    :config
    ;; Performance optimization: set variables before hooks
-   (setq exwm-workspace-number 5)
+   (setq exwm-workspace-number 3)
    (setq exwm-workspace-show-all-buffers t)
    (setq exwm-layout-show-all-buffers t)
    (setq exwm-manage-force-tiling nil)
-   (setq mouse-autoselect-window nil)
-   (setq focus-follows-mouse nil)
+   (setq mouse-autoselect-window t)
+   (setq focus-follows-mouse t)
 
    ;; Ultra-optimized mouse wheel scrolling for maximum speed
    (setq mouse-wheel-scroll-amount
@@ -485,10 +485,9 @@
    (setq redisplay-skip-invisible-layouts t) ; Skip invisible layouts for speed
    (setq redisplay-skip-modification-time-check t) ; Skip modification time checks
    (setq redisplay-dont-pause t) ; Never pause display updates
-   
+
    ;; Fix mouse click handling in EXWM
-   (setq exwm-workspace-warp-cursor nil) ; Don't warp cursor when switching workspaces
-   (setq exwm-input-simulation-keys nil) ; Disable simulation keys to fix mouse issues
+   (setq exwm-workspace-warp-cursor t) ; Don't warp cursor when switching workspaces
 
    ;; X resources settings for better rendering
    (when (executable-find "xrdb")
