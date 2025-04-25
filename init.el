@@ -385,11 +385,13 @@
 
    ;; Improve input performance
    (setq exwm-input-line-mode-passthrough t)
-   (setq exwm-input-grab-keyboard 'off) ; Less aggressive keyboard grabbing
+   (setq exwm-input-grab-keyboard 'always) ; Always grab keyboard for consistent behavior
 
-   ;; Optimize keyboard handling
+   ;; Optimize keyboard and mouse handling
    (setq exwm-input-move-event-delay 0) ; No delay for move events
    (setq exwm-input-resize-event-delay 0) ; No delay for resize events
+   (setq mouse-autoselect-window nil) ; Don't change focus with mouse movement
+   (setq focus-follows-mouse nil) ; Disable focus follows mouse
 
    ;; xss-lock setup for autolock and suspend locking
    (when (and (executable-find "xss-lock") (executable-find "slock"))
@@ -483,6 +485,10 @@
    (setq redisplay-skip-invisible-layouts t) ; Skip invisible layouts for speed
    (setq redisplay-skip-modification-time-check t) ; Skip modification time checks
    (setq redisplay-dont-pause t) ; Never pause display updates
+   
+   ;; Fix mouse click handling in EXWM
+   (setq exwm-workspace-warp-cursor nil) ; Don't warp cursor when switching workspaces
+   (setq exwm-input-simulation-keys nil) ; Disable simulation keys to fix mouse issues
 
    ;; X resources settings for better rendering
    (when (executable-find "xrdb")
