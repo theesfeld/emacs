@@ -285,7 +285,7 @@
 
    ;; Ultra-optimized mouse wheel scrolling for maximum speed
    (setq mouse-wheel-scroll-amount
-         '(1 ((shift) . 5) ((control) . 10)))
+         '(5 ((shift) . 10) ((control) . 20)))
    (setq mouse-wheel-progressive-speed nil)
    (setq mouse-wheel-follow-mouse t)
    (setq mouse-wheel-inhibit-click-time 0) ; Eliminate delay after wheel events
@@ -500,13 +500,13 @@
                             nil
                             "-merge")))
 
-   ;; Add scrolling optimization hook
+   ;; Set fast scrolling settings immediately at startup
    (add-hook
     'exwm-init-hook
     (lambda ()
-      ;; Force optimized scrolling mode when EXWM starts
+      ;; Force fast scrolling mode when EXWM starts
       (setq mouse-wheel-scroll-amount
-            '(1 ((shift) . 5) ((control) . 10)))
+            '(5 ((shift) . 10) ((control) . 20)))
       (setq pixel-scroll-precision-use-momentum nil)
       (setq pixel-scroll-precision-interpolate-mice nil)
       ;; Disable pixel-scroll-mode which can be slow in EXWM
@@ -514,6 +514,7 @@
       ;; Use more efficient scroll functions
       (setq scroll-preserve-screen-position t)
       (setq scroll-error-top-bottom t)
+      (setq scroll-step 3)
       ;; Increase GC threshold during scrolling
       (add-function :before pre-redisplay-function
                     (lambda (_)
@@ -536,12 +537,13 @@
      (interactive)
      ;; Disable pixel-scroll modes which can be slow in EXWM
      (pixel-scroll-precision-mode -1)
-     ;; Use optimized scrolling settings
+     ;; Use fast scrolling settings
      (setq mouse-wheel-scroll-amount
-           '(1 ((shift) . 5) ((control) . 10)))
+           '(5 ((shift) . 10) ((control) . 20)))
      (setq mouse-wheel-progressive-speed nil)
      (setq mouse-wheel-inhibit-click-time 0)
      (setq mwheel-coalesce-scroll-events t)
+     (setq scroll-step 3)
      ;; Optimize redisplay
      (setq redisplay-dont-pause t)
      (setq jit-lock-defer-time 0.0)
@@ -832,16 +834,16 @@
  ;; Enhanced scrolling settings for EXWM - ultra-optimized for speed
  (setq scroll-conservatively 101) ; Scroll line-by-line without recentering
  (setq scroll-margin 0) ; No scroll margin for better performance
- (setq scroll-step 1) ; Minimal scroll step for responsiveness
+ (setq scroll-step 3) ; Larger scroll step for faster scrolling
  (setq scroll-preserve-screen-position t) ; Preserve position when scrolling
  (setq auto-window-vscroll nil) ; Disable automatic vertical scroll adjustment
  (setq fast-but-imprecise-scrolling t) ; Prioritize speed over precision
- (setq mouse-wheel-scroll-amount '(1 ((shift) . 5) ((control) . 10))) ; Smaller increments
+ (setq mouse-wheel-scroll-amount '(5 ((shift) . 10) ((control) . 20))) ; Larger increments
  (setq mouse-wheel-progressive-speed nil) ; Disable progressive speed
  (setq mouse-wheel-follow-mouse t) ; Scroll window under mouse
  (setq pixel-scroll-precision-use-momentum nil) ; Disable momentum for immediate response
  (setq pixel-scroll-precision-interpolate-mice nil) ; Disable interpolation for speed
- (setq pixel-scroll-precision-mode nil) ; Disable pixel-scroll-precision-mode completely
+ (setq pixel-scroll-precision-mode -1) ; Explicitly disable pixel-scroll-precision-mode
  (setq mouse-wheel-inhibit-click-time 0) ; Zero delay after wheel events
  (setq mwheel-coalesce-scroll-events t) ; Coalesce events for smoother scrolling
  (setq auto-hscroll-mode nil) ; Disable horizontal scrolling adjustments
@@ -918,19 +920,21 @@
    "Toggle between smooth and fast scrolling modes."
    (interactive)
    (if (eq
-        mouse-wheel-scroll-amount '(1 ((shift) . 5) ((control) . 10)))
+        mouse-wheel-scroll-amount '(5 ((shift) . 10) ((control) . 20)))
        (progn
          (setq mouse-wheel-scroll-amount
-               '(3 ((shift) . 10) ((control) . 20)))
+               '(1 ((shift) . 3) ((control) . 5)))
          (setq pixel-scroll-precision-use-momentum t)
          (setq pixel-scroll-precision-interpolate-mice t)
          (pixel-scroll-precision-mode 1)
+         (setq scroll-step 1)
          (message "Smooth scrolling enabled"))
      (setq mouse-wheel-scroll-amount
-           '(1 ((shift) . 5) ((control) . 10)))
+           '(5 ((shift) . 10) ((control) . 20)))
      (setq pixel-scroll-precision-use-momentum nil)
      (setq pixel-scroll-precision-interpolate-mice nil)
      (pixel-scroll-precision-mode -1)
+     (setq scroll-step 3)
      (message "Fast scrolling enabled (optimized for EXWM)")))
 
  ;; Bind the toggle function to a key
@@ -946,7 +950,8 @@
    (lambda ()
      (global-display-line-numbers-mode 1)
      ;     (global-hl-line-mode 1)
-     ;; Don't enable pixel-scroll-precision-mode by default - it's slow in EXWM
+     ;; Ensure pixel-scroll-precision-mode is disabled for better performance
+     (pixel-scroll-precision-mode -1)
      (line-number-mode 1)
      (column-number-mode 1)
      (size-indication-mode 1)
