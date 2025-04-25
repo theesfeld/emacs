@@ -274,27 +274,40 @@
   (use-package
    exwm
    :ensure t
-   :config (setq exwm-workspace-number 5)
-
-   (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
-   (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
-   (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
-
+   :config 
+   ;; Performance optimization: set variables before hooks
+   (setq exwm-workspace-number 5)
    (setq exwm-workspace-show-all-buffers t)
    (setq exwm-layout-show-all-buffers t)
    (setq exwm-manage-force-tiling nil)
    (setq mouse-autoselect-window nil)
    (setq focus-follows-mouse nil)
-   (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
-   (setq mouse-wheel-progressive-speed t)
+   
+   ;; Improved mouse wheel scrolling for smoother experience
+   (setq mouse-wheel-scroll-amount '(1 ((shift) . 5) ((control) . 10)))
+   (setq mouse-wheel-progressive-speed nil)
+   (setq mouse-wheel-follow-mouse t)
+   
+   ;; Add hooks after setting variables
+   (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
+   (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
+   (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
    (setq
     x-select-enable-clipboard t
     x-select-enable-primary t
     select-enable-clipboard t)
 
+   ;; X11 performance optimizations
+   (setq x-no-window-manager t)  ; Tell Emacs it's managing windows
+   (setq x-wait-for-event-timeout 0.001) ; Faster X event processing
+   (setq exwm-debug nil) ; Disable debug for better performance
+   
+   ;; Environment variables for better scaling and performance
    (setenv "GDK_SCALE" "1")
    (setenv "QT_AUTO_SCREEN_SCALE_FACTOR" "1")
    (setenv "QT_ENABLE_HIGHDPI_SCALING" "1")
+   (setenv "GDK_DPI_SCALE" "1")
+   (setenv "GDK_SYNCHRONIZE" "0") ; Disable synchronous X calls
 
    (require 'exwm-randr)
    (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
@@ -349,20 +362,27 @@
 
    (exwm-randr-mode 1)
    (grim/set-wallpaper)
+   
    ;; Load the system tray before exwm-init
    (require 'exwm-systemtray)
    (setq exwm-systemtray-height 24)
+   (setq exwm-systemtray-icon-gap 4) ; Add gap between icons for better visibility
+   (setq exwm-systemtray-background-color nil) ; Use transparent background
    (exwm-systemtray-mode 1)
 
    ;; Input Prefix Keys
    (setq exwm-input-prefix-keys
          '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
-
+   
+   ;; Improve input performance
+   (setq exwm-input-line-mode-passthrough t)
+   (setq exwm-input-grab-keyboard 'off) ; Less aggressive keyboard grabbing
+   
    ;; xss-lock setup for autolock and suspend locking
    (when (and (executable-find "xss-lock") (executable-find "slock"))
      (start-process-shell-command "xss-lock" nil "xss-lock -- slock"))
    (when (executable-find "xset")
-     (start-process-shell-command "xset" nil "xset s 300")) ; 5-minute inactivity
+     (start-process-shell-command "xset" nil "xset s 300 r rate 300 50 m 5 10"))
 
    ;; Global keybindings
    (setq exwm-input-global-keys
@@ -434,7 +454,29 @@
            ([?\C-k] . [S-end delete])
            ([?\M-w] . [?\C-c])
            ([?\C-y] . [?\C-v])))
-
+   
+   ;; Performance optimizations before enabling EXWM
+   (setq redisplay-dont-pause t)  ; Don't pause display updates during input
+   (setq jit-lock-defer-time 0)   ; Fontification without delay
+   (setq fast-but-imprecise-scrolling t) ; Faster scrolling
+   (setq inhibit-compacting-font-caches t) ; Don't compact font caches during GC
+   (setq scroll-conservatively 101) ; Smoother scrolling
+   (setq scroll-margin 0) ; No scroll margin for better performance
+   (setq auto-window-vscroll nil) ; Disable automatic vertical scroll
+   (setq mouse-wheel-tilt-scroll t) ; Enable horizontal scrolling with tilting
+   
+   ;; X resources settings for better rendering
+   (when (executable-find "xrdb")
+     (with-temp-buffer
+       (insert "Emacs.fontBackend: xft\n")
+       (insert "Xft.antialias: 1\n")
+       (insert "Xft.hinting: 1\n")
+       (insert "Xft.hintstyle: hintslight\n")
+       (insert "Xft.rgba: rgb\n")
+       (insert "Xft.lcdfilter: lcddefault\n")
+       (insert "Xcursor.size: 24\n")
+       (call-process-region (point-min) (point-max) "xrdb" nil nil nil "-merge")))
+   
    (exwm-enable))
 
   (use-package
@@ -444,6 +486,8 @@
    :init
    ;; Pre-load settings
    (setq exwm-edit-default-major-mode 'text-mode) ; Default mode for editing
+   (setq exwm-edit-split 'below) ; Open edit buffer below for better performance
+   (setq exwm-edit-compose-hook nil) ; Don't run hooks for better performance
    :config
    ;; Explicitly load exwm-edit
    (require 'exwm-edit nil t)
@@ -660,6 +704,11 @@
  (setq inhibit-startup-message t)
  (setq custom-file
        (expand-file-name "custom.el" user-emacs-directory))
+ 
+ ;; EXWM performance optimizations
+ (setq frame-inhibit-implied-resize t) ; Avoid resizing frames
+ (setq idle-update-delay 1.0) ; Reduce frequency of idle updates
+ (setq pgtk-wait-for-event-timeout 0.001) ; Faster event processing
  ;; Basic Emacs Information and pre-load settings
  (setq
   user-full-name "TJ"
@@ -698,7 +747,14 @@
  :config
  (global-set-key (kbd "<up>") 'previous-line)
  (global-set-key (kbd "<down>") 'next-line)
+ 
+ ;; Enhanced scrolling settings for EXWM
  (setq scroll-conservatively 101) ; Scroll line-by-line without recentering
+ (setq pixel-scroll-precision-use-momentum t) ; Use momentum for smoother scrolling
+ (setq pixel-scroll-precision-interpolate-mice t) ; Interpolate mouse scrolling
+ (setq pixel-scroll-precision-interpolation-factor 1.0) ; Balanced interpolation
+ (setq pixel-scroll-precision-initial-velocity-factor 0.02) ; Faster initial scroll
+ (setq pixel-scroll-precision-momentum-min-velocity 0.01) ; Lower minimum velocity
  (when (file-exists-p custom-file)
    (load custom-file))
  ;; Global Emacs Settings
