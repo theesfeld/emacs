@@ -286,7 +286,7 @@
    ;; Ultra-optimized mouse wheel scrolling for maximum speed
    (setq mouse-wheel-scroll-amount
          '(5 ((shift) . 10) ((control) . 20)))
-   (setq mouse-wheel-progressive-speed nil)
+   (setq mouse-wheel-progressive-speed t)
    (setq mouse-wheel-follow-mouse t)
    (setq mouse-wheel-inhibit-click-time 0) ; Eliminate delay after wheel events
    (setq mwheel-coalesce-scroll-events t) ; Coalesce events for smoother scrolling
@@ -305,8 +305,8 @@
    (setq x-wait-for-event-timeout 0.0) ; Zero timeout for immediate X event processing
    (setq exwm-debug nil) ; Disable debug for better performance
    (setq exwm-input-event-queue-max-size 4096) ; Much larger event queue for smoother input
-   (setq exwm-workspace-minibuffer-position nil) ; Disable workspace minibuffer for performance
-   (setq exwm-workspace-warp-cursor nil) ; Don't warp cursor when switching workspaces
+   ;   (setq exwm-workspace-minibuffer-position nil) ; Disable workspace minibuffer for performance
+   (setq exwm-workspace-warp-cursor t) ; Don't warp cursor when switching workspaces
 
    ;; Environment variables for better scaling and performance
    (setenv "GDK_SCALE" "1")
@@ -920,7 +920,8 @@
    "Toggle between smooth and fast scrolling modes."
    (interactive)
    (if (eq
-        mouse-wheel-scroll-amount '(5 ((shift) . 10) ((control) . 20)))
+        mouse-wheel-scroll-amount
+        '(5 ((shift) . 10) ((control) . 20)))
        (progn
          (setq mouse-wheel-scroll-amount
                '(1 ((shift) . 3) ((control) . 5)))
