@@ -934,9 +934,9 @@
      (message "Fast scrolling enabled (optimized for EXWM)")))
 
  ;; Bind the toggle function to a key
- (global-set-key (kbd "S-s") 'my-toggle-fast-scrolling)
+ (global-set-key (kbd "s-s") 'my-toggle-fast-scrolling)
  ;; Add a key to force scrolling optimization
- (global-set-key (kbd "S-o") 'my-exwm-optimize-scrolling)
+ (global-set-key (kbd "s-o") 'my-exwm-optimize-scrolling)
 
  :hook
  ((text-mode . visual-wrap-prefix-mode)
