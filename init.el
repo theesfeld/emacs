@@ -839,7 +839,7 @@
  (setq auto-window-vscroll nil) ; Disable automatic vertical scroll adjustment
  (setq fast-but-imprecise-scrolling t) ; Prioritize speed over precision
  (setq mouse-wheel-scroll-amount '(5 ((shift) . 10) ((control) . 20))) ; Larger increments
- (setq mouse-wheel-progressive-speed nil) ; Disable progressive speed
+ (setq mouse-wheel-progressive-speed t) ; Disable progressive speed
  (setq mouse-wheel-follow-mouse t) ; Scroll window under mouse
  (setq pixel-scroll-precision-use-momentum nil) ; Disable momentum for immediate response
  (setq pixel-scroll-precision-interpolate-mice nil) ; Disable interpolation for speed
