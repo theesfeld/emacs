@@ -256,6 +256,9 @@
      display-time-24hr-format t
      display-time-day-and-date t)
     (display-time-mode 1)
+    ;; Ensure EXWM is the only window manager running
+    (when (executable-find "killall")
+      (call-process "killall" nil nil nil "i3" "bspwm" "dwm" "xmonad" "openbox"))
     (run-at-time 2 nil #'grim/run-in-background "nm-applet")
     (run-at-time 2 nil #'grim/run-in-background "udiskie -at")
     (run-at-time 2 nil #'grim/run-in-background "blueman-applet")
@@ -285,8 +288,16 @@
    (setq exwm-manage-force-tiling nil)
    (setq mouse-autoselect-window nil)
    (setq focus-follows-mouse nil)
-   (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
-   (setq mouse-wheel-progressive-speed t)
+   
+   ;; Optimize scrolling speed
+   (setq mouse-wheel-scroll-amount '(3 ((shift) . 1) ((control) . 10)))
+   (setq mouse-wheel-progressive-speed nil)
+   (setq mouse-wheel-follow-mouse t)
+   (setq scroll-conservatively 10000)
+   (setq scroll-margin 0)
+   (setq scroll-preserve-screen-position t)
+   (setq fast-but-imprecise-scrolling t)
+   (setq jit-lock-defer-time 0)
    (setq
     x-select-enable-clipboard t
     x-select-enable-primary t
@@ -351,12 +362,28 @@
    (grim/set-wallpaper)
    ;; Load the system tray before exwm-init
    (require 'exwm-systemtray)
-   (setq exwm-systemtray-height 24)
+   (setq exwm-systemtray-height 28)
+   (setq exwm-systemtray-icon-gap 8)  ;; Add padding between tray icons
    (exwm-systemtray-mode 1)
+   
+   ;; Improve systemtray appearance
+   (defun my-exwm-systemtray-refresh ()
+     "Refresh the systemtray with custom styling."
+     (dolist (icon-window (hash-table-keys exwm-systemtray--list))
+       (let ((icon-height (cdr (assq 'height (cdr (exwm-systemtray--list icon-window))))))
+         (exwm-systemtray--set-background icon-window)
+         (exwm--set-geometry icon-window nil nil nil 
+                            (- exwm-systemtray-height 4)))))  ;; Slightly smaller icons for better appearance
+   
+   (advice-add 'exwm-systemtray--refresh :after #'my-exwm-systemtray-refresh)
 
    ;; Input Prefix Keys
    (setq exwm-input-prefix-keys
          '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
+   
+   ;; Improve keyboard scrolling speed
+   (setq auto-window-vscroll nil)
+   (setq exwm-input-line-mode-passthrough t)  ;; Allow more keys to pass through to applications
 
    ;; xss-lock setup for autolock and suspend locking
    (when (and (executable-find "xss-lock") (executable-find "slock"))
@@ -433,8 +460,18 @@
            ([?\C-d] . [delete])
            ([?\C-k] . [S-end delete])
            ([?\M-w] . [?\C-c])
-           ([?\C-y] . [?\C-v])))
+           ([?\C-y] . [?\C-v])
+           ;; Additional keys for faster scrolling
+           ([?\C-\M-n] . [C-down])
+           ([?\C-\M-p] . [C-up])))
 
+   ;; Add a hook to ensure EXWM is the only window manager
+   (add-hook 'exwm-init-hook
+             (lambda ()
+               (message "EXWM is now the active window manager")
+               (when (executable-find "wmctrl")
+                 (shell-command "wmctrl -m | grep -q 'Name: EXWM' || echo 'Warning: EXWM may not be the active WM'"))))
+   
    (exwm-enable))
 
   (use-package
