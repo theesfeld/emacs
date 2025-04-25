@@ -376,7 +376,7 @@
    (require 'exwm-systemtray)
    (setq exwm-systemtray-height 24)
    (setq exwm-systemtray-icon-gap 4) ; Add gap between icons for better visibility
-   (setq exwm-systemtray-background-color nil) ; Use transparent background
+   ;   (setq exwm-systemtray-background-color nil) ; Use transparent background
    (exwm-systemtray-mode 1)
 
    ;; Input Prefix Keys
