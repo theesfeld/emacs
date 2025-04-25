@@ -274,49 +274,27 @@
   (use-package
    exwm
    :ensure t
-   :config
-   ;; Performance optimization: set variables before hooks
-   (setq exwm-workspace-number 3)
-   (setq exwm-workspace-show-all-buffers t)
-   (setq exwm-layout-show-all-buffers t)
-   (setq exwm-manage-force-tiling nil)
-   (setq mouse-autoselect-window t)
-   (setq focus-follows-mouse t)
+   :config (setq exwm-workspace-number 5)
 
-   ;; Ultra-optimized mouse wheel scrolling for maximum speed
-   (setq mouse-wheel-scroll-amount
-         '(5 ((shift) . 10) ((control) . 20)))
-   (setq mouse-wheel-progressive-speed t)
-   (setq mouse-wheel-follow-mouse t)
-   (setq mouse-wheel-inhibit-click-time 0) ; Eliminate delay after wheel events
-   (setq mwheel-coalesce-scroll-events t) ; Coalesce events for smoother scrolling
-
-   ;; Add hooks after setting variables
    (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
    (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
    (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
+
+   (setq exwm-workspace-show-all-buffers t)
+   (setq exwm-layout-show-all-buffers t)
+   (setq exwm-manage-force-tiling nil)
+   (setq mouse-autoselect-window nil)
+   (setq focus-follows-mouse nil)
+   (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
+   (setq mouse-wheel-progressive-speed t)
    (setq
     x-select-enable-clipboard t
     x-select-enable-primary t
     select-enable-clipboard t)
 
-   ;; X11 performance optimizations
-   (setq x-no-window-manager t) ; Tell Emacs it's managing windows
-   (setq x-wait-for-event-timeout 0.0) ; Zero timeout for immediate X event processing
-   (setq exwm-debug nil) ; Disable debug for better performance
-   (setq exwm-input-event-queue-max-size 4096) ; Much larger event queue for smoother input
-   ;   (setq exwm-workspace-minibuffer-position nil) ; Disable workspace minibuffer for performance
-   (setq exwm-workspace-warp-cursor t) ; Don't warp cursor when switching workspaces
-
-   ;; Environment variables for better scaling and performance
    (setenv "GDK_SCALE" "1")
    (setenv "QT_AUTO_SCREEN_SCALE_FACTOR" "1")
    (setenv "QT_ENABLE_HIGHDPI_SCALING" "1")
-   (setenv "GDK_DPI_SCALE" "1")
-   (setenv "GDK_SYNCHRONIZE" "0") ; Disable synchronous X calls
-   (setenv "_JAVA_AWT_WM_NONREPARENTING" "1") ; Fix Java applications in EXWM
-   (setenv "MOZ_USE_XINPUT2" "1") ; Better mouse input for Firefox
-   (setenv "QT_X11_NO_MITSHM" "1") ; Improve Qt application performance
 
    (require 'exwm-randr)
    (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
@@ -371,34 +349,20 @@
 
    (exwm-randr-mode 1)
    (grim/set-wallpaper)
-
    ;; Load the system tray before exwm-init
    (require 'exwm-systemtray)
    (setq exwm-systemtray-height 24)
-   (setq exwm-systemtray-icon-gap 4) ; Add gap between icons for better visibility
-   ;   (setq exwm-systemtray-background-color nil) ; Use transparent background
    (exwm-systemtray-mode 1)
 
    ;; Input Prefix Keys
    (setq exwm-input-prefix-keys
          '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
 
-   ;; Improve input performance
-   (setq exwm-input-line-mode-passthrough t)
-   (setq exwm-input-grab-keyboard 'always) ; Always grab keyboard for consistent behavior
-
-   ;; Optimize keyboard and mouse handling
-   (setq exwm-input-move-event-delay 0) ; No delay for move events
-   (setq exwm-input-resize-event-delay 0) ; No delay for resize events
-   (setq mouse-autoselect-window nil) ; Don't change focus with mouse movement
-   (setq focus-follows-mouse nil) ; Disable focus follows mouse
-
    ;; xss-lock setup for autolock and suspend locking
    (when (and (executable-find "xss-lock") (executable-find "slock"))
      (start-process-shell-command "xss-lock" nil "xss-lock -- slock"))
    (when (executable-find "xset")
-     (start-process-shell-command
-      "xset" nil "xset s 300 r rate 300 50 m 5 10"))
+     (start-process-shell-command "xset" nil "xset s 300")) ; 5-minute inactivity
 
    ;; Global keybindings
    (setq exwm-input-global-keys
@@ -471,95 +435,6 @@
            ([?\M-w] . [?\C-c])
            ([?\C-y] . [?\C-v])))
 
-   ;; Performance optimizations before enabling EXWM
-   (setq redisplay-dont-pause t) ; Don't pause display updates during input
-   (setq jit-lock-defer-time 0.0) ; No delay for immediate fontification
-   (setq fast-but-imprecise-scrolling t) ; Faster scrolling
-   (setq inhibit-compacting-font-caches t) ; Don't compact font caches during GC
-   (setq scroll-conservatively 101) ; Smoother scrolling
-   (setq scroll-margin 0) ; No scroll margin for better performance
-   (setq auto-window-vscroll nil) ; Disable automatic vertical scroll
-   (setq mouse-wheel-tilt-scroll t) ; Enable horizontal scrolling with tilting
-   (setq mouse-wheel-inhibit-click-time 0) ; Zero delay after wheel events
-   (setq redisplay-skip-fontification-on-input t) ; Skip fontification during input
-   (setq redisplay-skip-invisible-layouts t) ; Skip invisible layouts for speed
-   (setq redisplay-skip-modification-time-check t) ; Skip modification time checks
-   (setq redisplay-dont-pause t) ; Never pause display updates
-
-   ;; Fix mouse click handling in EXWM
-   (setq exwm-workspace-warp-cursor t) ; Don't warp cursor when switching workspaces
-
-   ;; X resources settings for better rendering
-   (when (executable-find "xrdb")
-     (with-temp-buffer
-       (insert "Emacs.fontBackend: xft\n")
-       (insert "Xft.antialias: 1\n")
-       (insert "Xft.hinting: 1\n")
-       (insert "Xft.hintstyle: hintslight\n")
-       (insert "Xft.rgba: rgb\n")
-       (insert "Xft.lcdfilter: lcddefault\n")
-       (insert "Xcursor.size: 24\n")
-       (call-process-region (point-min) (point-max) "xrdb"
-                            nil
-                            nil
-                            nil
-                            "-merge")))
-
-   ;; Set fast scrolling settings immediately at startup
-   (add-hook
-    'exwm-init-hook
-    (lambda ()
-      ;; Force fast scrolling mode when EXWM starts
-      (setq mouse-wheel-scroll-amount
-            '(5 ((shift) . 10) ((control) . 20)))
-      (setq pixel-scroll-precision-use-momentum nil)
-      (setq pixel-scroll-precision-interpolate-mice nil)
-      ;; Disable pixel-scroll-mode which can be slow in EXWM
-      (pixel-scroll-precision-mode -1)
-      ;; Use more efficient scroll functions
-      (setq scroll-preserve-screen-position t)
-      (setq scroll-error-top-bottom t)
-      (setq scroll-step 3)
-      ;; Increase GC threshold during scrolling
-      (add-function :before pre-redisplay-function
-                    (lambda (_)
-                      (when (or (memq
-                                 this-command
-                                 '(next-line
-                                   previous-line
-                                   scroll-up-command
-                                   scroll-down-command))
-                                (and (symbolp this-command)
-                                     (string-match-p
-                                      "scroll"
-                                      (symbol-name this-command))))
-                        (setq gc-cons-threshold
-                              most-positive-fixnum))))))
-
-   ;; Add a function to optimize EXWM for scrolling performance
-   (defun my-exwm-optimize-scrolling ()
-     "Apply optimal scrolling settings for EXWM."
-     (interactive)
-     ;; Disable pixel-scroll modes which can be slow in EXWM
-     (pixel-scroll-precision-mode -1)
-     ;; Use fast scrolling settings
-     (setq mouse-wheel-scroll-amount
-           '(5 ((shift) . 10) ((control) . 20)))
-     (setq mouse-wheel-progressive-speed nil)
-     (setq mouse-wheel-inhibit-click-time 0)
-     (setq mwheel-coalesce-scroll-events t)
-     (setq scroll-step 3)
-     ;; Optimize redisplay
-     (setq redisplay-dont-pause t)
-     (setq jit-lock-defer-time 0.0)
-     (setq fast-but-imprecise-scrolling t)
-     ;; Disable GC during scrolling
-     (setq gc-cons-threshold (* 100 1024 1024))
-     (message "EXWM scrolling optimized"))
-
-   ;; Run optimization after EXWM starts
-   (add-hook 'exwm-init-hook #'my-exwm-optimize-scrolling)
-
    (exwm-enable))
 
   (use-package
@@ -569,8 +444,6 @@
    :init
    ;; Pre-load settings
    (setq exwm-edit-default-major-mode 'text-mode) ; Default mode for editing
-   (setq exwm-edit-split 'below) ; Open edit buffer below for better performance
-   (setq exwm-edit-compose-hook nil) ; Don't run hooks for better performance
    :config
    ;; Explicitly load exwm-edit
    (require 'exwm-edit nil t)
@@ -787,16 +660,6 @@
  (setq inhibit-startup-message t)
  (setq custom-file
        (expand-file-name "custom.el" user-emacs-directory))
-
- ;; EXWM performance optimizations
- (setq frame-inhibit-implied-resize t) ; Avoid resizing frames
- (setq idle-update-delay 0.1) ; More responsive idle updates
- (setq pgtk-wait-for-event-timeout 0.0) ; Zero timeout for immediate event processing
- (setq x-wait-for-event-timeout 0.0) ; Zero timeout for immediate X event processing
- (setq double-buffering t) ; Enable double buffering for smoother display
- (setq redisplay-dont-pause t) ; Don't pause display updates
- (setq x-selection-timeout 10) ; Shorter X selection timeout
- (setq x-underline-at-descent-line t) ; More efficient underlines
  ;; Basic Emacs Information and pre-load settings
  (setq
   user-full-name "TJ"
@@ -835,24 +698,7 @@
  :config
  (global-set-key (kbd "<up>") 'previous-line)
  (global-set-key (kbd "<down>") 'next-line)
-
- ;; Enhanced scrolling settings for EXWM - ultra-optimized for speed
  (setq scroll-conservatively 101) ; Scroll line-by-line without recentering
- (setq scroll-margin 0) ; No scroll margin for better performance
- (setq scroll-step 3) ; Larger scroll step for faster scrolling
- (setq scroll-preserve-screen-position t) ; Preserve position when scrolling
- (setq auto-window-vscroll nil) ; Disable automatic vertical scroll adjustment
- (setq fast-but-imprecise-scrolling t) ; Prioritize speed over precision
- (setq mouse-wheel-scroll-amount '(5 ((shift) . 10) ((control) . 20))) ; Larger increments
- (setq mouse-wheel-progressive-speed t) ; Disable progressive speed
- (setq mouse-wheel-follow-mouse t) ; Scroll window under mouse
- (setq pixel-scroll-precision-use-momentum nil) ; Disable momentum for immediate response
- (setq pixel-scroll-precision-interpolate-mice nil) ; Disable interpolation for speed
- (setq pixel-scroll-precision-mode -1) ; Explicitly disable pixel-scroll-precision-mode
- (setq mouse-wheel-inhibit-click-time 0) ; Zero delay after wheel events
- (setq mwheel-coalesce-scroll-events t) ; Coalesce events for smoother scrolling
- (setq auto-hscroll-mode nil) ; Disable horizontal scrolling adjustments
- (setq redisplay-skip-fontification-on-input t) ; Skip fontification during input
  (when (file-exists-p custom-file)
    (load custom-file))
  ;; Global Emacs Settings
@@ -920,34 +766,6 @@
    "Restore GC threshold after exiting minibuffer."
    (setq gc-cons-threshold (* 100 1024 1024)))
 
- ;; Scrolling optimization functions
- (defun my-toggle-fast-scrolling ()
-   "Toggle between smooth and fast scrolling modes."
-   (interactive)
-   (if (eq
-        mouse-wheel-scroll-amount
-        '(5 ((shift) . 10) ((control) . 20)))
-       (progn
-         (setq mouse-wheel-scroll-amount
-               '(1 ((shift) . 3) ((control) . 5)))
-         (setq pixel-scroll-precision-use-momentum t)
-         (setq pixel-scroll-precision-interpolate-mice t)
-         (pixel-scroll-precision-mode 1)
-         (setq scroll-step 1)
-         (message "Smooth scrolling enabled"))
-     (setq mouse-wheel-scroll-amount
-           '(5 ((shift) . 10) ((control) . 20)))
-     (setq pixel-scroll-precision-use-momentum nil)
-     (setq pixel-scroll-precision-interpolate-mice nil)
-     (pixel-scroll-precision-mode -1)
-     (setq scroll-step 3)
-     (message "Fast scrolling enabled (optimized for EXWM)")))
-
- ;; Bind the toggle function to a key
- (global-set-key (kbd "s-s") 'my-toggle-fast-scrolling)
- ;; Add a key to force scrolling optimization
- (global-set-key (kbd "s-o") 'my-exwm-optimize-scrolling)
-
  :hook
  ((text-mode . visual-wrap-prefix-mode)
   (before-save . whitespace-cleanup)
@@ -956,8 +774,7 @@
    (lambda ()
      (global-display-line-numbers-mode 1)
      ;     (global-hl-line-mode 1)
-     ;; Ensure pixel-scroll-precision-mode is disabled for better performance
-     (pixel-scroll-precision-mode -1)
+     (pixel-scroll-precision-mode 1)
      (line-number-mode 1)
      (column-number-mode 1)
      (size-indication-mode 1)
