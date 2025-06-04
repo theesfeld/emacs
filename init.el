@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-04 10:59:46 by grim>
+;; Time-stamp: <Last changed 2025-06-04 11:02:14 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -348,27 +348,6 @@ TIMEOUT is duration in seconds (default 5)."
                3)
     (alert "Alert test message" :title "Alert Test" :category "Test")))
 
-;; Optional: EDNC for desktop notification daemon integration (Linux only)
-(when (and (eq system-type 'gnu/linux)
-           (executable-find "notify-send"))
-  (use-package
-    ednc
-    :ensure t
-    :demand t
-    :config
-    (setq ednc-log-notifications t)
-    (setq ednc-notification-timeout 5)
-
-    ;; Only enable if we can actually connect to notification daemon
-    (condition-case err
-        (progn
-          (ednc-mode 1)
-          (message "EDNC notification daemon integration enabled"))
-      (error
-       (message "EDNC failed to connect: %s"
-                (error-message-string err))
-       (ednc-mode -1)))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     EXWM                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -408,7 +387,7 @@ TIMEOUT is duration in seconds (default 5)."
   (defun grim/exwm-update-title ()
     (pcase exwm-class-name
       ("Firefox" (exwm-workspace-rename-buffer
-        (format "Firefox: %s" exwm-title)))))
+                  (format "Firefox: %s" exwm-title)))))
 
   ;; fix floating window size if possible
   ;; https://dindi.garjola.net/exwm-floating.html
@@ -458,284 +437,284 @@ TIMEOUT is duration in seconds (default 5)."
                   (error-message-string err))))))
 
   (use-package
-   exwm
-   :ensure t
-   :config (setq exwm-workspace-number 5)
+    exwm
+    :ensure t
+    :config (setq exwm-workspace-number 5)
 
-   (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
-   (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
-   (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
-   (add-hook 'exwm-floating-setup-hook #'my/adjust-floating-frame-size
-             100)
+    (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
+    (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
+    (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
+    (add-hook 'exwm-floating-setup-hook #'my/adjust-floating-frame-size
+              100)
 
-   (setq exwm-workspace-show-all-buffers t)
-   (setq exwm-layout-show-all-buffers t)
-   (setq exwm-manage-force-tiling nil)
-   (setq mouse-autoselect-window t)
-   (setq focus-follows-mouse t)
-   (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
-   (setq mouse-wheel-progressive-speed t)
-   (setq
-    x-select-enable-clipboard t
-    x-select-enable-primary t
-    select-enable-clipboard t)
+    (setq exwm-workspace-show-all-buffers t)
+    (setq exwm-layout-show-all-buffers t)
+    (setq exwm-manage-force-tiling nil)
+    (setq mouse-autoselect-window t)
+    (setq focus-follows-mouse t)
+    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
+    (setq mouse-wheel-progressive-speed t)
+    (setq
+     x-select-enable-clipboard t
+     x-select-enable-primary t
+     select-enable-clipboard t)
 
-   (setenv "GDK_SCALE" "1")
-   (setenv "QT_AUTO_SCREEN_SCALE_FACTOR" "1")
-   (setenv "QT_ENABLE_HIGHDPI_SCALING" "1")
+    (setenv "GDK_SCALE" "1")
+    (setenv "QT_AUTO_SCREEN_SCALE_FACTOR" "1")
+    (setenv "QT_ENABLE_HIGHDPI_SCALING" "1")
 
-   (require 'exwm-randr)
-   (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
-   (add-hook
-    'exwm-randr-screen-change-hook
-    (lambda ()
-      (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
-            connected-outputs)
-        (with-temp-buffer
-          (call-process "xrandr" nil t nil)
-          (goto-char (point-min))
-          (while (re-search-forward xrandr-output-regexp nil t)
-            (push (match-string 1) connected-outputs)))
-        (cond
-         ;; Single monitor or only eDP-1 connected
-         ((or (= (length connected-outputs) 1)
-              (and (member "eDP-1" connected-outputs)
-                   (= (length (remove "eDP-1" connected-outputs)) 0)))
-          (start-process-shell-command
-           "xrandr"
-           nil
-           "xrandr --output eDP-1 --primary --auto --scale .75 --dpi 192")
-          (start-process-shell-command
-           "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
-          (dolist (output (remove "eDP-1" connected-outputs))
-            (start-process-shell-command
-             "xrandr" nil
-             (format "xrandr --output %s --off" output)))
-          (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1")))
-         ;; One or more external monitors
-         ((>= (length (remove "eDP-1" connected-outputs)) 1)
-          (let ((primary (car (remove "eDP-1" connected-outputs)))
-                (secondary (cadr (remove "eDP-1" connected-outputs))))
-            (if secondary
-                (start-process-shell-command
-                 "xrandr" nil
-                 (format
-                  "xrandr --output %s --primary --auto --output %s --auto --left-of %s --output eDP-1 --off"
-                  primary secondary primary))
-              (start-process-shell-command
-               "xrandr" nil
-               (format
-                "xrandr --output %s --primary --auto --output eDP-1 --off"
-                primary)))
-            ;; Reset DPI to default (96) for external monitors
-            (start-process-shell-command
-             "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
-            (setq exwm-randr-workspace-monitor-plist
-                  (if secondary
-                      `(0 ,primary 1 ,secondary)
-                    `(0 ,primary)))))))))
-
-   (exwm-randr-mode 1)
-   ;; Load the system tray before exwm-init
-   (require 'exwm-systemtray)
-   (setq exwm-systemtray-height 24)
-   (setq exwm-systemtray-icon-gap 10)
-   (exwm-systemtray-mode 1)
-
-   ;; Input Prefix Keys
-   (setq exwm-input-prefix-keys
-         '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
-
-   ;; xss-lock setup for autolock and suspend locking
-   (when (and (executable-find "xss-lock") (executable-find "slock"))
-     (start-process-shell-command "xss-lock" nil "xss-lock -- slock"))
-   (when (executable-find "xset")
-     (start-process-shell-command "xset" nil "xset s 300")) ; 5-minute inactivity
-
-   ;; Global keybindings
-   (setq exwm-input-global-keys
-         (nconc
-          `(([?\s-r] . exwm-reset)
-            ([s-left] . windmove-left)
-            ([s-right] . windmove-right)
-            ([s-up] . windmove-up)
-            ([s-down] . windmove-down)
-            ([?\s-w] . exwm-workspace-switch)
-            ([?\s-&]
-             .
-             (lambda (cmd)
-               (interactive (list (read-shell-command "$ ")))
-               (start-process-shell-command cmd nil cmd)))
-            ([?\s-x]
-             .
-             (lambda ()
-               (interactive)
-               (save-buffers-kill-emacs)))
-            ([?\s-\ ]
-             .
-             (lambda ()
-               (interactive)
-               (async-shell-command)))
-            ([?\s-v] . consult-yank-pop)
-            ([?\s-q]
-             .
-             (lambda ()
-               (interactive)
-               (kill-buffer-and-window)))
-            ([XF86PowerOff]
-             .
-             (lambda ()
-               (interactive)
-               (when (executable-find "systemctl")
+    (require 'exwm-randr)
+    (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
+    (add-hook
+     'exwm-randr-screen-change-hook
+     (lambda ()
+       (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
+             connected-outputs)
+         (with-temp-buffer
+           (call-process "xrandr" nil t nil)
+           (goto-char (point-min))
+           (while (re-search-forward xrandr-output-regexp nil t)
+             (push (match-string 1) connected-outputs)))
+         (cond
+          ;; Single monitor or only eDP-1 connected
+          ((or (= (length connected-outputs) 1)
+               (and (member "eDP-1" connected-outputs)
+                    (= (length (remove "eDP-1" connected-outputs)) 0)))
+           (start-process-shell-command
+            "xrandr"
+            nil
+            "xrandr --output eDP-1 --primary --auto --scale .75 --dpi 192")
+           (start-process-shell-command
+            "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
+           (dolist (output (remove "eDP-1" connected-outputs))
+             (start-process-shell-command
+              "xrandr" nil
+              (format "xrandr --output %s --off" output)))
+           (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1")))
+          ;; One or more external monitors
+          ((>= (length (remove "eDP-1" connected-outputs)) 1)
+           (let ((primary (car (remove "eDP-1" connected-outputs)))
+                 (secondary (cadr (remove "eDP-1" connected-outputs))))
+             (if secondary
                  (start-process-shell-command
-                  "poweroff" nil "systemctl poweroff")))))
-          (mapcar
-           (lambda (i)
-             (cons
-              (kbd (format "s-%d" i))
+                  "xrandr" nil
+                  (format
+                   "xrandr --output %s --primary --auto --output %s --auto --left-of %s --output eDP-1 --off"
+                   primary secondary primary))
+               (start-process-shell-command
+                "xrandr" nil
+                (format
+                 "xrandr --output %s --primary --auto --output eDP-1 --off"
+                 primary)))
+             ;; Reset DPI to default (96) for external monitors
+             (start-process-shell-command
+              "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
+             (setq exwm-randr-workspace-monitor-plist
+                   (if secondary
+                       `(0 ,primary 1 ,secondary)
+                     `(0 ,primary)))))))))
+
+    (exwm-randr-mode 1)
+    ;; Load the system tray before exwm-init
+    (require 'exwm-systemtray)
+    (setq exwm-systemtray-height 24)
+    (setq exwm-systemtray-icon-gap 10)
+    (exwm-systemtray-mode 1)
+
+    ;; Input Prefix Keys
+    (setq exwm-input-prefix-keys
+          '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
+
+    ;; xss-lock setup for autolock and suspend locking
+    (when (and (executable-find "xss-lock") (executable-find "slock"))
+      (start-process-shell-command "xss-lock" nil "xss-lock -- slock"))
+    (when (executable-find "xset")
+      (start-process-shell-command "xset" nil "xset s 300")) ; 5-minute inactivity
+
+    ;; Global keybindings
+    (setq exwm-input-global-keys
+          (nconc
+           `(([?\s-r] . exwm-reset)
+             ([s-left] . windmove-left)
+             ([s-right] . windmove-right)
+             ([s-up] . windmove-up)
+             ([s-down] . windmove-down)
+             ([?\s-w] . exwm-workspace-switch)
+             ([?\s-&]
+              .
+              (lambda (cmd)
+                (interactive (list (read-shell-command "$ ")))
+                (start-process-shell-command cmd nil cmd)))
+             ([?\s-x]
+              .
               (lambda ()
                 (interactive)
-                (message "Switching to workspace %d" i)
-                (exwm-workspace-switch-create i))))
-           (number-sequence 0 9))
-          (mapcar
-           (lambda (i)
-             (cons
-              (kbd (format "M-s-%d" i))
+                (save-buffers-kill-emacs)))
+             ([?\s-\ ]
+              .
               (lambda ()
                 (interactive)
-                (message "Moving window to workspace %d" i)
-                (exwm-workspace-move-window i))))
-           (number-sequence 0 9))))
+                (async-shell-command)))
+             ([?\s-v] . consult-yank-pop)
+             ([?\s-q]
+              .
+              (lambda ()
+                (interactive)
+                (kill-buffer-and-window)))
+             ([XF86PowerOff]
+              .
+              (lambda ()
+                (interactive)
+                (when (executable-find "systemctl")
+                  (start-process-shell-command
+                   "poweroff" nil "systemctl poweroff")))))
+           (mapcar
+            (lambda (i)
+              (cons
+               (kbd (format "s-%d" i))
+               (lambda ()
+                 (interactive)
+                 (message "Switching to workspace %d" i)
+                 (exwm-workspace-switch-create i))))
+            (number-sequence 0 9))
+           (mapcar
+            (lambda (i)
+              (cons
+               (kbd (format "M-s-%d" i))
+               (lambda ()
+                 (interactive)
+                 (message "Moving window to workspace %d" i)
+                 (exwm-workspace-move-window i))))
+            (number-sequence 0 9))))
 
-   ;; Simulation Keys
-   (setq exwm-input-simulation-keys
-         '(([?\C-b] . [left])
-           ([?\C-f] . [right])
-           ([?\C-p] . [up])
-           ([?\C-n] . [down])
-           ([?\C-a] . [home])
-           ([?\C-e] . [end])
-           ([?\M-v] . [prior])
-           ([?\C-v] . [next])
-           ([?\C-d] . [delete])
-           ([?\C-k] . [S-end delete])
-           ([?\M-w] . [?\C-c])
-           ([?\C-y] . [?\C-v])))
+    ;; Simulation Keys
+    (setq exwm-input-simulation-keys
+          '(([?\C-b] . [left])
+            ([?\C-f] . [right])
+            ([?\C-p] . [up])
+            ([?\C-n] . [down])
+            ([?\C-a] . [home])
+            ([?\C-e] . [end])
+            ([?\M-v] . [prior])
+            ([?\C-v] . [next])
+            ([?\C-d] . [delete])
+            ([?\C-k] . [S-end delete])
+            ([?\M-w] . [?\C-c])
+            ([?\C-y] . [?\C-v])))
 
-   (exwm-enable))
-
-  (use-package
-   exwm-edit
-   :ensure t
-   :after exwm
-   :init
-   ;; Pre-load settings
-   (setq exwm-edit-default-major-mode 'text-mode) ; Default mode for editing
-   :config
-   ;; Explicitly load exwm-edit
-   (require 'exwm-edit nil t)
-   (when (featurep 'exwm-edit)
-     (message "exwm-edit loaded successfully"))
-   ;; Optional: Customize split behavior
-   ;(setq exwm-edit-split 'below) ; Open edit buffer below current window
-   :bind (:map exwm-mode-map ("C-c e" . exwm-edit--compose))
-   :hook
-   ;; Log initialization
-   (exwm-init
-    .
-    (lambda ()
-      (when (featurep 'exwm-edit)
-        (message "exwm-edit initialized")))))
-
-  (use-package
-   exwm-firefox-core
-   :ensure t
-   :after exwm
-   :init
-   ;; Pre-load settings
-   (setq exwm-firefox-core-classes
-         '("firefox" "firefoxdeveloperedition"))
-   :config
-   ;; Load package safely
-   (require 'exwm-firefox-core nil t)
-   (when (featurep 'exwm-firefox-core)
-     (message "exwm-firefox-core loaded"))
-   ;; Popular keybindings
-   :bind
-   (:map
-    exwm-mode-map
-    ("C-c F n" . exwm-firefox-core-tab-new)
-    ("C-c F t" . exwm-firefox-core-tab-close)
-    ("C-c F <right>" . exwm-firefox-core-tab-right)
-    ("C-c F <left>" . exwm-firefox-core-tab-left)
-    ("C-c F h" . exwm-firefox-core-back)
-    ("C-c F l" . exwm-firefox-core-forward))
-   :hook
-   ;; Rename buffers for Firefox windows
-   (exwm-update-title
-    .
-    (lambda ()
-      (when (string-match-p "firefox" (downcase exwm-class-name))
-        (exwm-workspace-rename-buffer exwm-title)))))
+    (exwm-enable))
 
   (use-package
-   desktop-environment
-   :ensure t
-   :init
-   ;; Pre-configure settings before mode activation
-   (setq desktop-environment-notifications t) ; Enable notifications
-   (setq desktop-environment-screenshot-directory
-         "~/Pictures/Screenshots") ; Screenshot path
-   (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
-   (setq
-    desktop-environment-volume-get-command
-    "pactl get-sink-volume @DEFAULT_SINK@ | awk '/Volume:/ {print $5}'")
-   (setq desktop-environment-volume-get-regexp "\\([0-9]+%\\)")
-   (setq desktop-environment-volume-set-command
-         "pactl set-sink-volume @DEFAULT_SINK@ %s%%") ; Set volume
-   (setq
-    desktop-environment-mute-get-command
-    "pactl get-sink-mute @DEFAULT_SINK@ | awk '{print ($2 == \"yes\") ? \"true\" : \"false\"}'")
-   (setq desktop-environment-volume-toggle-command
-         "pactl set-sink-mute @DEFAULT_SINK@ toggle") ; Toggle mute
-   (setq desktop-environment-volume-normal-increment "+5") ; Volume step up
-   (setq desktop-environment-volume-normal-decrement "-5") ; Volume step down
+    exwm-edit
+    :ensure t
+    :after exwm
+    :init
+    ;; Pre-load settings
+    (setq exwm-edit-default-major-mode 'text-mode) ; Default mode for editing
+    :config
+    ;; Explicitly load exwm-edit
+    (require 'exwm-edit nil t)
+    (when (featurep 'exwm-edit)
+      (message "exwm-edit loaded successfully"))
+    ;; Optional: Customize split behavior
+                                        ;(setq exwm-edit-split 'below) ; Open edit buffer below current window
+    :bind (:map exwm-mode-map ("C-c e" . exwm-edit--compose))
+    :hook
+    ;; Log initialization
+    (exwm-init
+     .
+     (lambda ()
+       (when (featurep 'exwm-edit)
+         (message "exwm-edit initialized")))))
 
-   :config
-   ;; Ensure dependencies are installed
-   (desktop-environment-mode 1)
-   (dolist (cmd '("scrot" "slock" "pactl" "brightnessctl"))
-     (unless (executable-find cmd)
-       (message
-        "Warning: %s not found; desktop-environment may not work fully"
-        cmd)))
+  (use-package
+    exwm-firefox-core
+    :ensure t
+    :after exwm
+    :init
+    ;; Pre-load settings
+    (setq exwm-firefox-core-classes
+          '("firefox" "firefoxdeveloperedition"))
+    :config
+    ;; Load package safely
+    (require 'exwm-firefox-core nil t)
+    (when (featurep 'exwm-firefox-core)
+      (message "exwm-firefox-core loaded"))
+    ;; Popular keybindings
+    :bind
+    (:map
+     exwm-mode-map
+     ("C-c F n" . exwm-firefox-core-tab-new)
+     ("C-c F t" . exwm-firefox-core-tab-close)
+     ("C-c F <right>" . exwm-firefox-core-tab-right)
+     ("C-c F <left>" . exwm-firefox-core-tab-left)
+     ("C-c F h" . exwm-firefox-core-back)
+     ("C-c F l" . exwm-firefox-core-forward))
+    :hook
+    ;; Rename buffers for Firefox windows
+    (exwm-update-title
+     .
+     (lambda ()
+       (when (string-match-p "firefox" (downcase exwm-class-name))
+         (exwm-workspace-rename-buffer exwm-title)))))
 
-   :hook
-   ;; Notification hooks for volume and brightness changes using our notification system
-   (desktop-environment-volume-changed
-    .
-    (lambda ()
-      (let ((vol (my-get-volume)))
-        (my-notify "Volume" (format "Volume: %d%%" vol) 'normal 2))))
-   (desktop-environment-mute-changed
-    .
-    (lambda ()
-      (my-notify "Volume Mute"
-                 (if (string-match-p
-                      "yes"
-                      (shell-command-to-string
-                       "pactl get-sink-mute @DEFAULT_SINK@"))
-                     "Muted"
-                   "Unmuted")
-                 'normal 2)))
-   (desktop-environment-brightness-changed
-    .
-    (lambda ()
-      (let ((bright (my-get-brightness)))
-        (my-notify "Brightness" (format "Brightness: %d%%" bright)
-                   'normal
-                   2))))))
+  (use-package
+    desktop-environment
+    :ensure t
+    :init
+    ;; Pre-configure settings before mode activation
+    (setq desktop-environment-notifications t) ; Enable notifications
+    (setq desktop-environment-screenshot-directory
+          "~/Pictures/Screenshots") ; Screenshot path
+    (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
+    (setq
+     desktop-environment-volume-get-command
+     "pactl get-sink-volume @DEFAULT_SINK@ | awk '/Volume:/ {print $5}'")
+    (setq desktop-environment-volume-get-regexp "\\([0-9]+%\\)")
+    (setq desktop-environment-volume-set-command
+          "pactl set-sink-volume @DEFAULT_SINK@ %s%%") ; Set volume
+    (setq
+     desktop-environment-mute-get-command
+     "pactl get-sink-mute @DEFAULT_SINK@ | awk '{print ($2 == \"yes\") ? \"true\" : \"false\"}'")
+    (setq desktop-environment-volume-toggle-command
+          "pactl set-sink-mute @DEFAULT_SINK@ toggle") ; Toggle mute
+    (setq desktop-environment-volume-normal-increment "+5") ; Volume step up
+    (setq desktop-environment-volume-normal-decrement "-5") ; Volume step down
+
+    :config
+    ;; Ensure dependencies are installed
+    (desktop-environment-mode 1)
+    (dolist (cmd '("scrot" "slock" "pactl" "brightnessctl"))
+      (unless (executable-find cmd)
+        (message
+         "Warning: %s not found; desktop-environment may not work fully"
+         cmd)))
+
+    :hook
+    ;; Notification hooks for volume and brightness changes using our notification system
+    (desktop-environment-volume-changed
+     .
+     (lambda ()
+       (let ((vol (my-get-volume)))
+         (my-notify "Volume" (format "Volume: %d%%" vol) 'normal 2))))
+    (desktop-environment-mute-changed
+     .
+     (lambda ()
+       (my-notify "Volume Mute"
+                  (if (string-match-p
+                       "yes"
+                       (shell-command-to-string
+                        "pactl get-sink-mute @DEFAULT_SINK@"))
+                      "Muted"
+                    "Unmuted")
+                  'normal 2)))
+    (desktop-environment-brightness-changed
+     .
+     (lambda ()
+       (let ((bright (my-get-brightness)))
+         (my-notify "Brightness" (format "Brightness: %d%%" bright)
+                    'normal
+                    2))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
