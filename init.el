@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-04 07:58:22 by grim>
+;; Time-stamp: <Last changed 2025-06-04 08:00:37 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3852,7 +3852,7 @@ With ARG, move that many defuns forward."
 ;; log viewing
 ;;;;;
 (use-package logview
-  :demand t
+  :ensure t
   :init
   (add-to-list 'auto-mode-alist '("\\.log\\'" . logview-mode))
   (add-to-list 'auto-mode-alist '("log\\'" . logview-mode)))
@@ -3861,7 +3861,6 @@ With ARG, move that many defuns forward."
 ;; pulsar
 ;;;;;
 (use-package pulsar
-  :ensure t
   :custom
   (pulsar-pulse t)
   (pulsar-delay 0.2)
