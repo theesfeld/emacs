@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-04 09:36:31 by grim>
+;; Time-stamp: <Last changed 2025-06-04 09:38:41 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -13,6 +13,9 @@
 
 ;; Disable the damn thing by making it disposable.
 (setq custom-file (make-temp-file "emacs-custom-"))
+
+;; imenu support
+(setq use-package-enable-imenu-support t)
 
 ;; Enable these
 (mapc
@@ -763,7 +766,6 @@ TIMEOUT is duration in seconds (default 5)."
   emacs
   :ensure nil ; Built-in, no need to install
   :init (server-start)
-  (setq use-package-enable-imenu-support t)
   ;; Define a variable for the temporary directory
   (defvar my-tmp-dir (expand-file-name "~/.tmp/")
     "Directory for temporary files, backups, and history files.")
