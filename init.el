@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-03 16:57:34 by grim>
+;; Time-stamp: <Last changed 2025-06-04 07:58:22 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -986,6 +986,7 @@ TIMEOUT is duration in seconds (default 5)."
   :bind
   (("C-x k" . kill-current-buffer)
    ("C-x K" . kill-buffer)
+   ( "C-x C-i" . imenu)
    ("s-<tab>" . previous-buffer)
    ("C-x C-;" . comment-or-uncomment-region)
    ("C-x C-'" . mc/mark-all-like-this)
@@ -1615,7 +1616,7 @@ TIMEOUT is duration in seconds (default 5)."
   (setq avy-zap-forward-only t)
   (setq avy-keys '(?a ?o ?e ?u ?i ?d ?h ?t ?n ?s)))
 
-(use-package ace-window :ensure t :after avy)
+(use-package ace-window :ensure t :after avy :bind ("M-o" . ace-window))
 
 (global-set-key (kbd "C-x o") #'ace-window)
 
@@ -3834,6 +3835,55 @@ With ARG, move that many defuns forward."
   ;; --hyperlink' uses.  I normally don't use those, but I am checking
   ;; this to see if there are any obvious advantages/disadvantages.
   (add-hook 'comint-output-filter-functions 'comint-osc-process-output))
+
+;;;;;
+;; definitions
+;;;;;
+(use-package
+  dictionary
+  :ensure nil
+  :custom
+  ;;(dictionary-server "dict.org")
+  (dictionary-server "localhost")
+  :bind
+  ("<f6>" . dictionary-lookup-definition))
+
+;;;;;
+;; log viewing
+;;;;;
+(use-package logview
+  :demand t
+  :init
+  (add-to-list 'auto-mode-alist '("\\.log\\'" . logview-mode))
+  (add-to-list 'auto-mode-alist '("log\\'" . logview-mode)))
+
+;;;;;
+;; pulsar
+;;;;;
+(use-package pulsar
+  :ensure t
+  :custom
+  (pulsar-pulse t)
+  (pulsar-delay 0.2)
+  (pulsar-iterations 15)
+  (pulsar-face 'isearch)
+  (pulsar-highlight-face 'pulsar-green)
+  :init
+  (add-hook 'minibuffer-setup-hook #'pulsar-pulse-line)
+  (add-hook 'consult-after-jump-hook #'pulsar-recenter-middle)
+  (add-hook 'consult-after-jump-hook #'pulsar-reveal-entry)
+  :config
+  (
+   pulsar-global-mode 1))
+
+;;;;;
+;; volatile highlighting
+;;;;;
+(use-package
+  volatile-highlights
+  :ensure t
+  :init (volatile-highlights-mode 1))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
