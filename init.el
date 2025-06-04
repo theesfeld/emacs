@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-04 12:33:09 by grim>
+;; Time-stamp: <Last changed 2025-06-04 12:35:05 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2410,8 +2410,7 @@ TIMEOUT is duration in seconds (default 5)."
     (quit-window))
   :custom
   (eww-history-limit 256)
-  :hook (eww-after-render . rgr/eww-after-render
-                          eww-mode . (lambda () (display-line-numbers-mode -1)))
+  :hook (eww-after-render . rgr/eww-after-render)
   :bind
   (:map eww-mode-map
         ( "&" . rgr/eww-launch-external-browser-from-buffer)))
