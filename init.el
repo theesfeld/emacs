@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-04 11:02:14 by grim>
+;; Time-stamp: <Last changed 2025-06-04 12:33:09 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2415,15 +2415,6 @@ TIMEOUT is duration in seconds (default 5)."
   :bind
   (:map eww-mode-map
         ( "&" . rgr/eww-launch-external-browser-from-buffer)))
-(use-package
-  eww
-  :ensure nil
-  :defer t
-
-
-  :config
-
-  :hook ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     pdf                                   ;;
@@ -2450,7 +2441,7 @@ TIMEOUT is duration in seconds (default 5)."
       (when (file-exists-p temp-file)
         (delete-file temp-file))))
   :config
-  (unless (featurep 'pdf-tools) ; Install only if not already loaded
+  (unless (featurep 'pdf-tools)   ; Install only if not already loaded
     (pdf-tools-install :no-query))
   (setq
    pdf-view-display-size 'fit-page
