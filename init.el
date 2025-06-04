@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-04 09:38:41 by grim>
+;; Time-stamp: <Last changed 2025-06-04 10:59:46 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2298,159 +2298,194 @@ TIMEOUT is duration in seconds (default 5)."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- dired
- :ensure nil
- :bind
- (("C-x C-d" . dired)
-  :map
-  dired-mode-map
-  ("RET" . dired-find-alternate-file)
-  ("<backspace>" . dired-up-directory)
-  ("C-c C-e" . wdired-change-to-wdired-mode)
-  ("C-c g" . dired-git-info-mode)
-  ("C-c t" . dired-toggle-read-only)
-  ("M-!" . dired-smart-shell-command)
-  ("C-c o" . dired-open-externally)
-  ("C-c w" . dired-copy-file-path)
-  ("C-c f" . dired-consult-filter))
- :hook
- ((dired-mode . dired-hide-details-mode)
-  (dired-mode . all-the-icons-dired-mode)
-  (dired-mode . dired-preview-mode)
-  (dired-mode . hl-line-mode))
- :custom
- (dired-listing-switches "-lah --group-directories-first")
- (dired-dwim-target t)
- (dired-recursive-copies 'always)
- (dired-recursive-deletes 'always)
- (dired-auto-revert-buffer t)
- (dired-hide-details-hide-symlink-targets nil)
- (dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open")))
- (dired-use-ls-dired t)
- :config
- (require 'dired-x)
- (setq dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open")))
- (setq dired-dwim-target t)
- (put 'dired-find-alternate-file 'disabled nil)
-
- (defun dired-open-externally ()
-   "Open file under cursor with xdg-open."
-   (interactive)
-   (let ((file (dired-get-file-for-visit)))
-     (start-process "dired-open" nil "xdg-open" file)))
-
- (defun dired-copy-file-path ()
-   "Copy the full path of the file under cursor to kill ring."
-   (interactive)
-   (let ((path (dired-get-file-for-visit)))
-     (kill-new path)
-     (message "Copied path: %s" path)))
-
- (defun dired-consult-filter ()
-   "Filter Dired buffer using Consult narrowing."
-   (interactive)
-   (consult-focus-lines
-    (lambda (file)
-      (string-match-p
-       (regexp-quote (consult--read "Filter: ")) file))))
-
- (use-package diredfl :ensure t :config (diredfl-global-mode 1))
- (use-package
-  all-the-icons-dired
-  :ensure t
-  :after (all-the-icons dired)
-  :hook (dired-mode . all-the-icons-dired-mode)
-  :config (setq all-the-icons-dired-monochrome nil)
-  (set-face-attribute 'all-the-icons-dired-dir-face nil
-                      :foreground "#81a1c1"))
- (use-package
-  dired-preview
-  :ensure t
-  :custom
-  (dired-preview-delay 0)
-  (dired-preview-max-size (* 10 1024 1024))
-  :config (dired-preview-global-mode 1))
- (use-package
-  dired-git-info
-  :ensure t
-  :custom (dgi-auto-hide-details-p nil)
-  :config
-  (setq dired-git-info-format " (%s)")
-  (define-key dired-mode-map ")" 'dired-git-info-mode))
- (use-package
-  dired-subtree
-  :ensure t
-  :bind
-  (:map
-   dired-mode-map
-   ("<tab>" . dired-subtree-toggle)
-   ("<C-tab>" . dired-subtree-cycle))
-  :config (setq dired-subtree-use-backgrounds nil)
-  (set-face-attribute 'dired-subtree-depth-1-face nil
-                      :background "#3b4252"))
- (use-package
-  dired-async
+  dired
   :ensure nil
-  :after dired
-  :config (dired-async-mode 1)))
+  :bind
+  (("C-x C-d" . dired)
+   :map
+   dired-mode-map
+   ("RET" . dired-find-alternate-file)
+   ("<backspace>" . dired-up-directory)
+   ("C-c C-e" . wdired-change-to-wdired-mode)
+   ("C-c g" . dired-git-info-mode)
+   ("C-c t" . dired-toggle-read-only)
+   ("M-!" . dired-smart-shell-command)
+   ("C-c o" . dired-open-externally)
+   ("C-c w" . dired-copy-file-path)
+   ("C-c f" . dired-consult-filter))
+  :hook
+  ((dired-mode . dired-hide-details-mode)
+   (dired-mode . all-the-icons-dired-mode)
+   (dired-mode . dired-preview-mode)
+   (dired-mode . hl-line-mode))
+  :custom
+  (dired-listing-switches "-lah --group-directories-first")
+  (dired-dwim-target t)
+  (dired-recursive-copies 'always)
+  (dired-recursive-deletes 'always)
+  (dired-auto-revert-buffer t)
+  (dired-hide-details-hide-symlink-targets nil)
+  (dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open")))
+  (dired-use-ls-dired t)
+  :config
+  (require 'dired-x)
+  (setq dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open")))
+  (setq dired-dwim-target t)
+  (put 'dired-find-alternate-file 'disabled nil)
+
+  (defun dired-open-externally ()
+    "Open file under cursor with xdg-open."
+    (interactive)
+    (let ((file (dired-get-file-for-visit)))
+      (start-process "dired-open" nil "xdg-open" file)))
+
+  (defun dired-copy-file-path ()
+    "Copy the full path of the file under cursor to kill ring."
+    (interactive)
+    (let ((path (dired-get-file-for-visit)))
+      (kill-new path)
+      (message "Copied path: %s" path)))
+
+  (defun dired-consult-filter ()
+    "Filter Dired buffer using Consult narrowing."
+    (interactive)
+    (consult-focus-lines
+     (lambda (file)
+       (string-match-p
+        (regexp-quote (consult--read "Filter: ")) file))))
+
+  (use-package diredfl :ensure t :config (diredfl-global-mode 1))
+  (use-package
+    all-the-icons-dired
+    :ensure t
+    :after (all-the-icons dired)
+    :hook (dired-mode . all-the-icons-dired-mode)
+    :config (setq all-the-icons-dired-monochrome nil)
+    (set-face-attribute 'all-the-icons-dired-dir-face nil
+                        :foreground "#81a1c1"))
+  (use-package
+    dired-preview
+    :ensure t
+    :custom
+    (dired-preview-delay 0)
+    (dired-preview-max-size (* 10 1024 1024))
+    :config (dired-preview-global-mode 1))
+  (use-package
+    dired-git-info
+    :ensure t
+    :custom (dgi-auto-hide-details-p nil)
+    :config
+    (setq dired-git-info-format " (%s)")
+    (define-key dired-mode-map ")" 'dired-git-info-mode))
+  (use-package
+    dired-subtree
+    :ensure t
+    :bind
+    (:map
+     dired-mode-map
+     ("<tab>" . dired-subtree-toggle)
+     ("<C-tab>" . dired-subtree-cycle))
+    :config (setq dired-subtree-use-backgrounds nil)
+    (set-face-attribute 'dired-subtree-depth-1-face nil
+                        :background "#3b4252"))
+  (use-package
+    dired-async
+    :ensure nil
+    :after dired
+    :config (dired-async-mode 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     eww                                   ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(use-package eww
+  :ensure nil
+  :commands (eww eww-browse-url)
+  :init
+  (setq browse-url-handlers
+        '(("\\.pdf\\'" . my-open-remote-pdf-in-emacs)
+          ("^https?://" . eww-browse-url)))
+  :config
+  (setq eww-auto-rename-buffer 'title)  ; Nicer buffer names
+  ;; Advice EWW to launch certain URLs using the generic launcher rather than EWW.
+  (defcustom rgr/eww-external-launch-url-chunks '("youtube")
+    "If any component of this list is contained in an EWW url then it will use `browse-url-generic to launch that url instead of `eww"
+    :type '(repeat string))
+  (defadvice eww (around rgr/eww-extern-advise activate)
+    "Use `browse-url-generic if any part of URL is contained in `rgr/eww-external-launch-url-chunks"
+    (if (string-match-p (regexp-opt rgr/eww-external-launch-url-chunks) url)
+        (progn
+          (call-process-shell-command "swaymsg workspace number 2" nil 0)
+          (browse-url-generic url))
+      ad-do-it))
+  (defun rgr/eww-after-render ()
+    ;;move point line to top
+    (condition-case err
+        (dotimes (_ 2)
+          (recenter-top-bottom))
+      (error nil)))
+  (defun rgr/eww-launch-external-browser-from-buffer()
+    (interactive)
+    (emacs-alert "Launching external browser")
+    (eww-browse-with-external-browser)
+    (quit-window))
+  :custom
+  (eww-history-limit 256)
+  :hook (eww-after-render . rgr/eww-after-render
+                          eww-mode . (lambda () (display-line-numbers-mode -1)))
+  :bind
+  (:map eww-mode-map
+        ( "&" . rgr/eww-launch-external-browser-from-buffer)))
 (use-package
- eww
- :ensure nil
- :defer t
- :commands (eww eww-browse-url)
- :init
- (setq browse-url-handlers
-       '(("\\.pdf\\'" . my-open-remote-pdf-in-emacs)
-         ("^https?://" . eww-browse-url)))
- :config
- (setq eww-auto-rename-buffer 'title) ; Nicer buffer names
- :hook (eww-mode . (lambda () (display-line-numbers-mode -1))))
+  eww
+  :ensure nil
+  :defer t
+
+
+  :config
+
+  :hook ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     pdf                                   ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- pdf-tools
- :ensure t
- :defer t
- :mode ("\\.pdf\\'" . pdf-view-mode)
- :init
- (defun my-open-remote-pdf-in-emacs (url &rest _args)
-   "Download a PDF from URL and open it in Emacs with pdf-view-mode."
-   (interactive "sPDF URL: ")
-   (let ((temp-file (make-temp-file "emacs-pdf-" nil ".pdf")))
-     (condition-case err
-         (progn
-           (url-copy-file url temp-file t)
-           (find-file temp-file))
-       (error
-        (message "Failed to open PDF from %s: %s"
-                 url
-                 (error-message-string err))))
-     (when (file-exists-p temp-file)
-       (delete-file temp-file))))
- :config
- (unless (featurep 'pdf-tools) ; Install only if not already loaded
-   (pdf-tools-install :no-query))
- (setq
-  pdf-view-display-size 'fit-page
-  pdf-view-continuous t
-  pdf-view-use-scaling t)
- (add-to-list 'pdf-view-incompatible-modes 'display-line-numbers-mode)
- :hook
+  pdf-tools
+  :ensure t
+  :defer t
+  :mode ("\\.pdf\\'" . pdf-view-mode)
+  :init
+  (defun my-open-remote-pdf-in-emacs (url &rest _args)
+    "Download a PDF from URL and open it in Emacs with pdf-view-mode."
+    (interactive "sPDF URL: ")
+    (let ((temp-file (make-temp-file "emacs-pdf-" nil ".pdf")))
+      (condition-case err
+          (progn
+            (url-copy-file url temp-file t)
+            (find-file temp-file))
+        (error
+         (message "Failed to open PDF from %s: %s"
+                  url
+                  (error-message-string err))))
+      (when (file-exists-p temp-file)
+        (delete-file temp-file))))
+  :config
+  (unless (featurep 'pdf-tools) ; Install only if not already loaded
+    (pdf-tools-install :no-query))
+  (setq
+   pdf-view-display-size 'fit-page
+   pdf-view-continuous t
+   pdf-view-use-scaling t)
+  (add-to-list 'pdf-view-incompatible-modes 'display-line-numbers-mode)
+  :hook
   (pdf-view-mode
-  .
-  (lambda ()
-    (pdf-view-themed-minor-mode)
-    (pdf-view-fit-page-to-window)
-    (display-line-numbers-mode -1)
-    (hl-line-mode -1))))
+   .
+   (lambda ()
+     (pdf-view-themed-minor-mode)
+     (pdf-view-fit-page-to-window)
+     (display-line-numbers-mode -1)
+     (hl-line-mode -1))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  DENOTE                                   ;;
