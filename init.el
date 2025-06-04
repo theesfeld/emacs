@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-04 08:16:20 by grim>
+;; Time-stamp: <Last changed 2025-06-04 08:18:08 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3863,10 +3863,10 @@ With ARG, move that many defuns forward."
 (use-package pulsar
   :custom
   (pulsar-pulse t)
-  (pulsar-delay 0.2)
+  (pulsar-delay 0.1)
   (pulsar-iterations 15)
   (pulsar-face 'isearch)
-  (pulsar-highlight-face 'pulsar-green)
+  (pulsar-highlight-face 'pulsar-yellow)
   :init
   (add-hook 'minibuffer-setup-hook #'pulsar-pulse-line)
   (add-hook 'consult-after-jump-hook #'pulsar-recenter-middle)
