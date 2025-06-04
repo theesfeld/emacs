@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-04 08:35:32 by grim>
+;; Time-stamp: <Last changed 2025-06-04 09:34:34 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -913,6 +913,7 @@ TIMEOUT is duration in seconds (default 5)."
   (add-hook 'before-save-hook 'time-stamp)
 
   :config
+  (setq use-package-enable-imenu-support t)
   (setq scroll-conservatively 101) ; Scroll line-by-line without recentering
   (when (file-exists-p custom-file)
     (load custom-file))
