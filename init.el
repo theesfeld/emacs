@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-04 09:34:34 by grim>
+;; Time-stamp: <Last changed 2025-06-04 09:36:31 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -763,6 +763,7 @@ TIMEOUT is duration in seconds (default 5)."
   emacs
   :ensure nil ; Built-in, no need to install
   :init (server-start)
+  (setq use-package-enable-imenu-support t)
   ;; Define a variable for the temporary directory
   (defvar my-tmp-dir (expand-file-name "~/.tmp/")
     "Directory for temporary files, backups, and history files.")
@@ -913,7 +914,6 @@ TIMEOUT is duration in seconds (default 5)."
   (add-hook 'before-save-hook 'time-stamp)
 
   :config
-  (setq use-package-enable-imenu-support t)
   (setq scroll-conservatively 101) ; Scroll line-by-line without recentering
   (when (file-exists-p custom-file)
     (load custom-file))
