@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-04 08:18:08 by grim>
+;; Time-stamp: <Last changed 2025-06-04 08:35:32 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3843,8 +3843,8 @@ With ARG, move that many defuns forward."
   dictionary
   :ensure nil
   :custom
-  ;;(dictionary-server "dict.org")
-  (dictionary-server "localhost")
+  (dictionary-server "dict.org")
+  ;;(dictionary-server "localhost")
   :bind
   ("<f6>" . dictionary-lookup-definition))
 
