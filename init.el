@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-05 14:39:55 by grim>
+;; Time-stamp: <Last changed 2025-06-05 14:44:02 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3975,14 +3975,7 @@ With ARG, move that many defuns forward."
           (:name "emacs" :query "tag:emacs" :sort-order newest-first :key "e")
           (:name "spam" :query "tag:spam" :sort-order newest-first :key "p")
           (:name "list" :query "tag:list" :sort-order newest-first :key "l")
-          (:name "wet-unread" :query "tag:wet tag:unread" :sort-order newest-first :key "W")
-          (:name "grim-unread" :query "tag:grim tag:unread" :sort-order newest-first :key "G")
-          (:name "tj-unread" :query "tag:tj tag:unread" :sort-order newest-first :key "T")
-          (:name "theesfeld-unread" :query "tag:theesfeld tag:unread" :sort-order newest-first :key "F")
-          (:name "samhain-unread" :query "tag:samhain tag:unread" :sort-order newest-first :key "S")
-          (:name "emacs-unread" :query "tag:emacs tag:unread" :sort-order newest-first :key "E")
-          (:name "spam-unread" :query "tag:spam tag:unread" :sort-order newest-first :key "P")
-          (:name "list-unread" :query "tag:list tag:unread" :sort-order newest-first :key "L")))
+          ))
 
   ;; Bind keys in notmuch-hello-mode-map and notmuch-search-mode-map
   (with-eval-after-load 'notmuch
@@ -4003,14 +3996,6 @@ With ARG, move that many defuns forward."
     (define-key notmuch-hello-mode-map (kbd "e") (lambda () (interactive) (my-notmuch-search "tag:emacs")))
     (define-key notmuch-hello-mode-map (kbd "p") (lambda () (interactive) (my-notmuch-search "tag:spam")))
     (define-key notmuch-hello-mode-map (kbd "l") (lambda () (interactive) (my-notmuch-search "tag:list")))
-    (define-key notmuch-hello-mode-map (kbd "W") (lambda () (interactive) (my-notmuch-search "tag:wet tag:unread")))
-    (define-key notmuch-hello-mode-map (kbd "G") (lambda () (interactive) (my-notmuch-search "tag:grim tag:unread")))
-    (define-key notmuch-hello-mode-map (kbd "T") (lambda () (interactive) (my-notmuch-search "tag:tj tag:unread")))
-    (define-key notmuch-hello-mode-map (kbd "F") (lambda () (interactive) (my-notmuch-search "tag:theesfeld tag:unread")))
-    (define-key notmuch-hello-mode-map (kbd "S") (lambda () (interactive) (my-notmuch-search "tag:samhain tag:unread")))
-    (define-key notmuch-hello-mode-map (kbd "E") (lambda () (interactive) (my-notmuch-search "tag:emacs tag:unread")))
-    (define-key notmuch-hello-mode-map (kbd "P") (lambda () (interactive) (my-notmuch-search "tag:spam tag:unread")))
-    (define-key notmuch-hello-mode-map (kbd "L") (lambda () (interactive) (my-notmuch-search "tag:list tag:unread")))
 
     ;; Keybindings for notmuch-search-mode-map
     (define-key notmuch-search-mode-map (kbd "i") (lambda () (interactive) (my-notmuch-search "tag:inbox")))
@@ -4023,25 +4008,8 @@ With ARG, move that many defuns forward."
     (define-key notmuch-search-mode-map (kbd "e") (lambda () (interactive) (my-notmuch-search "tag:emacs")))
     (define-key notmuch-search-mode-map (kbd "p") (lambda () (interactive) (my-notmuch-search "unread:spam")))
     (define-key notmuch-search-mode-map (kbd "l") (lambda () (interactive) (my-notmuch-search "tag:list")))
-    (define-key notmuch-search-mode-map (kbd "W") (lambda () (interactive) (my-notmuch-search "tag:wet tag:unread")))
-    (define-key notmuch-search-mode-map (kbd "G") (lambda () (interactive) (my-notmuch-search "tag:grim tag:unread")))
-    (define-key notmuch-search-mode-map (kbd "T") (lambda () (interactive) (my-notmuch-search "tag:tj tag:unread")))
-    (define-key notmuch-search-mode-map (kbd "F") (lambda () (interactive) (my-notmuch-search "tag:theesfeld tag:unread")))
-    (define-key notmuch-search-mode-map (kbd "S") (lambda () (interactive) (my-notmuch-search "tag:samhain tag:unread")))
-    (define-key notmuch-search-mode-map (kbd "E") (lambda () (interactive) (my-notmuch-search "tag:emacs tag:unread")))
-    (define-key notmuch-search-mode-map (kbd "P") (lambda () (interactive) (my-notmuch-search "tag:spam tag:unread")))
-    (define-key notmuch-search-mode-map (kbd "L") (lambda () (interactive) (my-notmuch-search "tag:list tag:unread")))
 
-    ;; Debug function to inspect query results
-    (defun my-notmuch-debug-query (query)
-      "Run QUERY and show results in a temporary buffer for debugging."
-      (interactive "sNotmuch query: ")
-      (let ((buffer (get-buffer-create "*Notmuch Debug*")))
-        (with-current-buffer buffer
-          (erase-buffer)
-          (insert (format "Query: %s\n\n" query))
-          (call-process "notmuch" nil t nil "search" "--format=text" query))
-        (pop-to-buffer buffer)))))
+    ))
 
 ;;;; Tags
 (use-package notmuch
