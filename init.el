@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-05 15:03:12 by grim>
+;; Time-stamp: <Last changed 2025-06-05 15:06:16 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3963,11 +3963,6 @@ With ARG, move that many defuns forward."
           ("flag" . italic)))
   (setq notmuch-show-empty-saved-searches t)
 
-  ;; Check if sexp queries are supported
-  (defun my-notmuch-sexp-supported-p ()
-    "Check if notmuch supports sexp queries."
-    (string= (shell-command-to-string "notmuch config get built_with.sexp_queries") "true\n"))
-
   ;; Define saved searches (use sexp for combined searches)
   (setq notmuch-saved-searches
         '((:name "inbox" :query "tag:inbox" :sort-order newest-first :key "i")
@@ -3989,15 +3984,10 @@ With ARG, move that many defuns forward."
           (:name "spam-unread" :query "(and (tag spam) (tag unread))" :sort-order newest-first :key "P")
           (:name "list-unread" :query "(and (tag list) (tag unread))" :sort-order newest-first :key "L")))
 
-  ;; Custom search function for sexp queries
   (defun my-notmuch-search-sexp (query)
     "Run notmuch-search with QUERY, using sexp syntax if combined tags."
-    (interactive)
-    (if (string-match-p "^(and" query)
-        (if (my-notmuch-sexp-supported-p)
-            (notmuch-search query 'newest-first nil nil "--query=sexp")
-          (error "Sexp queries not supported; run 'notmuch config get built_with.sexp_queries'"))
-      (notmuch-search query 'newest-first)))
+    (notmuch-search query 'newest-first nil nil "--query=sexp")
+    )
 
   ;; Bind keys in notmuch-hello-mode-map and notmuch-search-mode-map
   (with-eval-after-load 'notmuch
