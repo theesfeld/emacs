@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-05 14:44:02 by grim>
+;; Time-stamp: <Last changed 2025-06-05 15:01:55 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3963,7 +3963,12 @@ With ARG, move that many defuns forward."
           ("flag" . italic)))
   (setq notmuch-show-empty-saved-searches t)
 
-  ;; Define saved searches
+;; Check if sexp queries are supported
+  (defun my-notmuch-sexp-supported-p ()
+    "Check if notmuch supports sexp queries."
+    (string= (shell-command-to-string "notmuch config get built_with.sexp_queries") "true\n"))
+
+  ;; Define saved searches (use sexp for combined searches)
   (setq notmuch-saved-searches
         '((:name "inbox" :query "tag:inbox" :sort-order newest-first :key "i")
           (:name "unread" :query "tag:unread" :sort-order newest-first :key "u")
@@ -3975,41 +3980,68 @@ With ARG, move that many defuns forward."
           (:name "emacs" :query "tag:emacs" :sort-order newest-first :key "e")
           (:name "spam" :query "tag:spam" :sort-order newest-first :key "p")
           (:name "list" :query "tag:list" :sort-order newest-first :key "l")
-          ))
+          (:name "wet-unread" :query "(and (tag wet) (tag unread))" :sort-order newest-first :key "W")
+          (:name "grim-unread" :query "(and (tag grim) (tag unread))" :sort-order newest-first :key "G")
+          (:name "tj-unread" :query "(and (tag tj) (tag unread))" :sort-order newest-first :key "T")
+          (:name "theesfeld-unread" :query "(and (tag theesfeld) (tag unread))" :sort-order newest-first :key "F")
+          (:name "samhain-unread" :query "(and (tag samhain) (tag unread))" :sort-order newest-first :key "S")
+          (:name "emacs-unread" :query "(and (tag emacs) (tag unread))" :sort-order newest-first :key "E")
+          (:name "spam-unread" :query "(and (tag spam) (tag unread))" :sort-order newest-first :key "P")
+          (:name "list-unread" :query "(and (tag list) (tag unread))" :sort-order newest-first :key "L")))
+
+  ;; Custom search function for sexp queries
+  (defun my-notmuch-search-sexp (query)
+    "Run notmuch-search with QUERY, using sexp syntax if combined tags."
+    (interactive)
+    (if (string-match-p "^(and" query)
+        (if (my-notmuch-sexp-supported-p)
+            (notmuch-search query 'newest-first nil nil "--query=sexp")
+          (error "Sexp queries not supported; run 'notmuch config get built_with.sexp_queries'"))
+      (notmuch-search query 'newest-first)))
 
   ;; Bind keys in notmuch-hello-mode-map and notmuch-search-mode-map
   (with-eval-after-load 'notmuch
-    ;; Helper function to ensure strict query execution
-    (defun my-notmuch-search (query)
-      "Run notmuch-search with QUERY, ensuring newest-first sort order."
-      (interactive)
-      (notmuch-search query 'newest-first))
-
     ;; Keybindings for notmuch-hello-mode-map
-    (define-key notmuch-hello-mode-map (kbd "i") (lambda () (interactive) (my-notmuch-search "tag:inbox")))
-    (define-key notmuch-hello-mode-map (kbd "u") (lambda () (interactive) (my-notmuch-search "tag:unread")))
-    (define-key notmuch-hello-mode-map (kbd "w") (lambda () (interactive) (my-notmuch-search "tag:wet")))
-    (define-key notmuch-hello-mode-map (kbd "g") (lambda () (interactive) (my-notmuch-search "tag:grim")))
-    (define-key notmuch-hello-mode-map (kbd "t") (lambda () (interactive) (my-notmuch-search "tag:tj")))
-    (define-key notmuch-hello-mode-map (kbd "f") (lambda () (interactive) (my-notmuch-search "tag:theesfeld")))
-    (define-key notmuch-hello-mode-map (kbd "s") (lambda () (interactive) (my-notmuch-search "tag:samhain")))
-    (define-key notmuch-hello-mode-map (kbd "e") (lambda () (interactive) (my-notmuch-search "tag:emacs")))
-    (define-key notmuch-hello-mode-map (kbd "p") (lambda () (interactive) (my-notmuch-search "tag:spam")))
-    (define-key notmuch-hello-mode-map (kbd "l") (lambda () (interactive) (my-notmuch-search "tag:list")))
+    (define-key notmuch-hello-mode-map (kbd "i") (lambda () (interactive) (my-notmuch-search-sexp "tag:inbox")))
+    (define-key notmuch-hello-mode-map (kbd "u") (lambda () (interactive) (my-notmuch-search-sexp "tag:unread")))
+    (define-key notmuch-hello-mode-map (kbd "w") (lambda () (interactive) (my-notmuch-search-sexp "tag:wet")))
+    (define-key notmuch-hello-mode-map (kbd "g") (lambda () (interactive) (my-notmuch-search-sexp "tag:grim")))
+    (define-key notmuch-hello-mode-map (kbd "t") (lambda () (interactive) (my-notmuch-search-sexp "tag:tj")))
+    (define-key notmuch-hello-mode-map (kbd "f") (lambda () (interactive) (my-notmuch-search-sexp "tag:theesfeld")))
+    (define-key notmuch-hello-mode-map (kbd "s") (lambda () (interactive) (my-notmuch-search-sexp "tag:samhain")))
+    (define-key notmuch-hello-mode-map (kbd "e") (lambda () (interactive) (my-notmuch-search-sexp "tag:emacs")))
+    (define-key notmuch-hello-mode-map (kbd "p") (lambda () (interactive) (my-notmuch-search-sexp "tag:spam")))
+    (define-key notmuch-hello-mode-map (kbd "l") (lambda () (interactive) (my-notmuch-search-sexp "tag:list")))
+    (define-key notmuch-hello-mode-map (kbd "W") (lambda () (interactive) (my-notmuch-search-sexp "(and (tag wet) (tag unread))")))
+    (define-key notmuch-hello-mode-map (kbd "G") (lambda () (interactive) (my-notmuch-search-sexp "(and (tag grim) (tag unread))")))
+    (define-key notmuch-hello-mode-map (kbd "T") (lambda () (interactive) (my-notmuch-search-sexp "(and (tag tj) (tag unread))")))
+    (define-key notmuch-hello-mode-map (kbd "F") (lambda () (interactive) (my-notmuch-search-sexp "(and (tag theesfeld) (tag unread))")))
+    (define-key notmuch-hello-mode-map (kbd "S") (lambda () (interactive) (my-notmuch-search-sexp "(and (tag samhain) (tag unread))")))
+    (define-key notmuch-hello-mode-map (kbd "E") (lambda () (interactive) (my-notmuch-search-sexp "(and (tag emacs) (tag unread))")))
+    (define-key notmuch-hello-mode-map (kbd "P") (lambda () (interactive) (my-notmuch-search-sexp "(and (tag spam) (tag unread))")))
+    (define-key notmuch-hello-mode-map (kbd "L") (lambda () (interactive) (my-notmuch-search-sexp "(and (tag list) (tag unread))")))
 
     ;; Keybindings for notmuch-search-mode-map
-    (define-key notmuch-search-mode-map (kbd "i") (lambda () (interactive) (my-notmuch-search "tag:inbox")))
-    (define-key notmuch-search-mode-map (kbd "u") (lambda () (interactive) (my-notmuch-search "tag:unread")))
-    (define-key notmuch-search-mode-map (kbd "w") (lambda () (interactive) (my-notmuch-search "tag:wet")))
-    (define-key notmuch-search-mode-map (kbd "g") (lambda () (interactive) (my-notmuch-search "tag:grim")))
-    (define-key notmuch-search-mode-map (kbd "t") (lambda () (interactive) (my-notmuch-search "tag:tj")))
-    (define-key notmuch-search-mode-map (kbd "f") (lambda () (interactive) (my-notmuch-search "tag:theesfeld")))
-    (define-key notmuch-search-mode-map (kbd "s") (lambda () (interactive) (my-notmuch-search "tag:samhain")))
-    (define-key notmuch-search-mode-map (kbd "e") (lambda () (interactive) (my-notmuch-search "tag:emacs")))
-    (define-key notmuch-search-mode-map (kbd "p") (lambda () (interactive) (my-notmuch-search "unread:spam")))
-    (define-key notmuch-search-mode-map (kbd "l") (lambda () (interactive) (my-notmuch-search "tag:list")))
+    (define-key notmuch-search-mode-map (kbd "i") (lambda () (interactive) (my-notmuch-search-sexp "tag:inbox")))
+    (define-key notmuch-search-mode-map (kbd "u") (lambda () (interactive) (my-notmuch-search-sexp "tag:unread")))
+    (define-key notmuch-search-mode-map (kbd "w") (lambda () (interactive) (my-notmuch-search-sexp "tag:wet")))
+    (define-key notmuch-search-mode-map (kbd "g") (lambda () (interactive) (my-notmuch-search-sexp "tag:grim")))
+    (define-key notmuch-search-mode-map (kbd "t") (lambda () (interactive) (my-notmuch-search-sexp "tag:tj")))
+    (define-key notmuch-search-mode-map (kbd "f") (lambda () (interactive) (my-notmuch-search-sexp "tag:theesfeld")))
+    (define-key notmuch-search-mode-map (kbd "s") (lambda () (interactive) (my-notmuch-search-sexp "tag:samhain")))
+    (define-key notmuch-search-mode-map (kbd "e") (lambda () (interactive) (my-notmuch-search-sexp "tag:emacs")))
+    (define-key notmuch-search-mode-map (kbd "p") (lambda () (interactive) (my-notmuch-search-sexp "tag:spam")))
+    (define-key notmuch-search-mode-map (kbd "l") (lambda () (interactive) (my-notmuch-search-sexp "tag:list")))
+    (define-key notmuch-search-mode-map (kbd "W") (lambda () (interactive) (my-notmuch-search-sexp "(and (tag wet) (tag unread))")))
+    (define-key notmuch-search-mode-map (kbd "G") (lambda () (interactive) (my-notmuch-search-sexp "(and (tag grim) (tag unread))")))
+    (define-key notmuch-search-mode-map (kbd "T") (lambda () (interactive) (my-notmuch-search-sexp "(and (tag tj) (tag unread))")))
+    (define-key notmuch-search-mode-map (kbd "F") (lambda () (interactive) (my-notmuch-search-sexp "(and (tag theesfeld) (tag unread))")))
+    (define-key notmuch-search-mode-map (kbd "S") (lambda () (interactive) (my-notmuch-search-sexp "(and (tag samhain) (tag unread))")))
+    (define-key notmuch-search-mode-map (kbd "E") (lambda () (interactive) (my-notmuch-search-sexp "(and (tag emacs) (tag unread))")))
+    (define-key notmuch-search-mode-map (kbd "P") (lambda () (interactive) (my-notmuch-search-sexp "(and (tag spam) (tag unread))")))
+    (define-key notmuch-search-mode-map (kbd "L") (lambda () (interactive) (my-notmuch-search-sexp "(and (tag list) (tag unread))")))
 
-    ))
+    )
 
 ;;;; Tags
 (use-package notmuch
