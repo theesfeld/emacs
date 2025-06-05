@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-05 15:21:03 by grim>
+;; Time-stamp: <Last changed 2025-06-05 15:23:24 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3953,24 +3953,24 @@ With ARG, move that many defuns forward."
   (setq notmuch-show-empty-saved-searches t)
 
   (setq notmuch-saved-searches
-        '((:name "inbox" :query "tag:inbox" :sort-order newest-first :key "i")
-          (:name "unread" :query "tag:unread" :sort-order newest-first :key "u")
-          (:name "wet" :query "tag:wet" :sort-order newest-first :key "w")
-          (:name "grim" :query "tag:grim" :sort-order newest-first :key "g")
-          (:name "tj" :query "tag:tj" :sort-order newest-first :key "t")
-          (:name "theesfeld" :query "tag:theesfeld" :sort-order newest-first :key "f")
-          (:name "samhain" :query "tag:samhain" :sort-order newest-first :key "s")
-          (:name "emacs" :query "tag:emacs" :sort-order newest-first :key "e")
-          (:name "spam" :query "tag:spam" :sort-order newest-first :key "p")
-          (:name "list" :query "tag:list" :sort-order newest-first :key "l")
-          (:name "wet-unread" :query "(and (tag wet) (tag unread))" :sort-order newest-first :key "W")
-          (:name "grim-unread" :query "(and (tag grim) (tag unread))" :sort-order newest-first :key "G")
-          (:name "tj-unread" :query "(and (tag tj) (tag unread))" :sort-order newest-first :key "T")
-          (:name "theesfeld-unread" :query "(and (tag theesfeld) (tag unread))" :sort-order newest-first :key "F")
-          (:name "samhain-unread" :query "(and (tag samhain) (tag unread))" :sort-order newest-first :key "S")
-          (:name "emacs-unread" :query "(and (tag emacs) (tag unread))" :sort-order newest-first :key "E")
-          (:name "spam-unread" :query "(and (tag spam) (tag unread))" :sort-order newest-first :key "P")
-          (:name "list-unread" :query "(and (tag list) (tag unread))" :sort-order newest-first :key "L"))))
+        '((:name "inbox" :query "tag:inbox" :sort-order newest-first)
+          (:name "unread" :query "tag:unread" :sort-order newest-first)
+          (:name "wet" :query "tag:wet" :sort-order newest-first)
+          (:name "grim" :query "tag:grim" :sort-order newest-first)
+          (:name "tj" :query "tag:tj" :sort-order newest-first)
+          (:name "theesfeld" :query "tag:theesfeld" :sort-order newest-first)
+          (:name "samhain" :query "tag:samhain" :sort-order newest-first)
+          (:name "emacs" :query "tag:emacs" :sort-order newest-first)
+          (:name "spam" :query "tag:spam" :sort-order newest-first)
+          (:name "list" :query "tag:list" :sort-order newest-first)
+          (:name "wet-unread" :query "(and (tag wet) (tag unread))" :sort-order newest-first)
+          (:name "grim-unread" :query "(and (tag grim) (tag unread))" :sort-order newest-first)
+          (:name "tj-unread" :query "(and (tag tj) (tag unread))" :sort-order newest-first)
+          (:name "theesfeld-unread" :query "(and (tag theesfeld) (tag unread))" :sort-order newest-first)
+          (:name "samhain-unread" :query "(and (tag samhain) (tag unread))" :sort-order newest-first)
+          (:name "emacs-unread" :query "(and (tag emacs) (tag unread))" :sort-order newest-first)
+          (:name "spam-unread" :query "(and (tag spam) (tag unread))" :sort-order newest-first)
+          (:name "list-unread" :query "(and (tag list) (tag unread))" :sort-order newest-first))))
 
 ;;;; Tags
 (use-package notmuch
