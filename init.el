@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-05 14:35:14 by grim>
+;; Time-stamp: <Last changed 2025-06-05 14:35:56 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2397,13 +2397,13 @@ TIMEOUT is duration in seconds (default 5)."
   (defcustom rgr/eww-external-launch-url-chunks '("youtube")
     "If any component of this list is contained in an EWW url then it will use `browse-url-generic to launch that url instead of `eww"
     :type '(repeat string))
-  (defadvice eww (around rgr/eww-extern-advise activate)
-    "Use `browse-url-generic if any part of URL is contained in `rgr/eww-external-launch-url-chunks"
-    (if (string-match-p (regexp-opt rgr/eww-external-launch-url-chunks) url)
-        (progn
-          (call-process-shell-command "swaymsg workspace number 2" nil 0)
-          (browse-url-generic url))
-      ad-do-it))
+  (advice-add eww (around rgr/eww-extern-advise activate)
+              "Use `browse-url-generic if any part of URL is contained in `rgr/eww-external-launch-url-chunks"
+              (if (string-match-p (regexp-opt rgr/eww-external-launch-url-chunks) url)
+                  (progn
+                    (call-process-shell-command "swaymsg workspace number 2" nil 0)
+                    (browse-url-generic url))
+                ad-do-it))
   (defun rgr/eww-after-render ()
     ;;move point line to top
     (condition-case err
