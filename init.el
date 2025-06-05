@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-04 21:17:36 by grim>
+;; Time-stamp: <Last changed 2025-06-04 21:18:53 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3913,7 +3913,7 @@ With ARG, move that many defuns forward."
     (setq notmuch-identities
           (mapcar (lambda (str)
                     (format "%s <%s>" user-full-name str))
-                  (list prv pub inf box))
+                  (list mailbox))
           notmuch-fcc-dirs
           `((,mailbox . "gandi/Sent")))))
 
