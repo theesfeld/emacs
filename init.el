@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-04 21:42:55 by grim>
+;; Time-stamp: <Last changed 2025-06-05 14:13:18 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3962,15 +3962,37 @@ With ARG, move that many defuns forward."
           ;; when the window is split and you don't see the tags.
           ("flag" . italic)))
   (setq notmuch-show-empty-saved-searches t)
+
+
+
   (setq notmuch-saved-searches
-        `(( :name "inbox"
-            :query "tag:inbox"
-            :sort-order newest-first
-            :key ,(kbd "i"))
-          ( :name "all unread (inbox)"
-            :query "tag:unread and tag:inbox"
-            :sort-order newest-first
-            :key ,(kbd "u")))))
+        '((:name "inbox" :query "tag:inbox" :sort-order newest-first :key ,(kbd "i"))
+          (:name "unread" :query "tag:unread" :sort-order newest-first :key ,(kbd "u"))
+          (:name "wet" :query "tag:wet" :sort-order newest-first :key ,(kbd "w"))
+          (:name "grim" :query "tag:grim" :sort-order newest-first :key ,(kbd "g"))
+          (:name "tj" :query "tag:tj" :sort-order newest-first :key ,(kbd "t"))
+          (:name "theesfeld" :query "tag:theesfeld" :sort-order newest-first :key ,(kbd "f"))
+          (:name "samhain" :query "tag:samhain" :sort-order newest-first :key ,(kbd "s"))
+          (:name "emacs" :query "tag:emacs" :sort-order newest-first :key ,(kbd "e"))
+          (:name "spam" :query "tag:spam" :sort-order newest-first :key ,(kbd "p"))
+          (:name "list" :query "tag:list" :sort-order newest-first :key ,(kbd "l"))
+          (:name "wet-unread" :query "tag:wet tag:unread" :sort-order newest-first :key ,(kbd "W"))
+          (:name "grim-unread" :query "tag:grim tag:unread" :sort-order newest-first :key ,(kbd "G"))
+          (:name "tj-unread" :query "tag:tj tag:unread" :sort-order newest-first :key ,(kbd "T"))
+          (:name "theesfeld-unread" :query "tag:theesfeld tag:unread" :sort-order newest-first :key ,(kbd "F"))
+          (:name "samhain-unread" :query "tag:samhain tag:unread" :sort-order newest-first :key ,(kbd "S"))
+          (:name "emacs-unread" :query "tag:emacs tag:unread" :sort-order newest-first :key ,(kbd "E"))
+          (:name "spam-unread" :query "tag:spam tag:unread" :sort-order newest-first :key ,(kbd "P"))
+          (:name "list-unread" :query "tag:list tag:unread" :sort-order newest-first :key ,(kbd "L")))))
+
+;; `(( :name "inbox"
+;;     :query "tag:inbox"
+;;     :sort-order newest-first
+;;     :key ,(kbd "i"))
+;;   ( :name "all unread (inbox)"
+;;     :query "tag:unread and tag:inbox"
+;;     :sort-order newest-first
+;;     :key ,(kbd "u")))))
 
 ;;;; Tags
 (use-package notmuch
