@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-05 14:14:20 by grim>
+;; Time-stamp: <Last changed 2025-06-05 14:35:14 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3963,34 +3963,65 @@ With ARG, move that many defuns forward."
           ("flag" . italic)))
   (setq notmuch-show-empty-saved-searches t)
 
+  ;; Define saved searches
   (setq notmuch-saved-searches
-        '((:name "inbox" :query "tag:inbox" :sort-order newest-first :key ,(kbd "i"))
-          (:name "unread" :query "tag:unread" :sort-order newest-first :key ,(kbd "u"))
-          (:name "wet" :query "tag:wet" :sort-order newest-first :key ,(kbd "w"))
-          (:name "grim" :query "tag:grim" :sort-order newest-first :key ,(kbd "g"))
-          (:name "tj" :query "tag:tj" :sort-order newest-first :key ,(kbd "t"))
-          (:name "theesfeld" :query "tag:theesfeld" :sort-order newest-first :key ,(kbd "f"))
-          (:name "samhain" :query "tag:samhain" :sort-order newest-first :key ,(kbd "s"))
-          (:name "emacs" :query "tag:emacs" :sort-order newest-first :key ,(kbd "e"))
-          (:name "spam" :query "tag:spam" :sort-order newest-first :key ,(kbd "p"))
-          (:name "list" :query "tag:list" :sort-order newest-first :key ,(kbd "l"))
-          (:name "wet-unread" :query "tag:wet tag:unread" :sort-order newest-first :key ,(kbd "W"))
-          (:name "grim-unread" :query "tag:grim tag:unread" :sort-order newest-first :key ,(kbd "G"))
-          (:name "tj-unread" :query "tag:tj tag:unread" :sort-order newest-first :key ,(kbd "T"))
-          (:name "theesfeld-unread" :query "tag:theesfeld tag:unread" :sort-order newest-first :key ,(kbd "F"))
-          (:name "samhain-unread" :query "tag:samhain tag:unread" :sort-order newest-first :key ,(kbd "S"))
-          (:name "emacs-unread" :query "tag:emacs tag:unread" :sort-order newest-first :key ,(kbd "E"))
-          (:name "spam-unread" :query "tag:spam tag:unread" :sort-order newest-first :key ,(kbd "P"))
-          (:name "list-unread" :query "tag:list tag:unread" :sort-order newest-first :key ,(kbd "L")))))
+        '((:name "inbox" :query "tag:inbox" :sort-order newest-first :key "i")
+          (:name "unread" :query "tag:unread" :sort-order newest-first :key "u")
+          (:name "wet" :query "tag:wet" :sort-order newest-first :key "w")
+          (:name "grim" :query "tag:grim" :sort-order newest-first :key "g")
+          (:name "tj" :query "tag:tj" :sort-order newest-first :key "t")
+          (:name "theesfeld" :query "tag:theesfeld" :sort-order newest-first :key "f")
+          (:name "samhain" :query "tag:samhain" :sort-order newest-first :key "s")
+          (:name "emacs" :query "tag:emacs" :sort-order newest-first :key "e")
+          (:name "spam" :query "tag:spam" :sort-order newest-first :key "p")
+          (:name "list" :query "tag:list" :sort-order newest-first :key "l")
+          (:name "wet-unread" :query "tag:wet tag:unread" :sort-order newest-first :key "W")
+          (:name "grim-unread" :query "tag:grim tag:unread" :sort-order newest-first :key "G")
+          (:name "tj-unread" :query "tag:tj tag:unread" :sort-order newest-first :key "T")
+          (:name "theesfeld-unread" :query "tag:theesfeld tag:unread" :sort-order newest-first :key "F")
+          (:name "samhain-unread" :query "tag:samhain tag:unread" :sort-order newest-first :key "S")
+          (:name "emacs-unread" :query "tag:emacs tag:unread" :sort-order newest-first :key "E")
+          (:name "spam-unread" :query "tag:spam tag:unread" :sort-order newest-first :key "P")
+          (:name "list-unread" :query "tag:list tag:unread" :sort-order newest-first :key "L")))
 
-;; `(( :name "inbox"
-;;     :query "tag:inbox"
-;;     :sort-order newest-first
-;;     :key ,(kbd "i"))
-;;   ( :name "all unread (inbox)"
-;;     :query "tag:unread and tag:inbox"
-;;     :sort-order newest-first
-;;     :key ,(kbd "u")))))
+  ;; Bind keys in notmuch-hello-mode-map to trigger saved searches
+  (with-eval-after-load 'notmuch
+    (define-key notmuch-hello-mode-map (kbd "i")
+                (lambda () (interactive) (notmuch-hello-search "tag:inbox")))
+    (define-key notmuch-hello-mode-map (kbd "u")
+                (lambda () (interactive) (notmuch-hello-search "tag:unread")))
+    (define-key notmuch-hello-mode-map (kbd "w")
+                (lambda () (interactive) (notmuch-hello-search "tag:wet")))
+    (define-key notmuch-hello-mode-map (kbd "g")
+                (lambda () (interactive) (notmuch-hello-search "tag:grim")))
+    (define-key notmuch-hello-mode-map (kbd "t")
+                (lambda () (interactive) (notmuch-hello-search "tag:tj")))
+    (define-key notmuch-hello-mode-map (kbd "f")
+                (lambda () (interactive) (notmuch-hello-search "tag:theesfeld")))
+    (define-key notmuch-hello-mode-map (kbd "s")
+                (lambda () (interactive) (notmuch-hello-search "tag:samhain")))
+    (define-key notmuch-hello-mode-map (kbd "e")
+                (lambda () (interactive) (notmuch-hello-search "tag:emacs")))
+    (define-key notmuch-hello-mode-map (kbd "p")
+                (lambda () (interactive) (notmuch-hello-search "tag:spam")))
+    (define-key notmuch-hello-mode-map (kbd "l")
+                (lambda () (interactive) (notmuch-hello-search "tag:list")))
+    (define-key notmuch-hello-mode-map (kbd "W")
+                (lambda () (interactive) (notmuch-hello-search "tag:wet tag:unread")))
+    (define-key notmuch-hello-mode-map (kbd "G")
+                (lambda () (interactive) (notmuch-hello-search "tag:grim tag:unread")))
+    (define-key notmuch-hello-mode-map (kbd "T")
+                (lambda () (interactive) (notmuch-hello-search "tag:tj tag:unread")))
+    (define-key notmuch-hello-mode-map (kbd "F")
+                (lambda () (interactive) (notmuch-hello-search "tag:theesfeld tag:unread")))
+    (define-key notmuch-hello-mode-map (kbd "S")
+                (lambda () (interactive) (notmuch-hello-search "tag:samhain tag:unread")))
+    (define-key notmuch-hello-mode-map (kbd "E")
+                (lambda () (interactive) (notmuch-hello-search "tag:emacs tag:unread")))
+    (define-key notmuch-hello-mode-map (kbd "P")
+                (lambda () (interactive) (notmuch-hello-search "tag:spam tag:unread")))
+    (define-key notmuch-hello-mode-map (kbd "L")
+                (lambda () (interactive) (notmuch-hello-search "tag:list tag:unread")))))
 
 ;;;; Tags
 (use-package notmuch
