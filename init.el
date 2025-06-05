@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-04 21:18:53 by grim>
+;; Time-stamp: <Last changed 2025-06-04 21:26:16 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3963,11 +3963,11 @@ With ARG, move that many defuns forward."
           ("flag" . italic)))
   (setq notmuch-show-empty-saved-searches t)
   (setq notmuch-saved-searches
-        `(( :name "📥 inbox"
+        `(( :name "inbox"
             :query "tag:inbox"
             :sort-order newest-first
             :key ,(kbd "i"))
-          ( :name "💬 all unread (inbox)"
+          ( :name "all unread (inbox)"
             :query "tag:unread and tag:inbox"
             :sort-order newest-first
             :key ,(kbd "u")))))
