@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-05 15:11:20 by grim>
+;; Time-stamp: <Last changed 2025-06-05 15:21:03 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3906,17 +3906,6 @@ With ARG, move that many defuns forward."
   :defer t
   :commands (notmuch notmuch-mua-new-mail))
 
-;; (use-package notmuch
-;;   :defer t
-;;   :config
-;;   (let ((mailbox (prot-common-auth-get-field "smtp.mailbox.org" :host)))
-;;     (setq notmuch-identities
-;;           (mapcar (lambda (str)
-;;                     (format "%s <%s>" user-full-name str))
-;;                   (list mailbox))
-;;           notmuch-fcc-dirs
-;;           `((,mailbox . "gandi/Sent")))))
-
 ;;;; General UI
 (use-package notmuch
   :defer t
@@ -3925,7 +3914,7 @@ With ARG, move that many defuns forward."
         notmuch-column-control 1.0
         notmuch-hello-auto-refresh t
         notmuch-hello-recent-searches-max 20
-        notmuch-hello-thousands-separator nil
+        notmuch-hello-thousands-separator ""
         notmuch-hello-sections '(notmuch-hello-insert-saved-searches)
         notmuch-show-all-tags-list t))
 
