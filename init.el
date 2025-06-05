@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-04 21:14:59 by grim>
+;; Time-stamp: <Last changed 2025-06-04 21:17:36 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3909,19 +3909,13 @@ With ARG, move that many defuns forward."
 (use-package notmuch
   :defer t
   :config
-  (let ((prv (prot-common-auth-get-field "prv-gandi" :user))
-        (pub (prot-common-auth-get-field "pub-gandi" :user))
-        (inf (prot-common-auth-get-field "inf-gandi" :user))
-        (box (prot-common-auth-get-field "prot-gandi" :user)))
+  (let ((mailbox (prot-common-auth-get-field "smtp.mailbox.org" :host)))
     (setq notmuch-identities
           (mapcar (lambda (str)
                     (format "%s <%s>" user-full-name str))
                   (list prv pub inf box))
           notmuch-fcc-dirs
-          `((,prv . "gandi/Sent")
-            (,inf . "gandi/Sent")
-            (,pub . "gandi/Sent")
-            (,box . "gandi/Sent")))))
+          `((,mailbox . "gandi/Sent")))))
 
 ;;;; General UI
 (use-package notmuch
