@@ -3902,26 +3902,38 @@ With ARG, move that many defuns forward."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package notmuch
-  :load-path "/usr/share/emacs/site-lisp/"
+  :ensure t
   :defer t
-  :commands (notmuch notmuch-mua-new-mail))
-
-;;;; General UI
-(use-package notmuch
-  :defer t
+  :commands (notmuch notmuch-mua-new-mail)
+  :init
+  ;; Ensure notmuch CLI is available
+  (unless (executable-find "notmuch")
+    (error "notmuch CLI not found. Please install notmuch"))
+  
+  ;; Check notmuch version compatibility
+  (when (executable-find "notmuch")
+    (let ((version-output (shell-command-to-string "notmuch --version")))
+      (unless (string-match "notmuch \\([0-9]+\\.[0-9]+\\)" version-output)
+        (warn "Could not determine notmuch version"))
+      (let ((version (match-string 1 version-output)))
+        (when (version< version "0.37")
+          (warn "notmuch version %s may not support all features. Recommend 0.37+" version)))))
+  
   :config
+  ;; Core notmuch settings
+  (setq notmuch-command "notmuch")
+  (setq notmuch-database-path (expand-file-name "~/Mail"))
+  
+  ;; General UI settings
   (setq notmuch-show-logo nil
         notmuch-column-control 1.0
         notmuch-hello-auto-refresh t
         notmuch-hello-recent-searches-max 20
         notmuch-hello-thousands-separator ""
         notmuch-hello-sections '(notmuch-hello-insert-saved-searches)
-        notmuch-show-all-tags-list t))
+        notmuch-show-all-tags-list t)
 
-;;;; Search
-(use-package notmuch
-  :defer t
-  :config
+  ;; Search configuration
   (setq notmuch-search-oldest-first nil)
   (setq notmuch-search-result-format
         '(("date" . "%12s  ")
@@ -3938,20 +3950,10 @@ With ARG, move that many defuns forward."
           ("tags" . "(%s)")))
   (setq notmuch-search-line-faces
         '(("unread" . notmuch-search-unread-face)
-          ;; ;; NOTE 2022-09-19: I disable this because I add a cosmeic
-          ;; ;; emoji via `notmuch-tag-formats'.  This way I do not get
-          ;; ;; an intense style which is very distracting when I filter
-          ;; ;; my mail to include this tag.
-          ;;
-          ;; ("flag" . notmuch-search-flagged-face)
-          ;;
-          ;; Using `italic' instead is just fine.  Though I also tried
-          ;; it without any face and I was okay with it.  The upside of
-          ;; having a face is that you can identify the message even
-          ;; when the window is split and you don't see the tags.
           ("flag" . italic)))
   (setq notmuch-show-empty-saved-searches t)
 
+  ;; Saved searches
   (setq notmuch-saved-searches
         '((:name "inbox" :query "tag:inbox" :sort-order newest-first)
           (:name "unread" :query "tag:unread" :sort-order newest-first)
@@ -3963,19 +3965,16 @@ With ARG, move that many defuns forward."
           (:name "emacs" :query "tag:emacs" :sort-order newest-first)
           (:name "spam" :query "tag:spam" :sort-order newest-first)
           (:name "list" :query "tag:list" :sort-order newest-first)
-          (:name "wet-unread" :query "(and (tag wet) (tag unread))" :sort-order newest-first)
-          (:name "grim-unread" :query "(and (tag grim) (tag unread))" :sort-order newest-first)
-          (:name "tj-unread" :query "(and (tag tj) (tag unread))" :sort-order newest-first)
-          (:name "theesfeld-unread" :query "(and (tag theesfeld) (tag unread))" :sort-order newest-first)
-          (:name "samhain-unread" :query "(and (tag samhain) (tag unread))" :sort-order newest-first)
-          (:name "emacs-unread" :query "(and (tag emacs) (tag unread))" :sort-order newest-first)
-          (:name "spam-unread" :query "(and (tag spam) (tag unread))" :sort-order newest-first)
-          (:name "list-unread" :query "(and (tag list) (tag unread))" :sort-order newest-first))))
+          (:name "wet-unread" :query "tag:wet and tag:unread" :sort-order newest-first)
+          (:name "grim-unread" :query "tag:grim and tag:unread" :sort-order newest-first)
+          (:name "tj-unread" :query "tag:tj and tag:unread" :sort-order newest-first)
+          (:name "theesfeld-unread" :query "tag:theesfeld and tag:unread" :sort-order newest-first)
+          (:name "samhain-unread" :query "tag:samhain and tag:unread" :sort-order newest-first)
+          (:name "emacs-unread" :query "tag:emacs and tag:unread" :sort-order newest-first)
+          (:name "spam-unread" :query "tag:spam and tag:unread" :sort-order newest-first)
+          (:name "list-unread" :query "tag:list and tag:unread" :sort-order newest-first)))
 
-;;;; Tags
-(use-package notmuch
-  :defer t
-  :config
+  ;; Tag configuration
   (setq notmuch-archive-tags nil ; I do not archive email
         notmuch-message-replied-tags '("+replied")
         notmuch-message-forwarded-tags '("+forwarded")
@@ -3984,10 +3983,7 @@ With ARG, move that many defuns forward."
         notmuch-draft-folder "drafts"
         notmuch-draft-save-plaintext 'ask)
 
-  ;; Also see `notmuch-tagging-keys' in the `prot-notmuch' section
-  ;; further below.
-  ;;
-  ;; All emoji are cosmetic.  The tags are just the text.
+  ;; Tag formatting
   (setq notmuch-tag-formats
         '(("unread" (propertize tag 'face 'notmuch-tag-unread))
           ("flag" (propertize tag 'face 'notmuch-tag-flagged)
@@ -4001,12 +3997,9 @@ With ARG, move that many defuns forward."
         '(("del" (notmuch-apply-face tag 'notmuch-tag-added)
            (concat "💥" tag))
           (".*" (notmuch-apply-face tag 'notmuch-tag-added)
-           (concat "🏷️" tag)))))
+           (concat "🏷️" tag))))
 
-;;;; Email composition
-(use-package notmuch
-  :defer t
-  :config
+  ;; Email composition
   (setq notmuch-mua-compose-in 'current-window)
   (setq notmuch-mua-hidden-headers nil)
   (setq notmuch-address-command 'internal)
@@ -4018,35 +4011,12 @@ With ARG, move that many defuns forward."
   (setq notmuch-maildir-use-notmuch-insert t)
   (setq notmuch-crypto-process-mime t)
   (setq notmuch-crypto-get-keys-asynchronously t)
-  (setq notmuch-mua-attachment-regexp   ; see `notmuch-mua-send-hook'
+  (setq notmuch-mua-attachment-regexp
         (concat "\\b\\(attache\?ment\\|attached\\|attach\\|"
                 "pi[èe]ce\s+jointe?\\|"
                 "συνημμ[εέ]νο\\|επισυν[αά]πτω\\)\\b"))
 
-  (defun prot-notmuch-message-tab ()
-    "Override for `message-tab' to enforce header line check.
-More specifically, perform address completion when on a relevant header
-line, because `message-tab' sometimes (not sure when/how) fails to do
-that and instead tries to complete against dictionary entries."
-    (interactive nil message-mode)
-    (cond
-     ((save-excursion
-        (goto-char (line-beginning-position))
-        (looking-at notmuch-address-completion-headers-regexp))
-      (notmuch-address-expand-name)
-      ;; Completion was performed; nothing else to do.
-      nil)
-     (message-tab-body-function (funcall message-tab-body-function))
-     (t (funcall (or (lookup-key text-mode-map "\t")
-                     (lookup-key global-map "\t")
-                     'indent-relative)))))
-
-  (advice-add #'message-tab :override #'prot-notmuch-message-tab))
-
-;;;; Reading messages
-(use-package notmuch
-  :defer t
-  :config
+  ;; Reading messages
   (setq notmuch-show-relative-dates t)
   (setq notmuch-show-all-multipart/alternative-parts nil)
   (setq notmuch-show-indent-messages-width 0)
@@ -4058,40 +4028,57 @@ that and instead tries to complete against dictionary entries."
   (setq notmuch-message-headers '("To" "Cc" "Subject" "Date"))
   (setq notmuch-message-headers-visible t)
 
-  (let ((count most-positive-fixnum)) ; I don't like the buttonisation of long quotes
+  ;; Disable buttonisation of long quotes
+  (let ((count most-positive-fixnum))
     (setq notmuch-wash-citation-lines-prefix count
-          notmuch-wash-citation-lines-suffix count)))
+          notmuch-wash-citation-lines-suffix count))
 
-;;;; Hooks and key bindings
-(use-package notmuch
+  ;; Custom functions
+  (defun my-notmuch-message-tab ()
+    "Enhanced message tab completion for notmuch."
+    (interactive)
+    (cond
+     ((save-excursion
+        (goto-char (line-beginning-position))
+        (looking-at "\\(To\\|Cc\\|Bcc\\|From\\):"))
+      (notmuch-address-expand-name))
+     (t (indent-for-tab-command))))
+
+  ;; Apply custom tab function
+  (with-eval-after-load 'message
+    (define-key message-mode-map (kbd "TAB") #'my-notmuch-message-tab))
+
   :hook
-  (notmuch-mua-send . notmuch-mua-attachment-check) ; also see `notmuch-mua-attachment-regexp'
-  (notmuch-show . (lambda () (setq-local header-line-format nil)))
-  :config
-  (remove-hook 'notmuch-show-hook #'notmuch-show-turn-on-visual-line-mode)
-  (remove-hook 'notmuch-search-hook #'notmuch-hl-line-mode) ; Check my `lin' package
+  ((notmuch-mua-send . notmuch-mua-attachment-check)
+   (notmuch-show . (lambda () (setq-local header-line-format nil))))
+  
   :bind
-  ( :map global-map
-    ("C-c m" . notmuch)
-    ("C-x m" . notmuch-mua-new-mail) ; override `compose-mail'
-    :map notmuch-search-mode-map ; I normally don't use the tree view, otherwise check `notmuch-tree-mode-map'
-    ("a" . nil) ; the default is too easy to hit accidentally and I do not archive stuff
-    ("A" . nil)
-    ("/" . notmuch-search-filter) ; alias for l
-    ("r" . notmuch-search-reply-to-thread) ; easier to reply to all by default
-    ("R" . notmuch-search-reply-to-thread-sender)
-    :map notmuch-show-mode-map
-    ("a" . nil) ; the default is too easy to hit accidentally and I do not archive stuff
-    ("A" . nil)
-    ("r" . notmuch-show-reply) ; easier to reply to all by default
-    ("R" . notmuch-show-reply-sender)
-    :map notmuch-hello-mode-map
-    ("C-<tab>" . nil)))
+  (("C-c m" . notmuch)
+   ("C-x m" . notmuch-mua-new-mail)
+   :map notmuch-search-mode-map
+   ("a" . nil)
+   ("A" . nil)
+   ("/" . notmuch-search-filter)
+   ("r" . notmuch-search-reply-to-thread)
+   ("R" . notmuch-search-reply-to-thread-sender)
+   :map notmuch-show-mode-map
+   ("a" . nil)
+   ("A" . nil)
+   ("r" . notmuch-show-reply)
+   ("R" . notmuch-show-reply-sender)
+   :map notmuch-hello-mode-map
+   ("C-<tab>" . nil)))
 
-(setq send-mail-function    'smtpmail-send-it
-      smtpmail-smtp-server  "smtp.mailbox.org"
-      smtpmail-stream-type  'starttls
-      smtpmail-smtp-service 587)
+;; SMTP configuration for sending mail
+(use-package smtpmail
+  :ensure nil
+  :config
+  (setq send-mail-function 'smtpmail-send-it
+        smtpmail-smtp-server "smtp.mailbox.org"
+        smtpmail-stream-type 'starttls
+        smtpmail-smtp-service 587
+        smtpmail-debug-info t
+        smtpmail-debug-verb t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
