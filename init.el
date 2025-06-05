@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-05 15:01:55 by grim>
+;; Time-stamp: <Last changed 2025-06-05 15:03:12 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3963,7 +3963,7 @@ With ARG, move that many defuns forward."
           ("flag" . italic)))
   (setq notmuch-show-empty-saved-searches t)
 
-;; Check if sexp queries are supported
+  ;; Check if sexp queries are supported
   (defun my-notmuch-sexp-supported-p ()
     "Check if notmuch supports sexp queries."
     (string= (shell-command-to-string "notmuch config get built_with.sexp_queries") "true\n"))
@@ -4041,7 +4041,7 @@ With ARG, move that many defuns forward."
     (define-key notmuch-search-mode-map (kbd "P") (lambda () (interactive) (my-notmuch-search-sexp "(and (tag spam) (tag unread))")))
     (define-key notmuch-search-mode-map (kbd "L") (lambda () (interactive) (my-notmuch-search-sexp "(and (tag list) (tag unread))")))
 
-    )
+    ))
 
 ;;;; Tags
 (use-package notmuch
