@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-05 14:13:18 by grim>
+;; Time-stamp: <Last changed 2025-06-05 14:14:20 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3962,8 +3962,6 @@ With ARG, move that many defuns forward."
           ;; when the window is split and you don't see the tags.
           ("flag" . italic)))
   (setq notmuch-show-empty-saved-searches t)
-
-
 
   (setq notmuch-saved-searches
         '((:name "inbox" :query "tag:inbox" :sort-order newest-first :key ,(kbd "i"))
