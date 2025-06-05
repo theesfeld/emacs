@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-05 15:23:24 by grim>
+;; Time-stamp: <Last changed 2025-06-05 16:13:14 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3902,14 +3902,14 @@ With ARG, move that many defuns forward."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package notmuch
-  :ensure t
+  :load-path "/usr/share/emacs/site-lisp/"
   :defer t
   :commands (notmuch notmuch-mua-new-mail)
   :init
   ;; Ensure notmuch CLI is available
   (unless (executable-find "notmuch")
     (error "notmuch CLI not found. Please install notmuch"))
-  
+
   ;; Check notmuch version compatibility
   (when (executable-find "notmuch")
     (let ((version-output (shell-command-to-string "notmuch --version")))
@@ -3918,12 +3918,12 @@ With ARG, move that many defuns forward."
       (let ((version (match-string 1 version-output)))
         (when (version< version "0.37")
           (warn "notmuch version %s may not support all features. Recommend 0.37+" version)))))
-  
+
   :config
   ;; Core notmuch settings
   (setq notmuch-command "notmuch")
   (setq notmuch-database-path (expand-file-name "~/Mail"))
-  
+
   ;; General UI settings
   (setq notmuch-show-logo nil
         notmuch-column-control 1.0
@@ -4051,7 +4051,7 @@ With ARG, move that many defuns forward."
   :hook
   ((notmuch-mua-send . notmuch-mua-attachment-check)
    (notmuch-show . (lambda () (setq-local header-line-format nil))))
-  
+
   :bind
   (("C-c m" . notmuch)
    ("C-x m" . notmuch-mua-new-mail)
