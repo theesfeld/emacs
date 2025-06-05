@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-04 21:28:36 by grim>
+;; Time-stamp: <Last changed 2025-06-04 21:42:55 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -4087,6 +4087,11 @@ that and instead tries to complete against dictionary entries."
     ("R" . notmuch-show-reply-sender)
     :map notmuch-hello-mode-map
     ("C-<tab>" . nil)))
+
+(setq send-mail-function    'smtpmail-send-it
+      smtpmail-smtp-server  "smtp.mailbox.org"
+      smtpmail-stream-type  'starttls
+      smtpmail-smtp-service 587)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
