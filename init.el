@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-06 13:11:04 by grim>
+;; Time-stamp: <Last changed 2025-06-09 19:07:00 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2394,33 +2394,7 @@ TIMEOUT is duration in seconds (default 5)."
   :config
   (setq eww-auto-rename-buffer 'title)  ; Nicer buffer names
   ;; Advice EWW to launch certain URLs using the generic launcher rather than EWW.
-  (defcustom rgr/eww-external-launch-url-chunks '("youtube")
-    "If any component of this list is contained in an EWW url then it will use `browse-url-generic to launch that url instead of `eww"
-    :type '(repeat string))
-  (advice-add eww (around rgr/eww-extern-advise activate)
-              "Use `browse-url-generic if any part of URL is contained in `rgr/eww-external-launch-url-chunks"
-              (if (string-match-p (regexp-opt rgr/eww-external-launch-url-chunks) url)
-                  (progn
-                    (call-process-shell-command "swaymsg workspace number 2" nil 0)
-                    (browse-url-generic url))
-                ad-do-it))
-  (defun rgr/eww-after-render ()
-    ;;move point line to top
-    (condition-case err
-        (dotimes (_ 2)
-          (recenter-top-bottom))
-      (error nil)))
-  (defun rgr/eww-launch-external-browser-from-buffer()
-    (interactive)
-    (emacs-alert "Launching external browser")
-    (eww-browse-with-external-browser)
-    (quit-window))
-  :custom
-  (eww-history-limit 256)
-  :hook (eww-after-render . rgr/eww-after-render)
-  :bind
-  (:map eww-mode-map
-        ( "&" . rgr/eww-launch-external-browser-from-buffer)))
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     pdf                                   ;;
