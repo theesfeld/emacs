@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-09 19:07:00 by grim>
+;; Time-stamp: <Last changed 2025-06-11 00:28:03 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3168,7 +3168,8 @@ With ARG, move that many defuns forward."
           "nano"
           "ssh"
           "tail"
-          "watch"))
+          "watch"
+          "source"))
   (setq eshell-visual-subcommands ;; Subcommands needing terminal
         '(("git" "log" "diff" "show")))
   (setq eshell-buffer-maximum-lines 10000) ;; Buffer line limit
@@ -3325,9 +3326,9 @@ With ARG, move that many defuns forward."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- calc
- :ensure nil ;; calc is built-in, no need to install
- :bind (("C-c c" . 'calc)))
+  calc
+  :ensure nil ;; calc is built-in, no need to install
+  :bind (("C-c \\" . 'calc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Fix Emacsclient                               ;;
@@ -4053,6 +4054,11 @@ With ARG, move that many defuns forward."
         smtpmail-smtp-service 587
         smtpmail-debug-info t
         smtpmail-debug-verb t))
+
+(use-package claude-code :ensure t
+  :vc (:url "https://github.com/stevemolitor/claude-code.el" :rev :newest)
+  :config (claude-code-mode)
+  :bind-keymap ("C-c c" . claude-code-command-map)) ;; or your preferred key
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
