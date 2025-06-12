@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-12 11:49:14 by grim>
+;; Time-stamp: <Last changed 2025-06-12 11:51:35 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -4054,6 +4054,12 @@ With ARG, move that many defuns forward."
         smtpmail-smtp-service 587
         smtpmail-debug-info t
         smtpmail-debug-verb t))
+
+;;;;; mastodon
+(use-package mastodon
+  :ensure t
+  :config
+  (mastodon-discover))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
