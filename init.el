@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-12 11:51:35 by grim>
+;; Time-stamp: <Last changed 2025-06-12 11:56:42 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -4059,6 +4059,8 @@ With ARG, move that many defuns forward."
 (use-package mastodon
   :ensure t
   :config
+  (setq mastodon-active-user "blackdream"
+        mastodon-instance-url "https://defcon.social")
   (mastodon-discover))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
