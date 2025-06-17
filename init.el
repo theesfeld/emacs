@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-17 14:26:40 by grim>
+;; Time-stamp: <Last changed 2025-06-17 14:29:52 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -957,18 +957,23 @@ TIMEOUT is duration in seconds (default 5)."
   ;;                     :weight 'light)
   ;; (set-face-attribute 'font-lock-keyword-face nil :weight 'black)
 
-  (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono Plus Font Awesome Plus Font Awesome Extension Plus Octicons Plus Power Symbols Plus Codicons Plus Pomicons Plus Font Logos Plus Mate"))
+  (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
     (set-face-attribute 'default nil
-                        :font "BerkeleyMonoVariable Nerd Font Mono Plus Font Awesome Plus Font Awesome Extension Plus Octicons Plus Power Symbols Plus Codicons Plus Pomicons Plus Font Logos Plus Mate"
+                        :font "BerkeleyMonoVariable Nerd Font Mono"
                         :height 140))
-  (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono Plus Font Awesome Plus Font Awesome Extension Plus Octicons Plus Power Symbols Plus Codicons Plus Pomicons Plus Font Logos Plus Mate"))
+
+  ;; Set variable-pitch font (optional, for prose or Org-mode)
+  (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
     (set-face-attribute 'variable-pitch nil
-                        :font "BerkeleyMonoVariable Nerd Font Mono Plus Font Awesome Plus Font Awesome Extension Plus Octicons Plus Power Symbols Plus Codicons Plus Pomicons Plus Font Logos Plus Mate"
+                        :font "BerkeleyMonoVariable Nerd Font Mono"
                         :height 160))
+
+  ;; Customize font-lock faces
   (set-face-attribute 'font-lock-comment-face nil
                       :slant 'italic
                       :weight 'light)
-  (set-face-attribute 'font-lock-keyword-face nil :weight 'black)
+  (set-face-attribute 'font-lock-keyword-face nil
+                      :weight 'black)
 
   :hook
   ((text-mode . visual-wrap-prefix-mode)
