@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-12 11:56:42 by grim>
+;; Time-stamp: <Last changed 2025-06-17 09:49:51 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -4058,10 +4058,16 @@ With ARG, move that many defuns forward."
 ;;;;; mastodon
 (use-package mastodon
   :ensure t
+  :defer t
   :config
   (setq mastodon-active-user "blackdream"
         mastodon-instance-url "https://defcon.social")
   (mastodon-discover))
+
+;;;;; HACKERNEWS
+(use-package hnreader
+  :ensure t
+  :defer t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
