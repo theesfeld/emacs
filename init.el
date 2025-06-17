@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-17 14:29:52 by grim>
+;; Time-stamp: <Last changed 2025-06-17 14:31:11 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -943,19 +943,6 @@ TIMEOUT is duration in seconds (default 5)."
    '(cursor ((t (:background "#FFC107")))))
   (setq modus-themes-bold-constructs t)
   (setq modus-themes-italic-constructs t)
-
-  ;; (when (find-font (font-spec :name "Berkeley Mono"))
-  ;;   (set-face-attribute 'default nil
-  ;;                       :font "Berkeley Mono"
-  ;;                       :height 140))
-  ;; (when (find-font (font-spec :name "Berkeley Mono Variable"))
-  ;;   (set-face-attribute 'variable-pitch nil
-  ;;                       :font "Berkeley Mono Variable"
-  ;;                       :height 160))
-  ;; (set-face-attribute 'font-lock-comment-face nil
-  ;;                     :slant 'italic
-  ;;                     :weight 'light)
-  ;; (set-face-attribute 'font-lock-keyword-face nil :weight 'black)
 
   (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
     (set-face-attribute 'default nil
