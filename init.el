@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-18 17:06:33 by grim>
+;; Time-stamp: <Last changed 2025-06-18 17:14:11 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2141,7 +2141,7 @@ TIMEOUT is duration in seconds (default 5)."
   (ibuffer-expert t) ; Skip confirmation for dangerous operations
   (ibuffer-show-empty-filter-groups nil) ; Hide empty groups
   (ibuffer-display-summary nil) ; Show summary at bottom
-  (ibuffer-default-sorting-mode 'major-mode) ; Sort by major mode initially
+  (ibuffer-default-sorting-mode 'major-mode)  ; Sort by major mode initially
   (ibuffer-use-header-line t) ; Use header line for filter info
   :config
   ;; Define saved filter groups
@@ -2366,7 +2366,9 @@ TIMEOUT is duration in seconds (default 5)."
   (use-package
     dired-git-info
     :ensure t
-    :custom (dgi-auto-hide-details-p nil)
+    :custom
+    (dgi-auto-hide-details-p nil)
+    (dired-git-info-auto-enable t)
     :config
     (setq dired-git-info-format " (%s)")
     (define-key dired-mode-map ")" 'dired-git-info-mode))
