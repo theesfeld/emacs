@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-17 14:31:11 by grim>
+;; Time-stamp: <Last changed 2025-06-17 22:17:52 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3559,6 +3559,90 @@ With ARG, move that many defuns forward."
   ;; Additional configurations or hooks can be placed here.
   )
 
+;;;;; EAT EAT EAT
+(use-package eat
+  :ensure t  ;; Automatically install eat from NonGNU ELPA
+  :defer t   ;; Defer loading until needed for performance
+  :custom
+  ;; General settings for eat
+  (eat-shell (or (getenv "SHELL") "/sbin/bash") "Use user's default shell")
+  (eat-kill-buffer-on-exit t "Kill eat terminal buffer when the program exits")
+  (eat-enable-blinking-text t "Enable blinking text for visual cues")
+  (eat-enable-mouse t "Enable mouse support in eat terminals")
+  (eat-semi-char-non-bound-keys
+   '([?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-:] [?\M-&] [?\C-\M-c])
+   "Customize keys not bound in semi-char mode for Emacs compatibility")
+  (eat-eshell-semi-char-non-bound-keys
+   '([?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-:] [?\M-&] [?\C-\M-c])
+   "Customize keys not bound in Eshell semi-char mode")
+  (eat-enable-shell-prompt-annotation t "Show shell prompt annotations")
+  (eat-term-scrollback-size 100000 "Large scrollback buffer for performance")
+  :bind
+  ;; Global keybindings for launching eat
+  (:map global-map
+        ("C-c e e" . eat)               ;; Launch eat terminal
+        ("C-c e p" . eat-project)       ;; Launch eat in project root
+        ("C-c e n" . (lambda ()         ;; Create new eat instance
+                       (interactive)
+                       (eat nil t))))
+  ;; Keybindings within eat-mode
+  (:map eat-mode-map
+        ("C-c C-j" . eat-semi-char-mode)  ;; Switch to semi-char mode
+        ("C-c M-d" . eat-char-mode)       ;; Switch to char mode
+        ("C-c C-l" . eat-line-mode)       ;; Switch to line mode
+        ("C-c C-k" . eat-kill-process))   ;; Kill terminal process
+  ;; Keybindings for Eshell integration
+  (:map eshell-mode-map
+        ("C-c C-j" . eat-eshell-semi-char-mode)
+        ("C-c M-d" . eat-eshell-char-mode))
+  :hook
+  ;; Enable eat-eshell integration
+  ((eshell-load-hook . eat-eshell-mode)
+   (eshell-load-hook . eat-eshell-visual-command-mode)
+   ;; Ensure keybindings are updated after mode changes
+   (eat-mode-hook . (lambda ()
+                      (eat-update-semi-char-mode-map)
+                      (eat-eshell-update-semi-char-mode-map)))
+   ;; Auto-revert to semi-char mode when switching to eat buffer
+   (eat-mode-hook . eat-semi-char-mode))
+  :config
+  ;; Ensure shell integration for Bash
+  (when (string-match-p "bash" eat-shell)
+    (let ((bashrc (expand-file-name "~/.bashrc")))
+      (when (file-exists-p bashrc)
+        (with-temp-buffer
+          (insert "[ -n \"$EAT_SHELL_INTEGRATION_DIR\" ] && \\")
+          (insert "\n  source \"$EAT_SHELL_INTEGRATION_DIR/bash\"")
+          (append-to-file (point-min) (point-max) bashrc)))))
+  ;; Enable Sixel graphics support if available
+  (when (eat-term-sixel-p)
+    (eat-term-enable-sixel))
+  ;; Optimize performance for large outputs
+  (setq eat-term-resize t)  ;; Dynamic terminal resizing
+  ;; Custom function to run a command in eat
+  (defun my/eat-run-command (command)
+    "Run COMMAND in a new eat terminal."
+    (interactive "sCommand to run: ")
+    (eat command))
+  ;; Add which-key descriptions for eat keybindings
+  (with-eval-after-load 'which-key
+    (which-key-add-key-based-replacements
+      "C-c e" "eat-terminal"
+      "C-c e e" "open-eat"
+      "C-c e p" "eat-project-root"
+      "C-c e n" "new-eat-instance"))
+  ;; Enable eat in project.el integration
+  (with-eval-after-load 'project
+    (add-to-list 'project-switch-commands
+                 '(eat-project "Eat Terminal" ?t)))
+  :init
+  ;; Preload eat for faster startup when needed
+  (autoload 'eat "eat" "Start the Eat terminal emulator." t)
+  :delight
+  ;; Hide eat-eshell modes in mode-line for cleaner display
+  (eat-eshell-mode nil)
+  (eat-eshell-visual-command-mode nil))
+
 ;;;;;
 ;; GPTEL
 ;;;;;
@@ -3798,7 +3882,7 @@ With ARG, move that many defuns forward."
   :ensure nil
   :bind
   (
-   ("C-c e" . shell)
+   ("C-c E" . shell)
    :map shell-mode-map
    ("C-c C-k" . comint-clear-buffer)
    ("C-c C-w" . comint-write-output))
