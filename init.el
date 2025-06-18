@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-17 22:49:23 by grim>
+;; Time-stamp: <Last changed 2025-06-17 23:00:51 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3627,6 +3627,37 @@ With ARG, move that many defuns forward."
    (eat-mode-hook . eat-semi-char-mode))
 
   :config
+
+  (defun my/eat-ff (file)
+    (interactive "FOpen file: ")
+    (find-file file))
+
+  (defun my/eat-dired (&optional dir)
+    (interactive "GOpen Dired (default current dir): ")
+    (dired (or dir default-directory)))
+
+  (defun my/eat-rg (pattern)
+    (interactive "sRipgrep pattern: ")
+    (consult-ripgrep default-directory pattern))
+
+  (defun my/eat-magit ()
+    (interactive)
+    (require 'magit)
+    (magit-status))
+
+  (defun my/eat-buf (buffer)
+    (interactive
+     (list (completing-read "Switch to buffer: " (mapcar #'buffer-name (buffer-list)))))
+    (switch-to-buffer buffer))
+
+  ;; Register the commands AFTER eat loads
+  (with-eval-after-load 'eat
+    (eat-register-emacs-command 'my/eat-ff '("ff"))
+    (eat-register-emacs-command 'my/eat-dired '("dired"))
+    (eat-register-emacs-command 'my/eat-rg '("rg"))
+    (eat-register-emacs-command 'my/eat-magit '("magit"))
+    (eat-register-emacs-command 'my/eat-buf '("buf")))
+
   ;; Add which-key descriptions
   (with-eval-after-load 'which-key
     (which-key-add-key-based-replacements
