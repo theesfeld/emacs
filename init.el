@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-18 15:16:28 by grim>
+;; Time-stamp: <Last changed 2025-06-18 15:18:45 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3234,7 +3234,7 @@ With ARG, move that many defuns forward."
     (eshell-bol)
     (eshell-next-input 1))
 
-  ;; Disable visual distr actions
+  ;; Disable visual distractions
   (defun my-eshell-disable-distractions ()
     "Disable line numbers and highlighting in Eshell and subprocess buffers."
     (display-line-numbers-mode -1)
@@ -3295,14 +3295,7 @@ With ARG, move that many defuns forward."
     :config
     (eshell-git-prompt-use-theme 'powerline)) ;; Use powerline theme
 
-  ;; Enable eshell-z for directory navigation
-  (use-package
-    eshell-z
-    :ensure t
-    :after eshell
-    :config
-    (require 'eshell-z)
-    (add-hook 'eshell-mode-hook (lambda () (eshell-z-mode 1))))
+  :bind (("C-c e" . 'eshell))
 
   :hook
   ((eshell-mode . my-eshell-disable-distractions) ;; Disable distractions
