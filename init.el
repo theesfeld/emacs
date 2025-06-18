@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-17 22:45:44 by grim>
+;; Time-stamp: <Last changed 2025-06-17 22:47:29 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3612,6 +3612,7 @@ With ARG, move that many defuns forward."
   (defvar eat-prefix-map (make-sparse-keymap)
     "Keymap for eat terminal commands under C-c e.")
   (define-prefix-command 'eat-prefix-map)
+  (setq eat-prefix-map (symbol-function 'eat-prefix-map))
   ;; Preload eat for faster startup when needed
   (require 'eat)
   :config
