@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-17 22:35:42 by grim>
+;; Time-stamp: <Last changed 2025-06-17 22:45:44 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3564,7 +3564,7 @@ With ARG, move that many defuns forward."
   :ensure t  ;; Automatically install eat from NonGNU ELPA
   :custom
   ;; General settings for eat
-  (eat-shell (or (getenv "SHELL") "/sbin/bash") "Use user's default shell")
+  (eat-shell (or (getenv "SHELL") "/sbin/bash"))
   (eat-kill-buffer-on-exit t "Kill eat terminal buffer when the program exits")
   (eat-enable-blinking-text t "Enable blinking text for visual cues")
   (eat-enable-mouse t "Enable mouse support in eat terminals")
@@ -3613,7 +3613,7 @@ With ARG, move that many defuns forward."
     "Keymap for eat terminal commands under C-c e.")
   (define-prefix-command 'eat-prefix-map)
   ;; Preload eat for faster startup when needed
-  (autoload 'eat "eat" "Start the Eat terminal emulator." t)
+  (require 'eat)
   :config
 
   ;; Ensure shell integration for Bash
