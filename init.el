@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-17 22:21:23 by grim>
+;; Time-stamp: <Last changed 2025-06-17 22:22:14 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3624,9 +3624,6 @@ With ARG, move that many defuns forward."
             (insert "[ -n \"$EAT_SHELL_INTEGRATION_DIR\" ] && \\")
             (insert "\n  source \"$EAT_SHELL_INTEGRATION_DIR/bash\"")
             (append-to-file (point-min) (point-max) bashrc)))))
-    ;; Enable Sixel graphics support if available
-    (when (eat-term-sixel-p)
-      (eat-term-enable-sixel))
     ;; Optimize performance for large outputs
     (setq eat-term-resize t))  ;; Dynamic terminal resizing
   ;; Custom function to run a command in eat
