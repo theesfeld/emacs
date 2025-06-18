@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-18 16:52:10 by grim>
+;; Time-stamp: <Last changed 2025-06-18 16:55:56 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2869,12 +2869,12 @@ With ARG, move that many defuns forward."
  (setq treesit-fold-indicators-priority 100)
  :bind
  (:map prog-mode-map
-       ("C-c f t" . treesit-fold-toggle)
-       ("C-c f T" . treesit-fold-toggle-all)
-       ("C-c f o" . treesit-fold-open)
-       ("C-c f O" . treesit-fold-open-all)
-       ("C-c f c" . treesit-fold-close)
-       ("C-c f C" . treesit-fold-close-all)))
+       ("C-c F t" . treesit-fold-toggle)
+       ("C-c F T" . treesit-fold-toggle-all)
+       ("C-c F o" . treesit-fold-open)
+       ("C-c F O" . treesit-fold-open-all)
+       ("C-c F c" . treesit-fold-close)
+       ("C-c F C" . treesit-fold-close-all)))
 
 ;; Tree-sitter playground for debugging
 (use-package
@@ -2993,13 +2993,13 @@ With ARG, move that many defuns forward."
     "C-c t d" "debug node"
     "C-c t e" "explore"
     "C-c t i" "inspect"
-    "C-c f" "folding"
-    "C-c f t" "toggle fold"
-    "C-c f T" "toggle all"
-    "C-c f o" "open fold"
-    "C-c f O" "open all"
-    "C-c f c" "close fold"
-    "C-c f C" "close all"))
+    "C-c F" "folding"
+    "C-c F t" "toggle fold"
+    "C-c F T" "toggle all"
+    "C-c F o" "open fold"
+    "C-c F O" "open all"
+    "C-c F c" "close fold"
+    "C-c F C" "close all"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                So-long-mode                               ;;
