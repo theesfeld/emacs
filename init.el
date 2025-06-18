@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-18 17:02:05 by grim>
+;; Time-stamp: <Last changed 2025-06-18 17:02:33 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2142,7 +2142,7 @@ TIMEOUT is duration in seconds (default 5)."
   (ibuffer-show-empty-filter-groups nil) ; Hide empty groups
   (ibuffer-display-summary t) ; Show summary at bottom
   (ibuffer-default-sorting-mode 'major-mode) ; Sort by major mode initially
-  (ibuffer-use-header-line nil) ; Use header line for filter info
+  (ibuffer-use-header-line t) ; Use header line for filter info
   :config
   ;; Define saved filter groups
   (setq
