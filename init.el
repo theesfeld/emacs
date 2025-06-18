@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-17 22:31:43 by grim>
+;; Time-stamp: <Last changed 2025-06-17 22:35:42 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3615,6 +3615,7 @@ With ARG, move that many defuns forward."
   ;; Preload eat for faster startup when needed
   (autoload 'eat "eat" "Start the Eat terminal emulator." t)
   :config
+
   ;; Ensure shell integration for Bash
   (when (string-match-p "bash" (or (bound-and-true-p eat-shell) "/bin/bash"))
     (let* ((eat-dir (file-name-directory (locate-library "eat")))
@@ -3622,12 +3623,12 @@ With ARG, move that many defuns forward."
            (bashrc (expand-file-name "~/.bashrc")))
       (when (and eat-dir (file-exists-p integration-file) (file-exists-p bashrc))
         (with-temp-buffer
-          (insert "\n[ -n \"$EAT_SHELL_INTEGRATION_DIR\" ] && \\")
-          (insert "\n  source \"$EAT_SHELL_INTEGRATION_DIR/bash\"")
+          (insert "[ -n \"$EAT_SHELL_INTEGRATION_DIR\" ] && \\\n")
+          (insert "  source \"$EAT_SHELL_INTEGRATION_DIR/bash\"")
           ;; Only append if the line doesn’t already exist
           (unless (with-temp-buffer
                     (insert-file-contents bashrc)
-                    (re-search-forward "EAT_SHELL_INTEGRATION_DIR/bash" nil t))
+                    (re-search-forward "EAT_SHELL_INTEGRATION_DIR/bash\\(?:\\[]\\)?$" nil t))
             (append-to-file (point-min) (point-max) bashrc)))))
     ;; Set EAT_SHELL_INTEGRATION_DIR to the correct path
     (setenv "EAT_SHELL_INTEGRATION_DIR" (file-name-directory (locate-library "eat"))))
