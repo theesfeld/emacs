@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-17 22:22:14 by grim>
+;; Time-stamp: <Last changed 2025-06-17 22:27:18 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3569,10 +3569,10 @@ With ARG, move that many defuns forward."
   (eat-enable-blinking-text t "Enable blinking text for visual cues")
   (eat-enable-mouse t "Enable mouse support in eat terminals")
   (eat-semi-char-non-bound-keys
-   '([?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-:] [?\M-&] [?\C-\M-c])
+   '([?\C-x] [?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-:] [?\M-&] [?\C-\M-c])
    "Customize keys not bound in semi-char mode for Emacs compatibility")
   (eat-eshell-semi-char-non-bound-keys
-   '([?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-:] [?\M-&] [?\C-\M-c])
+   '([?\C-x] [?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-:] [?\M-&] [?\C-\M-c])
    "Customize keys not bound in Eshell semi-char mode")
   (eat-enable-shell-prompt-annotation t "Show shell prompt annotations")
   (eat-term-scrollback-size 100000 "Large scrollback buffer for performance")
