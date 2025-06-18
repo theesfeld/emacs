@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-18 16:55:56 by grim>
+;; Time-stamp: <Last changed 2025-06-18 16:58:45 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2131,158 +2131,158 @@ TIMEOUT is duration in seconds (default 5)."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- ibuffer
- :ensure nil
- :bind (("C-x C-b" . ibuffer)) ; Override default buffer switch
- :hook
- ((ibuffer-mode . my-ibuffer-setup-hook)
-  (ibuffer-mode . ibuffer-auto-mode)) ; Auto-update buffer list
- :custom
- (ibuffer-expert t) ; Skip confirmation for dangerous operations
- (ibuffer-show-empty-filter-groups nil) ; Hide empty groups
- (ibuffer-display-summary t) ; Show summary at bottom
- (ibuffer-default-sorting-mode 'major-mode) ; Sort by major mode initially
- (ibuffer-use-header-line t) ; Use header line for filter info
- :config
- ;; Define saved filter groups
- (setq
-  ibuffer-saved-filter-groups
-  '(("default" ("Emacs Lisp"
-      (derived-mode . emacs-lisp-mode)) ; Filter by derived mode
-     ("Org"
-      (derived-mode . org-mode)) ; Filter Org and derived modes
-     ("Programming"
-      (derived-mode . prog-mode)) ; All programming modes
-     ("Dired" (mode . dired-mode))
-     ("Special"
-      (name . "^\\*.*\\*$")) ; Buffers starting and ending with *
-     ("Files"
-      (and (filename . ".*") ; File-backed buffers
-           (not (name . "^\\*.*\\*$")))) ; Exclude special buffers
-     ("Projects"
-      (project-buffers)) ; Custom project filter
-     ("Other"
-      (name . ".*"))))) ; Catch-all group
-
- ;; Custom setup hook for ibuffer
- (defun my-ibuffer-setup-hook ()
-   "Set up ibuffer with saved filters, auto-mode, and visual enhancements."
-   (ibuffer-switch-to-saved-filter-groups "default")
-   (ibuffer-auto-mode 1) ; Enable auto-updates
-   (hl-line-mode 1) ; Highlight current line
-   ;; Ensure header line is styled
-   (set-face-attribute 'header-line nil
-                       :background "#2e3440" ; Modus Vivendi dark
-                       :foreground "#d8dee9" ; Light text
-                       :box nil)
-   ;; Refresh buffer list
-   (ibuffer-update nil t))
-
- ;; Ensure all-the-icons for visual enhancement
- (use-package
-  all-the-icons-ibuffer
-  :ensure t
-  :hook (ibuffer-mode . all-the-icons-ibuffer-mode)
+  ibuffer
+  :ensure nil
+  :bind (("C-x C-b" . ibuffer)) ; Override default buffer switch
+  :hook
+  ((ibuffer-mode . my-ibuffer-setup-hook)
+   (ibuffer-mode . ibuffer-auto-mode)) ; Auto-update buffer list
+  :custom
+  (ibuffer-expert t) ; Skip confirmation for dangerous operations
+  (ibuffer-show-empty-filter-groups nil) ; Hide empty groups
+  (ibuffer-display-summary t) ; Show summary at bottom
+  (ibuffer-default-sorting-mode 'major-mode) ; Sort by major mode initially
+  (ibuffer-use-header-line t) ; Use header line for filter info
   :config
-  (setq all-the-icons-ibuffer-icon-size 1.0)
-  (setq all-the-icons-ibuffer-icon-v-adjust 0.0)
-  (setq all-the-icons-ibuffer-human-readable-size t) ; Readable file sizes
-  ;; Ensure icons render correctly with modus-vivendi
-  (set-face-attribute 'all-the-icons-ibuffer-file-face nil
-                      :foreground "#88c0d0") ; Cyan for files
-  (set-face-attribute 'all-the-icons-ibuffer-dir-face nil
-                      :foreground "#81a1c1"
-                      :weight 'bold)) ; Blue for dirs
+  ;; Define saved filter groups
+  (setq
+   ibuffer-saved-filter-groups
+   '(("default" ("Emacs Lisp"
+                 (derived-mode . emacs-lisp-mode)) ; Filter by derived mode
+      ("Org"
+       (derived-mode . org-mode)) ; Filter Org and derived modes
+      ("Programming"
+       (derived-mode . prog-mode)) ; All programming modes
+      ("Dired" (mode . dired-mode))
+      ("Special"
+       (name . "^\\*.*\\*$")) ; Buffers starting and ending with *
+      ("Files"
+       (and (filename . ".*") ; File-backed buffers
+            (not (name . "^\\*.*\\*$")))) ; Exclude special buffers
+      ("Projects"
+       (project-buffers)) ; Custom project filter
+      ("Other"
+       (name . ".*"))))) ; Catch-all group
 
- ;; Custom functions for ibuffer
- (defun my-ibuffer-mark-unsaved-buffers ()
-   "Mark all unsaved file-visiting buffers."
-   (interactive)
-   (ibuffer-mark-for-delete nil) ; Clear existing marks
-   (ibuffer-mark-unsaved-buffers))
+  ;; Custom setup hook for ibuffer
+  (defun my-ibuffer-setup-hook ()
+    "Set up ibuffer with saved filters, auto-mode, and visual enhancements."
+    (ibuffer-switch-to-saved-filter-groups "default")
+    (ibuffer-auto-mode 1) ; Enable auto-updates
+    (hl-line-mode 1) ; Highlight current line
+    ;; Ensure header line is styled
+    (set-face-attribute 'header-line nil
+                        :background "#2e3440" ; Modus Vivendi dark
+                        :foreground "#d8dee9" ; Light text
+                        :box "#88c0d0")
+    ;; Refresh buffer list
+    (ibuffer-update nil t))
 
- (defun my-ibuffer-mark-special-buffers ()
-   "Mark all special buffers (starting with *)."
-   (interactive)
-   (ibuffer-mark-for-delete nil) ; Clear existing marks
-   (ibuffer-mark-by-name-regexp "^\\*.*\\*$"))
+  ;; Ensure all-the-icons for visual enhancement
+  (use-package
+    all-the-icons-ibuffer
+    :ensure t
+    :hook (ibuffer-mode . all-the-icons-ibuffer-mode)
+    :config
+    (setq all-the-icons-ibuffer-icon-size 1.0)
+    (setq all-the-icons-ibuffer-icon-v-adjust 0.0)
+    (setq all-the-icons-ibuffer-human-readable-size t) ; Readable file sizes
+    ;; Ensure icons render correctly with modus-vivendi
+    (set-face-attribute 'all-the-icons-ibuffer-file-face nil
+                        :foreground "#88c0d0") ; Cyan for files
+    (set-face-attribute 'all-the-icons-ibuffer-dir-face nil
+                        :foreground "#81a1c1"
+                        :weight 'bold)) ; Blue for dirs
 
- (defun my-ibuffer-mark-dired-buffers ()
-   "Mark all dired buffers."
-   (interactive)
-   (ibuffer-mark-for-delete nil) ; Clear existing marks
-   (ibuffer-mark-by-mode 'dired-mode))
+  ;; Custom functions for ibuffer
+  (defun my-ibuffer-mark-unsaved-buffers ()
+    "Mark all unsaved file-visiting buffers."
+    (interactive)
+    (ibuffer-mark-for-delete nil) ; Clear existing marks
+    (ibuffer-mark-unsaved-buffers))
 
- (defun my-ibuffer-toggle-filter-group-display ()
-   "Toggle display of empty filter groups."
-   (interactive)
-   (setq ibuffer-show-empty-filter-groups
-         (not ibuffer-show-empty-filter-groups))
-   (ibuffer-update nil t))
+  (defun my-ibuffer-mark-special-buffers ()
+    "Mark all special buffers (starting with *)."
+    (interactive)
+    (ibuffer-mark-for-delete nil) ; Clear existing marks
+    (ibuffer-mark-by-name-regexp "^\\*.*\\*$"))
 
- ;; Keybindings for ibuffer
- (define-key
-  ibuffer-mode-map (kbd "/ u") #'my-ibuffer-mark-unsaved-buffers)
- (define-key
-  ibuffer-mode-map (kbd "/ *") #'my-ibuffer-mark-special-buffers)
- (define-key
-  ibuffer-mode-map (kbd "/ d") #'my-ibuffer-mark-dired-buffers)
- (define-key
-  ibuffer-mode-map
-  (kbd "/ t")
-  #'my-ibuffer-toggle-filter-group-display)
- (define-key
-  ibuffer-mode-map
-  (kbd "C-c C-g")
-  #'ibuffer-switch-to-saved-filter-groups)
+  (defun my-ibuffer-mark-dired-buffers ()
+    "Mark all dired buffers."
+    (interactive)
+    (ibuffer-mark-for-delete nil) ; Clear existing marks
+    (ibuffer-mark-by-mode 'dired-mode))
 
- ;; Project-aware ibuffer
- (defun my-ibuffer-project ()
-   "Open ibuffer filtered to current project buffers."
-   (interactive)
-   (ibuffer)
-   (ibuffer-filter-by-predicate
-    (lambda ()
+  (defun my-ibuffer-toggle-filter-group-display ()
+    "Toggle display of empty filter groups."
+    (interactive)
+    (setq ibuffer-show-empty-filter-groups
+          (not ibuffer-show-empty-filter-groups))
+    (ibuffer-update nil t))
+
+  ;; Keybindings for ibuffer
+  (define-key
+   ibuffer-mode-map (kbd "/ u") #'my-ibuffer-mark-unsaved-buffers)
+  (define-key
+   ibuffer-mode-map (kbd "/ *") #'my-ibuffer-mark-special-buffers)
+  (define-key
+   ibuffer-mode-map (kbd "/ d") #'my-ibuffer-mark-dired-buffers)
+  (define-key
+   ibuffer-mode-map
+   (kbd "/ t")
+   #'my-ibuffer-toggle-filter-group-display)
+  (define-key
+   ibuffer-mode-map
+   (kbd "C-c C-g")
+   #'ibuffer-switch-to-saved-filter-groups)
+
+  ;; Project-aware ibuffer
+  (defun my-ibuffer-project ()
+    "Open ibuffer filtered to current project buffers."
+    (interactive)
+    (ibuffer)
+    (ibuffer-filter-by-predicate
+     (lambda ()
+       (if-let ((project (project-current)))
+           (let ((root (project-root project)))
+             (and (buffer-file-name)
+                  (string-prefix-p root (buffer-file-name))))
+         nil))))
+
+  ;; Custom project filter
+  (with-eval-after-load 'ibuf-ext
+    (define-ibuffer-filter
+        project-buffers
+        "Filter buffers that belong to the current project."
+      (:description "project buffers" :reader nil)
       (if-let ((project (project-current)))
-        (let ((root (project-root project)))
-          (and (buffer-file-name)
-               (string-prefix-p root (buffer-file-name))))
-        nil))))
+          (let ((root (project-root project)))
+            (and (buffer-file-name)
+                 (string-prefix-p root (buffer-file-name))))
+        nil)))
 
- ;; Custom project filter
- (with-eval-after-load 'ibuf-ext
-   (define-ibuffer-filter
-    project-buffers
-    "Filter buffers that belong to the current project."
-    (:description "project buffers" :reader nil)
-    (if-let ((project (project-current)))
-      (let ((root (project-root project)))
-        (and (buffer-file-name)
-             (string-prefix-p root (buffer-file-name))))
-      nil)))
+  ;; Keybindings for project filter
+  (define-key
+   ibuffer-mode-map (kbd "/ p") #'ibuffer-filter-by-project-buffers)
+  (global-set-key (kbd "C-x p b") #'my-ibuffer-project)
 
- ;; Keybindings for project filter
- (define-key
-  ibuffer-mode-map (kbd "/ p") #'ibuffer-filter-by-project-buffers)
- (global-set-key (kbd "C-x p b") #'my-ibuffer-project)
-
- ;; Which-key integration
- (with-eval-after-load 'which-key
-   (which-key-add-key-based-replacements
-    "C-x C-b"
-    "ibuffer"
-    "C-x p b"
-    "project-ibuffer"
-    "/ u"
-    "mark-unsaved"
-    "/ *"
-    "mark-special"
-    "/ d"
-    "mark-dired"
-    "/ t"
-    "toggle-filter-groups"
-    "/ p"
-    "filter-project")))
+  ;; Which-key integration
+  (with-eval-after-load 'which-key
+    (which-key-add-key-based-replacements
+      "C-x C-b"
+      "ibuffer"
+      "C-x p b"
+      "project-ibuffer"
+      "/ u"
+      "mark-unsaved"
+      "/ *"
+      "mark-special"
+      "/ d"
+      "mark-dired"
+      "/ t"
+      "toggle-filter-groups"
+      "/ p"
+      "filter-project")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  Dired                                    ;;
