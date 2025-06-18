@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-18 16:49:51 by grim>
+;; Time-stamp: <Last changed 2025-06-18 16:52:10 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2319,7 +2319,6 @@ TIMEOUT is duration in seconds (default 5)."
   (dired-hide-details-hide-symlink-targets nil)
   (dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open")))
   (dired-use-ls-dired t)
-  (dgi-auto-hide-details-p nil)
   :config
   (require 'dired-x)
   (setq dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open")))
