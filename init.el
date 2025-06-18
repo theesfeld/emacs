@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-18 17:15:58 by grim>
+;; Time-stamp: <Last changed 2025-06-18 17:31:37 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3949,6 +3949,11 @@ With ARG, move that many defuns forward."
 (use-package hnreader
   :ensure t
   :defer t)
+
+;;;; emojis
+;; this had better get rid of the shitty squares
+(use-package emojify
+  :hook (after-init . global-emojify-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
