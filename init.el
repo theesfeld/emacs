@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-18 15:00:41 by grim>
+;; Time-stamp: <Last changed 2025-06-18 15:12:14 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3308,7 +3308,8 @@ With ARG, move that many defuns forward."
   ((eshell-mode . my-eshell-disable-distractions) ;; Disable distractions
    (eshell-mode . my-eshell-setup-aliases) ;; Setup aliases
    (eshell-pre-output-filter . my-eshell-truncate-buffer) ;; Truncate buffer
-   (eshell-visual-subprocess-hook . my-eshell-disable-distractions))) ;; Subprocess distractions
+   (eshell-visual-subprocess-hook . my-eshell-disable-distractions)
+   ('eshell-mode . eat-eshell-visual-command-mode))) ;; Subprocess distractions
 
 ;; E MA I L EMAIL
 
