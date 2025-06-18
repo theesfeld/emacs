@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-17 22:47:29 by grim>
+;; Time-stamp: <Last changed 2025-06-17 22:49:23 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3562,100 +3562,98 @@ With ARG, move that many defuns forward."
 ;;;;; EAT EAT EAT
 (use-package eat
   :ensure t  ;; Automatically install eat from NonGNU ELPA
+  :init
+  ;; Preload Eat so everything is ready on first use
+  (require 'eat)
+
+  ;; Set EAT_SHELL_INTEGRATION_DIR early
+  (let ((eat-dir (file-name-directory (locate-library "eat"))))
+    (when eat-dir
+      (setenv "EAT_SHELL_INTEGRATION_DIR" eat-dir)))
+
+  ;; Define the prefix keymap for C-c e
+  (define-prefix-command 'eat-prefix-map)
+
+  ;; Optionally ensure integration file is sourced in ~/.bashrc
+  (let* ((eat-dir (file-name-directory (locate-library "eat")))
+         (integration-file (and eat-dir (expand-file-name "integration/bash" eat-dir)))
+         (bashrc (expand-file-name "~/.bashrc")))
+    (when (and integration-file (file-exists-p integration-file) (file-exists-p bashrc))
+      (unless (with-temp-buffer
+                (insert-file-contents bashrc)
+                (re-search-forward "EAT_SHELL_INTEGRATION_DIR/bash\\>" nil t))
+        (with-temp-buffer
+          (insert "[ -n \"$EAT_SHELL_INTEGRATION_DIR\" ] && \\\n")
+          (insert "  source \"$EAT_SHELL_INTEGRATION_DIR/bash\"\n")
+          (append-to-file (point-min) (point-max) bashrc)))))
+
   :custom
-  ;; General settings for eat
   (eat-shell (or (getenv "SHELL") "/sbin/bash"))
-  (eat-kill-buffer-on-exit t "Kill eat terminal buffer when the program exits")
-  (eat-enable-blinking-text t "Enable blinking text for visual cues")
-  (eat-enable-mouse t "Enable mouse support in eat terminals")
+  (eat-kill-buffer-on-exit t)
+  (eat-enable-blinking-text t)
+  (eat-enable-mouse t)
   (eat-semi-char-non-bound-keys
-   '([?\C-x] [?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-:] [?\M-&] [?\C-\M-c])
-   "Customize keys not bound in semi-char mode for Emacs compatibility")
+   '([?\C-x] [?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-:] [?\M-&] [?\C-\M-c]))
   (eat-eshell-semi-char-non-bound-keys
-   '([?\C-x] [?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-:] [?\M-&] [?\C-\M-c])
-   "Customize keys not bound in Eshell semi-char mode")
-  (eat-enable-shell-prompt-annotation t "Show shell prompt annotations")
-  (eat-term-scrollback-size 100000 "Large scrollback buffer for performance")
+   '([?\C-x] [?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-:] [?\M-&] [?\C-\M-c]))
+  (eat-enable-shell-prompt-annotation t)
+  (eat-term-scrollback-size 100000)
+  (eat-term-resize t)
+
   :bind
-  ;; Define C-c e as a prefix key
   (:map global-map
         ("C-c e" . eat-prefix-map))
-  ;; Bind subkeys under C-c e
   (:map eat-prefix-map
-        ("e" . eat)                     ;; C-c e e: Launch eat terminal
-        ("p" . eat-project)             ;; C-c e p: Launch eat in project root
-        ("n" . (lambda ()               ;; C-c e n: Create new eat instance
+        ("e" . my/eat-start)             ;; Open Eat terminal with ensured preload
+        ("p" . eat-project)              ;; Open Eat in project root
+        ("n" . (lambda ()
                  (interactive)
-                 (eat nil t))))
-  ;; Keybindings within eat-mode
+                 (eat nil t))))          ;; New Eat instance
   (:map eat-mode-map
-        ("C-c C-j" . eat-semi-char-mode)  ;; Switch to semi-char mode
-        ("C-c M-d" . eat-char-mode)       ;; Switch to char mode
-        ("C-c C-l" . eat-line-mode)       ;; Switch to line mode
-        ("C-c C-k" . eat-kill-process))   ;; Kill terminal process
-  ;; Keybindings for Eshell integration
+        ("C-c C-j" . eat-semi-char-mode)
+        ("C-c M-d" . eat-char-mode)
+        ("C-c C-l" . eat-line-mode)
+        ("C-c C-k" . eat-kill-process))
   (:map eshell-mode-map
         ("C-c C-j" . eat-eshell-semi-char-mode)
         ("C-c M-d" . eat-eshell-char-mode))
+
   :hook
-  ;; Enable eat-eshell integration
   ((eshell-load-hook . eat-eshell-mode)
    (eshell-load-hook . eat-eshell-visual-command-mode)
-   ;; Ensure keybindings are updated after mode changes
    (eat-mode-hook . (lambda ()
                       (eat-update-semi-char-mode-map)
                       (eat-eshell-update-semi-char-mode-map)))
-   ;; Auto-revert to semi-char mode when switching to eat buffer
    (eat-mode-hook . eat-semi-char-mode))
-  :init
-  ;; Define prefix keymap for C-c e
-  (defvar eat-prefix-map (make-sparse-keymap)
-    "Keymap for eat terminal commands under C-c e.")
-  (define-prefix-command 'eat-prefix-map)
-  (setq eat-prefix-map (symbol-function 'eat-prefix-map))
-  ;; Preload eat for faster startup when needed
-  (require 'eat)
+
   :config
-
-  ;; Ensure shell integration for Bash
-  (when (string-match-p "bash" (or (bound-and-true-p eat-shell) "/bin/bash"))
-    (let* ((eat-dir (file-name-directory (locate-library "eat")))
-           (integration-file (expand-file-name "integration/bash" eat-dir))
-           (bashrc (expand-file-name "~/.bashrc")))
-      (when (and eat-dir (file-exists-p integration-file) (file-exists-p bashrc))
-        (with-temp-buffer
-          (insert "[ -n \"$EAT_SHELL_INTEGRATION_DIR\" ] && \\\n")
-          (insert "  source \"$EAT_SHELL_INTEGRATION_DIR/bash\"")
-          ;; Only append if the line doesn’t already exist
-          (unless (with-temp-buffer
-                    (insert-file-contents bashrc)
-                    (re-search-forward "EAT_SHELL_INTEGRATION_DIR/bash\\(?:\\[]\\)?$" nil t))
-            (append-to-file (point-min) (point-max) bashrc)))))
-    ;; Set EAT_SHELL_INTEGRATION_DIR to the correct path
-    (setenv "EAT_SHELL_INTEGRATION_DIR" (file-name-directory (locate-library "eat"))))
-  ;; Optimize performance for large outputs
-  (setq eat-term-resize t)  ;; Dynamic terminal resizing
-
-  ;; Custom function to run a command in eat
-  (defun my/eat-run-command (command)
-    "Run COMMAND in a new eat terminal."
-    (interactive "sCommand to run: ")
-    (eat command))
-  ;; Add which-key descriptions for eat keybindings
+  ;; Add which-key descriptions
   (with-eval-after-load 'which-key
     (which-key-add-key-based-replacements
       "C-c e" "eat-terminal"
       "C-c e e" "open-eat"
       "C-c e p" "eat-project-root"
       "C-c e n" "new-eat-instance"))
-  ;; Enable eat in project.el integration
+
+  ;; Integrate with project.el
   (with-eval-after-load 'project
     (add-to-list 'project-switch-commands
                  '(eat-project "Eat Terminal" ?t)))
+
   :delight
-  ;; Hide eat-eshell modes in mode-line for cleaner display
   (eat-eshell-mode nil)
   (eat-eshell-visual-command-mode nil))
+
+;; Custom function to start Eat ensuring environment is ready
+(defun my/eat-start ()
+  "Start Eat terminal with proper environment."
+  (interactive)
+  (require 'eat)
+  (let ((default-directory (or (when (fboundp 'project-root)
+                                 (when-let ((proj (project-current)))
+                                   (project-root proj)))
+                               default-directory)))
+    (eat)))
 
 ;;;;;
 ;; GPTEL
