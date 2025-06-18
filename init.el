@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-18 17:02:33 by grim>
+;; Time-stamp: <Last changed 2025-06-18 17:03:28 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2161,6 +2161,7 @@ TIMEOUT is duration in seconds (default 5)."
             (not (name . "^\\*.*\\*$")))) ; Exclude special buffers
       ("Projects"
        (project-buffers)) ; Custom project filter
+      ("EXWM" (derived-mode . exwm-mode))
       ("Other"
        (name . ".*"))))) ; Catch-all group
 
