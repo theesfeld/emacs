@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-18 15:12:14 by grim>
+;; Time-stamp: <Last changed 2025-06-18 15:16:28 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3572,9 +3572,6 @@ With ARG, move that many defuns forward."
     (when eat-dir
       (setenv "EAT_SHELL_INTEGRATION_DIR" eat-dir)))
 
-  ;; Define the prefix keymap for C-c e
-  (define-prefix-command 'eat-prefix-map)
-
   ;; Optionally ensure integration file is sourced in ~/.bashrc
   (let* ((eat-dir (file-name-directory (locate-library "eat")))
          (integration-file (and eat-dir (expand-file-name "integration/bash" eat-dir)))
@@ -3601,24 +3598,6 @@ With ARG, move that many defuns forward."
   (eat-term-scrollback-size 100000)
   (eat-term-resize t)
 
-  :bind
-  (:map global-map
-        ("C-c e" . eat-prefix-map))
-  (:map eat-prefix-map
-        ("e" . my/eat-start)             ;; Open Eat terminal with ensured preload
-        ("p" . eat-project)              ;; Open Eat in project root
-        ("n" . (lambda ()
-                 (interactive)
-                 (eat nil t))))          ;; New Eat instance
-  (:map eat-mode-map
-        ("C-c C-j" . eat-semi-char-mode)
-        ("C-c M-d" . eat-char-mode)
-        ("C-c C-l" . eat-line-mode)
-        ("C-c C-k" . eat-kill-process))
-  (:map eshell-mode-map
-        ("C-c C-j" . eat-eshell-semi-char-mode)
-        ("C-c M-d" . eat-eshell-char-mode))
-
   :hook
   ((eshell-load-hook . eat-eshell-mode)
    (eshell-load-hook . eat-eshell-visual-command-mode)
@@ -3627,34 +3606,9 @@ With ARG, move that many defuns forward."
                       (eat-eshell-update-semi-char-mode-map)))
    (eat-mode-hook . eat-semi-char-mode))
 
-  :config
-  ;; Add which-key descriptions
-  (with-eval-after-load 'which-key
-    (which-key-add-key-based-replacements
-      "C-c e" "eat-terminal"
-      "C-c e e" "open-eat"
-      "C-c e p" "eat-project-root"
-      "C-c e n" "new-eat-instance"))
-
-  ;; Integrate with project.el
-  (with-eval-after-load 'project
-    (add-to-list 'project-switch-commands
-                 '(eat-project "Eat Terminal" ?t)))
-
   :delight
   (eat-eshell-mode nil)
   (eat-eshell-visual-command-mode nil))
-
-;; Custom function to start Eat ensuring environment is ready
-(defun my/eat-start ()
-  "Start Eat terminal with proper environment."
-  (interactive)
-  (require 'eat)
-  (let ((default-directory (or (when (fboundp 'project-root)
-                                 (when-let ((proj (project-current)))
-                                   (project-root proj)))
-                               default-directory)))
-    (eat)))
 
 ;;;;;
 ;; GPTEL
