@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-18 15:18:45 by grim>
+;; Time-stamp: <Last changed 2025-06-18 16:49:51 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2305,12 +2305,13 @@ TIMEOUT is duration in seconds (default 5)."
    ("C-c w" . dired-copy-file-path)
    ("C-c f" . dired-consult-filter))
   :hook
-  ((dired-mode . dired-hide-details-mode)
+  (
+                                        ;(dired-mode . dired-hide-details-mode)
    (dired-mode . all-the-icons-dired-mode)
    (dired-mode . dired-preview-mode)
    (dired-mode . hl-line-mode))
   :custom
-  (dired-listing-switches "-lah --group-directories-first")
+  (dired-listing-switches "-lah --group-directories-first --time=access")
   (dired-dwim-target t)
   (dired-recursive-copies 'always)
   (dired-recursive-deletes 'always)
@@ -2318,6 +2319,7 @@ TIMEOUT is duration in seconds (default 5)."
   (dired-hide-details-hide-symlink-targets nil)
   (dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open")))
   (dired-use-ls-dired t)
+  (dgi-auto-hide-details-p nil)
   :config
   (require 'dired-x)
   (setq dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open")))
