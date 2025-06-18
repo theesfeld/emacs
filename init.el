@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-17 22:17:52 by grim>
+;; Time-stamp: <Last changed 2025-06-17 22:21:23 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3562,7 +3562,6 @@ With ARG, move that many defuns forward."
 ;;;;; EAT EAT EAT
 (use-package eat
   :ensure t  ;; Automatically install eat from NonGNU ELPA
-  :defer t   ;; Defer loading until needed for performance
   :custom
   ;; General settings for eat
   (eat-shell (or (getenv "SHELL") "/sbin/bash") "Use user's default shell")
@@ -3578,13 +3577,16 @@ With ARG, move that many defuns forward."
   (eat-enable-shell-prompt-annotation t "Show shell prompt annotations")
   (eat-term-scrollback-size 100000 "Large scrollback buffer for performance")
   :bind
-  ;; Global keybindings for launching eat
+  ;; Define C-c e as a prefix key
   (:map global-map
-        ("C-c e e" . eat)               ;; Launch eat terminal
-        ("C-c e p" . eat-project)       ;; Launch eat in project root
-        ("C-c e n" . (lambda ()         ;; Create new eat instance
-                       (interactive)
-                       (eat nil t))))
+        ("C-c e" . eat-prefix-map))
+  ;; Bind subkeys under C-c e
+  (:map eat-prefix-map
+        ("e" . eat)                     ;; C-c e e: Launch eat terminal
+        ("p" . eat-project)             ;; C-c e p: Launch eat in project root
+        ("n" . (lambda ()               ;; C-c e n: Create new eat instance
+                 (interactive)
+                 (eat nil t))))
   ;; Keybindings within eat-mode
   (:map eat-mode-map
         ("C-c C-j" . eat-semi-char-mode)  ;; Switch to semi-char mode
@@ -3605,20 +3607,28 @@ With ARG, move that many defuns forward."
                       (eat-eshell-update-semi-char-mode-map)))
    ;; Auto-revert to semi-char mode when switching to eat buffer
    (eat-mode-hook . eat-semi-char-mode))
+  :init
+  ;; Define prefix keymap for C-c e
+  (defvar eat-prefix-map (make-sparse-keymap)
+    "Keymap for eat terminal commands under C-c e.")
+  (define-prefix-command 'eat-prefix-map)
+  ;; Preload eat for faster startup when needed
+  (autoload 'eat "eat" "Start the Eat terminal emulator." t)
   :config
-  ;; Ensure shell integration for Bash
-  (when (string-match-p "bash" eat-shell)
-    (let ((bashrc (expand-file-name "~/.bashrc")))
-      (when (file-exists-p bashrc)
-        (with-temp-buffer
-          (insert "[ -n \"$EAT_SHELL_INTEGRATION_DIR\" ] && \\")
-          (insert "\n  source \"$EAT_SHELL_INTEGRATION_DIR/bash\"")
-          (append-to-file (point-min) (point-max) bashrc)))))
-  ;; Enable Sixel graphics support if available
-  (when (eat-term-sixel-p)
-    (eat-term-enable-sixel))
-  ;; Optimize performance for large outputs
-  (setq eat-term-resize t)  ;; Dynamic terminal resizing
+  ;; Ensure shell integration for Bash after eat is loaded
+  (with-eval-after-load 'eat
+    (when (string-match-p "bash" (or (bound-and-true-p eat-shell) "/bin/bash"))
+      (let ((bashrc (expand-file-name "~/.bashrc")))
+        (when (file-exists-p bashrc)
+          (with-temp-buffer
+            (insert "[ -n \"$EAT_SHELL_INTEGRATION_DIR\" ] && \\")
+            (insert "\n  source \"$EAT_SHELL_INTEGRATION_DIR/bash\"")
+            (append-to-file (point-min) (point-max) bashrc)))))
+    ;; Enable Sixel graphics support if available
+    (when (eat-term-sixel-p)
+      (eat-term-enable-sixel))
+    ;; Optimize performance for large outputs
+    (setq eat-term-resize t))  ;; Dynamic terminal resizing
   ;; Custom function to run a command in eat
   (defun my/eat-run-command (command)
     "Run COMMAND in a new eat terminal."
@@ -3635,9 +3645,6 @@ With ARG, move that many defuns forward."
   (with-eval-after-load 'project
     (add-to-list 'project-switch-commands
                  '(eat-project "Eat Terminal" ?t)))
-  :init
-  ;; Preload eat for faster startup when needed
-  (autoload 'eat "eat" "Start the Eat terminal emulator." t)
   :delight
   ;; Hide eat-eshell modes in mode-line for cleaner display
   (eat-eshell-mode nil)
