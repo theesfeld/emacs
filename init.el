@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-17 23:07:24 by grim>
+;; Time-stamp: <Last changed 2025-06-17 23:13:36 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3627,29 +3627,6 @@ With ARG, move that many defuns forward."
    (eat-mode-hook . eat-semi-char-mode))
 
   :config
-
-  (defun emacs-ff (file)
-    (interactive "FOpen file: ")
-    (find-file file))
-
-  (defun emacs-dired (&optional dir)
-    (interactive "GOpen Dired (default current dir): ")
-    (dired (or dir default-directory)))
-
-  (defun emacs-rg (pattern)
-    (interactive "sRipgrep pattern: ")
-    (consult-ripgrep default-directory pattern))
-
-  (defun emacs-magit ()
-    (interactive)
-    (require 'magit)
-    (magit-status))
-
-  (defun emacs-buf (buffer)
-    (interactive
-     (list (completing-read "Switch to buffer: " (mapcar #'buffer-name (buffer-list)))))
-    (switch-to-buffer buffer))
-
   ;; Add which-key descriptions
   (with-eval-after-load 'which-key
     (which-key-add-key-based-replacements
