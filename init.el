@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-18 17:31:56 by grim>
+;; Time-stamp: <Last changed 2025-06-18 17:45:12 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3950,10 +3950,17 @@ With ARG, move that many defuns forward."
   :ensure t
   :defer t)
 
-;;;; emojis
-;; this had better get rid of the shitty squares
+
+
+;;;;; stupid fucking emojis
+;; im tired of the squares
 (use-package emojify
-  :ensure t
+  :config
+  (when (member "Noto Emoji" (font-family-list))
+    (set-fontset-font
+     t 'symbol (font-spec :family "Noto Emoji") nil 'prepend))
+  (setq emojify-display-style 'unicode)
+  (setq emojify-emoji-styles '(unicode))
   :hook (after-init . global-emojify-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
