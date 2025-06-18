@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-17 22:30:29 by grim>
+;; Time-stamp: <Last changed 2025-06-17 22:31:43 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3622,7 +3622,7 @@ With ARG, move that many defuns forward."
            (bashrc (expand-file-name "~/.bashrc")))
       (when (and eat-dir (file-exists-p integration-file) (file-exists-p bashrc))
         (with-temp-buffer
-          (insert "[ -n \"$EAT_SHELL_INTEGRATION_DIR\" ] && \\")
+          (insert "\n[ -n \"$EAT_SHELL_INTEGRATION_DIR\" ] && \\")
           (insert "\n  source \"$EAT_SHELL_INTEGRATION_DIR/bash\"")
           ;; Only append if the line doesn’t already exist
           (unless (with-temp-buffer
