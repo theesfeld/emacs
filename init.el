@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-19 15:19:30 by grim>
+;; Time-stamp: <Last changed 2025-06-19 15:30:41 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1462,7 +1462,6 @@ TIMEOUT is duration in seconds (default 5)."
    ("M-s r" . consult-ripgrep)
    ("M-s l" . consult-line)
    ("M-s f" . consult-find)
-   ("C-x p b" . consult-project-buffer)
    ))
 
 (use-package marginalia :ensure t :init (marginalia-mode 1))
@@ -2159,8 +2158,6 @@ TIMEOUT is duration in seconds (default 5)."
       ("Files"
        (and (filename . ".*") ; File-backed buffers
             (not (name . "^\\*.*\\*$")))) ; Exclude special buffers
-      ("Projects"
-       (project-buffers)) ; Custom project filter
       ("EXWM" (mode . exwm-mode))
       ("Other"
        (name . ".*"))))) ; Catch-all group
@@ -2237,43 +2234,11 @@ TIMEOUT is duration in seconds (default 5)."
    (kbd "C-c C-g")
    #'ibuffer-switch-to-saved-filter-groups)
 
-  ;; Project-aware ibuffer
-  (defun my-ibuffer-project ()
-    "Open ibuffer filtered to current project buffers."
-    (interactive)
-    (ibuffer)
-    (ibuffer-filter-by-predicate
-     (lambda ()
-       (if-let ((project (project-current)))
-           (let ((root (project-root project)))
-             (and (buffer-file-name)
-                  (string-prefix-p root (buffer-file-name))))
-         nil))))
-
-  ;; Custom project filter
-  (with-eval-after-load 'ibuf-ext
-    (define-ibuffer-filter
-        project-buffers
-        "Filter buffers that belong to the current project."
-      (:description "project buffers" :reader nil)
-      (if-let ((project (project-current)))
-          (let ((root (project-root project)))
-            (and (buffer-file-name)
-                 (string-prefix-p root (buffer-file-name))))
-        nil)))
-
-  ;; Keybindings for project filter
-  (define-key
-   ibuffer-mode-map (kbd "/ p") #'ibuffer-filter-by-project-buffers)
-  (global-set-key (kbd "C-x p b") #'my-ibuffer-project)
-
   ;; Which-key integration
   (with-eval-after-load 'which-key
     (which-key-add-key-based-replacements
       "C-x C-b"
       "ibuffer"
-      "C-x p b"
-      "project-ibuffer"
       "/ u"
       "mark-unsaved"
       "/ *"
@@ -3797,26 +3762,6 @@ With ARG, move that many defuns forward."
         '((:propertize which-func-current
                        face italic
                        mouse-face mode-line-highlight))))
-
-;;;; `project'
-(use-package project
-  :ensure nil
-  :bind
-  (("C-x p ." . project-dired)
-   ("C-x p C-g" . keyboard-quit)
-   ("C-x p <return>" . project-dired)
-   ("C-x p <delete>" . project-forget-project))
-  :config
-  (setopt project-switch-commands
-          '((project-find-file "Find file")
-            (project-find-regexp "Find regexp")
-            (project-find-dir "Find directory")
-            (project-dired "Root dired")
-            (project-vc-dir "VC-Dir")
-            (project-shell "Shell")
-            (keyboard-quit "Quit")))
-  (setq project-vc-extra-root-markers '(".project")) ; Emacs 29
-  (setq project-key-prompt-style t)) ; Emacs 30
 
 ;;; General minibuffer settings
 (use-package minibuffer
