@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-06 13:11:04 by grim>
+;; Time-stamp: <Last changed 2025-06-19 15:37:39 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -944,18 +944,23 @@ TIMEOUT is duration in seconds (default 5)."
   (setq modus-themes-bold-constructs t)
   (setq modus-themes-italic-constructs t)
 
-  (when (find-font (font-spec :name "Berkeley Mono"))
+  (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
     (set-face-attribute 'default nil
-                        :font "Berkeley Mono"
+                        :font "BerkeleyMonoVariable Nerd Font Mono"
                         :height 140))
-  (when (find-font (font-spec :name "Berkeley Mono Variable"))
+
+  ;; Set variable-pitch font (optional, for prose or Org-mode)
+  (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
     (set-face-attribute 'variable-pitch nil
-                        :font "Berkeley Mono Variable"
+                        :font "BerkeleyMonoVariable Nerd Font Mono"
                         :height 160))
+
+  ;; Customize font-lock faces
   (set-face-attribute 'font-lock-comment-face nil
                       :slant 'italic
                       :weight 'light)
-  (set-face-attribute 'font-lock-keyword-face nil :weight 'black)
+  (set-face-attribute 'font-lock-keyword-face nil
+                      :weight 'black)
 
   :hook
   ((text-mode . visual-wrap-prefix-mode)
@@ -1457,7 +1462,6 @@ TIMEOUT is duration in seconds (default 5)."
    ("M-s r" . consult-ripgrep)
    ("M-s l" . consult-line)
    ("M-s f" . consult-find)
-   ("C-x p b" . consult-project-buffer)
    ))
 
 (use-package marginalia :ensure t :init (marginalia-mode 1))
@@ -2126,158 +2130,125 @@ TIMEOUT is duration in seconds (default 5)."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- ibuffer
- :ensure nil
- :bind (("C-x C-b" . ibuffer)) ; Override default buffer switch
- :hook
- ((ibuffer-mode . my-ibuffer-setup-hook)
-  (ibuffer-mode . ibuffer-auto-mode)) ; Auto-update buffer list
- :custom
- (ibuffer-expert t) ; Skip confirmation for dangerous operations
- (ibuffer-show-empty-filter-groups nil) ; Hide empty groups
- (ibuffer-display-summary t) ; Show summary at bottom
- (ibuffer-default-sorting-mode 'major-mode) ; Sort by major mode initially
- (ibuffer-use-header-line t) ; Use header line for filter info
- :config
- ;; Define saved filter groups
- (setq
-  ibuffer-saved-filter-groups
-  '(("default" ("Emacs Lisp"
-      (derived-mode . emacs-lisp-mode)) ; Filter by derived mode
-     ("Org"
-      (derived-mode . org-mode)) ; Filter Org and derived modes
-     ("Programming"
-      (derived-mode . prog-mode)) ; All programming modes
-     ("Dired" (mode . dired-mode))
-     ("Special"
-      (name . "^\\*.*\\*$")) ; Buffers starting and ending with *
-     ("Files"
-      (and (filename . ".*") ; File-backed buffers
-           (not (name . "^\\*.*\\*$")))) ; Exclude special buffers
-     ("Projects"
-      (project-buffers)) ; Custom project filter
-     ("Other"
-      (name . ".*"))))) ; Catch-all group
-
- ;; Custom setup hook for ibuffer
- (defun my-ibuffer-setup-hook ()
-   "Set up ibuffer with saved filters, auto-mode, and visual enhancements."
-   (ibuffer-switch-to-saved-filter-groups "default")
-   (ibuffer-auto-mode 1) ; Enable auto-updates
-   (hl-line-mode 1) ; Highlight current line
-   ;; Ensure header line is styled
-   (set-face-attribute 'header-line nil
-                       :background "#2e3440" ; Modus Vivendi dark
-                       :foreground "#d8dee9" ; Light text
-                       :box nil)
-   ;; Refresh buffer list
-   (ibuffer-update nil t))
-
- ;; Ensure all-the-icons for visual enhancement
- (use-package
-  all-the-icons-ibuffer
-  :ensure t
-  :hook (ibuffer-mode . all-the-icons-ibuffer-mode)
+  ibuffer
+  :ensure nil
+  :bind (("C-x C-b" . ibuffer)) ; Override default buffer switch
+  :hook
+  ((ibuffer-mode . my-ibuffer-setup-hook)
+   (ibuffer-mode . ibuffer-auto-mode)) ; Auto-update buffer list
+  :custom
+  (ibuffer-expert t) ; Skip confirmation for dangerous operations
+  (ibuffer-show-empty-filter-groups nil) ; Hide empty groups
+  (ibuffer-display-summary nil) ; Show summary at bottom
+  (ibuffer-default-sorting-mode 'major-mode)  ; Sort by major mode initially
+  (ibuffer-use-header-line t) ; Use header line for filter info
   :config
-  (setq all-the-icons-ibuffer-icon-size 1.0)
-  (setq all-the-icons-ibuffer-icon-v-adjust 0.0)
-  (setq all-the-icons-ibuffer-human-readable-size t) ; Readable file sizes
-  ;; Ensure icons render correctly with modus-vivendi
-  (set-face-attribute 'all-the-icons-ibuffer-file-face nil
-                      :foreground "#88c0d0") ; Cyan for files
-  (set-face-attribute 'all-the-icons-ibuffer-dir-face nil
-                      :foreground "#81a1c1"
-                      :weight 'bold)) ; Blue for dirs
+  ;; Define saved filter groups
+  (setq
+   ibuffer-saved-filter-groups
+   '(("default" ("Emacs Lisp"
+                 (derived-mode . emacs-lisp-mode)) ; Filter by derived mode
+      ("Org"
+       (derived-mode . org-mode)) ; Filter Org and derived modes
+      ("Programming"
+       (derived-mode . prog-mode)) ; All programming modes
+      ("Dired" (mode . dired-mode))
+      ("Special"
+       (name . "^\\*.*\\*$")) ; Buffers starting and ending with *
+      ("Files"
+       (and (filename . ".*") ; File-backed buffers
+            (not (name . "^\\*.*\\*$")))) ; Exclude special buffers
+      ("EXWM" (mode . exwm-mode))
+      ("Other"
+       (name . ".*"))))) ; Catch-all group
 
- ;; Custom functions for ibuffer
- (defun my-ibuffer-mark-unsaved-buffers ()
-   "Mark all unsaved file-visiting buffers."
-   (interactive)
-   (ibuffer-mark-for-delete nil) ; Clear existing marks
-   (ibuffer-mark-unsaved-buffers))
+  ;; Custom setup hook for ibuffer
+  (defun my-ibuffer-setup-hook ()
+    "Set up ibuffer with saved filters, auto-mode, and visual enhancements."
+    (ibuffer-switch-to-saved-filter-groups "default")
+    (ibuffer-auto-mode 1) ; Enable auto-updates
+    (hl-line-mode 1) ; Highlight current line
+    ;; Ensure header line is styled
+    (set-face-attribute 'header-line nil
+                        :background "#2e3440" ; Modus Vivendi dark
+                        :foreground "#d8dee9" ; Light text
+                        :box "#88c0d0")
+    ;; Refresh buffer list
+    (ibuffer-update nil t))
 
- (defun my-ibuffer-mark-special-buffers ()
-   "Mark all special buffers (starting with *)."
-   (interactive)
-   (ibuffer-mark-for-delete nil) ; Clear existing marks
-   (ibuffer-mark-by-name-regexp "^\\*.*\\*$"))
+  ;; Ensure all-the-icons for visual enhancement
+  (use-package
+    all-the-icons-ibuffer
+    :ensure t
+    :hook (ibuffer-mode . all-the-icons-ibuffer-mode)
+    :config
+    (setq all-the-icons-ibuffer-icon-size 1.0)
+    (setq all-the-icons-ibuffer-icon-v-adjust 0.0)
+    (setq all-the-icons-ibuffer-human-readable-size t) ; Readable file sizes
+    ;; Ensure icons render correctly with modus-vivendi
+    (set-face-attribute 'all-the-icons-ibuffer-file-face nil
+                        :foreground "#88c0d0") ; Cyan for files
+    (set-face-attribute 'all-the-icons-ibuffer-dir-face nil
+                        :foreground "#81a1c1"
+                        :weight 'bold)) ; Blue for dirs
 
- (defun my-ibuffer-mark-dired-buffers ()
-   "Mark all dired buffers."
-   (interactive)
-   (ibuffer-mark-for-delete nil) ; Clear existing marks
-   (ibuffer-mark-by-mode 'dired-mode))
+  ;; Custom functions for ibuffer
+  (defun my-ibuffer-mark-unsaved-buffers ()
+    "Mark all unsaved file-visiting buffers."
+    (interactive)
+    (ibuffer-mark-for-delete nil) ; Clear existing marks
+    (ibuffer-mark-unsaved-buffers))
 
- (defun my-ibuffer-toggle-filter-group-display ()
-   "Toggle display of empty filter groups."
-   (interactive)
-   (setq ibuffer-show-empty-filter-groups
-         (not ibuffer-show-empty-filter-groups))
-   (ibuffer-update nil t))
+  (defun my-ibuffer-mark-special-buffers ()
+    "Mark all special buffers (starting with *)."
+    (interactive)
+    (ibuffer-mark-for-delete nil) ; Clear existing marks
+    (ibuffer-mark-by-name-regexp "^\\*.*\\*$"))
 
- ;; Keybindings for ibuffer
- (define-key
-  ibuffer-mode-map (kbd "/ u") #'my-ibuffer-mark-unsaved-buffers)
- (define-key
-  ibuffer-mode-map (kbd "/ *") #'my-ibuffer-mark-special-buffers)
- (define-key
-  ibuffer-mode-map (kbd "/ d") #'my-ibuffer-mark-dired-buffers)
- (define-key
-  ibuffer-mode-map
-  (kbd "/ t")
-  #'my-ibuffer-toggle-filter-group-display)
- (define-key
-  ibuffer-mode-map
-  (kbd "C-c C-g")
-  #'ibuffer-switch-to-saved-filter-groups)
+  (defun my-ibuffer-mark-dired-buffers ()
+    "Mark all dired buffers."
+    (interactive)
+    (ibuffer-mark-for-delete nil) ; Clear existing marks
+    (ibuffer-mark-by-mode 'dired-mode))
 
- ;; Project-aware ibuffer
- (defun my-ibuffer-project ()
-   "Open ibuffer filtered to current project buffers."
-   (interactive)
-   (ibuffer)
-   (ibuffer-filter-by-predicate
-    (lambda ()
-      (if-let ((project (project-current)))
-        (let ((root (project-root project)))
-          (and (buffer-file-name)
-               (string-prefix-p root (buffer-file-name))))
-        nil))))
+  (defun my-ibuffer-toggle-filter-group-display ()
+    "Toggle display of empty filter groups."
+    (interactive)
+    (setq ibuffer-show-empty-filter-groups
+          (not ibuffer-show-empty-filter-groups))
+    (ibuffer-update nil t))
 
- ;; Custom project filter
- (with-eval-after-load 'ibuf-ext
-   (define-ibuffer-filter
-    project-buffers
-    "Filter buffers that belong to the current project."
-    (:description "project buffers" :reader nil)
-    (if-let ((project (project-current)))
-      (let ((root (project-root project)))
-        (and (buffer-file-name)
-             (string-prefix-p root (buffer-file-name))))
-      nil)))
+  ;; Keybindings for ibuffer
+  (define-key
+   ibuffer-mode-map (kbd "/ u") #'my-ibuffer-mark-unsaved-buffers)
+  (define-key
+   ibuffer-mode-map (kbd "/ *") #'my-ibuffer-mark-special-buffers)
+  (define-key
+   ibuffer-mode-map (kbd "/ d") #'my-ibuffer-mark-dired-buffers)
+  (define-key
+   ibuffer-mode-map
+   (kbd "/ t")
+   #'my-ibuffer-toggle-filter-group-display)
+  (define-key
+   ibuffer-mode-map
+   (kbd "C-c C-g")
+   #'ibuffer-switch-to-saved-filter-groups)
 
- ;; Keybindings for project filter
- (define-key
-  ibuffer-mode-map (kbd "/ p") #'ibuffer-filter-by-project-buffers)
- (global-set-key (kbd "C-x p b") #'my-ibuffer-project)
-
- ;; Which-key integration
- (with-eval-after-load 'which-key
-   (which-key-add-key-based-replacements
-    "C-x C-b"
-    "ibuffer"
-    "C-x p b"
-    "project-ibuffer"
-    "/ u"
-    "mark-unsaved"
-    "/ *"
-    "mark-special"
-    "/ d"
-    "mark-dired"
-    "/ t"
-    "toggle-filter-groups"
-    "/ p"
-    "filter-project")))
+  ;; Which-key integration
+  (with-eval-after-load 'which-key
+    (which-key-add-key-based-replacements
+      "C-x C-b"
+      "ibuffer"
+      "/ u"
+      "mark-unsaved"
+      "/ *"
+      "mark-special"
+      "/ d"
+      "mark-dired"
+      "/ t"
+      "toggle-filter-groups"
+      "/ p"
+      "filter-project")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  Dired                                    ;;
@@ -2300,12 +2271,13 @@ TIMEOUT is duration in seconds (default 5)."
    ("C-c w" . dired-copy-file-path)
    ("C-c f" . dired-consult-filter))
   :hook
-  ((dired-mode . dired-hide-details-mode)
+  (
+                                        ;(dired-mode . dired-hide-details-mode)
    (dired-mode . all-the-icons-dired-mode)
    (dired-mode . dired-preview-mode)
    (dired-mode . hl-line-mode))
   :custom
-  (dired-listing-switches "-lah --group-directories-first")
+  (dired-listing-switches "-lah --group-directories-first --time=access")
   (dired-dwim-target t)
   (dired-recursive-copies 'always)
   (dired-recursive-deletes 'always)
@@ -2313,6 +2285,7 @@ TIMEOUT is duration in seconds (default 5)."
   (dired-hide-details-hide-symlink-targets nil)
   (dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open")))
   (dired-use-ls-dired t)
+  (dired-git-info-auto-enable t)
   :config
   (require 'dired-x)
   (setq dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open")))
@@ -2359,7 +2332,8 @@ TIMEOUT is duration in seconds (default 5)."
   (use-package
     dired-git-info
     :ensure t
-    :custom (dgi-auto-hide-details-p nil)
+    :custom
+    (dgi-auto-hide-details-p nil)
     :config
     (setq dired-git-info-format " (%s)")
     (define-key dired-mode-map ")" 'dired-git-info-mode))
@@ -2394,33 +2368,7 @@ TIMEOUT is duration in seconds (default 5)."
   :config
   (setq eww-auto-rename-buffer 'title)  ; Nicer buffer names
   ;; Advice EWW to launch certain URLs using the generic launcher rather than EWW.
-  (defcustom rgr/eww-external-launch-url-chunks '("youtube")
-    "If any component of this list is contained in an EWW url then it will use `browse-url-generic to launch that url instead of `eww"
-    :type '(repeat string))
-  (advice-add eww (around rgr/eww-extern-advise activate)
-              "Use `browse-url-generic if any part of URL is contained in `rgr/eww-external-launch-url-chunks"
-              (if (string-match-p (regexp-opt rgr/eww-external-launch-url-chunks) url)
-                  (progn
-                    (call-process-shell-command "swaymsg workspace number 2" nil 0)
-                    (browse-url-generic url))
-                ad-do-it))
-  (defun rgr/eww-after-render ()
-    ;;move point line to top
-    (condition-case err
-        (dotimes (_ 2)
-          (recenter-top-bottom))
-      (error nil)))
-  (defun rgr/eww-launch-external-browser-from-buffer()
-    (interactive)
-    (emacs-alert "Launching external browser")
-    (eww-browse-with-external-browser)
-    (quit-window))
-  :custom
-  (eww-history-limit 256)
-  :hook (eww-after-render . rgr/eww-after-render)
-  :bind
-  (:map eww-mode-map
-        ( "&" . rgr/eww-launch-external-browser-from-buffer)))
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     pdf                                   ;;
@@ -2889,12 +2837,12 @@ With ARG, move that many defuns forward."
  (setq treesit-fold-indicators-priority 100)
  :bind
  (:map prog-mode-map
-       ("C-c f t" . treesit-fold-toggle)
-       ("C-c f T" . treesit-fold-toggle-all)
-       ("C-c f o" . treesit-fold-open)
-       ("C-c f O" . treesit-fold-open-all)
-       ("C-c f c" . treesit-fold-close)
-       ("C-c f C" . treesit-fold-close-all)))
+       ("C-c F t" . treesit-fold-toggle)
+       ("C-c F T" . treesit-fold-toggle-all)
+       ("C-c F o" . treesit-fold-open)
+       ("C-c F O" . treesit-fold-open-all)
+       ("C-c F c" . treesit-fold-close)
+       ("C-c F C" . treesit-fold-close-all)))
 
 ;; Tree-sitter playground for debugging
 (use-package
@@ -3013,13 +2961,13 @@ With ARG, move that many defuns forward."
     "C-c t d" "debug node"
     "C-c t e" "explore"
     "C-c t i" "inspect"
-    "C-c f" "folding"
-    "C-c f t" "toggle fold"
-    "C-c f T" "toggle all"
-    "C-c f o" "open fold"
-    "C-c f O" "open all"
-    "C-c f c" "close fold"
-    "C-c f C" "close all"))
+    "C-c F" "folding"
+    "C-c F t" "toggle fold"
+    "C-c F T" "toggle all"
+    "C-c F o" "open fold"
+    "C-c F O" "open all"
+    "C-c F c" "close fold"
+    "C-c F C" "close all"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                So-long-mode                               ;;
@@ -3194,7 +3142,8 @@ With ARG, move that many defuns forward."
           "nano"
           "ssh"
           "tail"
-          "watch"))
+          "watch"
+          "source"))
   (setq eshell-visual-subcommands ;; Subcommands needing terminal
         '(("git" "log" "diff" "show")))
   (setq eshell-buffer-maximum-lines 10000) ;; Buffer line limit
@@ -3254,7 +3203,7 @@ With ARG, move that many defuns forward."
     (eshell-bol)
     (eshell-next-input 1))
 
-  ;; Disable visual distr actions
+  ;; Disable visual distractions
   (defun my-eshell-disable-distractions ()
     "Disable line numbers and highlighting in Eshell and subprocess buffers."
     (display-line-numbers-mode -1)
@@ -3315,20 +3264,14 @@ With ARG, move that many defuns forward."
     :config
     (eshell-git-prompt-use-theme 'powerline)) ;; Use powerline theme
 
-  ;; Enable eshell-z for directory navigation
-  (use-package
-    eshell-z
-    :ensure t
-    :after eshell
-    :config
-    (require 'eshell-z)
-    (add-hook 'eshell-mode-hook (lambda () (eshell-z-mode 1))))
+  :bind (("C-c e" . 'eshell))
 
   :hook
   ((eshell-mode . my-eshell-disable-distractions) ;; Disable distractions
    (eshell-mode . my-eshell-setup-aliases) ;; Setup aliases
    (eshell-pre-output-filter . my-eshell-truncate-buffer) ;; Truncate buffer
-   (eshell-visual-subprocess-hook . my-eshell-disable-distractions))) ;; Subprocess distractions
+   (eshell-visual-subprocess-hook . my-eshell-disable-distractions)
+   ('eshell-mode . eat-eshell-visual-command-mode))) ;; Subprocess distractions
 
 ;; E MA I L EMAIL
 
@@ -3351,9 +3294,9 @@ With ARG, move that many defuns forward."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- calc
- :ensure nil ;; calc is built-in, no need to install
- :bind (("C-c c" . 'calc)))
+  calc
+  :ensure nil ;; calc is built-in, no need to install
+  :bind (("C-c \\" . 'calc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Fix Emacsclient                               ;;
@@ -3579,6 +3522,56 @@ With ARG, move that many defuns forward."
   ;; Additional configurations or hooks can be placed here.
   )
 
+;;;;; EAT EAT EAT
+(use-package eat
+  :ensure t  ;; Automatically install eat from NonGNU ELPA
+  :init
+  ;; Preload Eat so everything is ready on first use
+  (require 'eat)
+
+  ;; Set EAT_SHELL_INTEGRATION_DIR early
+  (let ((eat-dir (file-name-directory (locate-library "eat"))))
+    (when eat-dir
+      (setenv "EAT_SHELL_INTEGRATION_DIR" eat-dir)))
+
+  ;; Optionally ensure integration file is sourced in ~/.bashrc
+  (let* ((eat-dir (file-name-directory (locate-library "eat")))
+         (integration-file (and eat-dir (expand-file-name "integration/bash" eat-dir)))
+         (bashrc (expand-file-name "~/.bashrc")))
+    (when (and integration-file (file-exists-p integration-file) (file-exists-p bashrc))
+      (unless (with-temp-buffer
+                (insert-file-contents bashrc)
+                (re-search-forward "EAT_SHELL_INTEGRATION_DIR/bash\\>" nil t))
+        (with-temp-buffer
+          (insert "[ -n \"$EAT_SHELL_INTEGRATION_DIR\" ] && \\\n")
+          (insert "  source \"$EAT_SHELL_INTEGRATION_DIR/bash\"\n")
+          (append-to-file (point-min) (point-max) bashrc)))))
+
+  :custom
+  (eat-shell (or (getenv "SHELL") "/sbin/bash"))
+  (eat-kill-buffer-on-exit t)
+  (eat-enable-blinking-text t)
+  (eat-enable-mouse t)
+  (eat-semi-char-non-bound-keys
+   '([?\C-x] [?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-:] [?\M-&] [?\C-\M-c]))
+  (eat-eshell-semi-char-non-bound-keys
+   '([?\C-x] [?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-:] [?\M-&] [?\C-\M-c]))
+  (eat-enable-shell-prompt-annotation t)
+  (eat-term-scrollback-size 100000)
+  (eat-term-resize t)
+
+  :hook
+  ((eshell-load-hook . eat-eshell-mode)
+   (eshell-load-hook . eat-eshell-visual-command-mode)
+   (eat-mode-hook . (lambda ()
+                      (eat-update-semi-char-mode-map)
+                      (eat-eshell-update-semi-char-mode-map)))
+   (eat-mode-hook . eat-semi-char-mode))
+
+  :delight
+  (eat-eshell-mode nil)
+  (eat-eshell-visual-command-mode nil))
+
 ;;;;;
 ;; GPTEL
 ;;;;;
@@ -3770,26 +3763,6 @@ With ARG, move that many defuns forward."
                        face italic
                        mouse-face mode-line-highlight))))
 
-;;;; `project'
-(use-package project
-  :ensure nil
-  :bind
-  (("C-x p ." . project-dired)
-   ("C-x p C-g" . keyboard-quit)
-   ("C-x p <return>" . project-dired)
-   ("C-x p <delete>" . project-forget-project))
-  :config
-  (setopt project-switch-commands
-          '((project-find-file "Find file")
-            (project-find-regexp "Find regexp")
-            (project-find-dir "Find directory")
-            (project-dired "Root dired")
-            (project-vc-dir "VC-Dir")
-            (project-shell "Shell")
-            (keyboard-quit "Quit")))
-  (setq project-vc-extra-root-markers '(".project")) ; Emacs 29
-  (setq project-key-prompt-style t)) ; Emacs 30
-
 ;;; General minibuffer settings
 (use-package minibuffer
   :ensure nil
@@ -3818,7 +3791,7 @@ With ARG, move that many defuns forward."
   :ensure nil
   :bind
   (
-   ("C-c e" . shell)
+   ("C-c E" . shell)
    :map shell-mode-map
    ("C-c C-k" . comint-clear-buffer)
    ("C-c C-w" . comint-write-output))
@@ -3897,178 +3870,6 @@ With ARG, move that many defuns forward."
   :ensure t
   :init (volatile-highlights-mode 1))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                  NOTMUCH                                  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package notmuch
-  :load-path "/usr/share/emacs/site-lisp/"
-  :defer t
-  :commands (notmuch notmuch-mua-new-mail)
-  :init
-  ;; Ensure notmuch CLI is available
-  (unless (executable-find "notmuch")
-    (error "notmuch CLI not found. Please install notmuch"))
-
-  ;; Check notmuch version compatibility
-  (when (executable-find "notmuch")
-    (let ((version-output (shell-command-to-string "notmuch --version")))
-      (unless (string-match "notmuch \\([0-9]+\\.[0-9]+\\)" version-output)
-        (warn "Could not determine notmuch version"))
-      (let ((version (match-string 1 version-output)))
-        (when (version< version "0.37")
-          (warn "notmuch version %s may not support all features. Recommend 0.37+" version)))))
-
-  :config
-  ;; Core notmuch settings
-  (setq notmuch-command "notmuch")
-  (setq notmuch-database-path (expand-file-name "~/Mail"))
-
-  ;; General UI settings
-  (setq notmuch-show-logo nil
-        notmuch-column-control 1.0
-        notmuch-hello-auto-refresh t
-        notmuch-hello-recent-searches-max 20
-        notmuch-hello-thousands-separator ""
-        notmuch-hello-sections '(notmuch-hello-insert-saved-searches)
-        notmuch-show-all-tags-list t)
-
-  ;; Search configuration
-  (setq notmuch-search-oldest-first nil)
-  (setq notmuch-search-result-format
-        '(("date" . "%12s  ")
-          ("count" . "%-7s  ")
-          ("authors" . "%-20s  ")
-          ("subject" . "%-80s  ")
-          ("tags" . "(%s)")))
-  (setq notmuch-tree-result-format
-        '(("date" . "%12s  ")
-          ("authors" . "%-20s  ")
-          ((("tree" . "%s")
-            ("subject" . "%s"))
-           . " %-80s  ")
-          ("tags" . "(%s)")))
-  (setq notmuch-search-line-faces
-        '(("unread" . notmuch-search-unread-face)
-          ("flag" . italic)))
-  (setq notmuch-show-empty-saved-searches t)
-
-  ;; Saved searches
-  (setq notmuch-saved-searches
-        '((:name "inbox" :query "tag:inbox" :sort-order newest-first)
-          (:name "unread" :query "tag:unread" :sort-order newest-first)
-          (:name "wet" :query "tag:wet" :sort-order newest-first)
-          (:name "grim" :query "tag:grim" :sort-order newest-first)
-          (:name "tj" :query "tag:tj" :sort-order newest-first)
-          (:name "theesfeld" :query "tag:theesfeld" :sort-order newest-first)
-          (:name "samhain" :query "tag:samhain" :sort-order newest-first)
-          (:name "emacs" :query "tag:emacs" :sort-order newest-first)
-          (:name "spam" :query "tag:spam" :sort-order newest-first)
-          (:name "list" :query "tag:list" :sort-order newest-first)
-          (:name "wet-unread" :query "tag:wet and tag:unread" :sort-order newest-first)
-          (:name "grim-unread" :query "tag:grim and tag:unread" :sort-order newest-first)
-          (:name "tj-unread" :query "tag:tj and tag:unread" :sort-order newest-first)
-          (:name "theesfeld-unread" :query "tag:theesfeld and tag:unread" :sort-order newest-first)
-          (:name "samhain-unread" :query "tag:samhain and tag:unread" :sort-order newest-first)
-          (:name "emacs-unread" :query "tag:emacs and tag:unread" :sort-order newest-first)
-          (:name "spam-unread" :query "tag:spam and tag:unread" :sort-order newest-first)
-          (:name "list-unread" :query "tag:list and tag:unread" :sort-order newest-first)))
-
-  ;; Tag configuration
-  (setq notmuch-archive-tags nil ; I do not archive email
-        notmuch-message-replied-tags '("+replied")
-        notmuch-message-forwarded-tags '("+forwarded")
-        notmuch-show-mark-read-tags '("-unread")
-        notmuch-draft-tags '("+draft")
-        notmuch-draft-folder "drafts"
-        notmuch-draft-save-plaintext 'ask)
-
-  ;; Tag formatting
-  (setq notmuch-tag-formats
-        '(("unread" (propertize tag 'face 'notmuch-tag-unread))
-          ("flag" (propertize tag 'face 'notmuch-tag-flagged)
-           (concat tag "🚩")))
-        notmuch-tag-deleted-formats
-        '(("unread" (notmuch-apply-face bare-tag 'notmuch-tag-deleted)
-           (concat "👁️‍🗨️" tag))
-          (".*" (notmuch-apply-face tag 'notmuch-tag-deleted)
-           (concat "🚫" tag)))
-        notmuch-tag-added-formats
-        '(("del" (notmuch-apply-face tag 'notmuch-tag-added)
-           (concat "💥" tag))
-          (".*" (notmuch-apply-face tag 'notmuch-tag-added)
-           (concat "🏷️" tag))))
-
-  ;; Email composition
-  (setq notmuch-mua-compose-in 'current-window)
-  (setq notmuch-mua-hidden-headers nil)
-  (setq notmuch-address-command 'internal)
-  (setq notmuch-address-use-company nil)
-  (setq notmuch-always-prompt-for-sender t)
-  (setq notmuch-mua-cite-function 'message-cite-original-without-signature)
-  (setq notmuch-mua-reply-insert-header-p-function 'notmuch-show-reply-insert-header-p-never)
-  (setq notmuch-mua-user-agent-function nil)
-  (setq notmuch-maildir-use-notmuch-insert t)
-  (setq notmuch-crypto-process-mime t)
-  (setq notmuch-crypto-get-keys-asynchronously t)
-  (setq notmuch-mua-attachment-regexp
-        (concat "\\b\\(attache\?ment\\|attached\\|attach\\|"
-                "pi[èe]ce\s+jointe?\\|"
-                "συνημμ[εέ]νο\\|επισυν[αά]πτω\\)\\b"))
-
-  ;; Reading messages
-  (setq notmuch-show-relative-dates t)
-  (setq notmuch-show-all-multipart/alternative-parts nil)
-  (setq notmuch-show-indent-messages-width 0)
-  (setq notmuch-show-indent-multipart nil)
-  (setq notmuch-show-part-button-default-action 'notmuch-show-view-part)
-  (setq notmuch-show-text/html-blocked-images ".") ; block everything
-  (setq notmuch-wash-wrap-lines-length 120)
-  (setq notmuch-unthreaded-show-out nil)
-  (setq notmuch-message-headers '("To" "Cc" "Subject" "Date"))
-  (setq notmuch-message-headers-visible t)
-
-  ;; Disable buttonisation of long quotes
-  (let ((count most-positive-fixnum))
-    (setq notmuch-wash-citation-lines-prefix count
-          notmuch-wash-citation-lines-suffix count))
-
-  ;; Custom functions
-  (defun my-notmuch-message-tab ()
-    "Enhanced message tab completion for notmuch."
-    (interactive)
-    (cond
-     ((save-excursion
-        (goto-char (line-beginning-position))
-        (looking-at "\\(To\\|Cc\\|Bcc\\|From\\):"))
-      (notmuch-address-expand-name))
-     (t (indent-for-tab-command))))
-
-  ;; Apply custom tab function
-  (with-eval-after-load 'message
-    (define-key message-mode-map (kbd "TAB") #'my-notmuch-message-tab))
-
-  :hook
-  ((notmuch-mua-send . notmuch-mua-attachment-check)
-   (notmuch-show . (lambda () (setq-local header-line-format nil))))
-
-  :bind
-  (("C-c m" . notmuch)
-   ("C-x m" . notmuch-mua-new-mail)
-   :map notmuch-search-mode-map
-   ("a" . nil)
-   ("A" . nil)
-   ("/" . notmuch-search-filter)
-   ("r" . notmuch-search-reply-to-thread)
-   ("R" . notmuch-search-reply-to-thread-sender)
-   :map notmuch-show-mode-map
-   ("a" . nil)
-   ("A" . nil)
-   ("r" . notmuch-show-reply)
-   ("R" . notmuch-show-reply-sender)
-   :map notmuch-hello-mode-map
-   ("C-<tab>" . nil)))
-
 ;; SMTP configuration for sending mail
 (use-package smtpmail
   :ensure nil
@@ -4080,10 +3881,61 @@ With ARG, move that many defuns forward."
         smtpmail-debug-info t
         smtpmail-debug-verb t))
 
+;;;;; mastodon
+(use-package mastodon
+  :ensure t
+  :defer t
+  :config
+  (setq mastodon-active-user "blackdream"
+        mastodon-instance-url "https://defcon.social")
+  (mastodon-discover))
+
+;;;;; HACKERNEWS
+(use-package hnreader
+  :ensure t
+  :defer t)
+
+
+
+;;;;; stupid fucking emojis
+;; im tired of the squares
+(use-package emojify
+  :config
+  (when (member "Noto Emoji" (font-family-list))
+    (set-fontset-font
+     t 'symbol (font-spec :family "Noto Emoji") nil 'prepend))
+  (setq emojify-display-style 'unicode)
+  (setq emojify-emoji-styles '(unicode))
+  :hook (after-init . global-emojify-mode))
+
+;;;; CLAUDEMACS
+(use-package claudemacs
+  :ensure t
+  :defer t
+  :vc (:url "https://github.com/cpoile/claudemacs")
+  :config
+  (define-key prog-mode-map (kbd "C-c C-e") #'claudemacs-transient-menu)
+
+  ;; Set a big buffer so we can search our history.
+  (with-eval-after-load 'eat
+    (setq eat-term-scrollback-size 400000))
+  ;; If you want it to pop up as a new buffer. Otherwise, it will use "other buffer."
+  ;; Personally, I use the default "other buffer" style.
+  ;; (add-to-list 'display-buffer-alist
+  ;;              '("^\\*claudemacs"
+  ;;                (display-buffer-in-side-window)
+  ;;                (side . right)
+  ;;                (window-width . 0.33)))
+
+  ;; Turn on autorevert because Claude modifies and saves buffers. Make it a habit to save
+  ;; before asking Claude anything, because it uses the file on disk as its source of truth.
+  ;; (And you don't want to lose edits after it modifies and saves the files.)
+  (global-auto-revert-mode t)
+  )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (put 'eshell 'disabled nil)
 (provide 'init)
-
 ;;; init.el ends here

@@ -11,6 +11,24 @@
       inhibit-startup-echo-area-message user-login-name ; read the docstring
       inhibit-startup-buffer-menu t)
 
+(when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
+  (set-face-attribute 'default nil
+                      :font "BerkeleyMonoVariable Nerd Font Mono"
+                      :height 140))
+
+;; Set variable-pitch font (optional, for prose or Org-mode)
+(when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
+  (set-face-attribute 'variable-pitch nil
+                      :font "BerkeleyMonoVariable Nerd Font Mono"
+                      :height 160))
+
+;; Customize font-lock faces
+(set-face-attribute 'font-lock-comment-face nil
+                    :slant 'italic
+                    :weight 'light)
+(set-face-attribute 'font-lock-keyword-face nil
+                    :weight 'black)
+
 (dolist (variable '(initial-frame-alist default-frame-alist))
   (set variable `((width . (text-pixels . 800))
                   (height . (text-pixels . 900))
