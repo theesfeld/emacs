@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-18 17:45:12 by grim>
+;; Time-stamp: <Last changed 2025-06-19 15:19:30 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3962,6 +3962,31 @@ With ARG, move that many defuns forward."
   (setq emojify-display-style 'unicode)
   (setq emojify-emoji-styles '(unicode))
   :hook (after-init . global-emojify-mode))
+
+;;;; CLAUDEMACS
+(use-package claudemacs
+  :ensure t
+  :defer t
+  :vc (:url "https://github.com/cpoile/claudemacs")
+  :config
+  (define-key prog-mode-map (kbd "C-c C-e") #'claudemacs-transient-menu)
+
+  ;; Set a big buffer so we can search our history.
+  (with-eval-after-load 'eat
+    (setq eat-term-scrollback-size 400000))
+  ;; If you want it to pop up as a new buffer. Otherwise, it will use "other buffer."
+  ;; Personally, I use the default "other buffer" style.
+  ;; (add-to-list 'display-buffer-alist
+  ;;              '("^\\*claudemacs"
+  ;;                (display-buffer-in-side-window)
+  ;;                (side . right)
+  ;;                (window-width . 0.33)))
+
+  ;; Turn on autorevert because Claude modifies and saves buffers. Make it a habit to save
+  ;; before asking Claude anything, because it uses the file on disk as its source of truth.
+  ;; (And you don't want to lose edits after it modifies and saves the files.)
+  (global-auto-revert-mode t)
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
