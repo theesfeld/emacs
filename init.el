@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-19 15:37:39 by grim>
+;; Time-stamp: <Last changed 2025-06-20 07:22:49 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3932,6 +3932,38 @@ With ARG, move that many defuns forward."
   ;; (And you don't want to lose edits after it modifies and saves the files.)
   (global-auto-revert-mode t)
   )
+
+(use-package confluemacs
+  :vc (:url "https://github.com/theesfeld/confluemacs.git"
+            :rev :newest)
+  :ensure t
+  :defer t
+  :commands (confluemacs
+             confluemacs-check-api-version
+             confluemacs-validate-configuration
+             confluemacs-recover-from-crash)
+  :bind (("C-c f c" . confluemacs)
+         ("C-c f v" . confluemacs-check-api-version)
+         ("C-c f r" . confluemacs-recover-from-crash))
+  :hook ((confluemacs-mode . hl-line-mode)
+         (kill-emacs . confluemacs-check-unsaved-changes))
+  :custom
+  (confluemacs-base-url "https://citywide-team.atlassian.net/wiki")
+  (confluemacs-auth-source-host "citywide-team.atlassian.net")
+  (confluemacs-api-version "v2")
+  (confluemacs-timeout 15)
+  (confluemacs-auto-save-interval 300)
+  (confluemacs-auto-save-directory
+   (expand-file-name "confluemacs-drafts" user-emacs-directory))
+  (confluemacs-expand-default "space,body.storage,version,container,ancestors")
+  :config
+  (confluemacs-validate-configuration)
+  (add-hook 'confluemacs-mode-hook
+            (lambda ()
+              (setq mode-line-format
+                    (append mode-line-format
+                            '(" " (:eval (when (bound-and-true-p confluemacs-content-modified)
+                                           " [Modified]"))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
