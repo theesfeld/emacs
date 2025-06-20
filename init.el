@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-20 07:22:49 by grim>
+;; Time-stamp: <Last changed 2025-06-20 18:11:37 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1717,146 +1717,145 @@ TIMEOUT is duration in seconds (default 5)."
 
 ;;; Org Mode Setup
 (use-package
- org
- :ensure nil
- :init
- ;; Load required Org extensions early
- (require 'org-protocol)
- (require 'org-download)
- (require 'org-id)
+  org
+  :ensure nil
+  :init
+  ;; Load required Org extensions early
+  (require 'org-protocol)
+  (require 'org-download)
+  (require 'org-id)
 
- ;; Define prefix keymap globally
- (defvar my-org-prefix-map (make-sparse-keymap)
-   "Prefix keymap for Org Mode commands.")
- (define-prefix-command 'my-org-prefix-map)
- (global-set-key (kbd "C-c o") 'my-org-prefix-map)
+  ;; Define prefix keymap globally
+  (defvar my-org-prefix-map (make-sparse-keymap)
+    "Prefix keymap for Org Mode commands.")
+  (define-prefix-command 'my-org-prefix-map)
+  (global-set-key (kbd "C-c o") 'my-org-prefix-map)
 
- :config
- ;; Core Org settings
- (setq org-directory "~/.org/")
- (setq org-startup-indented t)
- (setq org-startup-folded t)
- (setq org-return-follows-link t)
- (setq org-hide-emphasis-markers t)
- (setq org-startup-with-inline-images t)
- (setq org-log-done 'time)
- (setq org-id-track-globally t) ; Unique IDs for sync safety
- (setq org-todo-keywords
-       '((sequence
-          "TODO(t)"
-          "NEXT(n)"
-          "WAITING(w@/!)"
-          "|"
-          "DONE(d!)"
-          "CANCELED(c@)")))
- (setq org-clock-persist 'history)
- (setq org-refile-targets '((org-agenda-files :maxlevel . 3)))
- (setq org-refile-use-outline-path t)
- (setq org-outline-path-complete-in-steps nil)
+  :config
+  ;; Core Org settings
+  (setq org-directory "~/.org/")
+  (setq org-startup-indented t)
+  (setq org-startup-folded t)
+  (setq org-return-follows-link t)
+  (setq org-hide-emphasis-markers t)
+  (setq org-startup-with-inline-images t)
+  (setq org-log-done 'time)
+  (setq org-id-track-globally t) ; Unique IDs for sync safety
+  (setq org-todo-keywords
+        '((sequence
+           "TODO(t)"
+           "NEXT(n)"
+           "WAITING(w@/!)"
+           "|"
+           "DONE(d!)"
+           "CANCELED(c@)")))
+  (setq org-clock-persist 'history)
+  (setq org-refile-targets '((org-agenda-files :maxlevel . 3)))
+  (setq org-refile-use-outline-path t)
+  (setq org-outline-path-complete-in-steps nil)
 
- ;; Dynamically collect agenda files
- (defun my-org-agenda-files ()
-   "Return a list of all Org files for agenda, including local and Denote notes."
-   (delete-dups
-    (append
-     (directory-files "~/.org/" t "^[^b].*\\.org$" t)
-     (directory-files "~/.org/" t "b-.*\\.org$" t)
-     (directory-files "~/Documents/notes/" t "\\.org$" t))))
+  ;; Dynamically collect agenda files
+  (defun my-org-agenda-files ()
+    "Return a list of all Org files for agenda, including local and Denote notes."
+    (delete-dups
+     (append
+      (directory-files "~/.org/" t "^[^b].*\\.org$" t)
+      (directory-files "~/Documents/notes/" t "\\.org$" t))))
 
- (setq org-agenda-files (my-org-agenda-files)) ; Initial setting
- (defun my-org-update-agenda-files ()
-   "Update org-agenda-files dynamically."
-   (setq org-agenda-files (my-org-agenda-files)))
- (add-hook 'org-agenda-mode-hook #'my-org-update-agenda-files)
+  (setq org-agenda-files (my-org-agenda-files)) ; Initial setting
+  (defun my-org-update-agenda-files ()
+    "Update org-agenda-files dynamically."
+    (setq org-agenda-files (my-org-agenda-files)))
+  (add-hook 'org-agenda-mode-hook #'my-org-update-agenda-files)
 
- ;; Clock persistence
- (org-clock-persistence-insinuate)
+  ;; Clock persistence
+  (org-clock-persistence-insinuate)
 
- ;; Custom key bindings under C-c o
- (define-key my-org-prefix-map (kbd "o") #'my-org-open-agenda)
- (define-key my-org-prefix-map (kbd "c") #'org-capture)
- (define-key my-org-prefix-map (kbd "r") #'my-org-refile-to-todos)
- (define-key my-org-prefix-map (kbd "O") #'org-download-clipboard)
- (define-key my-org-prefix-map (kbd "t") #'my-org-show-todo-list)
- (define-key my-org-prefix-map (kbd "n") #'my-org-capture-note-quick)
- (define-key my-org-prefix-map (kbd "d") #'my-denote-capture-note)
+  ;; Custom key bindings under C-c o
+  (define-key my-org-prefix-map (kbd "o") #'my-org-open-agenda)
+  (define-key my-org-prefix-map (kbd "c") #'org-capture)
+  (define-key my-org-prefix-map (kbd "r") #'my-org-refile-to-todos)
+  (define-key my-org-prefix-map (kbd "O") #'org-download-clipboard)
+  (define-key my-org-prefix-map (kbd "t") #'my-org-show-todo-list)
+  (define-key my-org-prefix-map (kbd "n") #'my-org-capture-note-quick)
+  (define-key my-org-prefix-map (kbd "d") #'my-denote-capture-note)
 
- ;; Agenda keymap
- (defvar my-org-agenda-map (make-sparse-keymap)
-   "Keymap for Org Agenda commands.")
- (define-key my-org-prefix-map (kbd "a") my-org-agenda-map)
- (define-key my-org-agenda-map (kbd "a") #'org-agenda)
- (define-key my-org-agenda-map (kbd "t") #'my-org-agenda-today)
- (define-key
-  my-org-agenda-map (kbd "c") #'my-org-agenda-goto-current-clock)
+  ;; Agenda keymap
+  (defvar my-org-agenda-map (make-sparse-keymap)
+    "Keymap for Org Agenda commands.")
+  (define-key my-org-prefix-map (kbd "a") my-org-agenda-map)
+  (define-key my-org-agenda-map (kbd "a") #'org-agenda)
+  (define-key my-org-agenda-map (kbd "t") #'my-org-agenda-today)
+  (define-key
+   my-org-agenda-map (kbd "c") #'my-org-agenda-goto-current-clock)
 
- ;; Which-key integration
- (with-eval-after-load 'which-key
-   (which-key-add-key-based-replacements
-    "C-c o"
-    "org-mode"
-    "C-c o a"
-    "agenda"
-    "C-c o d"
-    "denote"
-    "C-c o t"
-    "todo-list"))
+  ;; Which-key integration
+  (with-eval-after-load 'which-key
+    (which-key-add-key-based-replacements
+      "C-c o"
+      "org-mode"
+      "C-c o a"
+      "agenda"
+      "C-c o d"
+      "denote"
+      "C-c o t"
+      "todo-list"))
 
- ;; Utility functions
- (defun my-org-refile-to-todos ()
-   "Refile current heading to todos.org under 'Tasks'."
-   (interactive)
-   (org-refile
-    nil nil
-    (list
-     "Tasks" (expand-file-name "todos.org" org-directory) nil nil)))
+  ;; Utility functions
+  (defun my-org-refile-to-todos ()
+    "Refile current heading to todos.org under 'Tasks'."
+    (interactive)
+    (org-refile
+     nil nil
+     (list
+      "Tasks" (expand-file-name "todos.org" org-directory) nil nil)))
 
- (defun my-org-agenda-today ()
-   "Show agenda for today with open TODOs."
-   (interactive)
-   (org-agenda nil "d"))
+  (defun my-org-agenda-today ()
+    "Show agenda for today with open TODOs."
+    (interactive)
+    (org-agenda nil "d"))
 
- (defun my-org-show-todo-list ()
-   "Show all open TODOs in an agenda buffer."
-   (interactive)
-   (when (get-buffer-window "*Org Agenda*")
-     (delete-window (get-buffer-window "*Org Agenda*")))
-   (org-switch-to-buffer-other-window "*Org Agenda*")
-   (org-agenda nil "t"))
+  (defun my-org-show-todo-list ()
+    "Show all open TODOs in an agenda buffer."
+    (interactive)
+    (when (get-buffer-window "*Org Agenda*")
+      (delete-window (get-buffer-window "*Org Agenda*")))
+    (org-switch-to-buffer-other-window "*Org Agenda*")
+    (org-agenda nil "t"))
 
- (defun my-org-capture-note-quick ()
-   "Quickly capture a note without switching buffers."
-   (interactive)
-   (org-capture nil "n"))
+  (defun my-org-capture-note-quick ()
+    "Quickly capture a note without switching buffers."
+    (interactive)
+    (org-capture nil "n"))
 
- (defun my-org-agenda-goto-current-clock ()
-   "Jump to the currently clocked task in agenda."
-   (interactive)
-   (org-agenda nil "a")
-   (org-agenda-goto (org-clock-is-active)))
+  (defun my-org-agenda-goto-current-clock ()
+    "Jump to the currently clocked task in agenda."
+    (interactive)
+    (org-agenda nil "a")
+    (org-agenda-goto (org-clock-is-active)))
 
- (defun my-org-open-agenda ()
-   "Open the Org Agenda in a separate window."
-   (interactive)
-   (when (get-buffer-window "*Org Agenda*")
-     (delete-window (get-buffer-window "*Org Agenda*")))
-   (org-switch-to-buffer-other-window "*Org Agenda*")
-   (org-agenda nil "a")
-   (call-interactively #'org-agenda-day-view))
+  (defun my-org-open-agenda ()
+    "Open the Org Agenda in a separate window."
+    (interactive)
+    (when (get-buffer-window "*Org Agenda*")
+      (delete-window (get-buffer-window "*Org Agenda*")))
+    (org-switch-to-buffer-other-window "*Org Agenda*")
+    (org-agenda nil "a")
+    (call-interactively #'org-agenda-day-view))
 
- ;; Denote integration
- (defun my-denote-capture-note ()
-   "Capture a note using Denote and link it to the current Org file."
-   (interactive)
-   (let ((denote-file (denote-create-note)))
-     (org-capture nil "n")
-     (insert
-      (format "[[file:%s][%s]]"
-              denote-file
-              (file-name-base denote-file)))
-     (org-capture-finalize t)))
+  ;; Denote integration
+  (defun my-denote-capture-note ()
+    "Capture a note using Denote and link it to the current Org file."
+    (interactive)
+    (let ((denote-file (denote-create-note)))
+      (org-capture nil "n")
+      (insert
+       (format "[[file:%s][%s]]"
+               denote-file
+               (file-name-base denote-file)))
+      (org-capture-finalize t)))
 
- :hook (org-capture-prepare-finalize . org-id-get-create))
+  :hook (org-capture-prepare-finalize . org-id-get-create))
 
 (use-package
  org-agenda
