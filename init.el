@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-20 18:11:37 by grim>
+;; Time-stamp: <Last changed 2025-06-20 20:27:04 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3906,63 +3906,6 @@ With ARG, move that many defuns forward."
   (setq emojify-display-style 'unicode)
   (setq emojify-emoji-styles '(unicode))
   :hook (after-init . global-emojify-mode))
-
-;;;; CLAUDEMACS
-(use-package claudemacs
-  :ensure t
-  :defer t
-  :vc (:url "https://github.com/cpoile/claudemacs")
-  :config
-  (define-key prog-mode-map (kbd "C-c C-e") #'claudemacs-transient-menu)
-
-  ;; Set a big buffer so we can search our history.
-  (with-eval-after-load 'eat
-    (setq eat-term-scrollback-size 400000))
-  ;; If you want it to pop up as a new buffer. Otherwise, it will use "other buffer."
-  ;; Personally, I use the default "other buffer" style.
-  ;; (add-to-list 'display-buffer-alist
-  ;;              '("^\\*claudemacs"
-  ;;                (display-buffer-in-side-window)
-  ;;                (side . right)
-  ;;                (window-width . 0.33)))
-
-  ;; Turn on autorevert because Claude modifies and saves buffers. Make it a habit to save
-  ;; before asking Claude anything, because it uses the file on disk as its source of truth.
-  ;; (And you don't want to lose edits after it modifies and saves the files.)
-  (global-auto-revert-mode t)
-  )
-
-(use-package confluemacs
-  :vc (:url "https://github.com/theesfeld/confluemacs.git"
-            :rev :newest)
-  :ensure t
-  :defer t
-  :commands (confluemacs
-             confluemacs-check-api-version
-             confluemacs-validate-configuration
-             confluemacs-recover-from-crash)
-  :bind (("C-c f c" . confluemacs)
-         ("C-c f v" . confluemacs-check-api-version)
-         ("C-c f r" . confluemacs-recover-from-crash))
-  :hook ((confluemacs-mode . hl-line-mode)
-         (kill-emacs . confluemacs-check-unsaved-changes))
-  :custom
-  (confluemacs-base-url "https://citywide-team.atlassian.net/wiki")
-  (confluemacs-auth-source-host "citywide-team.atlassian.net")
-  (confluemacs-api-version "v2")
-  (confluemacs-timeout 15)
-  (confluemacs-auto-save-interval 300)
-  (confluemacs-auto-save-directory
-   (expand-file-name "confluemacs-drafts" user-emacs-directory))
-  (confluemacs-expand-default "space,body.storage,version,container,ancestors")
-  :config
-  (confluemacs-validate-configuration)
-  (add-hook 'confluemacs-mode-hook
-            (lambda ()
-              (setq mode-line-format
-                    (append mode-line-format
-                            '(" " (:eval (when (bound-and-true-p confluemacs-content-modified)
-                                           " [Modified]"))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
