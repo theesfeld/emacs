@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-20 20:27:04 by grim>
+;; Time-stamp: <Last changed 2025-06-22 12:15:05 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3130,7 +3130,7 @@ With ARG, move that many defuns forward."
   (setq eshell-error-if-no-glob t) ;; Error on failed glob
   (setq eshell-hist-ignoredups t) ;; Ignore duplicate history entries
   (setq eshell-save-history-on-exit t) ;; Save history on exit
-  (setq eshell-prefer-lisp-functions nil) ;; Prefer external commands
+  (setq eshell-prefer-lisp-functions t) ;; Prefer external commands
   (setq eshell-destroy-buffer-when-process-dies t) ;; Kill buffer when process dies
   (setq eshell-visual-commands ;; Commands that need a terminal
         '("htop"
