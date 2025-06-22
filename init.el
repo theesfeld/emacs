@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-22 12:20:45 by grim>
+;; Time-stamp: <Last changed 2025-06-22 12:57:22 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3230,7 +3230,7 @@ With ARG, move that many defuns forward."
     (eshell/alias "emacs" "find-file $1") ;; Open in Emacs
     (eshell/alias "g" "git") ;; Git shorthand
     (eshell/alias "d" "dired $1") ;; Open Dired
-    (eshell/alias "fd" "find-dired $PWD ''")
+    (eshell/alias "fd" "find-dired $PWD $1")
     (eshell/alias "rg" "rg --color=always") ;; Ripgrep with color
     )
 
