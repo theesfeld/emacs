@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 08:21:13 by grim>
+;; Time-stamp: <Last changed 2025-06-23 08:26:17 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -442,7 +442,7 @@ The DWIM behaviour of this command is as follows:
     (exwm-randr-mode 1)
     ;; Load the system tray before exwm-init
     (require 'exwm-systemtray)
-    (setq exwm-systemtray-height 24)
+    (setq exwm-systemtray-height 40)
     (setq exwm-systemtray-icon-gap 10)
     (exwm-systemtray-mode 1)
 
