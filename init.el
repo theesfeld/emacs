@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 07:53:59 by grim>
+;; Time-stamp: <Last changed 2025-06-23 08:02:51 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -259,29 +259,27 @@ The DWIM behaviour of this command is as follows:
                   "completion-preview")
 (declare-function completion-preview--hide "completion-preview")
 
+;;;;; EDNC NOTIFICATIONS (DBUS)
+
+(use-package ednc
+  :ensure t
+  :config
+  (defun stack-notifications (&optional hide)
+    (mapconcat (lambda (notification)
+                 (let ((app-name (ednc-notification-app-name notification)))
+                   (unless (member app-name hide)
+                     (push app-name hide)
+                     (ednc-format-notification notification))))
+               (ednc-notifications) ""))
+  (nconc global-mode-string '((:eval (stack-notifications))))
+  (add-hook 'ednc-notification-presentation-functions
+            (lambda (&rest _) (force-mode-line-update t))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     EXWM                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (when (eq window-system 'x)
-
-  ;; Alert package
-  ;; A flexible notification system that supports multiple backends, including libnotify for Linux.
-  (use-package alert
-    :ensure t
-    :defer t
-    :config
-    ;; Set default notification style to libnotify for Linux
-    (setq alert-default-style (if (eq system-type 'gnu/linux) 'libnotify 'message))
-    ;; Optional: Customize notification title
-    (setq alert-default-title "Emacs Notification")
-    ;; Optional: Fade out notifications after 10 seconds
-    (setq alert-fade-time 10)
-    :hook
-    ((exwm-init . alert-initialize))  ;; Initialize alert with EXWM
-    :ensure-system-package
-    ((libnotify-bin . "libnotify-bin"))  ;; Ensure libnotify is installed for notifications
-    )
 
   (defun grim/run-in-background (command)
     (condition-case err
@@ -594,7 +592,7 @@ The DWIM behaviour of this command is as follows:
     ;; Pre-configure settings before mode activation
     (setq desktop-environment-notifications t) ; Enable notifications
     (setq desktop-environment-screenshot-directory
-          "~/Pictures/Screenshots") ; Screenshot path
+          "~/Pictures/Screenshots")     ; Screenshot path
     (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
     (setq
      desktop-environment-volume-get-command
