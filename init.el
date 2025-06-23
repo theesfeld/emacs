@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 10:32:29 by grim>
+;; Time-stamp: <Last changed 2025-06-23 10:35:34 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -249,6 +249,16 @@ The DWIM behaviour of this command is as follows:
   :ensure t
   :hook (after-init . ednc-mode)
   :config
+  (defun show-notification-in-buffer (old new)
+    (let ((name (format "Notification %d" (ednc-notification-id (or old new)))))
+      (with-current-buffer (get-buffer-create name)
+        (if new (let ((inhibit-read-only t))
+                  (if old (erase-buffer) (ednc-view-mode))
+                  (insert (ednc-format-notification new t))
+                  (pop-to-buffer (current-buffer)))
+          (kill-buffer)))))
+  (add-hook 'ednc-notification-presentation-functions
+            #'show-notification-in-buffer)
   (ednc-mode 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
