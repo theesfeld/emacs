@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 08:04:16 by grim>
+;; Time-stamp: <Last changed 2025-06-23 08:21:13 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -203,22 +203,6 @@ The DWIM behaviour of this command is as follows:
    'org-capture-after-finalize-hook
    #'my-org-download-images-from-capture))
 
-(defun my-get-volume ()
-  "Return the current volume percentage using pactl."
-  (let
-      ((output
-        (shell-command-to-string
-         "pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -n1")))
-    (string-to-number (string-trim output "%"))))
-
-;; Helper function to get current brightness from brightnessctl
-(defun my-get-brightness ()
-  "Return the current brightness percentage using brightnessctl."
-  (let ((output (shell-command-to-string "brightnessctl get")))
-    (max (string-to-number
-          (shell-command-to-string "brightnessctl max"))))
-  (round (* 100.0 (/ (string-to-number (string-trim output)) max))))
-
 (defun my/toggle-buffer (buffer-name command)
   "Toggle a buffer with BUFFER-NAME, running COMMAND if it doesn't exist."
   (interactive)
@@ -263,17 +247,30 @@ The DWIM behaviour of this command is as follows:
 
 (use-package ednc
   :ensure t
+  :hook (after-init . ednc-mode)
   :config
-  (defun stack-notifications (&optional hide)
-    (mapconcat (lambda (notification)
-                 (let ((app-name (ednc-notification-app-name notification)))
-                   (unless (member app-name hide)
-                     (push app-name hide)
-                     (ednc-format-notification notification))))
-               (ednc-notifications) ""))
-  (nconc global-mode-string '((:eval (stack-notifications))))
+  ;; Enable the global minor mode
+  (ednc-mode 1)
+
+  ;; Optional: Show notifications in mode-line
+  (defun my/show-notification-in-mode-line ()
+    (mapconcat #'ednc-format-notification (ednc-notifications) " | "))
+
+  ;; Add to mode-line
+  (setq-default mode-line-format
+                (append mode-line-format
+                        '((:eval (when (ednc-notifications)
+                                   (concat " [" (my/show-notification-in-mode-line) "]"))))))
+
+  ;; Force mode-line update on notification changes
   (add-hook 'ednc-notification-presentation-functions
-            (lambda (&rest _) (force-mode-line-update t))))
+            (lambda (&rest _) (force-mode-line-update t)))
+
+  ;; Custom keybindings
+  :bind (("C-c n l" . (lambda () (interactive) (pop-to-buffer "*ednc-log*")))
+         ("C-c n c" . (lambda () (interactive)
+                        (dolist (notification (ednc-notifications))
+                          (ednc-dismiss-notification notification))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     EXWM                                  ;;
