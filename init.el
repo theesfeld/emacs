@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 09:38:55 by grim>
+;; Time-stamp: <Last changed 2025-06-23 09:40:20 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -253,24 +253,25 @@ The DWIM behaviour of this command is as follows:
   (ednc-mode 1)
 
   ;; Optional: Show notifications in mode-line
-  (defun my/show-notification-in-mode-line ()
-    (mapconcat #'ednc-format-notification (ednc-notifications) " | "))
+  ;; (defun my/show-notification-in-mode-line ()
+  ;;   (mapconcat #'ednc-format-notification (ednc-notifications) " | "))
 
-  ;; Add to mode-line
-  (setq-default mode-line-format
-                (append mode-line-format
-                        '((:eval (when (ednc-notifications)
-                                   (concat " [" (my/show-notification-in-mode-line) "]"))))))
+  ;; ;; Add to mode-line
+  ;; (setq-default mode-line-format
+  ;;               (append mode-line-format
+  ;;                       '((:eval (when (ednc-notifications)
+  ;;                                  (concat " [" (my/show-notification-in-mode-line) "]"))))))
 
-  ;; Force mode-line update on notification changes
-  (add-hook 'ednc-notification-presentation-functions
-            (lambda (&rest _) (force-mode-line-update t)))
+  ;; ;; Force mode-line update on notification changes
+  ;; (add-hook 'ednc-notification-presentation-functions
+  ;;           (lambda (&rest _) (force-mode-line-update t)))
 
-  ;; Custom keybindings
-  :bind (("C-c n l" . (lambda () (interactive) (pop-to-buffer "*ednc-log*")))
-         ("C-c n c" . (lambda () (interactive)
-                        (dolist (notification (ednc-notifications))
-                          (ednc-dismiss-notification notification))))))
+  ;; ;; Custom keybindings
+  ;; :bind (("C-c n l" . (lambda () (interactive) (pop-to-buffer "*ednc-log*")))
+  ;;        ("C-c n c" . (lambda () (interactive)
+  ;;                       (dolist (notification (ednc-notifications))
+  ;;                         (ednc-dismiss-notification notification)))))
+  )
 
 (use-package ednc-popup
   :vc (:url "https://codeberg.org/akib/emacs-ednc-popup.git")
