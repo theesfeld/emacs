@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 06:57:16 by grim>
+;; Time-stamp: <Last changed 2025-06-23 07:52:22 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -260,106 +260,31 @@ The DWIM behaviour of this command is as follows:
 (declare-function completion-preview--hide "completion-preview")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                          Emacs Notification System                        ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Core notification function - pure Emacs approach
-(defun my-notify (title message &optional urgency timeout)
-  "Send a notification with TITLE and MESSAGE.
-URGENCY can be 'low, 'normal, or 'critical.
-TIMEOUT is duration in seconds (default 5)."
-  (let ((urgency-str
-         (pcase urgency
-           ('low "low")
-           ('critical "critical")
-           (_ "normal")))
-        (timeout-ms (* 1000 (or timeout 5))))
-    (cond
-     ;; Try desktop notifications first (Linux/freedesktop)
-     ((and (eq system-type 'gnu/linux)
-           (executable-find "notify-send"))
-      (start-process "notify" nil "notify-send"
-                     "--urgency"
-                     urgency-str
-                     "--expire-time"
-                     (number-to-string timeout-ms)
-                     "--app-name"
-                     "Emacs"
-                     title
-                     message))
-     ;; macOS notifications
-     ((and (eq system-type 'darwin) (executable-find "osascript"))
-      (start-process "notify" nil "osascript"
-                     "-e"
-                     (format
-                      "display notification \"%s\" with title \"%s\""
-                      message title)))
-     ;; Windows notifications (if available)
-     ((and (eq system-type 'windows-nt)
-           (executable-find "powershell"))
-      (start-process
-       "notify" nil "powershell"
-       "-Command"
-       (format
-        "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('%s', '%s')"
-        message title)))
-     ;; Fallback to Emacs message
-     (t
-      (message "[%s] %s: %s"
-               (upcase (symbol-name (or urgency 'normal)))
-               title
-               message)))))
-
-;; Enhanced alert system that integrates with the above
-(use-package
-  alert
-  :ensure t
-  :demand t
-  :config
-  ;; Define custom alert style using our notification function
-  (alert-define-style
-   'emacs-notify
-   :title "Emacs Notifications"
-   :notifier
-   (lambda (info)
-     (my-notify (plist-get info :title) (plist-get info :message)
-                (pcase (plist-get info :severity)
-                  ('urgent 'critical)
-                  ('high 'critical)
-                  ('moderate 'normal)
-                  ('normal 'normal)
-                  ('low 'low)
-                  (_ 'normal))
-                (or (plist-get info :timeout) 5))))
-
-  ;; Set as default style
-  (setq alert-default-style 'emacs-notify)
-
-  ;; Configure alert behavior
-  (setq alert-fade-time 5)
-  (setq alert-persist-idle-time 10)
-  (setq alert-log-messages t)
-
-  ;; Add rules for different contexts
-  (alert-add-rule :category "EXWM" :style 'emacs-notify :continue t)
-  (alert-add-rule :category "ERC" :style 'emacs-notify :continue t)
-  (alert-add-rule :category "Org" :style 'emacs-notify :continue t)
-  (alert-add-rule :mode 'exwm-mode :style 'emacs-notify :continue t)
-
-  ;; Test function
-  (defun my-test-notifications ()
-    "Test the notification system."
-    (interactive)
-    (my-notify "Test Notification" "This is a test from Emacs!"
-               'normal
-               3)
-    (alert "Alert test message" :title "Alert Test" :category "Test")))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     EXWM                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (when (eq window-system 'x)
+
+  ;; Emacs Notification Daemon (eosd)
+  ;; Provides a D-Bus-based notification daemon for EXWM, managing notifications from other applications.
+  (use-package eosd
+    :ensure t
+    :defer t
+    :config
+    ;; Start the EOSD notification daemon
+    (eosd)
+    ;; Optional: Customize notification display duration (in seconds)
+    (setq eosd-default-timeout 5)
+    ;; Optional: Customize notification buffer name
+    (setq eosd-buffer-name "*EOSD Notifications*")
+    :hook
+    ((exwm-init . eosd))  ;; Start EOSD when EXWM initializes
+    :init
+    ;; Ensure D-Bus is available (required for eosd)
+    (require 'dbus)
+    :ensure-system-package
+    ((dbus . "dbus"))  ;; Ensure D-Bus is installed on the system
+    )
 
   (defun grim/run-in-background (command)
     (condition-case err
@@ -695,33 +620,7 @@ TIMEOUT is duration in seconds (default 5)."
       (unless (executable-find cmd)
         (message
          "Warning: %s not found; desktop-environment may not work fully"
-         cmd)))
-
-    :hook
-    ;; Notification hooks for volume and brightness changes using our notification system
-    (desktop-environment-volume-changed
-     .
-     (lambda ()
-       (let ((vol (my-get-volume)))
-         (my-notify "Volume" (format "Volume: %d%%" vol) 'normal 2))))
-    (desktop-environment-mute-changed
-     .
-     (lambda ()
-       (my-notify "Volume Mute"
-                  (if (string-match-p
-                       "yes"
-                       (shell-command-to-string
-                        "pactl get-sink-mute @DEFAULT_SINK@"))
-                      "Muted"
-                    "Unmuted")
-                  'normal 2)))
-    (desktop-environment-brightness-changed
-     .
-     (lambda ()
-       (let ((bright (my-get-brightness)))
-         (my-notify "Brightness" (format "Brightness: %d%%" bright)
-                    'normal
-                    2))))))
+         cmd)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
