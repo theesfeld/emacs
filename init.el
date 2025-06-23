@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 10:10:06 by grim>
+;; Time-stamp: <Last changed 2025-06-23 10:20:08 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -267,6 +267,23 @@ The DWIM behaviour of this command is as follows:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (when (eq window-system 'x)
+
+  (use-package windower
+    :ensure t
+    :config
+    (global-set-key (kbd "<s-tab>") 'windower-switch-to-last-buffer)
+    (global-set-key (kbd "<s-o>") 'windower-toggle-single)
+    (global-set-key (kbd "s-\\") 'windower-toggle-split)
+
+    (global-set-key (kbd "<s-M-left>") 'windower-move-border-left)
+    (global-set-key (kbd "<s-M-down>") 'windower-move-border-below)
+    (global-set-key (kbd "<s-M-up>") 'windower-move-border-above)
+    (global-set-key (kbd "<s-M-right>") 'windower-move-border-right)
+
+    (global-set-key (kbd "<s-S-left>") 'windower-swap-left)
+    (global-set-key (kbd "<s-S-down>") 'windower-swap-below)
+    (global-set-key (kbd "<s-S-up>") 'windower-swap-above)
+    (global-set-key (kbd "<s-S-right>") 'windower-swap-right))
 
   (defun grim/run-in-background (command)
     (condition-case err
