@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-22 12:57:22 by grim>
+;; Time-stamp: <Last changed 2025-06-23 06:56:34 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3225,7 +3225,7 @@ With ARG, move that many defuns forward."
     "Define common Eshell aliases."
     (eshell/alias "ff" "find-file $1") ;; Open file in Emacs
     (eshell/alias "ll" "ls -lh --color=yes") ;; Long listing
-    (eshell/alias "la" "ls -lha --color=yes") ;; Long listing with hidden
+    (eshell/alias "la" "ls -asl --color=yes") ;; Long listing with hidden
     (eshell/alias "cls" "eshell/clear") ;; Clear buffer
     (eshell/alias "emacs" "find-file $1") ;; Open in Emacs
     (eshell/alias "g" "git") ;; Git shorthand
@@ -3279,7 +3279,6 @@ With ARG, move that many defuns forward."
   message
   :ensure nil
   :defer t
-  :after gnus
   :config
   (setq message-citation-line-format "On %a, %b %d %Y, %N wrote:\n")
   (setq message-citation-line-function
