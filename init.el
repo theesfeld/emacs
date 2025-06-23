@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 10:56:45 by grim>
+;; Time-stamp: <Last changed 2025-06-23 11:00:03 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -462,9 +462,9 @@ The DWIM behaviour of this command is as follows:
   (add-hook 'ednc-notification-presentation-functions #'ednc--show-notification)
 
   ;; === Keybindings ===
-  (global-set-key (kbd "C-c n n") #'ednc-browse-history)
-  (global-set-key (kbd "C-c n d") #'ednc-dismiss-all)
-  (global-set-key (kbd "C-c n c") #'ednc-clear-history)
+  (global-set-key (kbd "C-c e n") #'ednc-browse-history)
+  (global-set-key (kbd "C-c e d") #'ednc-dismiss-all)
+  (global-set-key (kbd "C-c e c") #'ednc-clear-history)
 
   (ednc-mode 1))
 
