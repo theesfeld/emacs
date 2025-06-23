@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 09:40:20 by grim>
+;; Time-stamp: <Last changed 2025-06-23 09:42:15 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -265,19 +265,13 @@ The DWIM behaviour of this command is as follows:
   ;; ;; Force mode-line update on notification changes
   ;; (add-hook 'ednc-notification-presentation-functions
   ;;           (lambda (&rest _) (force-mode-line-update t)))
-
-  ;; ;; Custom keybindings
-  ;; :bind (("C-c n l" . (lambda () (interactive) (pop-to-buffer "*ednc-log*")))
-  ;;        ("C-c n c" . (lambda () (interactive)
-  ;;                       (dolist (notification (ednc-notifications))
-  ;;                         (ednc-dismiss-notification notification)))))
   )
 
 (use-package ednc-popup
   :vc (:url "https://codeberg.org/akib/emacs-ednc-popup.git")
   :ensure t
   :after ednc
-  :config ((add-hook 'ednc-notification-presentation-functions #'ednc-popup-presentation-function)))
+  :config (add-hook 'ednc-notification-presentation-functions #'ednc-popup-presentation-function))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
