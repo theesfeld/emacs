@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 08:26:17 by grim>
+;; Time-stamp: <Last changed 2025-06-23 08:38:34 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -583,37 +583,37 @@ The DWIM behaviour of this command is as follows:
        (when (string-match-p "firefox" (downcase exwm-class-name))
          (exwm-workspace-rename-buffer exwm-title)))))
 
-  (use-package
-    desktop-environment
-    :ensure t
-    :init
-    ;; Pre-configure settings before mode activation
-    (setq desktop-environment-notifications t) ; Enable notifications
-    (setq desktop-environment-screenshot-directory
-          "~/Pictures/Screenshots")     ; Screenshot path
-    (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
-    (setq
-     desktop-environment-volume-get-command
-     "pactl get-sink-volume @DEFAULT_SINK@ | awk '/Volume:/ {print $5}'")
-    (setq desktop-environment-volume-get-regexp "\\([0-9]+%\\)")
-    (setq desktop-environment-volume-set-command
-          "pactl set-sink-volume @DEFAULT_SINK@ %s%%") ; Set volume
-    (setq
-     desktop-environment-mute-get-command
-     "pactl get-sink-mute @DEFAULT_SINK@ | awk '{print ($2 == \"yes\") ? \"true\" : \"false\"}'")
-    (setq desktop-environment-volume-toggle-command
-          "pactl set-sink-mute @DEFAULT_SINK@ toggle") ; Toggle mute
-    (setq desktop-environment-volume-normal-increment "+5") ; Volume step up
-    (setq desktop-environment-volume-normal-decrement "-5") ; Volume step down
+  ;; (use-package
+  ;;   desktop-environment
+  ;;   :ensure t
+  ;;   :init
+  ;;   ;; Pre-configure settings before mode activation
+  ;;   (setq desktop-environment-notifications t) ; Enable notifications
+  ;;   (setq desktop-environment-screenshot-directory
+  ;;         "~/Pictures/Screenshots")     ; Screenshot path
+  ;;   (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
+  ;;   (setq
+  ;;    desktop-environment-volume-get-command
+  ;;    "pactl get-sink-volume @DEFAULT_SINK@ | awk '/Volume:/ {print $5}'")
+  ;;   (setq desktop-environment-volume-get-regexp "\\([0-9]+%\\)")
+  ;;   (setq desktop-environment-volume-set-command
+  ;;         "pactl set-sink-volume @DEFAULT_SINK@ %s%%") ; Set volume
+  ;;   (setq
+  ;;    desktop-environment-mute-get-command
+  ;;    "pactl get-sink-mute @DEFAULT_SINK@ | awk '{print ($2 == \"yes\") ? \"true\" : \"false\"}'")
+  ;;   (setq desktop-environment-volume-toggle-command
+  ;;         "pactl set-sink-mute @DEFAULT_SINK@ toggle") ; Toggle mute
+  ;;   (setq desktop-environment-volume-normal-increment "+5") ; Volume step up
+  ;;   (setq desktop-environment-volume-normal-decrement "-5") ; Volume step down
 
-    :config
-    ;; Ensure dependencies are installed
-    (desktop-environment-mode 1)
-    (dolist (cmd '("scrot" "slock" "pactl" "brightnessctl"))
-      (unless (executable-find cmd)
-        (message
-         "Warning: %s not found; desktop-environment may not work fully"
-         cmd)))))
+  ;;   :config
+  ;;   ;; Ensure dependencies are installed
+  ;;   (desktop-environment-mode 1)
+  ;;   (dolist (cmd '("scrot" "slock" "pactl" "brightnessctl"))
+  ;;     (unless (executable-find cmd)
+  ;;       (message
+  ;;        "Warning: %s not found; desktop-environment may not work fully"
+  ;;        cmd)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
