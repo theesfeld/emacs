@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 09:42:15 by grim>
+;; Time-stamp: <Last changed 2025-06-23 09:46:06 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -253,26 +253,19 @@ The DWIM behaviour of this command is as follows:
   (ednc-mode 1)
 
   ;; Optional: Show notifications in mode-line
-  ;; (defun my/show-notification-in-mode-line ()
-  ;;   (mapconcat #'ednc-format-notification (ednc-notifications) " | "))
+  (defun my/show-notification-in-mode-line ()
+    (mapconcat #'ednc-format-notification (ednc-notifications) " | "))
 
-  ;; ;; Add to mode-line
-  ;; (setq-default mode-line-format
-  ;;               (append mode-line-format
-  ;;                       '((:eval (when (ednc-notifications)
-  ;;                                  (concat " [" (my/show-notification-in-mode-line) "]"))))))
+  ;; Add to mode-line
+  (setq-default mode-line-format
+                (append mode-line-format
+                        '((:eval (when (ednc-notifications)
+                                   (concat " [" (my/show-notification-in-mode-line) "]"))))))
 
-  ;; ;; Force mode-line update on notification changes
-  ;; (add-hook 'ednc-notification-presentation-functions
-  ;;           (lambda (&rest _) (force-mode-line-update t)))
+  ;; Force mode-line update on notification changes
+  (add-hook 'ednc-notification-presentation-functions
+            (lambda (&rest _) (force-mode-line-update t)))
   )
-
-(use-package ednc-popup
-  :vc (:url "https://codeberg.org/akib/emacs-ednc-popup.git")
-  :ensure t
-  :after ednc
-  :config (add-hook 'ednc-notification-presentation-functions #'ednc-popup-presentation-function))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     EXWM                                  ;;
