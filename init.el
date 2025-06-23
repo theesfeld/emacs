@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 10:47:44 by grim>
+;; Time-stamp: <Last changed 2025-06-23 10:56:45 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -245,22 +245,6 @@ The DWIM behaviour of this command is as follows:
 
 ;;;;; EDNC NOTIFICATIONS (DBUS)
 
-;; (use-package ednc
-;;   :ensure t
-;;   :hook (after-init . ednc-mode)
-;;   :config
-;;   (defun show-notification-in-buffer (old new)
-;;     (let ((name (format "Notification %d" (ednc-notification-id (or old new)))))
-;;       (with-current-buffer (get-buffer-create name)
-;;         (if new (let ((inhibit-read-only t))
-;;                   (if old (erase-buffer) (ednc-view-mode))
-;;                   (insert (ednc-format-notification new t))
-;;                   (pop-to-buffer (current-buffer)))
-;;           (kill-buffer)))))
-;;   (add-hook 'ednc-notification-presentation-functions
-;;             #'show-notification-in-buffer)
-;;   (ednc-mode 1))
-
 (use-package ednc
   :ensure t
   :hook (after-init . ednc-mode)
@@ -301,41 +285,32 @@ The DWIM behaviour of this command is as follows:
   (defvar ednc--notification-history nil)
   (defvar ednc--notification-ring (make-ring ednc-history-limit))
 
-  ;; === Faces ===
+  ;; === Faces (using theme colors) ===
   (defface ednc-notification-default-face
-    '((t :background "#2e3440" :foreground "#eceff4"))
+    '((t :inherit mode-line))
     "Default face for notifications.")
 
-  (defface ednc-notification-urgent-face
-    '((t :background "#bf616a" :foreground "#eceff4"))
-    "Face for urgent notifications.")
+  (defface ednc-notification-app-face
+    '((t :inherit mode-line :weight bold))
+    "Face for application name in notifications.")
 
-  (defface ednc-notification-low-face
-    '((t :background "#3b4252" :foreground "#d8dee9"))
-    "Face for low priority notifications.")
+  (defface ednc-notification-time-face
+    '((t :inherit font-lock-comment-face))
+    "Face for timestamps.")
 
   ;; === Core Functions ===
-  (defun ednc--get-notification-face (notification)
-    "Get appropriate face for NOTIFICATION based on urgency."
-    (let ((urgency (ednc-notification-hints-urgency notification)))
-      (pcase urgency
-        (2 'ednc-notification-urgent-face)
-        (0 'ednc-notification-low-face)
-        (_ 'ednc-notification-default-face))))
-
   (defun ednc--format-for-display (notification)
     "Format NOTIFICATION for posframe display."
     (let* ((app-name (ednc-notification-app-name notification))
            (summary (ednc-notification-summary notification))
-           (body (ednc-notification-body notification))
-           (face (ednc--get-notification-face notification)))
+           (body (ednc-notification-body notification)))
       (concat
        (when app-name
-         (concat (propertize app-name 'face `(:inherit ,face :weight bold))
+         (concat (propertize app-name 'face 'ednc-notification-app-face)
                  "\n"))
-       (propertize summary 'face face)
+       (propertize summary 'face 'ednc-notification-default-face)
        (when (and body (not (string-empty-p body)))
-         (concat "\n" (propertize body 'face face))))))
+         (concat "\n" (propertize body 'face 'ednc-notification-default-face))))))
 
   (defun ednc--store-in-history (notification)
     "Store NOTIFICATION in history for consult browsing."
@@ -343,16 +318,14 @@ The DWIM behaviour of this command is as follows:
            (app (ednc-notification-app-name notification))
            (summary (ednc-notification-summary notification))
            (body (ednc-notification-body notification))
-           (urgency (ednc-notification-hints-urgency notification))
            (entry (propertize
                    (format "%s │ %s: %s"
-                           (propertize time 'face 'font-lock-comment-face)
+                           (propertize time 'face 'ednc-notification-time-face)
                            (propertize (or app "System") 'face 'font-lock-keyword-face)
                            summary)
                    'notification notification
                    'time time
-                   'body body
-                   'urgency urgency)))
+                   'body body)))
       (ring-insert ednc--notification-ring entry)
       (push entry ednc--notification-history)))
 
@@ -374,9 +347,10 @@ The DWIM behaviour of this command is as follows:
              (buffer-name (format " *ednc-%d*" id))
              (notification-count (hash-table-count ednc--active-notifications))
              (position (ednc--calculate-position notification-count))
-             (face (ednc--get-notification-face new))
-             (bg-color (face-attribute face :background))
-             (fg-color (face-attribute face :foreground)))
+             ;; Use theme colors
+             (bg-color (face-attribute 'mode-line :background))
+             (fg-color (face-attribute 'mode-line :foreground))
+             (border-color (face-attribute 'mode-line-inactive :background)))
 
         ;; Show posframe
         (posframe-show buffer-name
@@ -394,6 +368,7 @@ The DWIM behaviour of this command is as follows:
                        :left-fringe 10
                        :right-fringe 10
                        :internal-border-width 12
+                       :internal-border-color border-color
                        :background-color bg-color
                        :foreground-color fg-color
                        :accept-focus nil
@@ -424,9 +399,10 @@ The DWIM behaviour of this command is as follows:
       (maphash (lambda (id data)
                  (let ((buffer-name (car data))
                        (position (ednc--calculate-position index)))
-                   (posframe-refresh buffer-name
-                                     :x-pixel-offset (car position)
-                                     :y-pixel-offset (cdr position)))
+                   (when (posframe-workable-p)
+                     (posframe-refresh buffer-name
+                                       :x-pixel-offset (car position)
+                                       :y-pixel-offset (cdr position))))
                  (cl-incf index))
                ednc--active-notifications)))
 
@@ -461,6 +437,7 @@ The DWIM behaviour of this command is as follows:
                    (with-current-buffer (get-buffer-create "*EDNC Preview*")
                      (let ((inhibit-read-only t))
                        (erase-buffer)
+                       (ednc-view-mode)
                        (insert "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
                        (insert (ednc-format-notification notification t))
                        (insert "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
