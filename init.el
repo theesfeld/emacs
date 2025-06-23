@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 09:36:03 by grim>
+;; Time-stamp: <Last changed 2025-06-23 09:38:55 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -276,7 +276,7 @@ The DWIM behaviour of this command is as follows:
   :vc (:url "https://codeberg.org/akib/emacs-ednc-popup.git")
   :ensure t
   :after ednc
-  :init ((add-hook 'ednc-notification-presentation-functions #'ednc-popup-presentation-function)))
+  :config ((add-hook 'ednc-notification-presentation-functions #'ednc-popup-presentation-function)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
