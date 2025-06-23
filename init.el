@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 15:29:23 by grim>
+;; Time-stamp: <Last changed 2025-06-23 16:30:48 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1263,7 +1263,11 @@ The DWIM behaviour of this command is as follows:
   (setq auto-revert-remote-files t) ; Enable reverting for remote files
   (setq auto-revert-interval 1)     ; Poll every 1 second
   (setq auto-revert-verbose nil)    ; Silence revert messages
-  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+  (setq remote-file-name-inhibit-locks t
+        tramp-use-scp-direct-remote-copying t
+        remote-file-name-inhibit-auto-save-visited t)
+  )
 
 (use-package
  files
