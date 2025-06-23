@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 11:00:03 by grim>
+;; Time-stamp: <Last changed 2025-06-23 13:25:47 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3994,6 +3994,21 @@ With ARG, move that many defuns forward."
   :ensure t
   :defer t)
 
+;;;;; Levenshtein
+(use-package levenshtein-distance
+  :ensure t
+  :vc (:url "https://github.com/theesfeld/levenshtein-distance.git")
+  :hook (text-mode . levenshtein-distance-mode)
+  :bind (:map levenshtein-distance-mode-map
+              ("C-c l s" . levenshtein-distance-calculate-strings)
+              ("C-c l b" . levenshtein-distance-calculate-buffers)
+              ("C-c l f" . levenshtein-distance-calculate-files)
+              ("C-c l r" . levenshtein-distance-calculate-regions)
+              ("C-c l l" . levenshtein-distance-show-last-result)
+              ("C-c l t" . levenshtein-distance-toggle-case-sensitivity))
+  :custom
+  (levenshtein-distance-display-result-buffer t)
+  (levenshtein-distance-case-sensitive t))
 
 
 ;;;;; stupid fucking emojis
