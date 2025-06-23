@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 10:22:48 by grim>
+;; Time-stamp: <Last changed 2025-06-23 10:32:29 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -249,18 +249,7 @@ The DWIM behaviour of this command is as follows:
   :ensure t
   :hook (after-init . ednc-mode)
   :config
-  (ednc-mode 1)
-
-  (defun my/show-notification-in-mode-line ()
-    (mapconcat #'ednc-format-notification (ednc-notifications) " | "))
-
-  (setq-default mode-line-format
-                (append mode-line-format
-                        '((:eval (when (ednc-notifications)
-                                   (concat " [" (my/show-notification-in-mode-line) "]"))))))
-
-  (add-hook 'ednc-notification-presentation-functions
-            (lambda (&rest _) (force-mode-line-update t))))
+  (ednc-mode 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     EXWM                                  ;;
