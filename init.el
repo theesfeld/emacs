@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 07:52:22 by grim>
+;; Time-stamp: <Last changed 2025-06-23 07:53:59 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -265,25 +265,22 @@ The DWIM behaviour of this command is as follows:
 
 (when (eq window-system 'x)
 
-  ;; Emacs Notification Daemon (eosd)
-  ;; Provides a D-Bus-based notification daemon for EXWM, managing notifications from other applications.
-  (use-package eosd
+  ;; Alert package
+  ;; A flexible notification system that supports multiple backends, including libnotify for Linux.
+  (use-package alert
     :ensure t
     :defer t
     :config
-    ;; Start the EOSD notification daemon
-    (eosd)
-    ;; Optional: Customize notification display duration (in seconds)
-    (setq eosd-default-timeout 5)
-    ;; Optional: Customize notification buffer name
-    (setq eosd-buffer-name "*EOSD Notifications*")
+    ;; Set default notification style to libnotify for Linux
+    (setq alert-default-style (if (eq system-type 'gnu/linux) 'libnotify 'message))
+    ;; Optional: Customize notification title
+    (setq alert-default-title "Emacs Notification")
+    ;; Optional: Fade out notifications after 10 seconds
+    (setq alert-fade-time 10)
     :hook
-    ((exwm-init . eosd))  ;; Start EOSD when EXWM initializes
-    :init
-    ;; Ensure D-Bus is available (required for eosd)
-    (require 'dbus)
+    ((exwm-init . alert-initialize))  ;; Initialize alert with EXWM
     :ensure-system-package
-    ((dbus . "dbus"))  ;; Ensure D-Bus is installed on the system
+    ((libnotify-bin . "libnotify-bin"))  ;; Ensure libnotify is installed for notifications
     )
 
   (defun grim/run-in-background (command)
