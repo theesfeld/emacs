@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 08:55:32 by grim>
+;; Time-stamp: <Last changed 2025-06-23 09:31:16 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -271,6 +271,11 @@ The DWIM behaviour of this command is as follows:
          ("C-c n c" . (lambda () (interactive)
                         (dolist (notification (ednc-notifications))
                           (ednc-dismiss-notification notification))))))
+
+(use-package ednc-popup
+  :vc (:url "https://codeberg.org/akib/emacs-ednc-popup.git")
+  :ensure t
+  :after ednc)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     EXWM                                  ;;
