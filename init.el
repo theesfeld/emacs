@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 10:08:17 by grim>
+;; Time-stamp: <Last changed 2025-06-23 10:08:40 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -298,7 +298,7 @@ The DWIM behaviour of this command is as follows:
     (run-at-time 2 nil #'grim/run-in-background "nm-applet")
     (run-at-time 2 nil #'grim/run-in-background "udiskie -at")
     (run-at-time 2 nil #'grim/run-in-background "blueman-applet")
-    (run-at-time 9 nil #'grim/run-in-background "mullvad-vpn"))
+    (run-at-time 5 nil #'grim/run-in-background "mullvad-vpn"))
 
   (defun grim/exwm-update-class ()
     (exwm-workspace-rename-buffer exwm-class-name))
