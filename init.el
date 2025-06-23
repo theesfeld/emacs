@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 06:56:34 by grim>
+;; Time-stamp: <Last changed 2025-06-23 06:57:16 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3264,7 +3264,7 @@ With ARG, move that many defuns forward."
     :config
     (eshell-git-prompt-use-theme 'powerline)) ;; Use powerline theme
 
-  :bind (("C-c e" . 'eshell))
+  :bind (("C-c `" . 'eshell))
 
   :hook
   ((eshell-mode . my-eshell-disable-distractions) ;; Disable distractions
