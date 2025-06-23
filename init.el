@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-23 10:35:34 by grim>
+;; Time-stamp: <Last changed 2025-06-23 10:47:44 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -245,20 +245,250 @@ The DWIM behaviour of this command is as follows:
 
 ;;;;; EDNC NOTIFICATIONS (DBUS)
 
+;; (use-package ednc
+;;   :ensure t
+;;   :hook (after-init . ednc-mode)
+;;   :config
+;;   (defun show-notification-in-buffer (old new)
+;;     (let ((name (format "Notification %d" (ednc-notification-id (or old new)))))
+;;       (with-current-buffer (get-buffer-create name)
+;;         (if new (let ((inhibit-read-only t))
+;;                   (if old (erase-buffer) (ednc-view-mode))
+;;                   (insert (ednc-format-notification new t))
+;;                   (pop-to-buffer (current-buffer)))
+;;           (kill-buffer)))))
+;;   (add-hook 'ednc-notification-presentation-functions
+;;             #'show-notification-in-buffer)
+;;   (ednc-mode 1))
+
 (use-package ednc
   :ensure t
   :hook (after-init . ednc-mode)
   :config
-  (defun show-notification-in-buffer (old new)
-    (let ((name (format "Notification %d" (ednc-notification-id (or old new)))))
-      (with-current-buffer (get-buffer-create name)
-        (if new (let ((inhibit-read-only t))
-                  (if old (erase-buffer) (ednc-view-mode))
-                  (insert (ednc-format-notification new t))
-                  (pop-to-buffer (current-buffer)))
-          (kill-buffer)))))
-  (add-hook 'ednc-notification-presentation-functions
-            #'show-notification-in-buffer)
+  (use-package posframe :ensure t)
+  (require 'consult)
+
+  ;; === Configuration Variables ===
+  (defgroup ednc-enhanced nil
+    "Enhanced EDNC notifications."
+    :group 'ednc)
+
+  (defcustom ednc-notification-timeout 5
+    "Seconds before notification auto-dismisses."
+    :type 'integer
+    :group 'ednc-enhanced)
+
+  (defcustom ednc-notification-position 'top-right
+    "Position for notifications."
+    :type '(choice (const top-right)
+                   (const top-left)
+                   (const bottom-right)
+                   (const bottom-left))
+    :group 'ednc-enhanced)
+
+  (defcustom ednc-notification-max-width 50
+    "Maximum width of notification popup."
+    :type 'integer
+    :group 'ednc-enhanced)
+
+  (defcustom ednc-history-limit 200
+    "Maximum number of notifications to keep in history."
+    :type 'integer
+    :group 'ednc-enhanced)
+
+  ;; === State Management ===
+  (defvar ednc--active-notifications (make-hash-table :test 'equal))
+  (defvar ednc--notification-history nil)
+  (defvar ednc--notification-ring (make-ring ednc-history-limit))
+
+  ;; === Faces ===
+  (defface ednc-notification-default-face
+    '((t :background "#2e3440" :foreground "#eceff4"))
+    "Default face for notifications.")
+
+  (defface ednc-notification-urgent-face
+    '((t :background "#bf616a" :foreground "#eceff4"))
+    "Face for urgent notifications.")
+
+  (defface ednc-notification-low-face
+    '((t :background "#3b4252" :foreground "#d8dee9"))
+    "Face for low priority notifications.")
+
+  ;; === Core Functions ===
+  (defun ednc--get-notification-face (notification)
+    "Get appropriate face for NOTIFICATION based on urgency."
+    (let ((urgency (ednc-notification-hints-urgency notification)))
+      (pcase urgency
+        (2 'ednc-notification-urgent-face)
+        (0 'ednc-notification-low-face)
+        (_ 'ednc-notification-default-face))))
+
+  (defun ednc--format-for-display (notification)
+    "Format NOTIFICATION for posframe display."
+    (let* ((app-name (ednc-notification-app-name notification))
+           (summary (ednc-notification-summary notification))
+           (body (ednc-notification-body notification))
+           (face (ednc--get-notification-face notification)))
+      (concat
+       (when app-name
+         (concat (propertize app-name 'face `(:inherit ,face :weight bold))
+                 "\n"))
+       (propertize summary 'face face)
+       (when (and body (not (string-empty-p body)))
+         (concat "\n" (propertize body 'face face))))))
+
+  (defun ednc--store-in-history (notification)
+    "Store NOTIFICATION in history for consult browsing."
+    (let* ((time (format-time-string "%Y-%m-%d %H:%M:%S"))
+           (app (ednc-notification-app-name notification))
+           (summary (ednc-notification-summary notification))
+           (body (ednc-notification-body notification))
+           (urgency (ednc-notification-hints-urgency notification))
+           (entry (propertize
+                   (format "%s │ %s: %s"
+                           (propertize time 'face 'font-lock-comment-face)
+                           (propertize (or app "System") 'face 'font-lock-keyword-face)
+                           summary)
+                   'notification notification
+                   'time time
+                   'body body
+                   'urgency urgency)))
+      (ring-insert ednc--notification-ring entry)
+      (push entry ednc--notification-history)))
+
+  (defun ednc--calculate-position (index)
+    "Calculate position for notification at INDEX."
+    (let ((spacing 10)
+          (height 80))
+      (pcase ednc-notification-position
+        ('top-right (cons -20 (+ 40 (* index (+ height spacing)))))
+        ('top-left (cons 20 (+ 40 (* index (+ height spacing)))))
+        ('bottom-right (cons -20 (- -40 (* index (+ height spacing)))))
+        ('bottom-left (cons 20 (- -40 (* index (+ height spacing))))))))
+
+  (defun ednc--show-notification (old new)
+    "Main notification handler."
+    (when new
+      (ednc--store-in-history new)
+      (let* ((id (ednc-notification-id new))
+             (buffer-name (format " *ednc-%d*" id))
+             (notification-count (hash-table-count ednc--active-notifications))
+             (position (ednc--calculate-position notification-count))
+             (face (ednc--get-notification-face new))
+             (bg-color (face-attribute face :background))
+             (fg-color (face-attribute face :foreground)))
+
+        ;; Show posframe
+        (posframe-show buffer-name
+                       :string (ednc--format-for-display new)
+                       :position (pcase ednc-notification-position
+                                   ((or 'top-right 'bottom-right) (point-max))
+                                   ((or 'top-left 'bottom-left) (point-min)))
+                       :poshandler (pcase ednc-notification-position
+                                     ('top-right #'posframe-poshandler-frame-top-right-corner)
+                                     ('top-left #'posframe-poshandler-frame-top-left-corner)
+                                     ('bottom-right #'posframe-poshandler-frame-bottom-right-corner)
+                                     ('bottom-left #'posframe-poshandler-frame-bottom-left-corner))
+                       :x-pixel-offset (car position)
+                       :y-pixel-offset (cdr position)
+                       :left-fringe 10
+                       :right-fringe 10
+                       :internal-border-width 12
+                       :background-color bg-color
+                       :foreground-color fg-color
+                       :accept-focus nil
+                       :width ednc-notification-max-width)
+
+        ;; Store and set timer
+        (let ((timer (run-with-timer ednc-notification-timeout nil
+                                     (lambda () (ednc--dismiss-notification id)))))
+          (puthash id (list buffer-name timer) ednc--active-notifications))))
+
+    ;; Handle removal
+    (when (and old (not new))
+      (ednc--dismiss-notification (ednc-notification-id old))))
+
+  (defun ednc--dismiss-notification (id)
+    "Dismiss notification with ID."
+    (when-let ((data (gethash id ednc--active-notifications)))
+      (let ((buffer-name (car data))
+            (timer (cadr data)))
+        (when (timerp timer) (cancel-timer timer))
+        (posframe-delete buffer-name)
+        (remhash id ednc--active-notifications)
+        (ednc--reposition-all))))
+
+  (defun ednc--reposition-all ()
+    "Reposition all active notifications."
+    (let ((index 0))
+      (maphash (lambda (id data)
+                 (let ((buffer-name (car data))
+                       (position (ednc--calculate-position index)))
+                   (posframe-refresh buffer-name
+                                     :x-pixel-offset (car position)
+                                     :y-pixel-offset (cdr position)))
+                 (cl-incf index))
+               ednc--active-notifications)))
+
+  ;; === Interactive Commands ===
+  (defun ednc-dismiss-all ()
+    "Dismiss all active notifications."
+    (interactive)
+    (maphash (lambda (id _) (ednc--dismiss-notification id))
+             ednc--active-notifications))
+
+  (defun ednc-browse-history ()
+    "Browse notification history with consult."
+    (interactive)
+    (let* ((candidates (ring-elements ednc--notification-ring))
+           (selected
+            (consult--read
+             candidates
+             :prompt "Notification History: "
+             :category 'ednc-notification
+             :sort nil
+             :annotate
+             (lambda (cand)
+               (when-let ((body (get-text-property 0 'body cand)))
+                 (when (not (string-empty-p body))
+                   (concat " " (propertize (truncate-string-to-width body 50)
+                                           'face 'font-lock-doc-face)))))
+             :preview-key '(:debounce 0.2 any)
+             :state
+             (lambda (action cand)
+               (when (and (eq action 'preview) cand)
+                 (when-let ((notification (get-text-property 0 'notification cand)))
+                   (with-current-buffer (get-buffer-create "*EDNC Preview*")
+                     (let ((inhibit-read-only t))
+                       (erase-buffer)
+                       (insert "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+                       (insert (ednc-format-notification notification t))
+                       (insert "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+                       (goto-char (point-min))
+                       (display-buffer (current-buffer)
+                                       '(display-buffer-below-selected
+                                         (window-height . 0.3)))))))))))
+      (when selected
+        (message "Notification: %s" selected))))
+
+  (defun ednc-clear-history ()
+    "Clear notification history."
+    (interactive)
+    (when (yes-or-no-p "Clear all notification history? ")
+      (setq ednc--notification-history nil)
+      (dotimes (_ (ring-length ednc--notification-ring))
+        (ring-remove ednc--notification-ring))
+      (message "Notification history cleared")))
+
+  ;; === Setup ===
+  (setq ednc-notification-presentation-functions nil)
+  (add-hook 'ednc-notification-presentation-functions #'ednc--show-notification)
+
+  ;; === Keybindings ===
+  (global-set-key (kbd "C-c n n") #'ednc-browse-history)
+  (global-set-key (kbd "C-c n d") #'ednc-dismiss-all)
+  (global-set-key (kbd "C-c n c") #'ednc-clear-history)
+
   (ednc-mode 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
