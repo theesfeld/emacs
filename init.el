@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 14:39:43 by grim>
+;; Time-stamp: <Last changed 2025-06-24 15:10:51 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3225,15 +3225,15 @@ The DWIM behaviour of this command is as follows:
 ;;                                 LaTeX templates                           ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package
-  emacs
-  :ensure nil
-  :config
-  (let ((templates-dir "~/.config/emacs/latex/templates/"))
-    (when (file-exists-p templates-dir)
-      (dolist (file
-               (directory-files-recursively templates-dir "\\.el$"))
-        (load-file file)))))
+;; (use-package
+;;   emacs
+;;   :ensure nil
+;;   :config
+;;   (let ((templates-dir "~/.config/emacs/latex/templates/"))
+;;     (when (file-exists-p templates-dir)
+;;       (dolist (file
+;;                (directory-files-recursively templates-dir "\\.el$"))
+;;         (load-file file)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                 pgmacs Setup                             ;;
