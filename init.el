@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 19:14:44 by grim>
+;; Time-stamp: <Last changed 2025-06-24 19:31:12 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3545,6 +3545,243 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq emojify-display-style 'unicode)
   (setq emojify-emoji-styles '(unicode))
   :hook (after-init . global-emojify-mode))
+
+;;;;; DASHBOARD?
+;; Dashboard configuration with horizontal layout
+(use-package dashboard
+  :ensure t
+  :init
+  ;; Basic dashboard settings
+  (setq dashboard-banner-logo-title "Welcome to GNU Emacs")
+  (setq dashboard-startup-banner 'official)
+  (setq dashboard-center-content t)
+  (setq dashboard-show-shortcuts nil)
+  (setq dashboard-set-heading-icons nil)
+  (setq dashboard-set-file-icons nil)
+  (setq dashboard-set-navigator nil)
+
+  ;; Configure widgets (only recent files from built-in widgets)
+  (setq dashboard-items '((recents . 5)))
+
+  ;; Custom navigator widget
+  (defun dashboard-insert-custom-navigator (list-size)
+    "Insert custom navigation menu."
+    (dashboard-insert-heading "Quick Access Menu")
+    (insert "\n\n")
+    (let ((inhibit-read-only t))
+      (insert (propertize "    [g] Gnus Mail       [m] Mastodon       [h] HackerNews\n"
+                          'face 'dashboard-items-face))
+      (insert (propertize "    [p] Proced          [M] Man Pages      [t] Todo List\n"
+                          'face 'dashboard-items-face))))
+
+  ;; Combined calendar and todo widget
+  (defun dashboard-insert-calendar-and-todos (list-size)
+    "Insert calendar and todo items side by side."
+    (let* ((inhibit-read-only t)
+           (calendar-start (point))
+           (calendar-width 40)
+           (todo-width 40)
+           (total-width (+ calendar-width todo-width 5)))
+
+      ;; Insert headers
+      (insert (propertize "        Calendar" 'face 'dashboard-heading))
+      (insert (make-string (- calendar-width 16) ?\s))
+      (insert "     ")
+      (insert (propertize "Today's Tasks" 'face 'dashboard-heading))
+      (insert "\n")
+      (insert (propertize (format "       %s" (format-time-string "%B %Y"))
+                          'face 'font-lock-comment-face))
+      (insert "\n")
+
+      ;; Generate calendar
+      (let ((calendar-buffer (get-buffer-create " *dashboard-calendar-temp*"))
+            (calendar-lines '()))
+        (with-current-buffer calendar-buffer
+          (let ((inhibit-read-only t))
+            (erase-buffer)
+            (calendar-mode)
+            (calendar-generate-month (string-to-number (format-time-string "%m"))
+                                     (string-to-number (format-time-string "%Y")))
+            (goto-char (point-min))
+            ;; Collect calendar lines
+            (while (not (eobp))
+              (push (buffer-substring-no-properties (line-beginning-position)
+                                                    (line-end-position))
+                    calendar-lines)
+              (forward-line 1))))
+        (kill-buffer calendar-buffer)
+        (setq calendar-lines (nreverse calendar-lines)))
+
+      ;; Get today's todos
+      (let ((todo-lines '()))
+        (with-temp-buffer
+          (org-mode)
+          (insert "* Today's Tasks\n")
+          ;; Get todos scheduled for today or with deadline today
+          (dolist (file (org-agenda-files))
+            (when (file-exists-p file)
+              (insert-file-contents file nil nil nil t)
+              (goto-char (point-min))
+              (while (re-search-forward org-heading-regexp nil t)
+                (let* ((todo-state (org-get-todo-state))
+                       (scheduled (org-get-scheduled-time (point)))
+                       (deadline (org-get-deadline-time (point)))
+                       (today (time-to-days (current-time)))
+                       (is-today (or (and scheduled
+                                          (= (time-to-days scheduled) today))
+                                     (and deadline
+                                          (= (time-to-days deadline) today))
+                                     (and (not scheduled) (not deadline) todo-state))))
+                  (when (and todo-state is-today)
+                    (push (format "%s %s"
+                                  (propertize todo-state
+                                              'face (org-get-todo-face todo-state))
+                                  (org-get-heading t t t t))
+                          todo-lines))))))
+
+          ;; Add undated todos
+          (push "\nUndated:" todo-lines)
+          (let ((undated-count 0))
+            (dolist (file (org-agenda-files))
+              (when (file-exists-p file)
+                (with-temp-buffer
+                  (insert-file-contents file)
+                  (org-mode)
+                  (goto-char (point-min))
+                  (while (and (< undated-count 5) ; Limit undated items
+                              (re-search-forward org-heading-regexp nil t))
+                    (let* ((todo-state (org-get-todo-state))
+                           (scheduled (org-get-scheduled-time (point)))
+                           (deadline (org-get-deadline-time (point))))
+                      (when (and todo-state (not scheduled) (not deadline))
+                        (push (format "%s %s"
+                                      (propertize todo-state
+                                                  'face (org-get-todo-face todo-state))
+                                      (org-get-heading t t t t))
+                              todo-lines)
+                        (setq undated-count (1+ undated-count))))))))))
+        (setq todo-lines (nreverse todo-lines)))
+
+      ;; Display calendar and todos side by side
+      (let ((cal-index 0)
+            (todo-index 0))
+        (while (or (< cal-index (length calendar-lines))
+                   (< todo-index (length todo-lines)))
+          (let ((cal-line (if (< cal-index (length calendar-lines))
+                              (nth cal-index calendar-lines)
+                            ""))
+                (todo-line (if (< todo-index (length todo-lines))
+                               (nth todo-index todo-lines)
+                             "")))
+            ;; Insert calendar line
+            (insert "  ")
+            (insert cal-line)
+            (insert (make-string (max 0 (- calendar-width (length cal-line) 2)) ?\s))
+            (insert "     ")
+            ;; Insert todo line
+            (when (> (length todo-line) todo-width)
+              (setq todo-line (concat (substring todo-line 0 (- todo-width 3)) "...")))
+            (insert todo-line)
+            (insert "\n"))
+          (setq cal-index (1+ cal-index))
+          (setq todo-index (1+ todo-index))))
+
+      ;; Highlight today's date in calendar
+      (save-excursion
+        (goto-char calendar-start)
+        (when (re-search-forward (format "\\b%s\\b" (format-time-string "%-d")) nil t)
+          (let ((inhibit-read-only t))
+            (add-text-properties (match-beginning 0) (match-end 0)
+                                 '(face (:background "#5e81ac" :foreground "#eceff4"
+                                                     :weight bold))))))))
+
+  ;; Update startup list with new order
+  (setq dashboard-startupify-list
+        '(dashboard-insert-banner
+          dashboard-insert-newline
+          dashboard-insert-banner-title
+          dashboard-insert-newline
+          dashboard-insert-page-break
+          dashboard-insert-custom-navigator
+          dashboard-insert-newline
+          dashboard-insert-page-break
+          dashboard-insert-calendar-and-todos
+          dashboard-insert-newline
+          dashboard-insert-page-break
+          dashboard-insert-items  ; Recent files at the bottom
+          dashboard-insert-newline
+          dashboard-insert-page-break
+          dashboard-insert-init-info))
+
+  ;; Add to dashboard-item-generators
+  (add-to-list 'dashboard-item-generators
+               '(calendar-and-todos . dashboard-insert-calendar-and-todos))
+  (add-to-list 'dashboard-item-generators
+               '(custom-navigator . dashboard-insert-custom-navigator))
+
+  :config
+  (dashboard-setup-startup-hook)
+
+  ;; Dashboard minor mode for keybindings
+  (define-minor-mode dashboard-minor-mode
+    "Minor mode for dashboard-specific keybindings."
+    :init-value nil
+    :lighter " Dashboard"
+    :keymap (let ((map (make-sparse-keymap)))
+              (define-key map (kbd "g")
+                          (lambda () (interactive)
+                            (gnus)
+                            (bury-buffer "*dashboard*")))
+              (define-key map (kbd "m")
+                          (lambda () (interactive)
+                            (mastodon)
+                            (bury-buffer "*dashboard*")))
+              (define-key map (kbd "h")
+                          (lambda () (interactive)
+                            (hnreader)
+                            (bury-buffer "*dashboard*")))
+              (define-key map (kbd "p")
+                          (lambda () (interactive)
+                            (proced)
+                            (bury-buffer "*dashboard*")))
+              (define-key map (kbd "M")
+                          (lambda () (interactive)
+                            (call-interactively 'man)
+                            (bury-buffer "*dashboard*")))
+              (define-key map (kbd "t")
+                          (lambda () (interactive)
+                            (org-todo-list)
+                            (bury-buffer "*dashboard*")))
+              (define-key map (kbd "r") 'dashboard-refresh-buffer)
+              (define-key map (kbd "q") 'quit-window)
+              map))
+
+  ;; Enable dashboard-minor-mode in dashboard buffer
+  (add-hook 'dashboard-mode-hook 'dashboard-minor-mode)
+
+  ;; Make dashboard the initial buffer
+  (setq initial-buffer-choice (lambda () (get-buffer-create "*dashboard*")))
+
+  ;; Auto-recreate dashboard if killed
+  (defun my/ensure-dashboard-exists ()
+    "Ensure dashboard buffer exists."
+    (unless (get-buffer "*dashboard*")
+      (save-window-excursion
+        (dashboard-refresh-buffer))))
+
+  ;; Check periodically
+  (run-with-idle-timer 5 t #'my/ensure-dashboard-exists)
+
+  ;; Custom page break style
+  (setq dashboard-page-separator "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+
+  ;; Custom footer
+  (setq dashboard-footer-messages
+        '("GNU Emacs - An extensible, customizable, free/libre text editor")))
+
+;; Ensure org-agenda files are set
+(with-eval-after-load 'org
+  (setq org-agenda-files (directory-files-recursively "~/Documents/notes/" "\\.org$")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
