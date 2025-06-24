@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 17:08:15 by grim>
+;; Time-stamp: <Last changed 2025-06-24 17:36:02 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1371,18 +1371,6 @@ The DWIM behaviour of this command is as follows:
      (smartparens-mode nil "smartparens"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                    helm                                   ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;; Helm - Bare Minimum for Aidermacs
-(use-package
-  helm
-  :ensure t
-  :defer t
-  :init
-  (setq helm-mode nil)) ; Disable Helm globally
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Buffer Management                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1609,7 +1597,6 @@ The DWIM behaviour of this command is as follows:
   :ensure nil ; Built-in since Emacs 29, no need to ensure
   :hook (after-init . which-key-mode)
   :config
-                                        ;(setq which-key-max-display-columns 3)
   (setq which-key-idle-delay 0.2)
   (setq which-key-idle-secondary-delay 0.1)
   (setq which-key-add-column-padding 1)
@@ -1646,35 +1633,11 @@ The DWIM behaviour of this command is as follows:
     t)
   (setf (alist-get ?. avy-dispatch-alist) 'avy-action-embark))
 
-(use-package
-  avy-zap
-  :ensure t
-  :after avy
-  :bind
-  (("M-z" . avy-zap-up-to-char-dwim) ("M-Z" . avy-zap-to-char-dwim))
-  :config
-  (setq avy-zap-forward-only t)
-  (setq avy-keys '(?a ?o ?e ?u ?i ?d ?h ?t ?n ?s)))
-
 (use-package ace-window
   :ensure t
   :after avy
   ;;;; KEYBIND_CHANGE: Using C-x o for ace-window is fine as it enhances other-window
   :bind ("C-x o" . ace-window))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                    XKCD                                   ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package
-  xkcd
-  :ensure t
-  :defer t
-  :config
-  ;; Optional: Customize cache directory
-  (setq xkcd-cache-dir "~/.config/emacs/xkcd/")
-  ;; Hook to set cursor-type to a non-blinking state in xkcd buffers
-  :hook (xkcd-mode . (lambda () (setq-local cursor-type '(bar . 0)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                   Flyspell                               ;;
@@ -2088,7 +2051,6 @@ The DWIM behaviour of this command is as follows:
         '(("~/Code" . 1))))
 
 (use-package forge :ensure t :defer t :after magit)
-
 (use-package magit-todos :ensure t :defer t :after magit)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2126,23 +2088,6 @@ The DWIM behaviour of this command is as follows:
            "projectile.cache"
            "workbench.xmi")
          grep-find-ignored-files)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                           Aidermacs (Anthropic)                           ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package
-  aidermacs
-  :ensure t
-  :config
-  (setq aidermacs-default-model "claude-sonnet-4-20250514")
-  (global-set-key (kbd "C-c a") 'aidermacs-transient-menu)
-  (setq
-   aidermacs-auto-commits t
-   aidermacs-show-diff-after-change nil)
-  (setq
-   aidermacs-use-architect-mode nil
-   aidermacs-auto-accept-architect nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                Misc Packages                              ;;
@@ -2518,8 +2463,6 @@ The DWIM behaviour of this command is as follows:
   :bind
   (("C-c n f" . consult-denote-find) ("C-c n g" . consult-denote-grep))
   :config (consult-denote-mode 1))
-
-
 
 (use-package
   denote-journal
@@ -2931,6 +2874,7 @@ The DWIM behaviour of this command is as follows:
   (setq eshell-destroy-buffer-when-process-dies t) ;; Kill buffer when process dies
   (setq eshell-visual-commands ;; Commands that need a terminal
         '("htop"
+          "btop"
           "top"
           "less"
           "more"
@@ -2939,6 +2883,7 @@ The DWIM behaviour of this command is as follows:
           "ssh"
           "tail"
           "watch"
+          "claude"
           "source"))
   (setq eshell-visual-subcommands ;; Subcommands needing terminal
         '(("git" "log" "diff" "show")))
@@ -3130,96 +3075,6 @@ The DWIM behaviour of this command is as follows:
 ;;         (load-file file)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                 pgmacs Setup                             ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package
-  pgmacs
-  :vc (:url "https://github.com/emarsden/pgmacs" :rev :newest)
-  :defer t
-  :init
-  ;; Load dependency 'pg' from GitHub
-  (use-package
-    pg
-    :vc (:url "https://github.com/emarsden/pg-el" :rev :newest))
-
-  ;; Define connection functions
-  (defun pgmacs-connect ()
-    "Connect to a PostgreSQL database using credentials from authinfo.gpg."
-    (interactive)
-    (let* ((connections (auth-source-search :port "5432" :max 10))
-           (choices
-            (mapcar
-             (lambda (entry)
-               (format "%s@%s/%s"
-                       (plist-get entry :user)
-                       (plist-get entry :host)
-                       (or (plist-get entry :database) "unknown")))
-             connections))
-           (selection
-            (completing-read "Select connection (or type 'manual'): "
-                             (append choices '("manual"))
-                             nil
-                             t)))
-      (if (string= selection "manual")
-          (call-interactively #'pgmacs-connect-manual)
-        (let* ((index (cl-position selection choices :test #'string=))
-               (entry (nth index connections)))
-          (when entry
-            (let ((conn-string
-                   (format
-                    "user=%s port=%s dbname=%s host=%s password=%s"
-                    (plist-get entry :user)
-                    (or (plist-get entry :dbport) "5432")
-                    (plist-get entry :database)
-                    (plist-get entry :host)
-                    (if (functionp (plist-get entry :secret))
-                        (funcall (plist-get entry :secret))
-                      (plist-get entry :secret)))))
-              (pgmacs-open-string conn-string)
-              (message "Connected to %s@%s/%s"
-                       (plist-get entry :user)
-                       (plist-get entry :host)
-                       (plist-get entry :database))))))))
-
-  (defun pgmacs-connect-manual ()
-    "Manually enter PostgreSQL connection details."
-    (interactive)
-    (let ((conn-string
-           (format "user=%s port=%s dbname=%s host=%s password=%s"
-                   (read-string "User: ")
-                   (read-string "Port (default 5432): " nil nil "5432")
-                   (read-string "Database: ")
-                   (read-string "Host: " nil nil "localhost")
-                   (read-passwd "Password: "))))
-      (pgmacs-open-string conn-string)))
-
-  ;; Set up keymap
-  (defvar pgmacs-map
-    (let ((map (make-sparse-keymap)))
-      (define-key map (kbd "c") #'pgmacs-connect)
-      (define-key map (kbd "m") #'pgmacs-connect-manual)
-      map)
-    "Keymap for pgmacs commands.")
-  (global-set-key (kbd "C-c p") pgmacs-map)
-
-  :config
-  ;; Ensure pgmacs is loaded
-  (require 'pgmacs)
-
-  ;; Enable which-key descriptions
-  (when (featurep 'which-key)
-    (which-key-add-key-based-replacements
-      "C-c p"
-      "pgmacs"
-      "C-c p c"
-      "connect (authinfo)"
-      "C-c p m"
-      "connect (manual)"))
-
-  :hook (pgmacs-mode . (lambda () (display-line-numbers-mode -1))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    LINE NUMBERS                           ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -3383,15 +3238,6 @@ The DWIM behaviour of this command is as follows:
    ("C-c w r" . gptel-rewrite)
    )
   :config
-  ;; Set xAI as the default backend
-  (setq gptel-default-backend
-        (gptel-make-openai "xAI"
-          :host "api.x.ai"
-          :endpoint "/v1/chat/completions"
-          :stream t
-          :key #'gptel-api-key-from-auth-source
-          :models '(grok-3-latest)))
-
   ;; Configure Anthropic (Claude) backend
   (gptel-make-anthropic "Claude"
     :stream t
@@ -3412,11 +3258,6 @@ The DWIM behaviour of this command is as follows:
                   ("anthropic-beta" . "prompt-caching-2024-07-31"))))
     :request-params '(:thinking (:type "enabled" :budget_tokens 2048)
                                 :max_tokens 4096))
-
-  ;; Set default model for xAI
-  (setq-default gptel-model 'grok-3-latest)
-
-  ;; Ensure API keys are read from ~/.authinfo.gpg
   (setq gptel-api-key-from-auth-source t))
 
 ;;;;;
@@ -3470,13 +3311,6 @@ The DWIM behaviour of this command is as follows:
   (unless (server-running-p)
     (server-start)))
 
-;;; Pass interface (password-store)
-(use-package password-store
-  :ensure t
-  :bind ("C-c P k" . password-store-copy)
-  :config
-  (setq password-store-time-before-clipboard-restore 30))
-
 (use-package pass
   :ensure t
   :commands (pass))
@@ -3496,7 +3330,7 @@ The DWIM behaviour of this command is as follows:
   (setq lazy-count-prefix-format "(%s/%s) ")
   (setq lazy-count-suffix-format nil)
   (setq isearch-wrap-pause t)
-  (setq isearch-repeat-on-direction-change t)
+  (setq isearch-repeat-on-direction-change t
   (setq list-matching-lines-jump-to-current-line nil)
   :bind
   ( :map global-map
@@ -3511,52 +3345,27 @@ The DWIM behaviour of this command is as follows:
     ("M-/" . isearch-complete)))
 
 ;;; General window and buffer configurations
-(use-package uniquify
-  :ensure nil
-  :config
+  (use-package uniquify
+    :ensure nil
+    :config
 
 ;;;; `uniquify' (unique names for buffers)
-  (setq uniquify-buffer-name-style 'forward)
-  (setq uniquify-strip-common-suffix t)
-  (setq uniquify-after-kill-buffer-p t))
-
-;;; Window history (winner-mode)
-(use-package winner
-  :ensure nil
-  :hook (after-init . winner-mode)
-  :bind
-  (("C-x <right>" . winner-redo)
-   ("C-x <left>" . winner-undo)))
-
-;;; Directional window motions (windmove)
-(use-package windmove
-  :ensure nil
-  :bind
-  ;; Those override some commands that are already available with
-  ;; C-M-u, C-M-f, C-M-b.
-  (("C-M-<up>" . windmove-up)
-   ("C-M-<right>" . windmove-right)
-   ("C-M-<down>" . windmove-down)
-   ("C-M-<left>" . windmove-left)
-   ("C-M-S-<up>" . windmove-swap-states-up)
-   ("C-M-S-<right>" . windmove-swap-states-right) ; conflicts with `org-increase-number-at-point'
-   ("C-M-S-<down>" . windmove-swap-states-down)
-   ("C-M-S-<left>" . windmove-swap-states-left))
-  :config
-  (setq windmove-create-window nil)) ; Emacs 27.1
+    (setq uniquify-buffer-name-style 'forward)
+    (setq uniquify-strip-common-suffix t)
+    (setq uniquify-after-kill-buffer-p t))
 
 ;;; Show the name of the current definition or heading for context (which-function-mode)
-(use-package which-func
-  :ensure nil
-  :hook (after-init . which-function-mode)
-  :config
-  (setq which-func-modes '(prog-mode org-mode))
-  (setq which-func-display 'mode) ; Emacs 30
-  (setq which-func-unknown "")
-  (setq which-func-format
-        '((:propertize which-func-current
-                       face italic
-                       mouse-face mode-line-highlight))))
+  (use-package which-func
+    :ensure nil
+    :hook (after-init . which-function-mode)
+    :config
+    (setq which-func-modes '(prog-mode org-mode))
+    (setq which-func-display 'mode) ; Emacs 30
+    (setq which-func-unknown "")
+    (setq which-func-format
+          '((:propertize which-func-current
+                         face bold
+                         mouse-face mode-line-highlight))))
 
 ;;; General minibuffer settings
 (use-package minibuffer
@@ -3639,6 +3448,7 @@ The DWIM behaviour of this command is as follows:
   (add-to-list 'auto-mode-alist '("log\\'" . logview-mode))
   :hook (
          ('log-mode 'logview-mode)))
+
 ;;;;;
 ;; pulsar
 ;;;;;
