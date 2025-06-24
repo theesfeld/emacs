@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 17:47:22 by grim>
+;; Time-stamp: <Last changed 2025-06-24 18:01:44 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1036,28 +1036,28 @@ The DWIM behaviour of this command is as follows:
   exec-path-from-shell
   :ensure t
   :config
-  (defun my-load-env-file ()
-    "Load environment variables from ~/.config/emacs/.env into Emacs."
-    (let ((env-file (expand-file-name ".env" user-emacs-directory)))
-      (when (file-readable-p env-file)
-        (with-temp-buffer
-          (insert-file-contents env-file)
-          (goto-char (point-min))
-          (while (not (eobp))
-            (let ((line
-                   (buffer-substring-no-properties
-                    (line-beginning-position) (line-end-position))))
-              (unless (or (string-empty-p line)
-                          (string-prefix-p "#" line))
-                (when (string-match "^\\([^=]+\\)=\\(.*\\)$" line)
-                  (let ((key (match-string 1 line))
-                        (value (match-string 2 line)))
-                    (setenv key value)
-                    (message "Loaded env: %s" key)))))
-            (forward-line 1))))
-      (unless (file-exists-p env-file)
-        (message "Warning: .env file not found at %s" env-file))))
-  (my-load-env-file)
+  ;; (defun my-load-env-file ()
+  ;;   "Load environment variables from ~/.config/emacs/.env into Emacs."
+  ;;   (let ((env-file (expand-file-name ".env" user-emacs-directory)))
+  ;;     (when (file-readable-p env-file)
+  ;;       (with-temp-buffer
+  ;;         (insert-file-contents env-file)
+  ;;         (goto-char (point-min))
+  ;;         (while (not (eobp))
+  ;;           (let ((line
+  ;;                  (buffer-substring-no-properties
+  ;;                   (line-beginning-position) (line-end-position))))
+  ;;             (unless (or (string-empty-p line)
+  ;;                         (string-prefix-p "#" line))
+  ;;               (when (string-match "^\\([^=]+\\)=\\(.*\\)$" line)
+  ;;                 (let ((key (match-string 1 line))
+  ;;                       (value (match-string 2 line)))
+  ;;                   (setenv key value)
+  ;;                   (message "Loaded env: %s" key)))))
+  ;;           (forward-line 1))))
+  ;;     (unless (file-exists-p env-file)
+  ;;       (message "Warning: .env file not found at %s" env-file))))
+  ;; (my-load-env-file)
   (setq exec-path-from-shell-shell-name "/bin/bash")
   (setq exec-path-from-shell-arguments '("-l"))
   (exec-path-from-shell-initialize) ;; Run unconditionally
@@ -2334,16 +2334,189 @@ The DWIM behaviour of this command is as follows:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package eww
-  :ensure nil
+  :ensure nil ; built-in package
   :commands (eww eww-browse-url)
   :init
-  (setq browse-url-handlers
-        '(("\\.pdf\\'" . my-open-remote-pdf-in-emacs)
-          ("^https?://" . eww-browse-url)))
+  ;; Set eww as the default browser for certain contexts
+  (setq browse-url-browser-function 'eww-browse-url)
+
   :config
-  (setq eww-auto-rename-buffer 'title)  ; Nicer buffer names
-  ;; Advice EWW to launch certain URLs using the generic launcher rather than EWW.
-  )
+  ;; Core eww settings for better browsing experience
+  (setq eww-search-prefix "https://duckduckgo.com/html?q="  ; Privacy-focused search
+        eww-download-directory "~/Downloads/"
+        eww-bookmarks-directory "~/.emacs.d/eww-bookmarks/"
+        eww-history-limit 150
+        eww-use-external-browser-for-content-type "\\`\\(video/\\|audio\\)" ; Use external browser for media
+        eww-browse-url-new-window-is-tab nil
+        eww-form-checkbox-selected-symbol "[X]"
+        eww-form-checkbox-symbol "[ ]"
+        eww-header-line-format "%t: %u"
+        shr-use-colors t
+        shr-use-fonts t
+        shr-indentation 2
+        shr-width 80
+        shr-max-image-proportion 0.7
+        shr-image-animate nil  ; Don't animate images by default
+        shr-discard-aria-hidden t
+        shr-cookie-policy 'same-origin)
+
+  ;; Custom functions for enhanced functionality
+  (defun eww-open-in-firefox ()
+    "Open the current EWW URL in Firefox via EXWM.
+This function integrates with exwm-firefox-core to open the current page."
+    (interactive)
+    (when (derived-mode-p 'eww-mode)
+      (let ((url (eww-current-url)))
+        (if url
+            (progn
+              (message "Opening %s in Firefox..." url)
+              (start-process "firefox" nil "firefox" url))
+          (message "No URL to open")))))
+
+  (defun eww-download-pdf ()
+    "Download the current page as PDF using an external tool."
+    (interactive)
+    (let ((url (eww-current-url)))
+      (if url
+          (let ((filename (expand-file-name
+                           (concat (format-time-string "%Y%m%d-%H%M%S")
+                                   "-"
+                                   (replace-regexp-in-string "[^a-zA-Z0-9]" "-" (or (plist-get eww-data :title) "page"))
+                                   ".pdf")
+                           eww-download-directory)))
+            (message "Downloading PDF to %s..." filename)
+            (start-process "wkhtmltopdf" nil "wkhtmltopdf" url filename))
+        (message "No URL to download"))))
+
+  (defun eww-toggle-images ()
+    "Toggle whether images are loaded in EWW."
+    (interactive)
+    (setq shr-inhibit-images (not shr-inhibit-images))
+    (eww-reload)
+    (message "Images are now %s" (if shr-inhibit-images "disabled" "enabled")))
+
+  (defun eww-increase-text-size ()
+    "Increase text size in EWW buffer."
+    (interactive)
+    (text-scale-increase 1))
+
+  (defun eww-decrease-text-size ()
+    "Decrease text size in EWW buffer."
+    (interactive)
+    (text-scale-decrease 1))
+
+  (defun eww-reset-text-size ()
+    "Reset text size in EWW buffer to default."
+    (interactive)
+    (text-scale-set 0))
+
+  (defun eww-view-source ()
+    "View the HTML source of the current page."
+    (interactive)
+    (let ((source (plist-get eww-data :source)))
+      (when source
+        (with-current-buffer (get-buffer-create "*eww-source*")
+          (delete-region (point-min) (point-max))
+          (insert source)
+          (html-mode)
+          (display-buffer (current-buffer))))))
+
+  (defun eww-copy-page-title ()
+    "Copy the title of the current page to the kill ring."
+    (interactive)
+    (let ((title (plist-get eww-data :title)))
+      (if title
+          (progn
+            (kill-new title)
+            (message "Copied: %s" title))
+        (message "No title found"))))
+
+  (defun eww-open-bookmark-in-firefox ()
+    "Open the selected bookmark in Firefox."
+    (interactive)
+    (let ((bookmark (eww-read-bookmark)))
+      (when bookmark
+        (start-process "firefox" nil "firefox" (plist-get bookmark :url)))))
+
+  ;; Enhanced bookmark functionality
+  (defun eww-bookmark-with-tags ()
+    "Bookmark the current page with optional tags."
+    (interactive)
+    (let ((tags (read-string "Tags (comma-separated): ")))
+      (eww-add-bookmark)
+      (when (and tags (not (string-empty-p tags)))
+        ;; Store tags in bookmark (would need custom bookmark format)
+        (message "Bookmark saved with tags: %s" tags))))
+
+  :bind
+  (:map eww-mode-map
+        ;; Custom keybindings only - not re-declaring defaults
+        ;; Default keys preserved: g (reload), G (search), l/r (back/forward),
+        ;; H (history), b (bookmarks), d (download), w (copy-url), & (external browser)
+
+        ;; Open in Firefox - using C-c C-f for consistency with Emacs conventions
+        ("C-c C-f" . eww-open-in-firefox)
+
+        ;; Additional navigation helpers
+        ("J" . eww-next-buffer)      ; Quick buffer switching
+        ("K" . eww-previous-buffer)  ; Quick buffer switching
+
+        ;; Content manipulation
+        ("+" . eww-increase-text-size)  ; Zoom in
+        ("-" . eww-decrease-text-size)  ; Zoom out
+        ("0" . eww-reset-text-size)     ; Reset zoom
+
+        ;; View and inspection
+        ("V" . eww-view-source)      ; View page source
+        ("I" . eww-toggle-images)    ; Toggle image loading
+
+        ;; Enhanced functionality
+        ("W" . eww-copy-page-title)  ; Copy page title (w is URL)
+        ("D" . eww-download-pdf)     ; Download as PDF (d is save)
+        ("B" . eww-bookmark-with-tags) ; Bookmark with tags
+
+        ;; Quick search with different engines
+        ("C-c /" . eww)              ; New search
+        ("C-c C-o" . eww-open-bookmark-in-firefox)) ; Open bookmark in Firefox
+
+  :hook
+  ;; Hooks for better integration
+  ((eww-mode . visual-line-mode)       ; Better line wrapping
+   (eww-mode . (lambda ()
+                 (setq-local scroll-conservatively 100) ; Smooth scrolling
+                 (setq-local mouse-wheel-scroll-amount '(1 ((shift) . 1)))))))
+
+;; Optional: Configure eww-lnum for link selection with numbers
+(use-package eww-lnum
+  :after eww
+  :bind
+  (:map eww-mode-map
+        ("f" . eww-lnum-follow)        ; Follow link by number
+        ("F" . eww-lnum-universal)))   ; Universal argument link selection
+
+;; Optional: ace-link integration for quick link selection
+(use-package ace-link
+  :after eww
+  :bind
+  (:map eww-mode-map
+        ("o" . ace-link-eww)))         ; Jump to any link with ace
+
+;; Which-key descriptions for better discoverability
+(with-eval-after-load 'which-key
+  (which-key-add-key-based-replacements
+    "C-c C-f" "open-in-firefox"
+    "J" "next-eww-buffer"
+    "K" "previous-eww-buffer"
+    "+" "increase-text-size"
+    "-" "decrease-text-size"
+    "0" "reset-text-size"
+    "V" "view-source"
+    "I" "toggle-images"
+    "W" "copy-page-title"
+    "D" "download-as-pdf"
+    "B" "bookmark-with-tags"
+    "C-c /" "new-search"
+    "C-c C-o" "bookmark->firefox"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                     pdf                                   ;;
