@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 15:31:48 by grim>
+;; Time-stamp: <Last changed 2025-06-24 15:37:09 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -125,8 +125,7 @@ The DWIM behaviour of this command is as follows:
       (message
        "No snippets available for current major/minor modes"))))
 
-;;;; KEYBIND_CHANGE: C-c Y is acceptable in user space, keeping it
-(global-set-key (kbd "C-c Y") #'my/consult-yasnippet-with-minor-modes)
+(global-set-key (kbd "C-& Y") #'my/consult-yasnippet-with-minor-modes)
 
 ;; Map C-M-S-s-<key> for letters and symbols
 (let ((keys
