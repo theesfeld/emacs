@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 16:43:18 by grim>
+;; Time-stamp: <Last changed 2025-06-24 16:44:32 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2848,11 +2848,6 @@ The DWIM behaviour of this command is as follows:
 ;; C-c @ ESC C-s - show all
 ;; C-c @ C-l - hide level
 ;; C-c @ C-c - toggle hiding
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                        Tree-sitter Utilities                                ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 ;; For debugging tree-sitter, use the built-in:
 ;; M-x treesit-inspect-mode - inspect tree-sitter nodes interactively
