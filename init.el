@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 15:10:51 by grim>
+;; Time-stamp: <Last changed 2025-06-24 15:31:48 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2645,7 +2645,7 @@ The DWIM behaviour of this command is as follows:
           (c . ("https://github.com/tree-sitter/tree-sitter-c"))
           (cpp . ("https://github.com/tree-sitter/tree-sitter-cpp"))
           (css . ("https://github.com/tree-sitter/tree-sitter-css"))
-          (elisp . ("https://github.com/Wilfred/tree-sitter-elisp"))
+          ;; Remove elisp - no official tree-sitter mode for emacs-lisp in Emacs 30
           (go . ("https://github.com/tree-sitter/tree-sitter-go"))
           (html . ("https://github.com/tree-sitter/tree-sitter-html"))
           (java . ("https://github.com/tree-sitter/tree-sitter-java"))
@@ -2694,6 +2694,7 @@ The DWIM behaviour of this command is as follows:
         (message "Updated tree-sitter grammar for %s" lang))))
 
   ;; Major mode remapping for tree-sitter variants
+  ;; REMOVE emacs-lisp-mode and lisp-interaction-mode remappings
   (setq major-mode-remap-alist
         '((c-mode . c-ts-mode)
           (c++-mode . c++-ts-mode)
@@ -2713,15 +2714,14 @@ The DWIM behaviour of this command is as follows:
           (ruby-mode . ruby-ts-mode)
           (dockerfile-mode . dockerfile-ts-mode)
           (java-mode . java-ts-mode)
-          ;; Add these missing remappings:
           (html-mode . html-ts-mode)
           (mhtml-mode . html-ts-mode)
           (sgml-mode . html-ts-mode)
           (lua-mode . lua-ts-mode)
           (elixir-mode . elixir-ts-mode)
-          (heex-mode . heex-ts-mode)
-          (emacs-lisp-mode . emacs-lisp-ts-mode)
-          (lisp-interaction-mode . emacs-lisp-ts-mode)))
+          (heex-mode . heex-ts-mode)))
+          ;; REMOVED: (emacs-lisp-mode . emacs-lisp-ts-mode)
+          ;; REMOVED: (lisp-interaction-mode . emacs-lisp-ts-mode)
 
   ;; Font-lock and indentation settings
   (setq treesit-font-lock-level 4)  ; Maximum highlighting
