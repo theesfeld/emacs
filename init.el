@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 14:08:54 by grim>
+;; Time-stamp: <Last changed 2025-06-24 14:35:50 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -125,6 +125,7 @@ The DWIM behaviour of this command is as follows:
       (message
        "No snippets available for current major/minor modes"))))
 
+;;;; KEYBIND_CHANGE: C-c Y is acceptable in user space, keeping it
 (global-set-key (kbd "C-c Y") #'my/consult-yasnippet-with-minor-modes)
 
 ;; Function to translate C-M-S-s-<key> to H-<key>
@@ -462,6 +463,7 @@ The DWIM behaviour of this command is as follows:
   (add-hook 'ednc-notification-presentation-functions #'ednc--show-notification)
 
   ;; === Keybindings ===
+  ;;;; KEYBIND_CHANGE: C-c e bindings are acceptable in user space
   (global-set-key (kbd "C-c e n") #'ednc-browse-history)
   (global-set-key (kbd "C-c e d") #'ednc-dismiss-all)
   (global-set-key (kbd "C-c e c") #'ednc-clear-history)
@@ -1149,11 +1151,11 @@ The DWIM behaviour of this command is as follows:
   :bind
   (("C-x k" . kill-current-buffer)
    ("C-x K" . kill-buffer)
-   ( "C-x C-i" . imenu)
-   ("s-<tab>" . previous-buffer)
-   ("C-x C-;" . comment-or-uncomment-region)
-   ("C-x C-'" . mc/mark-all-like-this)
-   ("C-x f" . find-file-at-point)))
+   ;;;; KEYBIND_CHANGE: Removed C-x C-i (imenu) - non-standard binding
+   ;;;; KEYBIND_CHANGE: Removed C-x C-; (comment-or-uncomment-region) - use M-; instead
+   ;;;; KEYBIND_CHANGE: Removed C-x C-' (mc/mark-all-like-this) - non-standard
+   ;;;; KEYBIND_CHANGE: Removed C-x f (find-file-at-point) - conflicts with set-fill-column
+   ))
 
 (use-package windower
   :ensure t
@@ -1220,111 +1222,111 @@ The DWIM behaviour of this command is as follows:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- ediff
- :ensure nil
- :defer t
- :custom
- (ediff-split-window-function
-  'split-window-right "Split windows vertically")
- (ediff-keep-variants
-  nil "Do not keep variant buffers after quitting")
- :config
- ;; Customize faces to respect themes
- (custom-theme-set-faces 'user
-                         '(ediff-current-diff-A
-                           ((t
-                             (:foreground
-                              "red"
-                              :background unspecified))))
-                         '(ediff-fine-diff-A
-                           ((t
-                             (:foreground
-                              "red"
-                              :background unspecified))))
-                         '(ediff-current-diff-B
-                           ((t
-                             (:foreground
-                              "green"
-                              :background unspecified))))
-                         '(ediff-fine-diff-B
-                           ((t
-                             (:foreground
-                              "green"
-                              :background unspecified))))
-                         '(diff-added
-                           ((t
-                             (:foreground
-                              "green4"
-                              :background unspecified))))
-                         '(diff-removed
-                           ((t
-                             (:foreground
-                              "red3"
-                              :background unspecified)))))
+  ediff
+  :ensure nil
+  :defer t
+  :custom
+  (ediff-split-window-function
+   'split-window-right "Split windows vertically")
+  (ediff-keep-variants
+   nil "Do not keep variant buffers after quitting")
+  :config
+  ;; Customize faces to respect themes
+  (custom-theme-set-faces 'user
+                          '(ediff-current-diff-A
+                            ((t
+                              (:foreground
+                               "red"
+                               :background unspecified))))
+                          '(ediff-fine-diff-A
+                            ((t
+                              (:foreground
+                               "red"
+                               :background unspecified))))
+                          '(ediff-current-diff-B
+                            ((t
+                              (:foreground
+                               "green"
+                               :background unspecified))))
+                          '(ediff-fine-diff-B
+                            ((t
+                              (:foreground
+                               "green"
+                               :background unspecified))))
+                          '(diff-added
+                            ((t
+                              (:foreground
+                               "green4"
+                               :background unspecified))))
+                          '(diff-removed
+                            ((t
+                              (:foreground
+                               "red3"
+                               :background unspecified)))))
 
- ;; Transient menu for ediff commands
- (require 'transient)
- (transient-define-prefix
-  my-ediff-dispatch () "Ediff command menu."
-  [["Compare"
-    ("f" "Files" my-ediff-files)
-    ("b" "Buffers" my-ediff-buffers)
-    ("d" "Directories" ediff-directories)]
-   ["Actions" ("q" "Quit and Restore" my-ediff-quit)]])
+  ;; Transient menu for ediff commands
+  (require 'transient)
+  (transient-define-prefix
+    my-ediff-dispatch () "Ediff command menu."
+    [["Compare"
+      ("f" "Files" my-ediff-files)
+      ("b" "Buffers" my-ediff-buffers)
+      ("d" "Directories" ediff-directories)]
+     ["Actions" ("q" "Quit and Restore" my-ediff-quit)]])
 
- ;; Interactive file selection with read-file-name
- (defun my-ediff-files ()
-   "Compare two files selected manually."
-   (interactive)
-   (let ((file-a (read-file-name "File A: "))
-         (file-b (read-file-name "File B: ")))
-     (when (and file-a file-b)
-       (my-ediff-save-window-config)
-       (ediff-files file-a file-b))))
+  ;; Interactive file selection with read-file-name
+  (defun my-ediff-files ()
+    "Compare two files selected manually."
+    (interactive)
+    (let ((file-a (read-file-name "File A: "))
+          (file-b (read-file-name "File B: ")))
+      (when (and file-a file-b)
+        (my-ediff-save-window-config)
+        (ediff-files file-a file-b))))
 
- ;; Interactive buffer selection
- (defun my-ediff-buffers ()
-   "Compare two buffers with completion."
-   (interactive)
-   (let* ((buffer-a
-           (completing-read
-            "Buffer A: " (mapcar #'buffer-name (buffer-list))))
-          (buffer-b
-           (completing-read
-            "Buffer B: " (mapcar #'buffer-name (buffer-list)))))
-     (when (and buffer-a buffer-b)
-       (my-ediff-save-window-config)
-       (ediff-buffers buffer-a buffer-b))))
+  ;; Interactive buffer selection
+  (defun my-ediff-buffers ()
+    "Compare two buffers with completion."
+    (interactive)
+    (let* ((buffer-a
+            (completing-read
+             "Buffer A: " (mapcar #'buffer-name (buffer-list))))
+           (buffer-b
+            (completing-read
+             "Buffer B: " (mapcar #'buffer-name (buffer-list)))))
+      (when (and buffer-a buffer-b)
+        (my-ediff-save-window-config)
+        (ediff-buffers buffer-a buffer-b))))
 
- ;; Save window configuration
- (defvar my-ediff-window-config nil
-   "Store window configuration before ediff.")
- (defun my-ediff-save-window-config ()
-   "Save window configuration before ediff."
-   (setq my-ediff-window-config (current-window-configuration)))
+  ;; Save window configuration
+  (defvar my-ediff-window-config nil
+    "Store window configuration before ediff.")
+  (defun my-ediff-save-window-config ()
+    "Save window configuration before ediff."
+    (setq my-ediff-window-config (current-window-configuration)))
 
- ;; Quit and restore
- (defun my-ediff-quit ()
-   "Quit ediff, discard changes, kill buffers, and restore window configuration."
-   (interactive)
-   (when (and (boundp 'ediff-control-buffer) ediff-control-buffer)
-     (with-current-buffer ediff-control-buffer
-       (ediff-quit t))
-     (when my-ediff-window-config
-       (set-window-configuration my-ediff-window-config)
-       (setq my-ediff-window-config nil))))
+  ;; Quit and restore
+  (defun my-ediff-quit ()
+    "Quit ediff, discard changes, kill buffers, and restore window configuration."
+    (interactive)
+    (when (and (boundp 'ediff-control-buffer) ediff-control-buffer)
+      (with-current-buffer ediff-control-buffer
+        (ediff-quit t))
+      (when my-ediff-window-config
+        (set-window-configuration my-ediff-window-config)
+        (setq my-ediff-window-config nil))))
 
- ;; Define keybindings after ediff is loaded
- (with-eval-after-load 'ediff-mode
-   (require 'ediff-mode)
-   (define-key ediff-mode-map (kbd "C-c q") #'my-ediff-quit)
-   (define-key ediff-mode-map (kbd "?") #'ediff-toggle-help))
+  ;; Define keybindings after ediff is loaded
+  (with-eval-after-load 'ediff-mode
+    (require 'ediff-mode)
+    (define-key ediff-mode-map (kbd "C-c q") #'my-ediff-quit)
+    (define-key ediff-mode-map (kbd "?") #'ediff-toggle-help))
 
- :bind (("C-c d" . my-ediff-dispatch)))
+  :bind (("C-c d" . my-ediff-dispatch)))
 
 (with-eval-after-load 'ediff-wind
   (setq ediff-control-frame-parameters
-    (cons '(unsplittable . t) ediff-control-frame-parameters)))
+        (cons '(unsplittable . t) ediff-control-frame-parameters)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    tramp                                  ;;
@@ -1351,82 +1353,82 @@ The DWIM behaviour of this command is as follows:
   )
 
 (use-package
- files
- :ensure nil
- :config
- ;; Save place settings
- (setq save-place-file
-       (expand-file-name "saveplace/saveplace" my-tmp-dir))
- (save-place-mode 1) ; Enable save-place-mode
+  files
+  :ensure nil
+  :config
+  ;; Save place settings
+  (setq save-place-file
+        (expand-file-name "saveplace/saveplace" my-tmp-dir))
+  (save-place-mode 1) ; Enable save-place-mode
 
- ;; Define a minimal log-mode for .log files
- (define-derived-mode
-  log-mode
-  fundamental-mode
-  "Log"
-  "A simple mode for log files."
-  (setq font-lock-defaults '(log-mode-font-lock-keywords)))
+  ;; Define a minimal log-mode for .log files
+  (define-derived-mode
+    log-mode
+    fundamental-mode
+    "Log"
+    "A simple mode for log files."
+    (setq font-lock-defaults '(log-mode-font-lock-keywords)))
 
- ;; Define font-lock keywords for log levels
- (defvar log-mode-font-lock-keywords
-   '(("\\bDEBUG\\b" . 'font-lock-comment-face)
-     ("\\bINFO\\b" . 'font-lock-string-face)
-     ("\\bWARN\\b" . 'font-lock-warning-face)
-     ("\\bERROR\\b" . 'font-lock-function-name-face))
-   "Font-lock keywords for `log-mode' highlighting.")
+  ;; Define font-lock keywords for log levels
+  (defvar log-mode-font-lock-keywords
+    '(("\\bDEBUG\\b" . 'font-lock-comment-face)
+      ("\\bINFO\\b" . 'font-lock-string-face)
+      ("\\bWARN\\b" . 'font-lock-warning-face)
+      ("\\bERROR\\b" . 'font-lock-function-name-face))
+    "Font-lock keywords for `log-mode' highlighting.")
 
- ;; Associate .log files with log-mode
- (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
+  ;; Associate .log files with log-mode
+  (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
 
- :hook
- ((log-mode . auto-revert-tail-mode) ; Enable tailing for log-mode
-  (auto-revert-tail-mode
-   .
-   (lambda ()
-     (when (derived-mode-p 'log-mode)
-       (goto-char (point-max))
-       (when (file-remote-p default-directory)
-         (setq buffer-read-only nil) ; Ensure writable for TRAMP
-         (let ((tramp-connection-properties
-                (cons
-                 `(,(tramp-make-tramp-file-name
-                     (tramp-file-name-method
-                      tramp-default-remote-file-name)
-                     (tramp-file-name-user
-                      tramp-default-remote-file-name)
-                     (tramp-file-name-host
-                      tramp-default-remote-file-name)
-                     nil)
-                   "connection-buffer" "auto-revert")
-                 tramp-connection-properties)))
-           (auto-revert-set-timer))))))))
+  :hook
+  ((log-mode . auto-revert-tail-mode) ; Enable tailing for log-mode
+   (auto-revert-tail-mode
+    .
+    (lambda ()
+      (when (derived-mode-p 'log-mode)
+        (goto-char (point-max))
+        (when (file-remote-p default-directory)
+          (setq buffer-read-only nil) ; Ensure writable for TRAMP
+          (let ((tramp-connection-properties
+                 (cons
+                  `(,(tramp-make-tramp-file-name
+                      (tramp-file-name-method
+                       tramp-default-remote-file-name)
+                      (tramp-file-name-user
+                       tramp-default-remote-file-name)
+                      (tramp-file-name-host
+                       tramp-default-remote-file-name)
+                      nil)
+                    "connection-buffer" "auto-revert")
+                  tramp-connection-properties)))
+            (auto-revert-set-timer))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    vundo                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- vundo
- :ensure t
- :defer t
- :bind ("C-x u" . vundo)
- :config
- (setq vundo-glyph-alist vundo-unicode-symbols)
- (setq vundo-files-directory (expand-file-name "undos" my-tmp-dir)))
+  vundo
+  :ensure t
+  :defer t
+  :bind ("C-x u" . vundo)
+  :config
+  (setq vundo-glyph-alist vundo-unicode-symbols)
+  (setq vundo-files-directory (expand-file-name "undos" my-tmp-dir)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                 deadgrep                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- deadgrep
- :ensure t
- :defer t
- :bind
- (("C-c s" . deadgrep)
-  :map
-  deadgrep-mode-map
-  ("q" . deadgrep-kill-all-buffers)))
+  deadgrep
+  :ensure t
+  :defer t
+  :bind
+  (("C-c s" . deadgrep)
+   :map
+   deadgrep-mode-map
+   ("q" . deadgrep-kill-all-buffers)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Visual Enhancements                         ;;
@@ -1434,27 +1436,27 @@ The DWIM behaviour of this command is as follows:
 
 ;; Rainbow Delimiters
 (use-package
- rainbow-delimiters
- :ensure t
- :defer t
- :diminish rainbow-delimiters-mode
- :hook (prog-mode . rainbow-delimiters-mode)
- :custom
- (rainbow-delimiters-max-face-count 9)) ;; Default 9 faces
+  rainbow-delimiters
+  :ensure t
+  :defer t
+  :diminish rainbow-delimiters-mode
+  :hook (prog-mode . rainbow-delimiters-mode)
+  :custom
+  (rainbow-delimiters-max-face-count 9)) ;; Default 9 faces
 
 ;; Highlight Thing at Point
 (use-package
- highlight-thing
- :ensure t
- :defer t
- :custom
- (highlight-thing-delay-seconds 0.5) ; Delay before highlighting
- (highlight-thing-what-thing 'symbol) ; Highlight symbols
- :config
- (set-face-attribute 'highlight-thing nil
-                     :background "#5e81ac" ; Soft blue from Modus
-                     :weight 'normal)
- :hook (prog-mode . highlight-thing-mode))
+  highlight-thing
+  :ensure t
+  :defer t
+  :custom
+  (highlight-thing-delay-seconds 0.5) ; Delay before highlighting
+  (highlight-thing-what-thing 'symbol) ; Highlight symbols
+  :config
+  (set-face-attribute 'highlight-thing nil
+                      :background "#5e81ac" ; Soft blue from Modus
+                      :weight 'normal)
+  :hook (prog-mode . highlight-thing-mode))
 
 (use-package
   indent-bars
@@ -1520,31 +1522,31 @@ The DWIM behaviour of this command is as follows:
 
 ;;; Helm - Bare Minimum for Aidermacs
 (use-package
- helm
- :ensure t
- :defer t
- :init
- (setq helm-mode nil)) ; Disable Helm globally
+  helm
+  :ensure t
+  :defer t
+  :init
+  (setq helm-mode nil)) ; Disable Helm globally
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Buffer Management                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- smartparens
- :ensure t
- :defer t
- :hook
- ((prog-mode . smartparens-mode)
-  (text-mode . smartparens-mode)
-  (markdown-mode . smartparens-mode))
- :config (require 'smartparens-config)
- :bind
- (:map
-  smartparens-mode-map
-  ("C-M-f" . sp-forward-sexp) ; Jump to next sexp
-  ("C-M-b" . sp-backward-sexp) ; Jump to prev sexp
-  ("C-M-u" . sp-backward-up-sexp))) ; Up a level
+  smartparens
+  :ensure t
+  :defer t
+  :hook
+  ((prog-mode . smartparens-mode)
+   (text-mode . smartparens-mode)
+   (markdown-mode . smartparens-mode))
+  :config (require 'smartparens-config)
+  :bind
+  (:map
+   smartparens-mode-map
+   ("C-M-f" . sp-forward-sexp) ; Jump to next sexp
+   ("C-M-b" . sp-backward-sexp) ; Jump to prev sexp
+   ("C-M-u" . sp-backward-up-sexp))) ; Up a level
 
 (use-package
   paredit
@@ -1694,13 +1696,13 @@ The DWIM behaviour of this command is as follows:
   (add-hook 'minibuffer-setup-hook #'corfu-disable-in-minibuffer))
 
 (use-package
- all-the-icons
- :ensure t
- :config
- (setq all-the-icons-scale-factor 1.1) ; Similar to your nerd-icons setting
- ;; Install fonts if not already present (run once manually if needed)
- (unless (find-font (font-spec :name "all-the-icons"))
-   (all-the-icons-install-fonts t)))
+  all-the-icons
+  :ensure t
+  :config
+  (setq all-the-icons-scale-factor 1.1) ; Similar to your nerd-icons setting
+  ;; Install fonts if not already present (run once manually if needed)
+  (unless (find-font (font-spec :name "all-the-icons"))
+    (all-the-icons-install-fonts t)))
 
 (use-package
   all-the-icons-completion
@@ -1721,8 +1723,9 @@ The DWIM behaviour of this command is as follows:
   :ensure t
   :bind
   (("C-S-c C-S-c" . mc/edit-lines)
-   ("C->" . mc/mark-next-like-this)
-   ("C-<" . mc/mark-previous-like-this)
+   ;;;; KEYBIND_CHANGE: Moved C-> and C-< to C-c prefix to avoid conflicts
+   ("C-c >" . mc/mark-next-like-this)
+   ("C-c <" . mc/mark-previous-like-this)
    ("C-c C-<" . mc/mark-all-like-this)))
 
 (use-package
@@ -1733,18 +1736,19 @@ The DWIM behaviour of this command is as follows:
    ("C-c D" . crux-delete-file-and-buffer)
    ("C-c r" . crux-rename-file-and-buffer)
    ("C-c k" . crux-kill-other-buffers)
-   ("C-a" . crux-move-beginning-of-line)))
+   ;;;; KEYBIND_CHANGE: Removed C-a override - use standard move-beginning-of-line
+   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              Editing Helpers                              ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- diff-hl
- :ensure t
- :defer t
- :hook (magit-post-refresh . diff-hl-magit-post-refresh)
- :config (global-diff-hl-mode +1))
+  diff-hl
+  :ensure t
+  :defer t
+  :hook (magit-post-refresh . diff-hl-magit-post-refresh)
+  :config (global-diff-hl-mode +1))
 
 (use-package
   which-key
@@ -1764,25 +1768,29 @@ The DWIM behaviour of this command is as follows:
   (setq which-key-prefix-prefix "+"))
 
 (use-package
- avy
- :ensure t
- :defer t
- :bind (("M-j" . avy-goto-char-timer) ("C-'" . avy-goto-char-2))
- :init (avy-setup-default)
- :config
- (defun avy-action-exchange (pt)
-   "Exchange sexp at PT with the one at point."
-   (set-mark pt)
-   (transpose-sexps 0))
- (add-to-list 'avy-dispatch-alist '(?e . avy-action-exchange))
- (defun avy-action-embark (pt)
-   "Invoke Embark at PT."
-   (save-excursion
-     (goto-char pt)
-     (embark-act))
-   (select-window (cdr (ring-ref avy-ring 0)))
-   t)
- (setf (alist-get ?. avy-dispatch-alist) 'avy-action-embark))
+  avy
+  :ensure t
+  :defer t
+  :bind (
+        ;;;; KEYBIND_CHANGE: M-j is acceptable - it's normally undefined
+         ("M-j" . avy-goto-char-timer)
+        ;;;; KEYBIND_CHANGE: Moved C-' to C-c ' to avoid conflict with toggle-input-method
+         ("C-c '" . avy-goto-char-2))
+  :init (avy-setup-default)
+  :config
+  (defun avy-action-exchange (pt)
+    "Exchange sexp at PT with the one at point."
+    (set-mark pt)
+    (transpose-sexps 0))
+  (add-to-list 'avy-dispatch-alist '(?e . avy-action-exchange))
+  (defun avy-action-embark (pt)
+    "Invoke Embark at PT."
+    (save-excursion
+      (goto-char pt)
+      (embark-act))
+    (select-window (cdr (ring-ref avy-ring 0)))
+    t)
+  (setf (alist-get ?. avy-dispatch-alist) 'avy-action-embark))
 
 (use-package
   avy-zap
@@ -1794,107 +1802,111 @@ The DWIM behaviour of this command is as follows:
   (setq avy-zap-forward-only t)
   (setq avy-keys '(?a ?o ?e ?u ?i ?d ?h ?t ?n ?s)))
 
-(use-package ace-window :ensure t :after avy :bind ("M-o" . ace-window))
-
-(global-set-key (kbd "C-x o") #'ace-window)
+(use-package ace-window
+  :ensure t
+  :after avy
+  ;;;; KEYBIND_CHANGE: Using C-x o for ace-window is fine as it enhances other-window
+  :bind ("C-x o" . ace-window))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                    XKCD                                   ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- xkcd
- :ensure t
- :defer t
- :config
- ;; Optional: Customize cache directory
- (setq xkcd-cache-dir "~/.config/emacs/xkcd/")
- ;; Hook to set cursor-type to a non-blinking state in xkcd buffers
- :hook (xkcd-mode . (lambda () (setq-local cursor-type '(bar . 0)))))
+  xkcd
+  :ensure t
+  :defer t
+  :config
+  ;; Optional: Customize cache directory
+  (setq xkcd-cache-dir "~/.config/emacs/xkcd/")
+  ;; Hook to set cursor-type to a non-blinking state in xkcd buffers
+  :hook (xkcd-mode . (lambda () (setq-local cursor-type '(bar . 0)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                   Flyspell                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- flyspell
- :ensure nil
- :hook
- ((text-mode-hook . flyspell-mode) ;; Prot enables in text modes
-  (org-mode-hook . flyspell-mode) ;; Added for your Org usage
-  (prog-mode-hook . flyspell-prog-mode)) ;; Comments/strings in code
- :config
- (setq ispell-program-name "aspell") ;; Prot uses aspell
- (setq ispell-dictionary "en_US") ;; Default dictionary
- (setq ispell-extra-args '("--sug-mode=ultra")) ;; Fast suggestions, Prot's style
- (setq ispell-personal-dictionary "~/.aspell.en.pws") ;; Personal words
- ;; Prot's performance tweaks
- (setq flyspell-issue-message-flag nil) ;; No chatter
- (setq flyspell-issue-welcome-flag nil) ;; No welcome
- ;; Ensure aspell is installed
- (unless (executable-find "aspell")
-   (message "Aspell not found; flyspell disabled")
-   (flyspell-mode -1))
- :bind
- (:map
-  flyspell-mode-map
-  ("C-;" . flyspell-correct-wrapper))) ;; Prot's correction key
+  flyspell
+  :ensure nil
+  :hook
+  ((text-mode-hook . flyspell-mode) ;; Prot enables in text modes
+   (org-mode-hook . flyspell-mode) ;; Added for your Org usage
+   (prog-mode-hook . flyspell-prog-mode)) ;; Comments/strings in code
+  :config
+  (setq ispell-program-name "aspell") ;; Prot uses aspell
+  (setq ispell-dictionary "en_US") ;; Default dictionary
+  (setq ispell-extra-args '("--sug-mode=ultra")) ;; Fast suggestions, Prot's style
+  (setq ispell-personal-dictionary "~/.aspell.en.pws") ;; Personal words
+  ;; Prot's performance tweaks
+  (setq flyspell-issue-message-flag nil) ;; No chatter
+  (setq flyspell-issue-welcome-flag nil) ;; No welcome
+  ;; Ensure aspell is installed
+  (unless (executable-find "aspell")
+    (message "Aspell not found; flyspell disabled")
+    (flyspell-mode -1))
+  :bind
+  (:map
+   flyspell-mode-map
+  ;;;; KEYBIND_CHANGE: Moved C-; to M-$ which is the standard ispell-word
+   ("M-$" . flyspell-correct-wrapper))) ;; Standard correction key
 
 (use-package
- flyspell-correct
- :ensure t
- :after flyspell
- :bind
- (:map flyspell-mode-map ("C-;" . flyspell-correct-wrapper)))
+  flyspell-correct
+  :ensure t
+  :after flyspell
+  :bind
+ ;;;; KEYBIND_CHANGE: Using M-$ for flyspell-correct (standard ispell key)
+  (:map flyspell-mode-map ("M-$" . flyspell-correct-wrapper)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Eglot (LSP) Setup                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- eglot
- :ensure nil
- :hook
- ((prog-mode
-   .
+  eglot
+  :ensure nil
+  :hook
+  ((prog-mode
+    .
+    (lambda ()
+      (unless (or (string-match-p "^\\*.*\\*$" (buffer-name))
+                  (string=
+                   (buffer-file-name)
+                   (expand-file-name "init.el" user-emacs-directory)))
+        (eglot-ensure))))
+   (eglot-managed-mode
+    .
+    (lambda ()
+      (add-hook 'before-save-hook #'eglot-format-buffer -10 t)
+      (setq eldoc-documentation-strategy #'eldoc-documentation-default)
+      (eglot-inlay-hints-mode))))
+  :config
+  (add-to-list
+   'eglot-server-programs
+   '(emacs-lisp-mode . nil)) ; No LSP server for Emacs Lisp
+  ;; Disable python-flymake when eglot is active
+  (add-hook
+   'eglot-managed-mode-hook
    (lambda ()
-     (unless (or (string-match-p "^\\*.*\\*$" (buffer-name))
-                 (string=
-                  (buffer-file-name)
-                  (expand-file-name "init.el" user-emacs-directory)))
-       (eglot-ensure))))
-  (eglot-managed-mode
-   .
-   (lambda ()
-     (add-hook 'before-save-hook #'eglot-format-buffer -10 t)
-     (setq eldoc-documentation-strategy #'eldoc-documentation-default)
-     (eglot-inlay-hints-mode))))
- :config
- (add-to-list
-  'eglot-server-programs
-  '(emacs-lisp-mode . nil)) ; No LSP server for Emacs Lisp
- ;; Disable python-flymake when eglot is active
- (add-hook
-  'eglot-managed-mode-hook
-  (lambda ()
-    (when (derived-mode-p 'python-mode 'python-ts-mode)
-      (remove-hook 'flymake-diagnostic-functions 'python-flymake
-                   t)))))
+     (when (derived-mode-p 'python-mode 'python-ts-mode)
+       (remove-hook 'flymake-diagnostic-functions 'python-flymake
+                    t)))))
 
 (use-package
- consult-lsp
- :ensure t
- :after (eglot consult)
- :bind
- (:map
-  eglot-mode-map
-  ("C-c l a" . consult-lsp-code-actions)
-  ("C-c l d" . consult-lsp-diagnostics)
-  ("C-c l s" . consult-lsp-symbols)
-  ("C-c l f" . consult-lsp-file-symbols)
-  ("C-c l i" . consult-lsp-implementation)
-  ("C-c l r" . consult-lsp-references)
-  ("C-c l D" . consult-lsp-definition)))
+  consult-lsp
+  :ensure t
+  :after (eglot consult)
+  :bind
+  (:map
+   eglot-mode-map
+   ("C-c l a" . consult-lsp-code-actions)
+   ("C-c l d" . consult-lsp-diagnostics)
+   ("C-c l s" . consult-lsp-symbols)
+   ("C-c l f" . consult-lsp-file-symbols)
+   ("C-c l i" . consult-lsp-implementation)
+   ("C-c l r" . consult-lsp-references)
+   ("C-c l D" . consult-lsp-definition)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Org Mode Setup                                ;;
@@ -2043,126 +2055,126 @@ The DWIM behaviour of this command is as follows:
   :hook (org-capture-prepare-finalize . org-id-get-create))
 
 (use-package
- org-agenda
- :ensure nil
- :after org
- :config
- ;; Custom agenda commands
- (setq org-agenda-custom-commands
-       '(("u" "Unified Agenda and Tasks"
-          ((agenda "" ((org-agenda-span 'week)))
-           (todo
-            "TODO|NEXT|WAITING"
-            ((org-agenda-overriding-header "All Tasks")))))
-         ("t" "All Open TODOs"
-          ((todo
-            "TODO|NEXT|WAITING"
-            ((org-agenda-overriding-header "Current Open TODOs")))))
-         ("d" "Today's Agenda with Open TODOs"
-          ((agenda
-            ""
-            ((org-agenda-span 'day)
-             (org-agenda-overriding-header "Today's Schedule")))))
-         (todo
-          "TODO|NEXT|WAITING"
-          ((org-agenda-overriding-header
-            "Open TODOs (Today or Unscheduled)")
-           (org-agenda-skip-function
-            '(org-agenda-skip-entry-if
-              'scheduled
-              'deadline
-              'notregexp
-              "^\\*\\s-+\\(TODO\\|NEXT\\|WAITING\\)"))))))
+  org-agenda
+  :ensure nil
+  :after org
+  :config
+  ;; Custom agenda commands
+  (setq org-agenda-custom-commands
+        '(("u" "Unified Agenda and Tasks"
+           ((agenda "" ((org-agenda-span 'week)))
+            (todo
+             "TODO|NEXT|WAITING"
+             ((org-agenda-overriding-header "All Tasks")))))
+          ("t" "All Open TODOs"
+           ((todo
+             "TODO|NEXT|WAITING"
+             ((org-agenda-overriding-header "Current Open TODOs")))))
+          ("d" "Today's Agenda with Open TODOs"
+           ((agenda
+             ""
+             ((org-agenda-span 'day)
+              (org-agenda-overriding-header "Today's Schedule")))))
+          (todo
+           "TODO|NEXT|WAITING"
+           ((org-agenda-overriding-header
+             "Open TODOs (Today or Unscheduled)")
+            (org-agenda-skip-function
+             '(org-agenda-skip-entry-if
+               'scheduled
+               'deadline
+               'notregexp
+               "^\\*\\s-+\\(TODO\\|NEXT\\|WAITING\\)"))))))
 
- (setq org-agenda-start-on-weekday 1)
- (setq org-agenda-span 'week)
- (setq org-agenda-include-diary t)
- (setq org-agenda-sorting-strategy
-       '((agenda habit-down time-up priority-down tag-up)
-         (todo priority-down category-keep)
-         (tags priority-down category-keep)
-         (search category-keep)))
- (setq org-agenda-log-mode-items '(closed clocked))
- (setq org-agenda-start-with-log-mode t)
- (setq org-agenda-prefix-format
-       '((agenda . " %i %-12:c%?-12t% s [%e] ")
-         (todo . " %i %-12:c")
-         (tags . " %i %-12:c")
-         (search . " %i %-12:c"))))
-
-(use-package
- org-capture
- :ensure nil
- :after org
- :config
- (setq
-  org-capture-templates
-  `(("t" "Todo" entry
-     (file+headline
-      ,(expand-file-name "tasks.org" org-directory) "Tasks")
-     "* TODO %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\n")
-    ("m" "Meeting" entry
-     (file+headline
-      ,(expand-file-name "calendar.org" org-directory) "Meetings")
-     "* MEETING %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\nSCHEDULED: %^T\n%a")
-    ("n" "Note" entry
-     (file+headline
-      ,(expand-file-name "notes/notes.org" org-directory) "Notes")
-     "* %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\n%a")
-    ("w" "Web Capture" entry
-     (file+headline
-      ,(expand-file-name "web.org" org-directory) "Web")
-     "%:initial"
-     :immediate-finish t)
-    ("o" "Outlook Email TODO" entry
-     (file+headline
-      ,(expand-file-name "tasks.org" org-directory) "Tasks")
-     "* TODO %:subject\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:EMAIL_LINK: %:link\n:END:\n\n%:initial\n"
-     :immediate-finish t)
-    ("e"
-     "Email"
-     entry
-     (file+headline "~/org/inbox.org" "Emails")
-     "* TODO %:subject\n:PROPERTIES:\n:EMAIL: %:message-id\n:END:\n%?"
-     :immediate-finish t)
-    ("r"
-     "RSS"
-     entry
-     (file+headline "~/org/inbox.org" "RSS")
-     "* TODO %:title\n:PROPERTIES:\n:URL: %:url\n:END:\n%?"
-     :immediate-finish t)))
- :hook
- (org-capture-after-finalize
-  .
-  (lambda ()
-    (when (get-buffer-window "*Capture*")
-      (delete-window (get-buffer-window "*Capture*"))))))
+  (setq org-agenda-start-on-weekday 1)
+  (setq org-agenda-span 'week)
+  (setq org-agenda-include-diary t)
+  (setq org-agenda-sorting-strategy
+        '((agenda habit-down time-up priority-down tag-up)
+          (todo priority-down category-keep)
+          (tags priority-down category-keep)
+          (search category-keep)))
+  (setq org-agenda-log-mode-items '(closed clocked))
+  (setq org-agenda-start-with-log-mode t)
+  (setq org-agenda-prefix-format
+        '((agenda . " %i %-12:c%?-12t% s [%e] ")
+          (todo . " %i %-12:c")
+          (tags . " %i %-12:c")
+          (search . " %i %-12:c"))))
 
 (use-package
- org-protocol
- :ensure nil
- :after org
- :config
- (setq org-protocol-default-template-key nil) ; Use template key from URL
- (add-to-list 'org-modules 'org-protocol))
+  org-capture
+  :ensure nil
+  :after org
+  :config
+  (setq
+   org-capture-templates
+   `(("t" "Todo" entry
+      (file+headline
+       ,(expand-file-name "tasks.org" org-directory) "Tasks")
+      "* TODO %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\n")
+     ("m" "Meeting" entry
+      (file+headline
+       ,(expand-file-name "calendar.org" org-directory) "Meetings")
+      "* MEETING %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\nSCHEDULED: %^T\n%a")
+     ("n" "Note" entry
+      (file+headline
+       ,(expand-file-name "notes/notes.org" org-directory) "Notes")
+      "* %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\n%a")
+     ("w" "Web Capture" entry
+      (file+headline
+       ,(expand-file-name "web.org" org-directory) "Web")
+      "%:initial"
+      :immediate-finish t)
+     ("o" "Outlook Email TODO" entry
+      (file+headline
+       ,(expand-file-name "tasks.org" org-directory) "Tasks")
+      "* TODO %:subject\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:EMAIL_LINK: %:link\n:END:\n\n%:initial\n"
+      :immediate-finish t)
+     ("e"
+      "Email"
+      entry
+      (file+headline "~/org/inbox.org" "Emails")
+      "* TODO %:subject\n:PROPERTIES:\n:EMAIL: %:message-id\n:END:\n%?"
+      :immediate-finish t)
+     ("r"
+      "RSS"
+      entry
+      (file+headline "~/org/inbox.org" "RSS")
+      "* TODO %:title\n:PROPERTIES:\n:URL: %:url\n:END:\n%?"
+      :immediate-finish t)))
+  :hook
+  (org-capture-after-finalize
+   .
+   (lambda ()
+     (when (get-buffer-window "*Capture*")
+       (delete-window (get-buffer-window "*Capture*"))))))
 
 (use-package
- org-download
- :ensure t
- :hook (dired-mode . org-download-enable)
- :config
- (setq org-download-image-dir
-       (expand-file-name "images" org-directory)))
+  org-protocol
+  :ensure nil
+  :after org
+  :config
+  (setq org-protocol-default-template-key nil) ; Use template key from URL
+  (add-to-list 'org-modules 'org-protocol))
 
 (use-package
- org-attach
- :ensure nil
- :after org
- :config
- (setq org-attach-dir-relative t)
- (setq org-attach-use-inheritance t)
- (setq org-attach-id-dir
-       (expand-file-name "attachments" org-directory)))
+  org-download
+  :ensure t
+  :hook (dired-mode . org-download-enable)
+  :config
+  (setq org-download-image-dir
+        (expand-file-name "images" org-directory)))
+
+(use-package
+  org-attach
+  :ensure nil
+  :after org
+  :config
+  (setq org-attach-dir-relative t)
+  (setq org-attach-use-inheritance t)
+  (setq org-attach-id-dir
+        (expand-file-name "attachments" org-directory)))
 
 (use-package
   org-modern
@@ -2307,7 +2319,8 @@ The DWIM behaviour of this command is as follows:
    recentf-max-menu-items 25
    recentf-auto-cleanup nil)
   (run-at-time nil (* 5 60) 'recentf-save-list) ; Save every 5 minutes
-  :bind (("C-c r" . consult-recent-file)))
+  ;;;; KEYBIND_CHANGE: C-c r conflicts with crux-rename-file-and-buffer, moved to C-c f r
+  :bind (("C-c f r" . consult-recent-file)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                  Ibuffer                                  ;;
@@ -2599,78 +2612,78 @@ The DWIM behaviour of this command is as follows:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- denote
- :ensure t
- :hook
- ( ;; If you use Markdown or plain text files, then you want to make
-  ;; the Denote links clickable (Org renders links as buttons right
-  ;; away)
-  (text-mode . denote-fontify-links-mode-maybe)
-  ;; Apply colours to Denote names in Dired.  This applies to all
-  ;; directories.  Check `denote-dired-directories' for the specific
-  ;; directories you may prefer instead.  Then, instead of
-  ;; `denote-dired-mode', use `denote-dired-mode-in-directories'.
-  (dired-mode . denote-dired-mode))
- :bind
- ;; Denote DOES NOT define any key bindings.  This is for the user to
- ;; decide.  For example:
- (:map
-  global-map
-  ("C-c n n" . denote)
-  ("C-c n j" . denote-journal-new-or-existing-entry)
-  ("C-c n d" . denote-dired)
-  ("C-c n g" . denote-grep)
+  denote
+  :ensure t
+  :hook
+  ( ;; If you use Markdown or plain text files, then you want to make
+   ;; the Denote links clickable (Org renders links as buttons right
+   ;; away)
+   (text-mode . denote-fontify-links-mode-maybe)
+   ;; Apply colours to Denote names in Dired.  This applies to all
+   ;; directories.  Check `denote-dired-directories' for the specific
+   ;; directories you may prefer instead.  Then, instead of
+   ;; `denote-dired-mode', use `denote-dired-mode-in-directories'.
+   (dired-mode . denote-dired-mode))
+  :bind
+  ;; Denote DOES NOT define any key bindings.  This is for the user to
+  ;; decide.  For example:
+  (:map
+   global-map
+   ("C-c n n" . denote)
+   ("C-c n j" . denote-journal-new-or-existing-entry)
+   ("C-c n d" . denote-dired)
+   ("C-c n g" . denote-grep)
 
-  ;; If you intend to use Denote with a variety of file types, it is
-  ;; easier to bind the link-related commands to the `global-map', as
-  ;; shown here.  Otherwise follow the same pattern for `org-mode-map',
-  ;; `markdown-mode-map', and/or `text-mode-map'.
-  ("C-c n l" . denote-link)
-  ("C-c n L" . denote-add-links)
-  ("C-c n b" . denote-backlinks)
-  ("C-c n q c" . denote-query-contents-link) ; create link that triggers a grep
-  ("C-c n q f" . denote-query-filenames-link) ; create link that triggers a dired
-  ;; Note that `denote-rename-file' can work from any context, not just
-  ;; Dired bufffers.  That is why we bind it here to the `global-map'.
-  ("C-c n r" . denote-rename-file)
-  ("C-c n R" . denote-rename-file-using-front-matter)
+   ;; If you intend to use Denote with a variety of file types, it is
+   ;; easier to bind the link-related commands to the `global-map', as
+   ;; shown here.  Otherwise follow the same pattern for `org-mode-map',
+   ;; `markdown-mode-map', and/or `text-mode-map'.
+   ("C-c n l" . denote-link)
+   ("C-c n L" . denote-add-links)
+   ("C-c n b" . denote-backlinks)
+   ("C-c n q c" . denote-query-contents-link) ; create link that triggers a grep
+   ("C-c n q f" . denote-query-filenames-link) ; create link that triggers a dired
+   ;; Note that `denote-rename-file' can work from any context, not just
+   ;; Dired bufffers.  That is why we bind it here to the `global-map'.
+   ("C-c n r" . denote-rename-file)
+   ("C-c n R" . denote-rename-file-using-front-matter)
 
-  ;; Key bindings specifically for Dired.
-  :map
-  dired-mode-map
-  ("C-c C-d C-i" . denote-dired-link-marked-notes)
-  ("C-c C-d C-r" . denote-dired-rename-files)
-  ("C-c C-d C-k" . denote-dired-rename-marked-files-with-keywords)
-  ("C-c C-d C-R"
-   .
-   denote-dired-rename-marked-files-using-front-matter))
+   ;; Key bindings specifically for Dired.
+   :map
+   dired-mode-map
+   ("C-c C-d C-i" . denote-dired-link-marked-notes)
+   ("C-c C-d C-r" . denote-dired-rename-files)
+   ("C-c C-d C-k" . denote-dired-rename-marked-files-with-keywords)
+   ("C-c C-d C-R"
+    .
+    denote-dired-rename-marked-files-using-front-matter))
 
- :config
- ;; Remember to check the doc string of each of those variables.
- (setq denote-directory (expand-file-name "~/Documents/notes/"))
- (setq denote-save-buffers nil)
- (setq denote-known-keywords
-       '("emacs" "philosophy" "politics" "economics"))
- (setq denote-infer-keywords t)
- (setq denote-sort-keywords t)
- (setq denote-prompts '(title keywords))
- (setq denote-excluded-directories-regexp nil)
- (setq denote-excluded-keywords-regexp nil)
- (setq denote-rename-confirmations
-       '(rewrite-front-matter modify-file-name))
+  :config
+  ;; Remember to check the doc string of each of those variables.
+  (setq denote-directory (expand-file-name "~/Documents/notes/"))
+  (setq denote-save-buffers nil)
+  (setq denote-known-keywords
+        '("emacs" "philosophy" "politics" "economics"))
+  (setq denote-infer-keywords t)
+  (setq denote-sort-keywords t)
+  (setq denote-prompts '(title keywords))
+  (setq denote-excluded-directories-regexp nil)
+  (setq denote-excluded-keywords-regexp nil)
+  (setq denote-rename-confirmations
+        '(rewrite-front-matter modify-file-name))
 
- ;; Pick dates, where relevant, with Org's advanced interface:
- (setq denote-date-prompt-use-org-read-date t)
+  ;; Pick dates, where relevant, with Org's advanced interface:
+  (setq denote-date-prompt-use-org-read-date t)
 
- ;; Automatically rename Denote buffers using the `denote-rename-buffer-format'.
- (denote-rename-buffer-mode 1))
+  ;; Automatically rename Denote buffers using the `denote-rename-buffer-format'.
+  (denote-rename-buffer-mode 1))
 
 (use-package
- consult-denote
- :ensure t
- :bind
- (("C-c n f" . consult-denote-find) ("C-c n g" . consult-denote-grep))
- :config (consult-denote-mode 1))
+  consult-denote
+  :ensure t
+  :bind
+  (("C-c n f" . consult-denote-find) ("C-c n g" . consult-denote-grep))
+  :config (consult-denote-mode 1))
 
 
 
@@ -2858,8 +2871,9 @@ The DWIM behaviour of this command is as follows:
   :bind
   (:map
    erc-mode-map
-   ("C-c e" . erc-button-browse-url)
-   ("C-c l" . erc-view-log-mode)
+   ;;;; KEYBIND_CHANGE: C-c e conflicts with ednc, moved to C-c i e
+   ("C-c i e" . erc-button-browse-url)
+   ("C-c i l" . erc-view-log-mode)
    ("TAB" . completion-at-point) ; Explicitly bind TAB
    :map
    global-map
@@ -3348,28 +3362,28 @@ The DWIM behaviour of this command is as follows:
   :custom
   (outline-minor-mode-cycle t)  ; Enable cycling
   (outline-minor-mode-highlight 'override))  ; Better highlighting
-  ;; Standard outline keybindings work out of the box:
-  ;; C-c @ C-c - hide entry
-  ;; C-c @ C-e - show entry
-  ;; C-c @ C-l - hide leaves
-  ;; C-c @ C-k - show branches
-  ;; C-c @ C-q - hide sublevels
-  ;; C-c @ C-a - show all
-  ;; C-c @ C-t - hide body
-  ;; TAB - cycle (when outline-minor-mode-cycle is t)
+;; Standard outline keybindings work out of the box:
+;; C-c @ C-c - hide entry
+;; C-c @ C-e - show entry
+;; C-c @ C-l - hide leaves
+;; C-c @ C-k - show branches
+;; C-c @ C-q - hide sublevels
+;; C-c @ C-a - show all
+;; C-c @ C-t - hide body
+;; TAB - cycle (when outline-minor-mode-cycle is t)
 
 ;; Hideshow as alternative folding method (works well with tree-sitter)
 (use-package hideshow
   :ensure nil
   :hook
   (prog-mode . hs-minor-mode))
-  ;; Standard hideshow keybindings:
-  ;; C-c @ C-h - hide block
-  ;; C-c @ C-s - show block
-  ;; C-c @ ESC C-h - hide all
-  ;; C-c @ ESC C-s - show all
-  ;; C-c @ C-l - hide level
-  ;; C-c @ C-c - toggle hiding
+;; Standard hideshow keybindings:
+;; C-c @ C-h - hide block
+;; C-c @ C-s - show block
+;; C-c @ ESC C-h - hide all
+;; C-c @ ESC C-s - show all
+;; C-c @ C-l - hide level
+;; C-c @ C-c - toggle hiding
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                        Tree-sitter Utilities                                ;;
@@ -3439,59 +3453,59 @@ The DWIM behaviour of this command is as follows:
    ("C-c ! p" . flymake-goto-prev-error)))
 
 (use-package
- elisp-lint
- :ensure t
- :commands (elisp-lint-buffer elisp-lint-file)
- :bind (("C-c l" . elisp-lint-buffer))
- :config (setq elisp-lint-ignored-validators '("package-lint")))
+  elisp-lint
+  :ensure t
+  :commands (elisp-lint-buffer elisp-lint-file)
+ ;;;; KEYBIND_CHANGE: C-c l conflicts with consult-lsp, using standard M-x
+  :config (setq elisp-lint-ignored-validators '("package-lint")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                        snippets (Yasnippet)                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- yasnippet
- :ensure t
- :init (yas-global-mode 1)
- :custom
- (yas-snippet-dirs
-  (list
-   (expand-file-name "snippets/" user-emacs-directory)
-   (expand-file-name
-    "snippets/"
-    (file-name-directory (find-library-name "yasnippet-snippets")))))
- (yas-prompt-functions
-  '(yas-completing-prompt yas-ido-prompt yas-no-prompt))
- :config (add-hook 'after-init-hook #'yas-reload-all)
- :bind (:map yas-minor-mode-map ("C-c y" . yas-insert-snippet)))
+  yasnippet
+  :ensure t
+  :init (yas-global-mode 1)
+  :custom
+  (yas-snippet-dirs
+   (list
+    (expand-file-name "snippets/" user-emacs-directory)
+    (expand-file-name
+     "snippets/"
+     (file-name-directory (find-library-name "yasnippet-snippets")))))
+  (yas-prompt-functions
+   '(yas-completing-prompt yas-ido-prompt yas-no-prompt))
+  :config (add-hook 'after-init-hook #'yas-reload-all)
+  :bind (:map yas-minor-mode-map ("C-c y" . yas-insert-snippet)))
 
 (use-package
- yasnippet-snippets
- :ensure t
- :after yasnippet
- :config
- (let ((snippets-dir
-        (expand-file-name "snippets/"
-                          (file-name-directory
-                           (find-library-name
-                            "yasnippet-snippets")))))
-   (unless (file-directory-p snippets-dir)
-     (warn
-      "yasnippet-snippets directory %s not found; reinstall the package"
-      snippets-dir))))
+  yasnippet-snippets
+  :ensure t
+  :after yasnippet
+  :config
+  (let ((snippets-dir
+         (expand-file-name "snippets/"
+                           (file-name-directory
+                            (find-library-name
+                             "yasnippet-snippets")))))
+    (unless (file-directory-p snippets-dir)
+      (warn
+       "yasnippet-snippets directory %s not found; reinstall the package"
+       snippets-dir))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                elisp coding                               ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package
- helpful
- :ensure t
- :bind
- ([remap describe-function] . helpful-callable)
- ([remap describe-variable] . helpful-variable)
- ([remap describe-symbol] . helpful-symbol)
- ([remap describe-key] . helpful-key))
+  helpful
+  :ensure t
+  :bind
+  ([remap describe-function] . helpful-callable)
+  ([remap describe-variable] . helpful-variable)
+  ([remap describe-symbol] . helpful-symbol)
+  ([remap describe-key] . helpful-key))
 
 (use-package
   elisp-demos
@@ -3923,9 +3937,9 @@ The DWIM behaviour of this command is as follows:
 ;; xoauth2
 ;;;;;
 (use-package
- auth-source-xoauth2-plugin
- :ensure t
- :custom (auth-source-xoauth2-plugin-mode t))
+  auth-source-xoauth2-plugin
+  :ensure t
+  :custom (auth-source-xoauth2-plugin-mode t))
 
 ;;;;;
 ;; mailcap
@@ -4102,7 +4116,8 @@ The DWIM behaviour of this command is as follows:
   :ensure t
   ;; Mnemonic is the root of the "code" word (κώδικας).  But also to add
   ;; the password to the kill-ring.  Other options are already taken.
-  :bind ("C-c k" . password-store-copy)
+  ;;;; KEYBIND_CHANGE: C-c k conflicts with crux-kill-other-buffers, moved to C-c P k
+  :bind ("C-c P k" . password-store-copy)
   :config
   (setq password-store-time-before-clipboard-restore 30))
 
@@ -4129,7 +4144,8 @@ The DWIM behaviour of this command is as follows:
   (setq list-matching-lines-jump-to-current-line nil)
   :bind
   ( :map global-map
-    ("C-." . isearch-forward-symbol-at-point)
+    ;;;; KEYBIND_CHANGE: C-. is better as universal-argument-more
+    ("M-s ." . isearch-forward-symbol-at-point)
     :map minibuffer-local-isearch-map
     ("M-/" . isearch-complete-edit)
     :map occur-mode-map
