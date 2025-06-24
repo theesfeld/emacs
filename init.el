@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 17:39:19 by grim>
+;; Time-stamp: <Last changed 2025-06-24 17:47:22 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2050,8 +2050,8 @@ The DWIM behaviour of this command is as follows:
   (setq magit-repository-directories
         '(("~/Code" . 1))))
 
-(use-package forge :ensure t :defer t :after magit)
-(use-package magit-todos :ensure t :defer t :after magit)
+(use-package forge :ensure t :after magit)
+(use-package magit-todos :ensure t :after magit :config (magit-todos-mode 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Grep Ignorance                              ;;
