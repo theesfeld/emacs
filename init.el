@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 17:36:02 by grim>
+;; Time-stamp: <Last changed 2025-06-24 17:36:21 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3331,18 +3331,18 @@ The DWIM behaviour of this command is as follows:
   (setq lazy-count-suffix-format nil)
   (setq isearch-wrap-pause t)
   (setq isearch-repeat-on-direction-change t
-  (setq list-matching-lines-jump-to-current-line nil)
-  :bind
-  ( :map global-map
+        (setq list-matching-lines-jump-to-current-line nil)
+        :bind
+        ( :map global-map
     ;;;; KEYBIND_CHANGE: C-. is better as universal-argument-more
-    ("M-s ." . isearch-forward-symbol-at-point)
-    :map minibuffer-local-isearch-map
-    ("M-/" . isearch-complete-edit)
-    :map occur-mode-map
-    ("t" . toggle-truncate-lines)
-    :map isearch-mode-map
-    ("C-g" . isearch-cancel)
-    ("M-/" . isearch-complete)))
+          ("M-s ." . isearch-forward-symbol-at-point)
+          :map minibuffer-local-isearch-map
+          ("M-/" . isearch-complete-edit)
+          :map occur-mode-map
+          ("t" . toggle-truncate-lines)
+          :map isearch-mode-map
+          ("C-g" . isearch-cancel)
+          ("M-/" . isearch-complete))))
 
 ;;; General window and buffer configurations
   (use-package uniquify
