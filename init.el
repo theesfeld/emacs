@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 13:25:04 by grim>
+;; Time-stamp: <Last changed 2025-06-24 13:43:30 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -501,7 +501,7 @@ The DWIM behaviour of this command is as follows:
     (run-at-time 2 nil #'grim/run-in-background "nm-applet")
     (run-at-time 2 nil #'grim/run-in-background "udiskie -at")
     (run-at-time 2 nil #'grim/run-in-background "blueman-applet")
-;;    (run-at-time 5 nil #'grim/run-in-background "mullvad-vpn")
+    ;;    (run-at-time 5 nil #'grim/run-in-background "mullvad-vpn")
     )
 
   (defun grim/exwm-update-class ()
@@ -750,36 +750,116 @@ The DWIM behaviour of this command is as follows:
        (when (featurep 'exwm-edit)
          (message "exwm-edit initialized")))))
 
-  (use-package
-    exwm-firefox-core
+  ;; (use-package
+  ;;   exwm-firefox-core
+  ;;   :ensure t
+  ;;   :after exwm
+  ;;   :init
+  ;;   ;; Pre-load settings
+  ;;   (setq exwm-firefox-core-classes
+  ;;         '("firefox" "firefoxdeveloperedition"))
+  ;;   :config
+  ;;   ;; Load package safely
+  ;;   (require 'exwm-firefox-core nil t)
+  ;;   (when (featurep 'exwm-firefox-core)
+  ;;     (message "exwm-firefox-core loaded"))
+  ;;   ;; Popular keybindings
+  ;;   :bind
+  ;;   (:map
+  ;;    exwm-mode-map
+  ;;    ("C-c F n" . exwm-firefox-core-tab-new)
+  ;;    ("C-c F t" . exwm-firefox-core-tab-close)
+  ;;    ("C-c F <right>" . exwm-firefox-core-tab-right)
+  ;;    ("C-c F <left>" . exwm-firefox-core-tab-left)
+  ;;    ("C-c F h" . exwm-firefox-core-back)
+  ;;    ("C-c F l" . exwm-firefox-core-forward)
+  ;;    ("C-c F f" . exwm-firefox-core-find)
+  ;;    )
+  ;;   :hook
+  ;;   ;; Rename buffers for Firefox windows
+  ;;   (exwm-update-title
+  ;;    .
+  ;;    (lambda ()
+  ;;      (when (string-match-p "firefox" (downcase exwm-class-name))
+  ;;        (exwm-workspace-rename-buffer exwm-title)))))
+
+  (use-package exwm-firefox-core
     :ensure t
     :after exwm
     :init
     ;; Pre-load settings
     (setq exwm-firefox-core-classes
           '("firefox" "firefoxdeveloperedition"))
+
+    ;; Define Firefox-specific minor mode before package loads
+    (define-minor-mode exwm-firefox-mode
+      "Minor mode for Firefox-specific keybindings in EXWM."
+      :init-value nil
+      :lighter " Firefox"
+      :keymap (let ((map (make-sparse-keymap)))
+                (define-key map (kbd "C-c F n") 'exwm-firefox-core-tab-new)
+                (define-key map (kbd "C-c F t") 'exwm-firefox-core-tab-close)
+                (define-key map (kbd "C-c F <right>") 'exwm-firefox-core-tab-right)
+                (define-key map (kbd "C-c F <left>") 'exwm-firefox-core-tab-left)
+                (define-key map (kbd "C-c F h") 'exwm-firefox-core-back)
+                (define-key map (kbd "C-c F l") 'exwm-firefox-core-forward)
+                (define-key map (kbd "C-c F f") 'exwm-firefox-core-find)
+                (define-key map (kbd "C-c F r") 'exwm-firefox-core-reload)
+                (define-key map (kbd "C-c F b") 'exwm-firefox-core-bookmark)
+                map))
+
     :config
     ;; Load package safely
     (require 'exwm-firefox-core nil t)
-    (when (featurep 'exwm-firefox-core)
-      (message "exwm-firefox-core loaded"))
-    ;; Popular keybindings
-    :bind
-    (:map
-     exwm-mode-map
-     ("C-c F n" . exwm-firefox-core-tab-new)
-     ("C-c F t" . exwm-firefox-core-tab-close)
-     ("C-c F <right>" . exwm-firefox-core-tab-right)
-     ("C-c F <left>" . exwm-firefox-core-tab-left)
-     ("C-c F h" . exwm-firefox-core-back)
-     ("C-c F l" . exwm-firefox-core-forward))
+
+    ;; Function to manage Firefox buffer setup
+    (defun exwm-firefox-setup ()
+      "Set up Firefox-specific configuration for current buffer."
+      (when (and (derived-mode-p 'exwm-mode)
+                 (member (downcase (or exwm-class-name ""))
+                         '("firefox" "firefoxdeveloperedition")))
+        ;; Enable Firefox mode
+        (exwm-firefox-mode 1)
+        ;; Rename buffer to page title
+        (when exwm-title
+          (exwm-workspace-rename-buffer exwm-title))))
+
+    ;; Function to handle buffer switches
+    (defun exwm-firefox-maybe-enable ()
+      "Enable or disable Firefox mode based on current buffer."
+      (when (derived-mode-p 'exwm-mode)
+        (if (member (downcase (or exwm-class-name ""))
+                    '("firefox" "firefoxdeveloperedition"))
+            (exwm-firefox-mode 1)
+          (exwm-firefox-mode -1))))
+
     :hook
-    ;; Rename buffers for Firefox windows
-    (exwm-update-title
-     .
-     (lambda ()
-       (when (string-match-p "firefox" (downcase exwm-class-name))
-         (exwm-workspace-rename-buffer exwm-title)))))
+    ;; Set up Firefox buffers when they're created
+    ((exwm-manage-finish . exwm-firefox-setup)
+     ;; Update buffer name when title changes
+     (exwm-update-title . exwm-firefox-setup)
+     ;; Handle buffer switches to enable/disable mode
+     (window-configuration-change . exwm-firefox-maybe-enable))
+
+    :custom
+    ;; Optional: Customize Firefox-specific EXWM settings
+    (exwm-firefox-core-enable-auto-move-focus t)
+
+    :init
+    ;; Optional: Additional EXWM configuration for Firefox
+    (with-eval-after-load 'exwm
+      ;; Make Firefox windows floating by default (optional)
+      ;; (add-to-list 'exwm-manage-configurations
+      ;;              '((string-match "Firefox" exwm-class-name)
+      ;;                floating t
+      ;;                floating-mode-line nil))
+
+      ;; Set Firefox-specific workspace (optional)
+      ;; (add-to-list 'exwm-manage-configurations
+      ;;              '((string-match "Firefox" exwm-class-name)
+      ;;                workspace 2))
+      ))
+
 
   (use-package
     desktop-environment
