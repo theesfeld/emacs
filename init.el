@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 18:01:44 by grim>
+;; Time-stamp: <Last changed 2025-06-24 19:14:44 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1726,299 +1726,161 @@ The DWIM behaviour of this command is as follows:
    ("C-c l D" . consult-lsp-definition)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                             Org Mode Setup                                ;;
+;;                          Minimal Org Mode Setup                          ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; Org Mode Setup
-(use-package
-  org
+;; Core Org Mode Configuration
+(use-package org
   :ensure nil
-  :init
-  ;; Load required Org extensions early
-  (require 'org-protocol)
-  (require 'org-download)
-  (require 'org-id)
-
-  ;; Define prefix keymap globally
-  (defvar my-org-prefix-map (make-sparse-keymap)
-    "Prefix keymap for Org Mode commands.")
-  (define-prefix-command 'my-org-prefix-map)
-  (global-set-key (kbd "C-c o") 'my-org-prefix-map)
-
   :config
-  ;; Core Org settings
-  (setq org-directory "~/.org/")
+  ;; Basic settings
+  (setq org-directory "~/Documents/notes/")
   (setq org-startup-indented t)
   (setq org-startup-folded t)
   (setq org-return-follows-link t)
-  (setq org-hide-emphasis-markers t)
-  (setq org-startup-with-inline-images t)
   (setq org-log-done 'time)
-  (setq org-id-track-globally t) ; Unique IDs for sync safety
+
+  ;; TODO states
   (setq org-todo-keywords
-        '((sequence
-           "TODO(t)"
-           "NEXT(n)"
-           "WAITING(w@/!)"
-           "|"
-           "DONE(d!)"
-           "CANCELED(c@)")))
-  (setq org-clock-persist 'history)
-  (setq org-refile-targets '((org-agenda-files :maxlevel . 3)))
-  (setq org-refile-use-outline-path t)
-  (setq org-outline-path-complete-in-steps nil)
+        '((sequence "TODO(t)" "NEXT(n)" "WAITING(w@/!)"
+                    "|" "DONE(d!)" "CANCELED(c@)")))
 
-  ;; Dynamically collect agenda files
-  (defun my-org-agenda-files ()
-    "Return a list of all Org files for agenda, including local and Denote notes."
-    (delete-dups
-     (append
-      (directory-files "~/.org/" t "^[^b].*\\.org$" t)
-      (directory-files "~/Documents/notes/" t "\\.org$" t))))
+  ;; Agenda files - scan all .org files in notes directory
+  (setq org-agenda-files
+        (directory-files-recursively "~/Documents/notes/" "\\.org$"))
 
-  (setq org-agenda-files (my-org-agenda-files)) ; Initial setting
-  (defun my-org-update-agenda-files ()
-    "Update org-agenda-files dynamically."
-    (setq org-agenda-files (my-org-agenda-files)))
-  (add-hook 'org-agenda-mode-hook #'my-org-update-agenda-files)
+  ;; Update agenda files before opening agenda
+  (defun my/update-org-agenda-files ()
+    "Update org-agenda-files to include all .org files in notes directory."
+    (setq org-agenda-files
+          (directory-files-recursively "~/Documents/notes/" "\\.org$")))
 
-  ;; Clock persistence
-  (org-clock-persistence-insinuate)
-
-  ;; Custom key bindings under C-c o
-  (define-key my-org-prefix-map (kbd "o") #'my-org-open-agenda)
-  (define-key my-org-prefix-map (kbd "c") #'org-capture)
-  (define-key my-org-prefix-map (kbd "r") #'my-org-refile-to-todos)
-  (define-key my-org-prefix-map (kbd "O") #'org-download-clipboard)
-  (define-key my-org-prefix-map (kbd "t") #'my-org-show-todo-list)
-  (define-key my-org-prefix-map (kbd "n") #'my-org-capture-note-quick)
-  (define-key my-org-prefix-map (kbd "d") #'my-denote-capture-note)
-
-  ;; Agenda keymap
-  (defvar my-org-agenda-map (make-sparse-keymap)
-    "Keymap for Org Agenda commands.")
-  (define-key my-org-prefix-map (kbd "a") my-org-agenda-map)
-  (define-key my-org-agenda-map (kbd "a") #'org-agenda)
-  (define-key my-org-agenda-map (kbd "t") #'my-org-agenda-today)
-  (define-key
-   my-org-agenda-map (kbd "c") #'my-org-agenda-goto-current-clock)
-
-  ;; Which-key integration
-  (with-eval-after-load 'which-key
-    (which-key-add-key-based-replacements
-      "C-c o"
-      "org-mode"
-      "C-c o a"
-      "agenda"
-      "C-c o d"
-      "denote"
-      "C-c o t"
-      "todo-list"))
-
-  ;; Utility functions
-  (defun my-org-refile-to-todos ()
-    "Refile current heading to todos.org under 'Tasks'."
-    (interactive)
-    (org-refile
-     nil nil
-     (list
-      "Tasks" (expand-file-name "todos.org" org-directory) nil nil)))
-
-  (defun my-org-agenda-today ()
-    "Show agenda for today with open TODOs."
-    (interactive)
-    (org-agenda nil "d"))
-
-  (defun my-org-show-todo-list ()
-    "Show all open TODOs in an agenda buffer."
-    (interactive)
-    (when (get-buffer-window "*Org Agenda*")
-      (delete-window (get-buffer-window "*Org Agenda*")))
-    (org-switch-to-buffer-other-window "*Org Agenda*")
-    (org-agenda nil "t"))
-
-  (defun my-org-capture-note-quick ()
-    "Quickly capture a note without switching buffers."
-    (interactive)
-    (org-capture nil "n"))
-
-  (defun my-org-agenda-goto-current-clock ()
-    "Jump to the currently clocked task in agenda."
-    (interactive)
-    (org-agenda nil "a")
-    (org-agenda-goto (org-clock-is-active)))
-
-  (defun my-org-open-agenda ()
-    "Open the Org Agenda in a separate window."
-    (interactive)
-    (when (get-buffer-window "*Org Agenda*")
-      (delete-window (get-buffer-window "*Org Agenda*")))
-    (org-switch-to-buffer-other-window "*Org Agenda*")
-    (org-agenda nil "a")
-    (call-interactively #'org-agenda-day-view))
-
-  ;; Denote integration
-  (defun my-denote-capture-note ()
-    "Capture a note using Denote and link it to the current Org file."
-    (interactive)
-    (let ((denote-file (denote-create-note)))
-      (org-capture nil "n")
-      (insert
-       (format "[[file:%s][%s]]"
-               denote-file
-               (file-name-base denote-file)))
-      (org-capture-finalize t)))
-
-  :hook (org-capture-prepare-finalize . org-id-get-create))
-
-(use-package
-  org-agenda
-  :ensure nil
-  :after org
-  :config
-  ;; Custom agenda commands
-  (setq org-agenda-custom-commands
-        '(("u" "Unified Agenda and Tasks"
-           ((agenda "" ((org-agenda-span 'week)))
-            (todo
-             "TODO|NEXT|WAITING"
-             ((org-agenda-overriding-header "All Tasks")))))
-          ("t" "All Open TODOs"
-           ((todo
-             "TODO|NEXT|WAITING"
-             ((org-agenda-overriding-header "Current Open TODOs")))))
-          ("d" "Today's Agenda with Open TODOs"
-           ((agenda
-             ""
-             ((org-agenda-span 'day)
-              (org-agenda-overriding-header "Today's Schedule")))))
-          (todo
-           "TODO|NEXT|WAITING"
-           ((org-agenda-overriding-header
-             "Open TODOs (Today or Unscheduled)")
-            (org-agenda-skip-function
-             '(org-agenda-skip-entry-if
-               'scheduled
-               'deadline
-               'notregexp
-               "^\\*\\s-+\\(TODO\\|NEXT\\|WAITING\\)"))))))
-
-  (setq org-agenda-start-on-weekday 1)
-  (setq org-agenda-span 'week)
-  (setq org-agenda-include-diary t)
-  (setq org-agenda-sorting-strategy
-        '((agenda habit-down time-up priority-down tag-up)
-          (todo priority-down category-keep)
-          (tags priority-down category-keep)
-          (search category-keep)))
-  (setq org-agenda-log-mode-items '(closed clocked))
-  (setq org-agenda-start-with-log-mode t)
-  (setq org-agenda-prefix-format
-        '((agenda . " %i %-12:c%?-12t% s [%e] ")
-          (todo . " %i %-12:c")
-          (tags . " %i %-12:c")
-          (search . " %i %-12:c"))))
-
-(use-package
-  org-capture
-  :ensure nil
-  :after org
-  :config
-  (setq
-   org-capture-templates
-   `(("t" "Todo" entry
-      (file+headline
-       ,(expand-file-name "tasks.org" org-directory) "Tasks")
-      "* TODO %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\n")
-     ("m" "Meeting" entry
-      (file+headline
-       ,(expand-file-name "calendar.org" org-directory) "Meetings")
-      "* MEETING %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\nSCHEDULED: %^T\n%a")
-     ("n" "Note" entry
-      (file+headline
-       ,(expand-file-name "notes/notes.org" org-directory) "Notes")
-      "* %?\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:END:\n%a")
-     ("w" "Web Capture" entry
-      (file+headline
-       ,(expand-file-name "web.org" org-directory) "Web")
-      "%:initial"
-      :immediate-finish t)
-     ("o" "Outlook Email TODO" entry
-      (file+headline
-       ,(expand-file-name "tasks.org" org-directory) "Tasks")
-      "* TODO %:subject\n:PROPERTIES:\n:ID: %(org-id-uuid)\n:CREATED: %U\n:EMAIL_LINK: %:link\n:END:\n\n%:initial\n"
-      :immediate-finish t)
-     ("e"
-      "Email"
-      entry
-      (file+headline "~/org/inbox.org" "Emails")
-      "* TODO %:subject\n:PROPERTIES:\n:EMAIL: %:message-id\n:END:\n%?"
-      :immediate-finish t)
-     ("r"
-      "RSS"
-      entry
-      (file+headline "~/org/inbox.org" "RSS")
-      "* TODO %:title\n:PROPERTIES:\n:URL: %:url\n:END:\n%?"
-      :immediate-finish t)))
   :hook
-  (org-capture-after-finalize
-   .
-   (lambda ()
-     (when (get-buffer-window "*Capture*")
-       (delete-window (get-buffer-window "*Capture*"))))))
+  ((before-save . my/update-org-agenda-files)
+   (org-agenda-mode . my/update-org-agenda-files)))
 
-(use-package
-  org-protocol
+;; Capture Templates
+(use-package org-capture
   :ensure nil
   :after org
   :config
-  (setq org-protocol-default-template-key nil) ; Use template key from URL
-  (add-to-list 'org-modules 'org-protocol))
+  (setq org-capture-templates
+        `(("t" "Todo" entry
+           (file ,(expand-file-name "todo.org" org-directory))
+           "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n"
+           :empty-lines 1)
+          ("r" "RSS Feed" entry
+           (file ,(expand-file-name "rss.org" org-directory))
+           "* %:description\n:PROPERTIES:\n:RSS_URL: %:link\n:END:\n"
+           :immediate-finish t))))
 
-(use-package
-  org-download
-  :ensure t
-  :hook (dired-mode . org-download-enable)
-  :config
-  (setq org-download-image-dir
-        (expand-file-name "images" org-directory)))
-
-(use-package
-  org-attach
+;; Agenda Configuration
+(use-package org-agenda
   :ensure nil
   :after org
   :config
-  (setq org-attach-dir-relative t)
-  (setq org-attach-use-inheritance t)
-  (setq org-attach-id-dir
-        (expand-file-name "attachments" org-directory)))
+  ;; Simple agenda views
+  (setq org-agenda-custom-commands
+        '(("t" "All TODOs" todo "TODO|NEXT|WAITING"
+           ((org-agenda-overriding-header "All Open TODOs")))
+          ("d" "Today's Agenda" agenda ""
+           ((org-agenda-span 'day)
+            (org-agenda-overriding-header "Today")))))
 
-(use-package
-  org-modern
-  :ensure t
+  ;; Start week on Monday
+  (setq org-agenda-start-on-weekday 1))
+
+;; Protocol support for browser integration
+(use-package org-protocol
+  :ensure nil
+  :after org
   :config
-  (setq
-   ;; Edit settings
-   org-auto-align-tags nil
-   org-tags-column 0
-   org-catch-invisible-edits 'show-and-error
-   org-special-ctrl-a/e t
-   org-insert-heading-respect-content t
+  ;; No additional config needed, just load it
+  (require 'org-protocol))
 
-   ;; Org styling, hide markup etc.
-   org-hide-emphasis-markers t
-   org-pretty-entities t
-   org-agenda-tags-column 0
-   org-ellipsis "…")
-  (setq org-modern-table-vertical 2)
-  (setq org-modern-table-horizontal 2)
-  (global-org-modern-mode)
-  )
+;; Export Configuration
+(use-package ox
+  :ensure nil
+  :after org
+  :config
+  ;; Load built-in export backends
+  (require 'ox-html)
+  (require 'ox-latex)
+  (require 'ox-md)
+  (require 'ox-odt)
 
-(use-package
-  org-auto-tangle
+  ;; HTML export settings
+  (setq org-html-validation-link nil)
+  (setq org-html-head-include-scripts nil)
+  (setq org-html-head-include-default-style nil)
+
+  ;; LaTeX/PDF export settings
+  (setq org-latex-pdf-process
+        '("pdflatex -interaction nonstopmode -output-directory %o %f"
+          "pdflatex -interaction nonstopmode -output-directory %o %f"
+          "pdflatex -interaction nonstopmode -output-directory %o %f")))
+
+;; Optional: GitHub Flavored Markdown export
+(use-package ox-gfm
+  :ensure t
+  :after ox)
+
+;; Optional: Pandoc export (provides DOCX and many other formats)
+(use-package ox-pandoc
+  :ensure t
+  :after ox
+  :config
+  (setq org-pandoc-options '((standalone . t))))
+
+;; Auto-tangle for literate config
+(use-package org-auto-tangle
   :ensure t
   :hook (org-mode . org-auto-tangle-mode))
+
+;; Standard Org keybindings
+(global-set-key (kbd "C-c l") 'org-store-link)
+(global-set-key (kbd "C-c a") 'org-agenda)
+(global-set-key (kbd "C-c c") 'org-capture)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                          Firefox Integration Setup                        ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; To set up Firefox integration:
+;;
+;; 1. Create ~/.local/share/applications/org-protocol.desktop:
+;;    [Desktop Entry]
+;;    Name=org-protocol
+;;    Exec=emacsclient %u
+;;    Type=Application
+;;    Terminal=false
+;;    Categories=System;
+;;    MimeType=x-scheme-handler/org-protocol;
+;;
+;; 2. Register the handler:
+;;    xdg-mime default org-protocol.desktop x-scheme-handler/org-protocol
+;;
+;; 3. In Firefox about:config, create:
+;;    network.protocol-handler.expose.org-protocol = false
+;;
+;; 4. Install the org-protocol Firefox extension for easier use
+;;
+;; 5. For RSS feeds, use bookmarklet:
+;;    javascript:location.href='org-protocol://capture://r/'+
+;;    encodeURIComponent(location.href)+'/'+
+;;    encodeURIComponent(document.title)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                               Export Usage                                ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Export commands:
+;; - C-c C-e h h : Export to HTML
+;; - C-c C-e l p : Export to PDF via LaTeX
+;; - C-c C-e m m : Export to Markdown
+;; - C-c C-e o o : Export to ODT (can convert to DOCX)
+;; - C-c C-e g g : Export to GitHub Flavored Markdown (if ox-gfm installed)
+;; - C-c C-e p x : Export to DOCX via Pandoc (if ox-pandoc installed)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                   Magit/Forge                            ;;
