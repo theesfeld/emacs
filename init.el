@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 19:31:12 by grim>
+;; Time-stamp: <Last changed 2025-06-24 19:31:59 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -473,156 +473,187 @@ The DWIM behaviour of this command is as follows:
     :ensure t
     :config (setq exwm-workspace-number 5)
 
-    (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
-    (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
-    (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
+    ;; firefox dialog sizing
+    ;; Auto-resize floating windows configuration
+    (defun my/exwm-floating-firefox-dialog-fix ()
+      "Auto-resize Firefox dialogs to a reasonable size."
+      (when (and exwm-class-name
+                 (member exwm-class-name '("Firefox" "firefox" "firefoxdeveloperedition"))
+                 exwm-floating-frame)
+        ;; Give the dialog a moment to fully initialize
+        (run-at-time 0.1 nil
+                     (lambda ()
+                       (when (and (frame-live-p exwm-floating-frame)
+                                  ;; Check if it's a dialog by title patterns
+                                  (or (string-match-p "Save\\|Open\\|Download\\|Upload" exwm-title)
+                                      ;; Or by checking if it's smaller than main Firefox window
+                                      (< (frame-pixel-height exwm-floating-frame)
+                                         (/ (x-display-pixel-height) 2))))
+                         ;; Resize to 60% of screen width and 70% of height
+                         (let ((width (round (* 0.6 (x-display-pixel-width))))
+                               (height (round (* 0.7 (x-display-pixel-height)))))
+                           (exwm-floating-resize width height)
+                           ;; Center the dialog
+                           (let ((x (/ (- (x-display-pixel-width) width) 2))
+                                 (y (/ (- (x-display-pixel-height) height) 2)))
+                             (exwm-floating-move x y))))))))
 
-    (setq exwm-workspace-show-all-buffers t)
-    (setq exwm-layout-show-all-buffers t)
-    (setq exwm-manage-force-tiling nil)
-    (setq mouse-autoselect-window t)
-    (setq focus-follows-mouse t)
-    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
-    (setq mouse-wheel-progressive-speed t)
-    (setq
-     x-select-enable-clipboard t
-     x-select-enable-primary t
-     select-enable-clipboard t)
+    ;; Hook it to floating setup
+    (add-hook 'exwm-floating-setup-hook #'my/exwm-floating-firefox-dialog-fix)
 
-    (require 'exwm-randr)
-    (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
-    (add-hook
-     'exwm-randr-screen-change-hook
-     (lambda ()
-       (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
-             connected-outputs)
-         (with-temp-buffer
-           (call-process "xrandr" nil t nil)
-           (goto-char (point-min))
-           (while (re-search-forward xrandr-output-regexp nil t)
-             (push (match-string 1) connected-outputs)))
-         (cond
-          ;; Single monitor or only eDP-1 connected
-          ((or (= (length connected-outputs) 1)
-               (and (member "eDP-1" connected-outputs)
-                    (= (length (remove "eDP-1" connected-outputs)) 0)))
+    ;; Also add to manage-finish hook for reliability
+    (add-hook 'exwm-manage-finish-hook #'my/exwm-floating-firefox-dialog-fix))
+
+  (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
+  (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
+  (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
+
+  (setq exwm-workspace-show-all-buffers t)
+  (setq exwm-layout-show-all-buffers t)
+  (setq exwm-manage-force-tiling nil)
+  (setq mouse-autoselect-window t)
+  (setq focus-follows-mouse t)
+  (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
+  (setq mouse-wheel-progressive-speed t)
+  (setq
+   x-select-enable-clipboard t
+   x-select-enable-primary t
+   select-enable-clipboard t)
+
+  (require 'exwm-randr)
+  (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
+  (add-hook
+   'exwm-randr-screen-change-hook
+   (lambda ()
+     (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
+           connected-outputs)
+       (with-temp-buffer
+         (call-process "xrandr" nil t nil)
+         (goto-char (point-min))
+         (while (re-search-forward xrandr-output-regexp nil t)
+           (push (match-string 1) connected-outputs)))
+       (cond
+        ;; Single monitor or only eDP-1 connected
+        ((or (= (length connected-outputs) 1)
+             (and (member "eDP-1" connected-outputs)
+                  (= (length (remove "eDP-1" connected-outputs)) 0)))
+         (start-process-shell-command
+          "xrandr"
+          nil
+          "xrandr --output eDP-1 --primary --auto --scale .75 --dpi 192")
+         (start-process-shell-command
+          "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
+         (dolist (output (remove "eDP-1" connected-outputs))
            (start-process-shell-command
-            "xrandr"
-            nil
-            "xrandr --output eDP-1 --primary --auto --scale .75 --dpi 192")
-           (start-process-shell-command
-            "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
-           (dolist (output (remove "eDP-1" connected-outputs))
-             (start-process-shell-command
-              "xrandr" nil
-              (format "xrandr --output %s --off" output)))
-           (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1")))
-          ;; One or more external monitors
-          ((>= (length (remove "eDP-1" connected-outputs)) 1)
-           (let ((primary (car (remove "eDP-1" connected-outputs)))
-                 (secondary (cadr (remove "eDP-1" connected-outputs))))
-             (if secondary
-                 (start-process-shell-command
-                  "xrandr" nil
-                  (format
-                   "xrandr --output %s --primary --auto --output %s --auto --left-of %s --output eDP-1 --off"
-                   primary secondary primary))
+            "xrandr" nil
+            (format "xrandr --output %s --off" output)))
+         (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1")))
+        ;; One or more external monitors
+        ((>= (length (remove "eDP-1" connected-outputs)) 1)
+         (let ((primary (car (remove "eDP-1" connected-outputs)))
+               (secondary (cadr (remove "eDP-1" connected-outputs))))
+           (if secondary
                (start-process-shell-command
                 "xrandr" nil
                 (format
-                 "xrandr --output %s --primary --auto --output eDP-1 --off"
-                 primary)))
-             ;; Reset DPI to default (96) for external monitors
+                 "xrandr --output %s --primary --auto --output %s --auto --left-of %s --output eDP-1 --off"
+                 primary secondary primary))
              (start-process-shell-command
-              "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
-             (setq exwm-randr-workspace-monitor-plist
-                   (if secondary
-                       `(0 ,primary 1 ,secondary)
-                     `(0 ,primary)))))))))
+              "xrandr" nil
+              (format
+               "xrandr --output %s --primary --auto --output eDP-1 --off"
+               primary)))
+           ;; Reset DPI to default (96) for external monitors
+           (start-process-shell-command
+            "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
+           (setq exwm-randr-workspace-monitor-plist
+                 (if secondary
+                     `(0 ,primary 1 ,secondary)
+                   `(0 ,primary)))))))))
 
-    (exwm-randr-mode 1)
-    ;; Load the system tray before exwm-init
-    (require 'exwm-systemtray)
-    (setq exwm-systemtray-height 20)
-    (setq exwm-systemtray-icon-gap 5)
-    (exwm-systemtray-mode 1)
+  (exwm-randr-mode 1)
+  ;; Load the system tray before exwm-init
+  (require 'exwm-systemtray)
+  (setq exwm-systemtray-height 20)
+  (setq exwm-systemtray-icon-gap 5)
+  (exwm-systemtray-mode 1)
 
-    ;; Input Prefix Keys
-    (setq exwm-input-prefix-keys
-          '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
+  ;; Input Prefix Keys
+  (setq exwm-input-prefix-keys
+        '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
 
-    ;; Global keybindings
-    (setq exwm-input-global-keys
-          (nconc
-           `(([?\s-r] . exwm-reset)
-             ([s-left] . windmove-left)
-             ([s-right] . windmove-right)
-             ([s-up] . windmove-up)
-             ([s-down] . windmove-down)
-             ([?\s-w] . exwm-workspace-switch)
-             ([?\s-&]
-              .
-              (lambda (cmd)
-                (interactive (list (read-shell-command "$ ")))
-                (start-process-shell-command cmd nil cmd)))
-             ([?\s-x]
-              .
-              (lambda ()
-                (interactive)
-                (save-buffers-kill-emacs)))
-             ([?\s-\ ]
-              .
-              (lambda ()
-                (interactive)
-                (async-shell-command)))
-             ([?\s-v] . consult-yank-pop)
-             ([?\s-q]
-              .
-              (lambda ()
-                (interactive)
-                (kill-buffer-and-window)))
-             ([XF86PowerOff]
-              .
-              (lambda ()
-                (interactive)
-                (when (executable-find "systemctl")
-                  (start-process-shell-command
-                   "poweroff" nil "systemctl poweroff")))))
-           (mapcar
-            (lambda (i)
-              (cons
-               (kbd (format "s-%d" i))
-               (lambda ()
-                 (interactive)
-                 (message "Switching to workspace %d" i)
-                 (exwm-workspace-switch-create i))))
-            (number-sequence 0 9))
-           (mapcar
-            (lambda (i)
-              (cons
-               (kbd (format "M-s-%d" i))
-               (lambda ()
-                 (interactive)
-                 (message "Moving window to workspace %d" i)
-                 (exwm-workspace-move-window i))))
-            (number-sequence 0 9))))
+  ;; Global keybindings
+  (setq exwm-input-global-keys
+        (nconc
+         `(([?\s-r] . exwm-reset)
+           ([s-left] . windmove-left)
+           ([s-right] . windmove-right)
+           ([s-up] . windmove-up)
+           ([s-down] . windmove-down)
+           ([?\s-w] . exwm-workspace-switch)
+           ([?\s-&]
+            .
+            (lambda (cmd)
+              (interactive (list (read-shell-command "$ ")))
+              (start-process-shell-command cmd nil cmd)))
+           ([?\s-x]
+            .
+            (lambda ()
+              (interactive)
+              (save-buffers-kill-emacs)))
+           ([?\s-\ ]
+            .
+            (lambda ()
+              (interactive)
+              (async-shell-command)))
+           ([?\s-v] . consult-yank-pop)
+           ([?\s-q]
+            .
+            (lambda ()
+              (interactive)
+              (kill-buffer-and-window)))
+           ([XF86PowerOff]
+            .
+            (lambda ()
+              (interactive)
+              (when (executable-find "systemctl")
+                (start-process-shell-command
+                 "poweroff" nil "systemctl poweroff")))))
+         (mapcar
+          (lambda (i)
+            (cons
+             (kbd (format "s-%d" i))
+             (lambda ()
+               (interactive)
+               (message "Switching to workspace %d" i)
+               (exwm-workspace-switch-create i))))
+          (number-sequence 0 9))
+         (mapcar
+          (lambda (i)
+            (cons
+             (kbd (format "M-s-%d" i))
+             (lambda ()
+               (interactive)
+               (message "Moving window to workspace %d" i)
+               (exwm-workspace-move-window i))))
+          (number-sequence 0 9))))
 
-    ;; Simulation Keys
-    (setq exwm-input-simulation-keys
-          '(([?\C-b] . [left])
-            ([?\C-f] . [right])
-            ([?\C-p] . [up])
-            ([?\C-n] . [down])
-            ([?\C-a] . [home])
-            ([?\C-e] . [end])
-            ([?\M-v] . [prior])
-            ([?\C-v] . [next])
-            ([?\C-d] . [delete])
-            ([?\C-k] . [S-end delete])
-            ([?\M-w] . [?\C-c])
-            ([?\C-y] . [?\C-v])))
+  ;; Simulation Keys
+  (setq exwm-input-simulation-keys
+        '(([?\C-b] . [left])
+          ([?\C-f] . [right])
+          ([?\C-p] . [up])
+          ([?\C-n] . [down])
+          ([?\C-a] . [home])
+          ([?\C-e] . [end])
+          ([?\M-v] . [prior])
+          ([?\C-v] . [next])
+          ([?\C-d] . [delete])
+          ([?\C-k] . [S-end delete])
+          ([?\M-w] . [?\C-c])
+          ([?\C-y] . [?\C-v])))
 
-    (exwm-enable))
+  (exwm-enable))
 
   (use-package
     exwm-edit
