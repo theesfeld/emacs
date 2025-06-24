@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 15:37:39 by grim>
+;; Time-stamp: <Last changed 2025-06-24 16:43:18 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2853,19 +2853,6 @@ The DWIM behaviour of this command is as follows:
 ;;                        Tree-sitter Utilities                                ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Helpful message on startup
-(defun my/treesit-status ()
-  "Show tree-sitter status."
-  (interactive)
-  (if (treesit-available-p)
-      (let ((available-langs (seq-filter #'treesit-language-available-p
-                                         (mapcar #'car treesit-language-source-alist))))
-        (message "Tree-sitter is available. Installed grammars: %s"
-                 (mapconcat #'symbol-name available-langs ", ")))
-    (message "Tree-sitter is not available in this Emacs build")))
-
-;; Check status on startup
-(add-hook 'emacs-startup-hook #'my/treesit-status)
 
 ;; For debugging tree-sitter, use the built-in:
 ;; M-x treesit-inspect-mode - inspect tree-sitter nodes interactively
