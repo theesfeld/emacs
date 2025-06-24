@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 13:54:31 by grim>
+;; Time-stamp: <Last changed 2025-06-24 13:59:55 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3239,92 +3239,22 @@ The DWIM behaviour of this command is as follows:
   (setq treesit-max-buffer-size (* 4 1024 1024))  ; 4MB max buffer size
 
   :config
-  ;; Built-in functions for structural navigation
-  (defun my/treesit-navigate-forward ()
-    "Navigate to next sibling using tree-sitter."
-    (interactive)
-    (when-let* ((node (treesit-node-at (point)))
-                (next (treesit-node-next-sibling node)))
-      (goto-char (treesit-node-start next))))
-
-  (defun my/treesit-navigate-backward ()
-    "Navigate to previous sibling using tree-sitter."
-    (interactive)
-    (when-let* ((node (treesit-node-at (point)))
-                (prev (treesit-node-prev-sibling node)))
-      (goto-char (treesit-node-start prev))))
-
-  (defun my/treesit-navigate-up ()
-    "Navigate to parent node using tree-sitter."
-    (interactive)
-    (when-let* ((node (treesit-node-at (point)))
-                (parent (treesit-node-parent node)))
-      (goto-char (treesit-node-start parent))))
-
-  (defun my/treesit-navigate-down ()
-    "Navigate to first child using tree-sitter."
-    (interactive)
-    (when-let* ((node (treesit-node-at (point)))
-                (child (treesit-node-child node 0)))
-      (goto-char (treesit-node-start child))))
-
-  ;; Smart selection using tree-sitter
-  (defun my/treesit-mark-node ()
-    "Mark the tree-sitter node at point."
-    (interactive)
-    (when-let ((node (treesit-node-at (point))))
-      (goto-char (treesit-node-start node))
-      (push-mark (treesit-node-end node) t t)))
-
-  (defun my/treesit-mark-defun ()
-    "Mark the current defun using tree-sitter."
-    (interactive)
-    (when-let ((node (treesit-defun-at-point)))
-      (goto-char (treesit-node-start node))
-      (push-mark (treesit-node-end node) t t)))
-
-  ;; Built-in folding using outline-minor-mode with tree-sitter
-  (defun my/treesit-outline-level ()
-    "Return outline level for current heading."
-    (let ((node (treesit-node-at (point))))
-      (if node
-          (let ((depth 0)
-                (current node))
-            (while (setq current (treesit-node-parent current))
-              (cl-incf depth))
-            depth)
-        0)))
-
   ;; Install grammars on first run
   (unless (file-exists-p (expand-file-name "tree-sitter" user-emacs-directory))
     (my/treesit-install-all-languages))
 
-  :bind
-  ;; Use built-in keybindings where possible, add custom ones for tree-sitter specific features
-  (:map prog-mode-map
-        ;; Built-in navigation (these work with tree-sitter modes)
-        ("C-M-f" . forward-sexp)       ; Works with tree-sitter
-        ("C-M-b" . backward-sexp)      ; Works with tree-sitter
-        ("C-M-d" . down-list)          ; Works with tree-sitter
-        ("C-M-u" . backward-up-list)   ; Works with tree-sitter
-        ("C-M-n" . forward-list)       ; Works with tree-sitter
-        ("C-M-p" . backward-list)      ; Works with tree-sitter
-
-        ;; Tree-sitter specific navigation
-        ("C-c n f" . my/treesit-navigate-forward)
-        ("C-c n b" . my/treesit-navigate-backward)
-        ("C-c n u" . my/treesit-navigate-up)
-        ("C-c n d" . my/treesit-navigate-down)
-
-        ;; Selection
-        ("C-c n m" . my/treesit-mark-node)
-        ("C-M-h" . my/treesit-mark-defun)
-
-        ;; Debugging
-        ("C-c n i" . treesit-inspect-mode)))
+  ;; Note: Standard Emacs navigation commands work with tree-sitter:
+  ;; C-M-a / C-M-e - beginning/end of defun
+  ;; C-M-f / C-M-b - forward/backward sexp
+  ;; C-M-d / C-M-u - down-list/backward-up-list
+  ;; C-M-n / C-M-p - forward-list/backward-list
+  ;; C-M-h - mark-defun (works with tree-sitter)
+  ;; No custom keybindings needed!
+  )
 
 ;; Treesit-auto for automatic mode selection and grammar installation
 (use-package treesit-auto
+  :ensure t
   :custom
   (treesit-auto-install 'prompt)  ; Prompt before installing grammars
   :config
@@ -3405,80 +3335,33 @@ The DWIM behaviour of this command is as follows:
   ((prog-mode . outline-minor-mode))
   :custom
   (outline-minor-mode-cycle t)  ; Enable cycling
-  (outline-minor-mode-highlight 'override)  ; Better highlighting
-  :bind
-  (:map outline-minor-mode-map
-        ("C-c @ C-c" . outline-hide-entry)
-        ("C-c @ C-e" . outline-show-entry)
-        ("C-c @ C-l" . outline-hide-leaves)
-        ("C-c @ C-k" . outline-show-branches)
-        ("C-c @ C-q" . outline-hide-sublevels)
-        ("C-c @ C-a" . outline-show-all)
-        ("C-c @ C-t" . outline-hide-body)
-        ("TAB" . outline-cycle)))
+  (outline-minor-mode-highlight 'override))  ; Better highlighting
+  ;; Standard outline keybindings work out of the box:
+  ;; C-c @ C-c - hide entry
+  ;; C-c @ C-e - show entry
+  ;; C-c @ C-l - hide leaves
+  ;; C-c @ C-k - show branches
+  ;; C-c @ C-q - hide sublevels
+  ;; C-c @ C-a - show all
+  ;; C-c @ C-t - hide body
+  ;; TAB - cycle (when outline-minor-mode-cycle is t)
 
 ;; Hideshow as alternative folding method (works well with tree-sitter)
 (use-package hideshow
   :ensure nil
   :hook
-  (prog-mode . hs-minor-mode)
-  :bind
-  (:map hs-minor-mode-map
-        ("C-c h h" . hs-hide-block)
-        ("C-c h s" . hs-show-block)
-        ("C-c h H" . hs-hide-all)
-        ("C-c h S" . hs-show-all)
-        ("C-c h l" . hs-hide-level)
-        ("C-c h t" . hs-toggle-hiding)))
+  (prog-mode . hs-minor-mode))
+  ;; Standard hideshow keybindings:
+  ;; C-c @ C-h - hide block
+  ;; C-c @ C-s - show block
+  ;; C-c @ ESC C-h - hide all
+  ;; C-c @ ESC C-s - show all
+  ;; C-c @ C-l - hide level
+  ;; C-c @ C-c - toggle hiding
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                        Enhanced Tree-sitter Features                        ;;
+;;                        Tree-sitter Utilities                                ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Context-aware commenting using tree-sitter
-(defun my/treesit-comment-node ()
-  "Comment the current tree-sitter node."
-  (interactive)
-  (when-let ((node (treesit-node-at (point))))
-    (comment-region (treesit-node-start node)
-                    (treesit-node-end node))))
-
-(defun my/treesit-uncomment-node ()
-  "Uncomment the current tree-sitter node."
-  (interactive)
-  (when-let ((node (treesit-node-at (point))))
-    (uncomment-region (treesit-node-start node)
-                      (treesit-node-end node))))
-
-;; Smart indentation using tree-sitter
-(defun my/treesit-indent-defun ()
-  "Indent the current defun using tree-sitter."
-  (interactive)
-  (when-let ((node (treesit-defun-at-point)))
-    (indent-region (treesit-node-start node)
-                   (treesit-node-end node))))
-
-;; Add to prog-mode-map
-(with-eval-after-load 'prog-mode
-  (define-key prog-mode-map (kbd "C-c n c") #'my/treesit-comment-node)
-  (define-key prog-mode-map (kbd "C-c n u") #'my/treesit-uncomment-node)
-  (define-key prog-mode-map (kbd "C-c n =") #'my/treesit-indent-defun))
-
-;; Which-key descriptions
-(with-eval-after-load 'which-key
-  (which-key-add-key-based-replacements
-    "C-c n" "tree-sitter navigation"
-    "C-c n f" "forward sibling"
-    "C-c n b" "backward sibling"
-    "C-c n u" "up to parent"
-    "C-c n d" "down to child"
-    "C-c n m" "mark node"
-    "C-c n c" "comment node"
-    "C-c n u" "uncomment node"
-    "C-c n =" "indent defun"
-    "C-c n i" "inspect"
-    "C-c h" "hideshow"
-    "C-c @" "outline"))
 
 ;; Helpful message on startup
 (defun my/treesit-status ()
@@ -3493,6 +3376,9 @@ The DWIM behaviour of this command is as follows:
 
 ;; Check status on startup
 (add-hook 'emacs-startup-hook #'my/treesit-status)
+
+;; For debugging tree-sitter, use the built-in:
+;; M-x treesit-inspect-mode - inspect tree-sitter nodes interactively
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                So-long-mode                               ;;
