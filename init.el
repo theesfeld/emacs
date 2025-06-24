@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 13:59:55 by grim>
+;; Time-stamp: <Last changed 2025-06-24 14:05:28 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3230,7 +3230,10 @@ The DWIM behaviour of this command is as follows:
           (yaml-mode . yaml-ts-mode)
           (ruby-mode . ruby-ts-mode)
           (dockerfile-mode . dockerfile-ts-mode)
-          (java-mode . java-ts-mode)))
+          (java-mode . java-ts-mode)
+          (html-mode . html-ts-mode)         ; Add this
+          (mhtml-mode . html-ts-mode)        ; Also remap mhtml-mode
+          (tsx-mode . tsx-ts-mode)))
 
   ;; Font-lock and indentation settings
   (setq treesit-font-lock-level 4)  ; Maximum highlighting
