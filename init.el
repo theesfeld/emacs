@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 14:05:28 by grim>
+;; Time-stamp: <Last changed 2025-06-24 14:08:30 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3231,9 +3231,15 @@ The DWIM behaviour of this command is as follows:
           (ruby-mode . ruby-ts-mode)
           (dockerfile-mode . dockerfile-ts-mode)
           (java-mode . java-ts-mode)
-          (html-mode . html-ts-mode)         ; Add this
-          (mhtml-mode . html-ts-mode)        ; Also remap mhtml-mode
-          (tsx-mode . tsx-ts-mode)))
+          ;; Add these missing remappings:
+          (html-mode . html-ts-mode)
+          (mhtml-mode . html-ts-mode)
+          (sgml-mode . html-ts-mode)
+          (lua-mode . lua-ts-mode)
+          (elixir-mode . elixir-ts-mode)
+          (heex-mode . heex-ts-mode)
+          (emacs-lisp-mode . emacs-lisp-ts-mode)
+          (lisp-interaction-mode . emacs-lisp-ts-mode)))
 
   ;; Font-lock and indentation settings
   (setq treesit-font-lock-level 4)  ; Maximum highlighting
