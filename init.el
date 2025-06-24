@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 19:46:22 by grim>
+;; Time-stamp: <Last changed 2025-06-24 19:54:01 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2609,8 +2609,8 @@ This function integrates with exwm-firefox-core to open the current page."
           (lua-mode . lua-ts-mode)
           (elixir-mode . elixir-ts-mode)
           (heex-mode . heex-ts-mode)))
-          ;; REMOVED: (emacs-lisp-mode . emacs-lisp-ts-mode)
-          ;; REMOVED: (lisp-interaction-mode . emacs-lisp-ts-mode)
+  ;; REMOVED: (emacs-lisp-mode . emacs-lisp-ts-mode)
+  ;; REMOVED: (lisp-interaction-mode . emacs-lisp-ts-mode)
 
   ;; Font-lock and indentation settings
   (setq treesit-font-lock-level 4)  ; Maximum highlighting
@@ -2632,11 +2632,15 @@ This function integrates with exwm-firefox-core to open the current page."
   ;; No custom keybindings needed!
   )
 
+(use-package tree-sitter-langs
+  :ensure t
+  :after tree-sitter)
+
 ;; Treesit-auto for automatic mode selection and grammar installation
 (use-package treesit-auto
   :ensure t
   :custom
-  (treesit-auto-install 'prompt)  ; Prompt before installing grammars
+  (treesit-auto-install 'prompt)   ; Prompt before installing grammars
   :config
   (treesit-auto-add-to-auto-mode-alist 'all)
   (global-treesit-auto-mode))
