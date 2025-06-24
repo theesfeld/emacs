@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 13:23:22 by grim>
+;; Time-stamp: <Last changed 2025-06-24 13:25:04 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3945,8 +3945,9 @@ With ARG, move that many defuns forward."
   :ensure t
   :init
   (add-to-list 'auto-mode-alist '("\\.log\\'" . logview-mode))
-  (add-to-list 'auto-mode-alist '("log\\'" . logview-mode)))
-
+  (add-to-list 'auto-mode-alist '("log\\'" . logview-mode))
+  :hook (
+         ('log-mode 'logview-mode)))
 ;;;;;
 ;; pulsar
 ;;;;;
