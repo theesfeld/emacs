@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 14:08:30 by grim>
+;; Time-stamp: <Last changed 2025-06-24 14:08:54 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3187,6 +3187,9 @@ The DWIM behaviour of this command is as follows:
           (elixir . ("https://github.com/elixir-lang/tree-sitter-elixir"))
           (heex . ("https://github.com/phoenixframework/tree-sitter-heex"))
           (sql . ("https://github.com/DerekStride/tree-sitter-sql"))
+          (csharp . ("https://github.com/tree-sitter/tree-sitter-c-sharp"))
+          (php . ("https://github.com/tree-sitter/tree-sitter-php"))
+          (go-mod . ("https://github.com/camdencheek/tree-sitter-go-mod"))
           (latex . ("https://github.com/latex-lsp/tree-sitter-latex"))))
 
   ;; Automatic installation and updating of tree-sitter grammars
