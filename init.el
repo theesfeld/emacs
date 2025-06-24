@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 16:44:32 by grim>
+;; Time-stamp: <Last changed 2025-06-24 17:08:15 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -195,25 +195,12 @@ The DWIM behaviour of this command is as follows:
           (switch-to-buffer buffer)
         (call-interactively command)))))
 
-(defun my-erc-update-notifications-keywords (&rest _)
-  "Update notification keywords with current nick."
-  (when erc-session-user
-    (setq erc-notifications-keywords (list erc-session-user))))
-
-(defun my-erc-set-fill-column ()
-  "Set ERC fill column based on display type."
-  (setq-local erc-fill-column
-              (if (display-graphic-p)
-                  (window-width)
-                (min 80 (window-width)))))
-
 (defun my-org-capture-delete-file-after-kill (&rest _)
   "Delete file if capture is aborted."
   (when (and (buffer-file-name) (file-exists-p (buffer-file-name)))
     (delete-file (buffer-file-name))
     (message "Deleted aborted capture file: %s" (buffer-file-name))))
 
-(declare-function pcomplete-erc-setup "erc-pcomplete")
 (declare-function completion-preview-insert "completion-preview")
 (declare-function completion-preview-next-candidate
                   "completion-preview")
@@ -438,13 +425,6 @@ The DWIM behaviour of this command is as follows:
   ;; === Setup ===
   (setq ednc-notification-presentation-functions nil)
   (add-hook 'ednc-notification-presentation-functions #'ednc--show-notification)
-
-  ;; === Keybindings ===
-  ;;;; KEYBIND_CHANGE: C-c e bindings are acceptable in user space
-  (global-set-key (kbd "C-c e n") #'ednc-browse-history)
-  (global-set-key (kbd "C-c e d") #'ednc-dismiss-all)
-  (global-set-key (kbd "C-c e c") #'ednc-clear-history)
-
   (ednc-mode 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -477,7 +457,7 @@ The DWIM behaviour of this command is as follows:
     (run-at-time 2 nil #'grim/run-in-background "nm-applet")
     (run-at-time 2 nil #'grim/run-in-background "udiskie -at")
     (run-at-time 2 nil #'grim/run-in-background "blueman-applet")
-    ;;    (run-at-time 5 nil #'grim/run-in-background "mullvad-vpn")
+    ;;(run-at-time 5 nil #'grim/run-in-background "mullvad-vpn")
     )
 
   (defun grim/exwm-update-class ()
@@ -488,53 +468,6 @@ The DWIM behaviour of this command is as follows:
       ("Firefox" (exwm-workspace-rename-buffer
                   (format "Firefox: %s" exwm-title)))))
 
-  ;; fix floating window size if possible
-  ;; https://dindi.garjola.net/exwm-floating.html
-  (defun my/adjust-floating-frame-size ()
-    "Ensure that the current floating exwm frame does not exceed the size of the screen"
-    (when (and (boundp 'exwm-workspace--workareas)
-               exwm-workspace--workareas
-               (> (length exwm-workspace--workareas) 0))
-      (condition-case err
-          (let* ((frame (selected-frame))
-                 (width (frame-pixel-width frame))
-                 (height (frame-pixel-height frame))
-                 (workarea-0 (elt exwm-workspace--workareas 0))
-                 (workarea-1
-                  (when (> (length exwm-workspace--workareas) 1)
-                    (elt exwm-workspace--workareas 1)))
-                 (w1
-                  (when workarea-0
-                    (elt workarea-0 2)))
-                 (h1
-                  (when workarea-0
-                    (elt workarea-0 3)))
-                 (w2
-                  (when workarea-1
-                    (elt workarea-1 2)))
-                 (h2
-                  (when workarea-1
-                    (elt workarea-1 3)))
-                 (max-width
-                  (round
-                   (* 0.75
-                      (if (and w1 w2)
-                          (min w1 w2)
-                        (or w1 1920)))))
-                 (max-height
-                  (round
-                   (* 0.75
-                      (if (and h1 h2)
-                          (min h1 h2)
-                        (or h1 1080)))))
-                 (final-height (min height max-height))
-                 (final-width (min width max-width)))
-            (when (and (> final-width 0) (> final-height 0))
-              (set-frame-size frame final-width final-height t)))
-        (error
-         (message "Error adjusting floating frame size: %s"
-                  (error-message-string err))))))
-
   (use-package
     exwm
     :ensure t
@@ -543,8 +476,6 @@ The DWIM behaviour of this command is as follows:
     (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
     (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
     (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
-    (add-hook 'exwm-floating-setup-hook #'my/adjust-floating-frame-size
-              100)
 
     (setq exwm-workspace-show-all-buffers t)
     (setq exwm-layout-show-all-buffers t)
@@ -557,10 +488,6 @@ The DWIM behaviour of this command is as follows:
      x-select-enable-clipboard t
      x-select-enable-primary t
      select-enable-clipboard t)
-
-    (setenv "GDK_SCALE" "1")
-    (setenv "QT_AUTO_SCREEN_SCALE_FACTOR" "1")
-    (setenv "QT_ENABLE_HIGHDPI_SCALING" "1")
 
     (require 'exwm-randr)
     (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
@@ -623,12 +550,6 @@ The DWIM behaviour of this command is as follows:
     ;; Input Prefix Keys
     (setq exwm-input-prefix-keys
           '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
-
-    ;; xss-lock setup for autolock and suspend locking
-    (when (and (executable-find "xss-lock") (executable-find "slock"))
-      (start-process-shell-command "xss-lock" nil "xss-lock -- slock"))
-    (when (executable-find "xset")
-      (start-process-shell-command "xset" nil "xset s 300")) ; 5-minute inactivity
 
     ;; Global keybindings
     (setq exwm-input-global-keys
@@ -716,7 +637,7 @@ The DWIM behaviour of this command is as follows:
     (when (featurep 'exwm-edit)
       (message "exwm-edit loaded successfully"))
     ;; Optional: Customize split behavior
-                                        ;(setq exwm-edit-split 'below) ; Open edit buffer below current window
+    (setq exwm-edit-split 'below) ; Open edit buffer below current window
     :bind (:map exwm-mode-map ("C-c e" . exwm-edit--compose))
     :hook
     ;; Log initialization
@@ -950,11 +871,6 @@ The DWIM behaviour of this command is as follows:
       (unless (file-exists-p path)
         (make-directory path t))))
 
-  ;; Ensure savehist file exists and set up history variables
-  (let ((savehist-path (expand-file-name "savehist-file" my-tmp-dir)))
-    (unless (file-exists-p savehist-path)
-      (with-temp-file savehist-path
-        (insert ""))))
   (setq savehist-additional-variables
         '(kill-ring
           search-ring
@@ -970,7 +886,6 @@ The DWIM behaviour of this command is as follows:
   (set-language-environment "UTF-8")
   (save-place-mode 1)
   (savehist-mode 1) ; Ensure history persistence is enabled
-  (setq savehist-file (expand-file-name "savehist-file" my-tmp-dir))
   (setq history-length 1000) ; Consistent with consult
   (setq history-delete-duplicates t)
   (setq savehist-save-minibuffer-history t)
@@ -1006,10 +921,7 @@ The DWIM behaviour of this command is as follows:
           ;; For org-mode
           (org-mode . [my/insert-time-stamp])
           ;; For text-mode
-          (text-mode . [my/insert-time-stamp])
-          ;; Default for other modes
-          (t . [my/insert-time-stamp])))
-
+          (text-mode . [my/insert-time-stamp])))
   ;; Enable time-stamp updates on save
   (add-hook 'before-save-hook 'time-stamp)
 
@@ -1300,7 +1212,8 @@ The DWIM behaviour of this command is as follows:
   ;; Save place settings
   (setq save-place-file
         (expand-file-name "saveplace/saveplace" my-tmp-dir))
-  (save-place-mode 1) ; Enable save-place-mode
+  (save-place-mode 1)
+                                        ; Enable save-place-mode
 
   ;; Define a minimal log-mode for .log files
   (define-derived-mode
