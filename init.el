@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 19:54:01 by grim>
+;; Time-stamp: <Last changed 2025-06-24 19:56:24 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2631,10 +2631,6 @@ This function integrates with exwm-firefox-core to open the current page."
   ;; C-M-h - mark-defun (works with tree-sitter)
   ;; No custom keybindings needed!
   )
-
-(use-package tree-sitter-langs
-  :ensure t
-  :after tree-sitter)
 
 ;; Treesit-auto for automatic mode selection and grammar installation
 (use-package treesit-auto
