@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 06:40:00 by grim>
+;; Time-stamp: <Last changed 2025-06-24 10:20:27 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2375,10 +2375,9 @@ The DWIM behaviour of this command is as follows:
    ("C-c w" . dired-copy-file-path)
    ("C-c f" . dired-consult-filter))
   :hook
-  (
-                                        ;(dired-mode . dired-hide-details-mode)
+  (;;(dired-mode . dired-hide-details-mode)
    (dired-mode . all-the-icons-dired-mode)
-   (dired-mode . dired-preview-mode)
+   ;;   (dired-mode . dired-preview-mode)
    (dired-mode . hl-line-mode))
   :custom
   (dired-listing-switches "-lah --group-directories-first --time=access")
@@ -2426,13 +2425,13 @@ The DWIM behaviour of this command is as follows:
     :config (setq all-the-icons-dired-monochrome nil)
     (set-face-attribute 'all-the-icons-dired-dir-face nil
                         :foreground "#81a1c1"))
-  (use-package
-    dired-preview
-    :ensure t
-    :custom
-    (dired-preview-delay 0)
-    (dired-preview-max-size (* 10 1024 1024))
-    :config (dired-preview-global-mode 1))
+  ;; (use-package
+  ;;   dired-preview
+  ;;   :ensure t
+  ;;   :custom
+  ;;   (dired-preview-delay 0)
+  ;;   (dired-preview-max-size (* 10 1024 1024))
+  ;;   :config (dired-preview-global-mode 1))
   (use-package
     dired-git-info
     :ensure t
