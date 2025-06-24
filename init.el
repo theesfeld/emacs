@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 14:35:50 by grim>
+;; Time-stamp: <Last changed 2025-06-24 14:39:43 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -127,28 +127,6 @@ The DWIM behaviour of this command is as follows:
 
 ;;;; KEYBIND_CHANGE: C-c Y is acceptable in user space, keeping it
 (global-set-key (kbd "C-c Y") #'my/consult-yasnippet-with-minor-modes)
-
-;; Function to translate C-M-S-s-<key> to H-<key>
-(defun my-hyper-translate (key)
-  "Translate C-M-S-s-<key> to H-<key>, handling any key type."
-  (let*
-      ((base-key
-        (if (and (integerp key) (>= key ?A) (<= key ?Z)) ;; If uppercase letter
-            (downcase key) ;; Strip Shift
-          key)) ;; Pass symbols/other keys as-is
-       (key-str
-        (cond
-         ((eq base-key ?+)
-          "+") ;; Explicit symbol mappings
-         ((eq base-key ?-)
-          "-")
-         ((eq base-key ?=)
-          "=")
-         ((eq base-key ?_)
-          "_")
-         (t
-          (char-to-string base-key))))) ;; Default to char
-    (kbd (concat "H-" key-str))))
 
 ;; Map C-M-S-s-<key> for letters and symbols
 (let ((keys
@@ -475,9 +453,6 @@ The DWIM behaviour of this command is as follows:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (when (eq window-system 'x)
-
-
-
   (defun grim/run-in-background (command)
     (condition-case err
         (let ((command-parts (split-string command "[ ]+")))
@@ -751,39 +726,6 @@ The DWIM behaviour of this command is as follows:
      (lambda ()
        (when (featurep 'exwm-edit)
          (message "exwm-edit initialized")))))
-
-  ;; (use-package
-  ;;   exwm-firefox-core
-  ;;   :ensure t
-  ;;   :after exwm
-  ;;   :init
-  ;;   ;; Pre-load settings
-  ;;   (setq exwm-firefox-core-classes
-  ;;         '("firefox" "firefoxdeveloperedition"))
-  ;;   :config
-  ;;   ;; Load package safely
-  ;;   (require 'exwm-firefox-core nil t)
-  ;;   (when (featurep 'exwm-firefox-core)
-  ;;     (message "exwm-firefox-core loaded"))
-  ;;   ;; Popular keybindings
-  ;;   :bind
-  ;;   (:map
-  ;;    exwm-mode-map
-  ;;    ("C-c F n" . exwm-firefox-core-tab-new)
-  ;;    ("C-c F t" . exwm-firefox-core-tab-close)
-  ;;    ("C-c F <right>" . exwm-firefox-core-tab-right)
-  ;;    ("C-c F <left>" . exwm-firefox-core-tab-left)
-  ;;    ("C-c F h" . exwm-firefox-core-back)
-  ;;    ("C-c F l" . exwm-firefox-core-forward)
-  ;;    ("C-c F f" . exwm-firefox-core-find)
-  ;;    )
-  ;;   :hook
-  ;;   ;; Rename buffers for Firefox windows
-  ;;   (exwm-update-title
-  ;;    .
-  ;;    (lambda ()
-  ;;      (when (string-match-p "firefox" (downcase exwm-class-name))
-  ;;        (exwm-workspace-rename-buffer exwm-title)))))
 
   (use-package exwm-firefox-core
     :ensure t
@@ -2179,7 +2121,6 @@ The DWIM behaviour of this command is as follows:
 (use-package
   org-modern
   :ensure t
-                                        ; :hook (org-mode . org-modern-mode)
   :config
   (setq
    ;; Edit settings
@@ -2273,19 +2214,6 @@ The DWIM behaviour of this command is as follows:
            "projectile.cache"
            "workbench.xmi")
          grep-find-ignored-files)))
-
-;; DOOM MODELINE
-
-;; (use-package
-;;   doom-modeline
-;;   :ensure t
-;;   :hook (after-init . doom-modeline-mode))
-
-;;;;;
-;; MODE LINE
-;;;;;
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                           Aidermacs (Anthropic)                           ;;
@@ -2518,13 +2446,7 @@ The DWIM behaviour of this command is as follows:
     :config (setq all-the-icons-dired-monochrome nil)
     (set-face-attribute 'all-the-icons-dired-dir-face nil
                         :foreground "#81a1c1"))
-  ;; (use-package
-  ;;   dired-preview
-  ;;   :ensure t
-  ;;   :custom
-  ;;   (dired-preview-delay 0)
-  ;;   (dired-preview-max-size (* 10 1024 1024))
-  ;;   :config (dired-preview-global-mode 1))
+
   (use-package
     dired-git-info
     :ensure t
@@ -2708,463 +2630,6 @@ The DWIM behaviour of this command is as follows:
   (setq denote-journal-title-format 'day-date-month-year))
 
 (use-package denote-org :ensure t :defer t)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                              ERC (IRC Client)                             ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package
-  erc
-  :ensure nil
-  :defer t
-  :config
-  (setq
-   erc-track-remove-disconnected-buffers t
-   erc-hide-list '("PART" "QUIT" "JOIN")
-   erc-interpret-mirc-color t
-   erc-kill-queries-on-quit t
-   erc-kill-server-buffer-on-quit t
-   erc-track-shorten-start 8
-   erc-kill-buffer-on-part t
-   erc-auto-query 'bury
-   erc-prompt
-   (lambda ()
-     (concat
-      (propertize "ERC> "
-                  'face
-                  '(:foreground "cyan" :weight bold))
-      (buffer-name)))
-   erc-timestamp-format "[%Y-%m-%d %H:%M] "
-   erc-insert-timestamp-function 'erc-insert-timestamp-left
-   erc-track-position-in-mode-line t
-   erc-track-exclude-types '("JOIN" "PART" "QUIT" "NICK" "MODE")
-   erc-track-switch-direction 'newest
-   erc-track-visibility 'visible
-   erc-track-showcount t
-   erc-format-query-as-channel-p t
-   erc-fill-function 'erc-fill-variable
-   erc-fill-prefix "  "
-   erc-fill-static-center 20
-   erc-log-channels-directory (expand-file-name "irc-logs" my-tmp-dir)
-   erc-save-buffer-on-part t
-   erc-log-write-after-insert t)
-  (setq erc-modules '(networks notifications match))
-  (erc-update-modules)
-  (erc-timestamp-mode 1)
-  (erc-track-mode 1)
-  (erc-autojoin-mode 1)
-  (require 'erc-button)
-  (erc-button-mode 1)
-  (setq erc-button-url-open-function 'eww-browse-url)
-  (set-face-attribute 'erc-nick-default-face nil :foreground "#bd93f9")
-  (set-face-attribute 'erc-timestamp-face nil :foreground "#6272a4")
-  (set-face-attribute 'erc-my-nick-face nil
-                      :foreground "#ff79c6"
-                      :weight 'bold)
-  ;; Custom face for nick mentions with background highlight
-  (defface erc-nick-mentioned-face
-    '((t
-       :background "#452950"
-       :foreground "#ffcc66"
-       :weight bold
-       :extend t))
-    "Face for messages where my nick is mentioned in ERC, using Modus Vivendi colors."
-    :group 'erc-faces)
-  ;; Modified function to highlight message and add fringe marker
-  (defun my-erc-highlight-nick-message (msg)
-    "Highlight the entire message and add a fringe marker when my nick is mentioned."
-    (let ((nick (erc-current-nick)))
-      (when (and nick (string-match-p (regexp-quote nick) msg))
-        ;; Highlight the full message
-        (put-text-property
-         0 (length msg) 'face 'erc-nick-mentioned-face
-         msg)
-        ;; Add fringe indicator
-        (put-text-property 0 1 'display
-                           '(left-fringe
-                             erc-nick-mentioned-fringe bitmap)
-                           msg))))
-  ;; Add the highlight function to ERC's message insertion hook
-  (add-hook
-   'erc-insert-modify-hook
-   (lambda ()
-     (when (erc-server-buffer)
-       (save-excursion
-         (goto-char (point-min))
-         (while (not (eobp))
-           (let ((msg (buffer-substring (point) (line-end-position))))
-             (my-erc-highlight-nick-message msg))
-           (forward-line 1))))))
-  ;; Define fringe bitmap for red asterisk
-  (define-fringe-bitmap 'erc-nick-mentioned-fringe
-    [#b00000000
-     #b00111000 #b01111100 #b11111110 #b01111100 #b00111000 #b00000000]
-    nil nil 'center)
-  ;; Define face for fringe marker
-  (defface erc-nick-mentioned-fringe-face
-    '((t :foreground "red" :weight bold))
-    "Face for the fringe marker when nick is mentioned."
-    :group 'erc-faces)
-  ;; Associate face with fringe bitmap
-  (put
-   'erc-nick-mentioned-fringe 'face 'erc-nick-mentioned-fringe-face)
-  ;; Configure ERC match for nick highlighting
-  (setq erc-keywords '())
-  (defun my-erc-update-keywords ()
-    "Update erc-keywords with the current nick."
-    (let ((nick (erc-current-nick)))
-      (when nick
-        (setq erc-keywords (list nick)))))
-  (add-hook
-   'erc-after-connect-hook
-   (lambda (&rest _args) (my-erc-update-keywords)))
-  (add-hook 'erc-nick-changed-hook #'my-erc-update-keywords)
-  (setq erc-match-keywords-hook nil)
-  (add-hook
-   'erc-match-keywords-hook
-   (lambda ()
-     (when (and (erc-server-buffer) (erc-current-nick))
-       (my-erc-highlight-nick-message
-        (buffer-substring (point-min) (point-max))))))
-  ;; Completion setup
-  (defun my-erc-setup-completion ()
-    "Set up ERC completion with pcomplete and corfu."
-    (require 'erc-pcomplete)
-    (pcomplete-erc-setup) ; ERC's nick completion
-    (setq-local completion-at-point-functions
-                (list #'erc-pcomplete)) ; Use pcomplete for completion
-    (corfu-mode 1)) ; Enable corfu for dropdown UI
-  ;; Disable line numbers in ERC
-  (add-hook 'erc-mode-hook (lambda () (display-line-numbers-mode -1)))
-
-  (defun my-erc-connect ()
-    "Retrieve IRC credentials from authinfo.gpg and connect to the IRC server"
-    (interactive)
-    (let* ((host "samhain.su")
-           (port "7000")
-           (auth-entry
-            (car
-             (auth-source-search
-              :host host
-              :port port
-              :require '(:user :secret)
-              :max 1)))
-           (username (plist-get auth-entry :user))
-           (password
-            (if (functionp (plist-get auth-entry :secret))
-                (funcall (plist-get auth-entry :secret))
-              (plist-get auth-entry :secret))))
-      (unless (and username password)
-        (error "Could not retrieve IRC credentials from authinfo.gpg"))
-      (erc-tls
-       :server host
-       :port (string-to-number port)
-       :nick username
-       :password password
-       :full-name "blackdream")))
-
-  :hook
-  ((erc-mode . my-erc-set-fill-column)
-   (erc-nick-changed . my-erc-update-notifications-keywords)
-   (erc-insert-post . erc-save-buffer-in-logs)
-   (erc-mode . my-erc-setup-completion)) ; Replace old completion hook
-  :bind
-  (:map
-   erc-mode-map
-   ;;;; KEYBIND_CHANGE: C-c e conflicts with ednc, moved to C-c i e
-   ("C-c i e" . erc-button-browse-url)
-   ("C-c i l" . erc-view-log-mode)
-   ("TAB" . completion-at-point) ; Explicitly bind TAB
-   :map
-   global-map
-   ("C-c E" . my-erc-connect)))
-
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ;;                          Native Tree-sitter Configuration                  ;;
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; ;; Remove the treesit-auto package and use native tree-sitter
-;; (use-package
-;;  emacs
-;;  :ensure nil
-;;  :init
-;;  ;; Tree-sitter language sources
-;;  (setq treesit-language-source-alist
-;;        '((bash . ("https://github.com/tree-sitter/tree-sitter-bash"))
-;;          (c . ("https://github.com/tree-sitter/tree-sitter-c"))
-;;          (cpp . ("https://github.com/tree-sitter/tree-sitter-cpp"))
-;;          (css . ("https://github.com/tree-sitter/tree-sitter-css"))
-;;          (elisp . ("https://github.com/Wilfred/tree-sitter-elisp"))
-;;          (go . ("https://github.com/tree-sitter/tree-sitter-go"))
-;;          (html . ("https://github.com/tree-sitter/tree-sitter-html"))
-;;          (java . ("https://github.com/tree-sitter/tree-sitter-java"))
-;;          (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "master" "src"))
-;;          (json . ("https://github.com/tree-sitter/tree-sitter-json"))
-;;          (lua . ("https://github.com/MunifTanjim/tree-sitter-lua"))
-;;          (make . ("https://github.com/alemuller/tree-sitter-make"))
-;;          (markdown . ("https://github.com/ikatyang/tree-sitter-markdown"))
-;;          (python . ("https://github.com/tree-sitter/tree-sitter-python"))
-;;          (rust . ("https://github.com/tree-sitter/tree-sitter-rust"))
-;;          (toml . ("https://github.com/tree-sitter/tree-sitter-toml"))
-;;          (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src"))
-;;          (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src"))
-;;          (yaml . ("https://github.com/ikatyang/tree-sitter-yaml"))))
-
-;;  ;; Automatic installation of tree-sitter grammars
-;;  (defun my-install-missing-treesit-grammars ()
-;;    "Install missing tree-sitter grammars."
-;;    (interactive)
-;;    (dolist (lang-src treesit-language-source-alist)
-;;      (let ((lang (car lang-src)))
-;;        (unless (treesit-language-available-p lang)
-;;          (when (y-or-n-p (format "Install tree-sitter grammar for %s? " lang))
-;;            (treesit-install-language-grammar lang))))))
-
-;;  ;; Major mode remapping to use tree-sitter variants
-;;  (setq major-mode-remap-alist
-;;        '((c-mode . c-ts-mode)
-;;          (c++-mode . c++-ts-mode)
-;;          (cmake-mode . cmake-ts-mode)
-;;          (conf-toml-mode . toml-ts-mode)
-;;          (css-mode . css-ts-mode)
-;;          (js-mode . js-ts-mode)
-;;          (js-json-mode . json-ts-mode)
-;;          (python-mode . python-ts-mode)
-;;          (sh-mode . bash-ts-mode)
-;;          (typescript-mode . typescript-ts-mode)
-;;          (rust-mode . rust-ts-mode)
-;;          (go-mode . go-ts-mode)
-;;          (yaml-mode . yaml-ts-mode)))
-
-;;  ;; Font-lock level for tree-sitter modes
-;;  (setq treesit-font-lock-level 4) ; Maximum highlighting
-
-;;  ;; Tree-sitter based indentation settings
-;;  (setq treesit-simple-indent-presets
-;;        (append
-;;         treesit-simple-indent-presets
-;;         '((prot-indent-close
-;;            (lambda (node parent bol)
-;;              (save-excursion
-;;                (goto-char bol)
-;;                (looking-at-p
-;;                 (rx (or "}" "]" ")")))))))
-;;         ))
-
-;;  :config
-;;  ;; Enhanced tree-sitter font-lock rules
-;;  (defun my-treesit-fontify-all-strings (lang)
-;;    "Fontify all strings in LANG modes."
-;;    (treesit-font-lock-rules
-;;     :language lang
-;;     :feature 'string
-;;     '((string) @font-lock-string-face)))
-
-;;  ;; Tree-sitter structural navigation
-;;  (defun my-treesit-beginning-of-defun (&optional arg)
-;;    "Move to beginning of defun using tree-sitter.
-;; With ARG, move that many defuns backward."
-;;    (interactive "p")
-;;    (let ((arg (or arg 1)))
-;;      (if (< arg 0)
-;;          (my-treesit-end-of-defun (- arg))
-;;        (dotimes (_ arg)
-;;          (treesit-beginning-of-defun)))))
-
-;;  (defun my-treesit-end-of-defun (&optional arg)
-;;    "Move to end of defun using tree-sitter.
-;; With ARG, move that many defuns forward."
-;;    (interactive "p")
-;;    (let ((arg (or arg 1)))
-;;      (if (< arg 0)
-;;          (my-treesit-beginning-of-defun (- arg))
-;;        (dotimes (_ arg)
-;;          (treesit-end-of-defun)))))
-
-;;  ;; Tree-sitter aware commenting
-;;  (defun my-treesit-comment-or-uncomment ()
-;;    "Comment or uncomment using tree-sitter node detection."
-;;    (interactive)
-;;    (let* ((node (treesit-node-at (point)))
-;;           (start (treesit-node-start node))
-;;           (end (treesit-node-end node)))
-;;      (comment-or-uncomment-region start end)))
-
-;;  ;; Install grammars on first run
-;;  (add-hook 'emacs-startup-hook
-;;            (lambda ()
-;;              (when (and (treesit-available-p)
-;;                         (not (file-exists-p
-;;                               (expand-file-name "tree-sitter" user-emacs-directory))))
-;;                (my-install-missing-treesit-grammars))))
-
-;;  :hook
-;;  ;; Enable tree-sitter modes
-;;  ((c-ts-mode c++-ts-mode
-;;    python-ts-mode js-ts-mode
-;;    rust-ts-mode go-ts-mode) . eglot-ensure)
-
-;;  ;; Configure tree-sitter modes
-;;  ((prog-mode . (lambda ()
-;;                  (when (and (treesit-available-p)
-;;                             (treesit-language-at (point)))
-;;                    ;; Set up tree-sitter navigation
-;;                    (setq-local beginning-of-defun-function
-;;                                #'my-treesit-beginning-of-defun)
-;;                    (setq-local end-of-defun-function
-;;                                #'my-treesit-end-of-defun)))))
-
-;;  :bind
-;;  (:map prog-mode-map
-;;        ("C-M-a" . my-treesit-beginning-of-defun)
-;;        ("C-M-e" . my-treesit-end-of-defun)
-;;        ("C-c t c" . my-treesit-comment-or-uncomment)))
-
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ;;                        Tree-sitter Enhanced Features                       ;;
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; ;; Tree-sitter based code folding
-;; (use-package
-;;  treesit-fold
-;;  :vc (:url "https://github.com/emacs-tree-sitter/treesit-fold")
-;;  :after treesit
-;;  :config
-;;  (global-treesit-fold-mode 1)
-;;  (setq treesit-fold-indicators-priority 100)
-;;  :bind
-;;  (:map prog-mode-map
-;;        ("C-c F t" . treesit-fold-toggle)
-;;        ("C-c F T" . treesit-fold-toggle-all)
-;;        ("C-c F o" . treesit-fold-open)
-;;        ("C-c F O" . treesit-fold-open-all)
-;;        ("C-c F c" . treesit-fold-close)
-;;        ("C-c F C" . treesit-fold-close-all)))
-
-;; ;; Tree-sitter playground for debugging
-;; (use-package
-;;  treesit-explore
-;;  :ensure nil
-;;  :commands (treesit-explore-mode treesit-inspect-mode)
-;;  :bind
-;;  (:map prog-mode-map
-;;        ("C-c t e" . treesit-explore-mode)
-;;        ("C-c t i" . treesit-inspect-mode)))
-
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ;;                     Tree-sitter Specific Configurations                    ;;
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; ;; Python with tree-sitter
-;; (use-package
-;;  python
-;;  :ensure nil
-;;  :mode ("\\.py\\'" . python-ts-mode)
-;;  :config
-;;  (setq python-indent-guess-indent-offset-verbose nil)
-;;  (setq python-indent-offset 4)
-
-;;  ;; Tree-sitter aware python navigation
-;;  (defun my-python-ts-beginning-of-block ()
-;;    "Move to beginning of Python block using tree-sitter."
-;;    (interactive)
-;;    (when-let ((node (treesit-parent-until
-;;                      (treesit-node-at (point))
-;;                      (lambda (n)
-;;                        (member (treesit-node-type n)
-;;                                '("function_definition"
-;;                                  "class_definition"
-;;                                  "if_statement"
-;;                                  "for_statement"
-;;                                  "while_statement"
-;;                                  "with_statement"))))))
-;;      (goto-char (treesit-node-start node))))
-
-;;  :hook
-;;  (python-ts-mode . (lambda ()
-;;                      (setq-local treesit-defun-type-regexp
-;;                                  (rx (or "function_definition"
-;;                                          "class_definition")))
-;;                      (treesit-major-mode-setup))))
-
-;; ;; JavaScript/TypeScript with tree-sitter
-;; (use-package
-;;  js
-;;  :ensure nil
-;;  :mode (("\\.js\\'" . js-ts-mode)
-;;         ("\\.jsx\\'" . js-ts-mode))
-;;  :config
-;;  (setq js-indent-level 2)
-;;  :hook
-;;  (js-ts-mode . (lambda ()
-;;                  (setq-local treesit-defun-type-regexp
-;;                              (rx (or "function_declaration"
-;;                                      "arrow_function"
-;;                                      "method_definition"
-;;                                      "class_declaration")))
-;;                  (treesit-major-mode-setup))))
-
-;; ;; Elisp tree-sitter (experimental but available)
-;; (when (treesit-language-available-p 'elisp)
-;;   (define-derived-mode emacs-lisp-ts-mode emacs-lisp-mode "Elisp[TS]"
-;;     "Major mode for Emacs Lisp with tree-sitter support."
-;;     (when (treesit-ready-p 'elisp)
-;;       (treesit-parser-create 'elisp)
-;;       (setq-local treesit-font-lock-settings
-;;                   (treesit-font-lock-rules
-;;                    :language 'elisp
-;;                    :feature 'comment
-;;                    '((comment) @font-lock-comment-face)
-;;                    :language 'elisp
-;;                    :feature 'string
-;;                    '((string) @font-lock-string-face)
-;;                    :language 'elisp
-;;                    :feature 'keyword
-;;                    '((defun) @font-lock-keyword-face
-;;                      (defvar) @font-lock-keyword-face
-;;                      (defcustom) @font-lock-keyword-face
-;;                      (defmacro) @font-lock-keyword-face
-;;                      (let) @font-lock-keyword-face
-;;                      (lambda) @font-lock-keyword-face)))
-;;       (setq-local treesit-defun-type-regexp "\\(defun\\|defmacro\\|defvar\\|defcustom\\)")
-;;       (treesit-major-mode-setup))))
-
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ;;                          Tree-sitter Debugging                             ;;
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; (defun my-treesit-debug-node-at-point ()
-;;   "Show tree-sitter node information at point."
-;;   (interactive)
-;;   (when (treesit-available-p)
-;;     (let* ((node (treesit-node-at (point)))
-;;            (parent (treesit-node-parent node))
-;;            (type (treesit-node-type node))
-;;            (text (treesit-node-text node))
-;;            (start (treesit-node-start node))
-;;            (end (treesit-node-end node)))
-;;       (message "Node: %s [%s-%s]\nParent: %s\nText: %s"
-;;                type start end
-;;                (and parent (treesit-node-type parent))
-;;                (truncate-string-to-width text 50)))))
-
-;; (global-set-key (kbd "C-c t d") #'my-treesit-debug-node-at-point)
-
-;; ;; Which-key descriptions
-;; (with-eval-after-load 'which-key
-;;   (which-key-add-key-based-replacements
-;;     "C-c t" "tree-sitter"
-;;     "C-c t c" "comment node"
-;;     "C-c t d" "debug node"
-;;     "C-c t e" "explore"
-;;     "C-c t i" "inspect"
-;;     "C-c F" "folding"
-;;     "C-c F t" "toggle fold"
-;;     "C-c F T" "toggle all"
-;;     "C-c F o" "open fold"
-;;     "C-c F O" "open all"
-;;     "C-c F c" "close fold"
-;;     "C-c F C" "close all"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                     Native Tree-sitter Configuration for Emacs 30.1         ;;
@@ -4114,9 +3579,6 @@ The DWIM behaviour of this command is as follows:
 ;;; Pass interface (password-store)
 (use-package password-store
   :ensure t
-  ;; Mnemonic is the root of the "code" word (κώδικας).  But also to add
-  ;; the password to the kill-ring.  Other options are already taken.
-  ;;;; KEYBIND_CHANGE: C-c k conflicts with crux-kill-other-buffers, moved to C-c P k
   :bind ("C-c P k" . password-store-copy)
   :config
   (setq password-store-time-before-clipboard-restore 30))
@@ -4270,7 +3732,6 @@ The DWIM behaviour of this command is as follows:
   :ensure nil
   :custom
   (dictionary-server "dict.org")
-  ;;(dictionary-server "localhost")
   :bind
   ("<f6>" . dictionary-lookup-definition))
 
