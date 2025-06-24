@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 17:36:21 by grim>
+;; Time-stamp: <Last changed 2025-06-24 17:39:19 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3329,43 +3329,43 @@ The DWIM behaviour of this command is as follows:
   (setq isearch-lazy-count t)
   (setq lazy-count-prefix-format "(%s/%s) ")
   (setq lazy-count-suffix-format nil)
-  (setq isearch-wrap-pause t)
-  (setq isearch-repeat-on-direction-change t
-        (setq list-matching-lines-jump-to-current-line nil)
-        :bind
-        ( :map global-map
+  (setq isearch-wrap-pause t
+        isearch-repeat-on-direction-change t)
+  (setq list-matching-lines-jump-to-current-line nil)
+  :bind
+  ( :map global-map
     ;;;; KEYBIND_CHANGE: C-. is better as universal-argument-more
-          ("M-s ." . isearch-forward-symbol-at-point)
-          :map minibuffer-local-isearch-map
-          ("M-/" . isearch-complete-edit)
-          :map occur-mode-map
-          ("t" . toggle-truncate-lines)
-          :map isearch-mode-map
-          ("C-g" . isearch-cancel)
-          ("M-/" . isearch-complete))))
+    ("M-s ." . isearch-forward-symbol-at-point)
+    :map minibuffer-local-isearch-map
+    ("M-/" . isearch-complete-edit)
+    :map occur-mode-map
+    ("t" . toggle-truncate-lines)
+    :map isearch-mode-map
+    ("C-g" . isearch-cancel)
+    ("M-/" . isearch-complete)))
 
 ;;; General window and buffer configurations
-  (use-package uniquify
-    :ensure nil
-    :config
+(use-package uniquify
+  :ensure nil
+  :config
 
 ;;;; `uniquify' (unique names for buffers)
-    (setq uniquify-buffer-name-style 'forward)
-    (setq uniquify-strip-common-suffix t)
-    (setq uniquify-after-kill-buffer-p t))
+  (setq uniquify-buffer-name-style 'forward)
+  (setq uniquify-strip-common-suffix t)
+  (setq uniquify-after-kill-buffer-p t))
 
 ;;; Show the name of the current definition or heading for context (which-function-mode)
-  (use-package which-func
-    :ensure nil
-    :hook (after-init . which-function-mode)
-    :config
-    (setq which-func-modes '(prog-mode org-mode))
-    (setq which-func-display 'mode) ; Emacs 30
-    (setq which-func-unknown "")
-    (setq which-func-format
-          '((:propertize which-func-current
-                         face bold
-                         mouse-face mode-line-highlight))))
+(use-package which-func
+  :ensure nil
+  :hook (after-init . which-function-mode)
+  :config
+  (setq which-func-modes '(prog-mode org-mode))
+  (setq which-func-display 'mode) ; Emacs 30
+  (setq which-func-unknown "")
+  (setq which-func-format
+        '((:propertize which-func-current
+                       face bold
+                       mouse-face mode-line-highlight))))
 
 ;;; General minibuffer settings
 (use-package minibuffer
