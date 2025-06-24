@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 19:35:24 by grim>
+;; Time-stamp: <Last changed 2025-06-24 19:39:57 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -472,38 +472,6 @@ The DWIM behaviour of this command is as follows:
     exwm
     :ensure t
     :config (setq exwm-workspace-number 5)
-
-    ;; firefox dialog sizing
-    ;; Auto-resize floating windows configuration
-    (defun my/exwm-floating-firefox-dialog-fix ()
-      "Auto-resize Firefox dialogs to a reasonable size."
-      (when (and exwm-class-name
-                 (member exwm-class-name '("Firefox" "firefox" "firefoxdeveloperedition"))
-                 exwm-floating-frame)
-        ;; Give the dialog a moment to fully initialize
-        (run-at-time 0.1 nil
-                     (lambda ()
-                       (when (and (frame-live-p exwm-floating-frame)
-                                  ;; Check if it's a dialog by title patterns
-                                  (or (string-match-p "Save\\|Open\\|Download\\|Upload" exwm-title)
-                                      ;; Or by checking if it's smaller than main Firefox window
-                                      (< (frame-pixel-height exwm-floating-frame)
-                                         (/ (x-display-pixel-height) 2))))
-                         ;; Resize to 60% of screen width and 70% of height
-                         (let ((width (round (* 0.6 (x-display-pixel-width))))
-                               (height (round (* 0.7 (x-display-pixel-height)))))
-                           (exwm-floating-resize width height)
-                           ;; Center the dialog
-                           (let ((x (/ (- (x-display-pixel-width) width) 2))
-                                 (y (/ (- (x-display-pixel-height) height) 2)))
-                             (exwm-floating-move x y))))))))
-
-    ;; Hook it to floating setup
-    (add-hook 'exwm-floating-setup-hook #'my/exwm-floating-firefox-dialog-fix)
-
-    ;; Also add to manage-finish hook for reliability
-    (add-hook 'exwm-manage-finish-hook #'my/exwm-floating-firefox-dialog-fix))
-
   (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
   (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
   (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
@@ -753,7 +721,7 @@ The DWIM behaviour of this command is as follows:
       ;; (add-to-list 'exwm-manage-configurations
       ;;              '((string-match "Firefox" exwm-class-name)
       ;;                workspace 2))
-      ))
+      )
 
 
   (use-package
@@ -786,7 +754,7 @@ The DWIM behaviour of this command is as follows:
       (unless (executable-find cmd)
         (message
          "Warning: %s not found; desktop-environment may not work fully"
-         cmd))))
+         cmd)))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                         Version Control for Config                       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
