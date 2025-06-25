@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-25 16:03:31 by grim>
+;; Time-stamp: <Last changed 2025-06-25 16:37:35 by grim>
 
 ;;; Early Initial Settings
 
@@ -1523,7 +1523,7 @@ The DWIM behaviour of this command is as follows:
          (rust-ts-mode . completion-preview-mode))
   :custom
   (completion-preview-minimum-symbol-length 2)
-  (completion-preview-idle-delay 0.2)
+  (completion-preview-idle-delay 0)
   :config
   ;; Make completion-preview work with paredit/smartparens
   (defun my/completion-preview-insert-word ()
