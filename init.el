@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 20:35:30 by grim>
+;; Time-stamp: <Last changed 2025-06-24 20:39:33 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2559,7 +2559,6 @@ This function integrates with exwm-firefox-core to open the current page."
           (elixir . ("https://github.com/elixir-lang/tree-sitter-elixir"))
           (glsl . ("https://github.com/theHamsta/tree-sitter-glsl"))
           (go . ("https://github.com/tree-sitter/tree-sitter-go"))
-          (gomod . ("https://github.com/camdencheek/tree-sitter-go-mod"))
           (heex . ("https://github.com/phoenixframework/tree-sitter-heex"))
           (html . ("https://github.com/tree-sitter/tree-sitter-html"))
           (janet . ("https://github.com/GrayJack/tree-sitter-janet"))
@@ -2655,7 +2654,6 @@ This function integrates with exwm-firefox-core to open the current page."
           (dockerfile-mode . dockerfile-ts-mode)
           (elixir-mode . elixir-ts-mode)
           (go-mode . go-ts-mode)
-          (go-mod-mode . go-mod-ts-mode)
           (html-mode . html-ts-mode)
           (mhtml-mode . html-ts-mode)
           (java-mode . java-ts-mode)
