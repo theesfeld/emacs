@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-25 10:22:15 by grim>
+;; Time-stamp: <Last changed 2025-06-25 12:29:17 by grim>
 
 ;;; Early Initial Settings
 
@@ -1485,45 +1485,78 @@ The DWIM behaviour of this command is as follows:
 
 ;;; corfu
 
-(use-package
-  corfu
-  :ensure t
-  :init
-  (global-corfu-mode 1)                 ; Enable Corfu globally
-  (corfu-popupinfo-mode 1)              ; Show documentation in popups
+;; (use-package
+;;   corfu
+;;   :ensure t
+;;   :init
+;;   (global-corfu-mode 1)                 ; Enable Corfu globally
+;;   (corfu-popupinfo-mode 1)              ; Show documentation in popups
+;;   :custom
+;;   (corfu-cycle t)                 ; Cycle through candidates
+;;   (corfu-auto t)                  ; Auto-show completions after typing
+;;   (corfu-preselect 'directory)
+;;   (corfu-auto-prefix 2)          ; Show completions after 2 characters
+;;   (corfu-auto-delay 0.1)         ; Fast popup display
+;;   (corfu-quit-at-boundary t)     ; Quit if no match at word boundary
+;;   (corfu-quit-no-match t)        ; Quit if no matches
+;;   (corfu-preselect-first t)      ; Preselect first candidate
+;;   (corfu-popupinfo-delay '(0.5 . 0.2)) ; Delay for documentation popup
+;;   :bind
+;;   (:map
+;;    corfu-map
+;;    ("TAB" . corfu-complete)             ; Accept current suggestion
+;;    ([tab] . corfu-complete)             ; Ensure both TAB forms work
+;;    ("<down>" . corfu-next)              ; Cycle down with down arrow
+;;    ("<up>" . corfu-previous)            ; Cycle up with up arrow
+;;    ("M-d" . corfu-popupinfo-toggle))    ; Toggle documentation
+;;   :config
+;;   (keymap-set
+;;    corfu-map "RET"
+;;    `(menu-item
+;;      "" nil
+;;      :filter
+;;      ,(lambda (&optional _)
+;;         (and (derived-mode-p 'eshell-mode 'comint-mode)
+;;              #'corfu-send))))
+;;   ;; Disable Corfu in minibuffer to avoid conflicts with Vertico
+;;   (defun corfu-disable-in-minibuffer ()
+;;     "Disable Corfu in minibuffer."
+;;     (when (minibufferp)
+;;       (corfu-mode -1)))
+;;   (add-hook 'minibuffer-setup-hook #'corfu-disable-in-minibuffer))
+
+;;; completion-preview
+
+(use-package completion-preview
+  :ensure nil  ; Built-in to Emacs 30.1
+  :hook ((prog-mode . completion-preview-mode)
+         (text-mode . completion-preview-mode)
+         (conf-mode . completion-preview-mode)
+         (eshell-mode . completion-preview-mode)
+         (eat-mode . completion-preview-mode)
+         (vterm-mode . completion-preview-mode))
   :custom
-  (corfu-cycle t)                 ; Cycle through candidates
-  (corfu-auto t)                  ; Auto-show completions after typing
-  (corfu-preselect 'directory)
-  (corfu-auto-prefix 2)          ; Show completions after 2 characters
-  (corfu-auto-delay 0.1)         ; Fast popup display
-  (corfu-quit-at-boundary t)     ; Quit if no match at word boundary
-  (corfu-quit-no-match t)        ; Quit if no matches
-  (corfu-preselect-first t)      ; Preselect first candidate
-  (corfu-popupinfo-delay '(0.5 . 0.2)) ; Delay for documentation popup
-  :bind
-  (:map
-   corfu-map
-   ("TAB" . corfu-complete)             ; Accept current suggestion
-   ([tab] . corfu-complete)             ; Ensure both TAB forms work
-   ("<down>" . corfu-next)              ; Cycle down with down arrow
-   ("<up>" . corfu-previous)            ; Cycle up with up arrow
-   ("M-d" . corfu-popupinfo-toggle))    ; Toggle documentation
+  ;; Start showing previews after 2 characters
+  (completion-preview-minimum-symbol-length 2)
+  ;; Show preview after a short delay
+  (completion-preview-idle-delay 0.2)
+  ;; Use a subtle face for the preview
+  (completion-preview-overlay-face '((t :inherit shadow)))
+  ;; Don't insert completion on RET by default
+  (completion-preview-insert-on-completion nil)
   :config
-  (keymap-set
-   corfu-map "RET"
-   `(menu-item
-     "" nil
-     :filter
-     ,(lambda (&optional _)
-        (and (derived-mode-p 'eshell-mode 'comint-mode)
-             #'corfu-send))))
-  ;; Disable Corfu in minibuffer to avoid conflicts with Vertico
-  (defun corfu-disable-in-minibuffer ()
-    "Disable Corfu in minibuffer."
-    (when (minibufferp)
-      (corfu-mode -1)))
-  (add-hook 'minibuffer-setup-hook #'corfu-disable-in-minibuffer))
+  ;; TAB to accept is already the default binding
+  ;; No need to rebind anything - using all defaults
+  )
+
+;; Optional: Configure completion-at-point (C-M-i or M-TAB)
+(use-package emacs
+  :ensure nil
+  :custom
+  ;; Better completion behavior
+  (tab-always-indent 'complete)  ; TAB completes when at end of word
+  (completion-cycle-threshold 3)  ; TAB cycles through completions
+  (completion-styles '(basic partial-completion emacs22 flex)))
 
 ;;; all-the-icons
 
