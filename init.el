@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-25 12:29:17 by grim>
+;; Time-stamp: <Last changed 2025-06-25 12:34:18 by grim>
 
 ;;; Early Initial Settings
 
@@ -1534,7 +1534,8 @@ The DWIM behaviour of this command is as follows:
          (conf-mode . completion-preview-mode)
          (eshell-mode . completion-preview-mode)
          (eat-mode . completion-preview-mode)
-         (vterm-mode . completion-preview-mode))
+         (vterm-mode . completion-preview-mode)
+         (emacs-lisp-mode . completion-preview-mode))
   :custom
   ;; Start showing previews after 2 characters
   (completion-preview-minimum-symbol-length 2)
