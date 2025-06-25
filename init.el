@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-25 10:13:55 by grim>
+;; Time-stamp: <Last changed 2025-06-25 10:19:18 by grim>
 
 ;;; Early Initial Settings
 
@@ -1639,17 +1639,28 @@ The DWIM behaviour of this command is as follows:
   flyspell
   :ensure nil
   :hook
-  ((text-mode-hook . flyspell-mode) ;; Prot enables in text modes
-   (org-mode-hook . flyspell-mode) ;; Added for your Org usage
-   (prog-mode-hook . flyspell-prog-mode)) ;; Comments/strings in code
+  ((text-mode-hook . flyspell-mode)
+   (org-mode-hook . flyspell-mode)
+   (prog-mode-hook . flyspell-prog-mode))
   :config
-  (setq ispell-program-name "aspell") ;; Prot uses aspell
-  (setq ispell-dictionary "en_US") ;; Default dictionary
-  (setq ispell-extra-args '("--sug-mode=ultra")) ;; Fast suggestions, Prot's style
-  (setq ispell-personal-dictionary "~/.aspell.en.pws") ;; Personal words
+  (setq ispell-program-name "aspell")
+  (setq ispell-dictionary "en_US")
+  (setq ispell-extra-args '("--sug-mode=ultra"))
+  (setq ispell-personal-dictionary "~/.aspell.en.pws")
   ;; Prot's performance tweaks
-  (setq flyspell-issue-message-flag nil) ;; No chatter
-  (setq flyspell-issue-welcome-flag nil) ;; No welcome
+  (setq flyspell-issue-message-flag nil)
+  (setq flyspell-issue-welcome-flag nil)
+
+  ;; FIX: Disable ispell word list since we're using aspell
+  (setq ispell-alternate-dictionary nil)
+
+  ;; Remove ispell completions from text modes since we use aspell
+  (add-hook 'text-mode-hook
+            (lambda ()
+              (setq-local completion-at-point-functions
+                          (remove 'ispell-completion-at-point
+                                  completion-at-point-functions))))
+
   ;; Ensure aspell is installed
   (unless (executable-find "aspell")
     (message "Aspell not found; flyspell disabled")
@@ -1657,8 +1668,7 @@ The DWIM behaviour of this command is as follows:
   :bind
   (:map
    flyspell-mode-map
-  ;;;; KEYBIND_CHANGE: Moved C-; to M-$ which is the standard ispell-word
-   ("M-$" . flyspell-correct-wrapper))) ;; Standard correction key
+   ("M-$" . flyspell-correct-wrapper)))
 
 (use-package
   flyspell-correct
