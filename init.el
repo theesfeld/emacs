@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-25 07:09:44 by grim>
+;; Time-stamp: <Last changed 2025-06-25 09:34:54 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3012,7 +3012,6 @@ This function integrates with exwm-firefox-core to open the current page."
 (use-package
   elisp-demos
   :ensure t
-  :defer t
   :config
   (advice-add
    'helpful-update
@@ -3610,7 +3609,7 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq shell-completion-fignore '("~" "#" "%"))
   (setq-default comint-scroll-to-bottom-on-input t)
   (setq-default comint-scroll-to-bottom-on-output nil)
-  (setq-default comint-input-autoexpand 'input)
+  l  (setq-default comint-input-autoexpand 'input)
   (setq comint-prompt-read-only t)
   (setq comint-buffer-maximum-size 9999)
   (setq comint-completion-autolist t)
