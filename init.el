@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-25 10:19:18 by grim>
+;; Time-stamp: <Last changed 2025-06-25 10:22:15 by grim>
 
 ;;; Early Initial Settings
 
@@ -1675,7 +1675,7 @@ The DWIM behaviour of this command is as follows:
   :ensure t
   :after flyspell
   :bind
- ;;;; KEYBIND_CHANGE: Using M-$ for flyspell-correct (standard ispell key)
+;;;; KEYBIND_CHANGE: Using M-$ for flyspell-correct (standard ispell key)
   (:map flyspell-mode-map ("M-$" . flyspell-correct-wrapper)))
 
 ;;; eglot / lsp
