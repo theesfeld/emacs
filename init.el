@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 20:43:09 by grim>
+;; Time-stamp: <Last changed 2025-06-24 20:45:12 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2852,22 +2852,22 @@ This function integrates with exwm-firefox-core to open the current page."
                     (setq-local treesit-primary-parser (treesit-parser-create 'ruby))
                     (eglot-ensure))))
 
-;; Elisp with tree-sitter (if available)
-(use-package elisp-ts-mode
-  :ensure nil
-  :if (treesit-language-available-p 'elisp)
-  :hook
-  (elisp-ts-mode . (lambda ()
-                     (setq-local treesit-defun-type-regexp
-                                 (rx (or "function_definition"
-                                         "macro_definition")))
-                     (setq-local treesit-thing-settings
-                                 `((elisp
-                                    (defun . ,(rx (or "function_definition"
-                                                      "macro_definition")))
-                                    (sexp . "sexp")
-                                    (sentence . "sexp"))))
-                     (setq-local treesit-primary-parser (treesit-parser-create 'elisp)))))
+;; ;; Elisp with tree-sitter (if available)
+;; (use-package elisp-ts-mode
+;;   :ensure nil
+;;   :if (treesit-language-available-p 'elisp)
+;;   :hook
+;;   (elisp-ts-mode . (lambda ()
+;;                      (setq-local treesit-defun-type-regexp
+;;                                  (rx (or "function_definition"
+;;                                          "macro_definition")))
+;;                      (setq-local treesit-thing-settings
+;;                                  `((elisp
+;;                                     (defun . ,(rx (or "function_definition"
+;;                                                       "macro_definition")))
+;;                                     (sexp . "sexp")
+;;                                     (sentence . "sexp"))))
+;;                      (setq-local treesit-primary-parser (treesit-parser-create 'elisp)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
