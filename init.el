@@ -1,11 +1,8 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-25 09:34:54 by grim>
+;; Time-stamp: <Last changed 2025-06-25 10:08:09 by grim>
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                             Early Initial Settings                       ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Early Initial Settings
 
 (when (native-comp-available-p)
   (setq native-comp-async-report-warnings-errors 'silent) ; Emacs 28 with native compilation
@@ -30,7 +27,7 @@
  '(eshell project-eshell overwrite-mode iconify-frame diary))
 
 (setq initial-buffer-choice t)
-(setq initial-major-mode p-interaction-mode)
+(setq initial-major-mode lisp-interaction-mode)
 (setq initial-scratch-message
       (format ";; This is `%s'.  Use `%s' to evaluate and print results.\n\n"
               'lisp-interaction-mode
@@ -38,9 +35,7 @@
                (substitute-command-keys "\\<lisp-interaction-mode-map>\\[eval-print-last-sexp]")
                'face 'help-key-binding)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                  MELPA                                    ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; MELPA
 
 (setq package-vc-register-as-project nil) ; Emacs 30
 
@@ -58,9 +53,7 @@
         ("melpa" . 2)
         ("nongnu" . 1)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                CUSTOM FUNCTIONS                           ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; CUSTOM FUNCTIONS
 
 (defun prot-common-auth-get-field (host prop)
   "Find PROP in `auth-sources' for HOST entry."
@@ -208,7 +201,7 @@ The DWIM behaviour of this command is as follows:
                   "completion-preview")
 (declare-function completion-preview--hide "completion-preview")
 
-;;;;; EDNC NOTIFICATIONS (DBUS)
+;;; EDNC NOTIFICATIONS (DBUS)
 
 (use-package ednc
   :ensure t
@@ -427,9 +420,7 @@ The DWIM behaviour of this command is as follows:
   (add-hook 'ednc-notification-presentation-functions #'ednc--show-notification)
   (ednc-mode 1))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                     EXWM                                  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; EXWM
 
 (when (eq window-system 'x)
   (defun grim/run-in-background (command)
@@ -755,9 +746,8 @@ The DWIM behaviour of this command is as follows:
           (message
            "Warning: %s not found; desktop-environment may not work fully"
            cmd))))))
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                         Version Control for Config                       ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; init.el version control
 
 (use-package
   vc
@@ -776,9 +766,7 @@ The DWIM behaviour of this command is as follows:
          "Auto-commit init.el changes"))))
   :hook (after-save . my-auto-commit-init-el))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                     EMACS                                 ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; emacs configuration section
 
 (use-package
   emacs
@@ -1027,9 +1015,7 @@ The DWIM behaviour of this command is as follows:
   (global-set-key (kbd "<s-S-up>") 'windower-swap-above)
   (global-set-key (kbd "<s-S-right>") 'windower-swap-right))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                               Shell Environment                          ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; shell environment (path, etc)
 
 (use-package
   exec-path-from-shell
@@ -1069,9 +1055,7 @@ The DWIM behaviour of this command is as follows:
   (message "exec-path-from-shell ran with shell: %s"
            exec-path-from-shell-shell-name))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                   ediff                                   ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; ediff settings
 
 (use-package
   ediff
@@ -1119,12 +1103,12 @@ The DWIM behaviour of this command is as follows:
   ;; Transient menu for ediff commands
   (require 'transient)
   (transient-define-prefix
-    my-ediff-dispatch () "Ediff command menu."
-    [["Compare"
-      ("f" "Files" my-ediff-files)
-      ("b" "Buffers" my-ediff-buffers)
-      ("d" "Directories" ediff-directories)]
-     ["Actions" ("q" "Quit and Restore" my-ediff-quit)]])
+   my-ediff-dispatch () "Ediff command menu."
+   [["Compare"
+     ("f" "Files" my-ediff-files)
+     ("b" "Buffers" my-ediff-buffers)
+     ("d" "Directories" ediff-directories)]
+    ["Actions" ("q" "Quit and Restore" my-ediff-quit)]])
 
   ;; Interactive file selection with read-file-name
   (defun my-ediff-files ()
@@ -1180,9 +1164,7 @@ The DWIM behaviour of this command is as follows:
   (setq ediff-control-frame-parameters
         (cons '(unsplittable . t) ediff-control-frame-parameters)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                    tramp                                  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; tramp settings
 
 (use-package
   tramp
@@ -1261,9 +1243,7 @@ The DWIM behaviour of this command is as follows:
                   tramp-connection-properties)))
             (auto-revert-set-timer))))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                    vundo                                  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; vundo settings
 
 (use-package
   vundo
@@ -1274,9 +1254,7 @@ The DWIM behaviour of this command is as follows:
   (setq vundo-glyph-alist vundo-unicode-symbols)
   (setq vundo-files-directory (expand-file-name "undos" my-tmp-dir)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                 deadgrep                                  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; deadgrep
 
 (use-package
   deadgrep
@@ -1288,9 +1266,7 @@ The DWIM behaviour of this command is as follows:
    deadgrep-mode-map
    ("q" . deadgrep-kill-all-buffers)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                               Visual Enhancements                         ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; visual enhancements (rainbow/indent/highlight/...)
 
 ;; Rainbow Delimiters
 (use-package
@@ -1351,9 +1327,7 @@ The DWIM behaviour of this command is as follows:
       (font-lock-ensure)))
   (add-hook 'indent-bars-mode-hook #'indent-bars-refresh-font-lock))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                              Mode Line Cleanup                           ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; modeline
 
 (use-package autorevert
   :ensure nil
@@ -1374,9 +1348,7 @@ The DWIM behaviour of this command is as follows:
      (yas-minor-mode nil "yasnippet")
      (smartparens-mode nil "smartparens"))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                              Buffer Management                            ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; smartparens
 
 (use-package
   smartparens
@@ -1390,9 +1362,11 @@ The DWIM behaviour of this command is as follows:
   :bind
   (:map
    smartparens-mode-map
-   ("C-M-f" . sp-forward-sexp) ; Jump to next sexp
-   ("C-M-b" . sp-backward-sexp) ; Jump to prev sexp
+   ("C-M-f" . sp-forward-sexp)          ; Jump to next sexp
+   ("C-M-b" . sp-backward-sexp)         ; Jump to prev sexp
    ("C-M-u" . sp-backward-up-sexp))) ; Up a level
+
+;;; paredit
 
 (use-package
   paredit
@@ -1414,6 +1388,8 @@ The DWIM behaviour of this command is as follows:
    ("C-}" . paredit-forward-barf-sexp)
    ("C-(" . paredit-backward-slurp-sexp)
    ("C-{" . paredit-backward-barf-sexp)))
+
+;;; vertico
 
 (use-package
   vertico
@@ -1441,6 +1417,8 @@ The DWIM behaviour of this command is as follows:
    ("s-<tab>" . vertico-next)
    ("S-s-<tab>" . vertico-previous)))
 
+;;; orderless
+
 (use-package
   orderless
   :ensure t
@@ -1454,6 +1432,8 @@ The DWIM behaviour of this command is as follows:
   (completion-category-overrides
    '((file (styles basic partial-completion)))))
 
+;;; consult
+
 (use-package
   consult
   :ensure t
@@ -1464,7 +1444,7 @@ The DWIM behaviour of this command is as follows:
         (append
          savehist-additional-variables '(extended-command-history)))
   (setq consult-preview-key 'any) ;; Preview on any key
-  (setq consult-narrow-key "<") ;; Narrowing key
+  (setq consult-narrow-key "<")   ;; Narrowing key
   (defvar my-consult-hidden-buffer-source
     `(:name
       "Hidden Buffers"
@@ -1497,34 +1477,38 @@ The DWIM behaviour of this command is as follows:
    ("M-s f" . consult-find)
    ))
 
+(use-package consult-yasnippet :ensure t :after (consult yasnippet))
+
+;;; marginalia
+
 (use-package marginalia :ensure t :init (marginalia-mode 1))
 
-(use-package consult-yasnippet :ensure t :after (consult yasnippet))
+;;; corfu
 
 (use-package
   corfu
   :ensure t
   :init
-  (global-corfu-mode 1) ; Enable Corfu globally
-  (corfu-popupinfo-mode 1) ; Show documentation in popups
+  (global-corfu-mode 1)                 ; Enable Corfu globally
+  (corfu-popupinfo-mode 1)              ; Show documentation in popups
   :custom
-  (corfu-cycle t) ; Cycle through candidates
-  (corfu-auto t) ; Auto-show completions after typing
+  (corfu-cycle t)                 ; Cycle through candidates
+  (corfu-auto t)                  ; Auto-show completions after typing
   (corfu-preselect 'directory)
-  (corfu-auto-prefix 2) ; Show completions after 2 characters
-  (corfu-auto-delay 0.1) ; Fast popup display
-  (corfu-quit-at-boundary t) ; Quit if no match at word boundary
-  (corfu-quit-no-match t) ; Quit if no matches
-  (corfu-preselect-first t) ; Preselect first candidate
+  (corfu-auto-prefix 2)          ; Show completions after 2 characters
+  (corfu-auto-delay 0.1)         ; Fast popup display
+  (corfu-quit-at-boundary t)     ; Quit if no match at word boundary
+  (corfu-quit-no-match t)        ; Quit if no matches
+  (corfu-preselect-first t)      ; Preselect first candidate
   (corfu-popupinfo-delay '(0.5 . 0.2)) ; Delay for documentation popup
   :bind
   (:map
    corfu-map
-   ("TAB" . corfu-complete) ; Accept current suggestion
-   ([tab] . corfu-complete) ; Ensure both TAB forms work
-   ("<down>" . corfu-next) ; Cycle down with down arrow
-   ("<up>" . corfu-previous) ; Cycle up with up arrow
-   ("M-d" . corfu-popupinfo-toggle)) ; Toggle documentation
+   ("TAB" . corfu-complete)             ; Accept current suggestion
+   ([tab] . corfu-complete)             ; Ensure both TAB forms work
+   ("<down>" . corfu-next)              ; Cycle down with down arrow
+   ("<up>" . corfu-previous)            ; Cycle up with up arrow
+   ("M-d" . corfu-popupinfo-toggle))    ; Toggle documentation
   :config
   (keymap-set
    corfu-map "RET"
@@ -1540,6 +1524,8 @@ The DWIM behaviour of this command is as follows:
     (when (minibufferp)
       (corfu-mode -1)))
   (add-hook 'minibuffer-setup-hook #'corfu-disable-in-minibuffer))
+
+;;; all-the-icons
 
 (use-package
   all-the-icons
@@ -1558,21 +1544,21 @@ The DWIM behaviour of this command is as follows:
   :hook
   (marginalia-mode . all-the-icons-completion-marginalia-setup))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                              Power User Essentials                        ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (use-package expand-region :ensure t :bind ("C-=" . er/expand-region))
+
+;;; multiple cursors
 
 (use-package
   multiple-cursors
   :ensure t
   :bind
   (("C-S-c C-S-c" . mc/edit-lines)
-   ;;;; KEYBIND_CHANGE: Moved C-> and C-< to C-c prefix to avoid conflicts
+;;;; KEYBIND_CHANGE: Moved C-> and C-< to C-c prefix to avoid conflicts
    ("C-c >" . mc/mark-next-like-this)
    ("C-c <" . mc/mark-previous-like-this)
    ("C-c C-<" . mc/mark-all-like-this)))
+
+;;; crux
 
 (use-package
   crux
@@ -1582,12 +1568,10 @@ The DWIM behaviour of this command is as follows:
    ("C-c D" . crux-delete-file-and-buffer)
    ("C-c r" . crux-rename-file-and-buffer)
    ("C-c k" . crux-kill-other-buffers)
-   ;;;; KEYBIND_CHANGE: Removed C-a override - use standard move-beginning-of-line
+;;;; KEYBIND_CHANGE: Removed C-a override - use standard move-beginning-of-line
    ))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                              Editing Helpers                              ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; diff-hl
 
 (use-package
   diff-hl
@@ -1596,9 +1580,11 @@ The DWIM behaviour of this command is as follows:
   :hook (magit-post-refresh . diff-hl-magit-post-refresh)
   :config (global-diff-hl-mode +1))
 
+;;; which-key
+
 (use-package
   which-key
-  :ensure nil ; Built-in since Emacs 29, no need to ensure
+  :ensure nil             ; Built-in since Emacs 29, no need to ensure
   :hook (after-init . which-key-mode)
   :config
   (setq which-key-idle-delay 0.2)
@@ -1612,14 +1598,16 @@ The DWIM behaviour of this command is as follows:
   (setq which-key-separator " → ")
   (setq which-key-prefix-prefix "+"))
 
+;;; avy
+
 (use-package
   avy
   :ensure t
   :defer t
   :bind (
-        ;;;; KEYBIND_CHANGE: M-j is acceptable - it's normally undefined
+;;;; KEYBIND_CHANGE: M-j is acceptable - it's normally undefined
          ("M-j" . avy-goto-char-timer)
-        ;;;; KEYBIND_CHANGE: Moved C-' to C-c ' to avoid conflict with toggle-input-method
+;;;; KEYBIND_CHANGE: Moved C-' to C-c ' to avoid conflict with toggle-input-method
          ("C-c '" . avy-goto-char-2))
   :init (avy-setup-default)
   :config
@@ -1637,15 +1625,15 @@ The DWIM behaviour of this command is as follows:
     t)
   (setf (alist-get ?. avy-dispatch-alist) 'avy-action-embark))
 
+;;; ace-window
+
 (use-package ace-window
   :ensure t
   :after avy
-  ;;;; KEYBIND_CHANGE: Using C-x o for ace-window is fine as it enhances other-window
+;;;; KEYBIND_CHANGE: Using C-x o for ace-window is fine as it enhances other-window
   :bind ("C-x o" . ace-window))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                   Flyspell                               ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; flyspell
 
 (use-package
   flyspell
@@ -1680,9 +1668,7 @@ The DWIM behaviour of this command is as follows:
  ;;;; KEYBIND_CHANGE: Using M-$ for flyspell-correct (standard ispell key)
   (:map flyspell-mode-map ("M-$" . flyspell-correct-wrapper)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                             Eglot (LSP) Setup                             ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; eglot / lsp
 
 (use-package
   eglot
@@ -1729,9 +1715,7 @@ The DWIM behaviour of this command is as follows:
    ("C-c l r" . consult-lsp-references)
    ("C-c l D" . consult-lsp-definition)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                          Minimal Org Mode Setup                          ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; org-mode
 
 ;; Core Org Mode Configuration
 (use-package org
@@ -1846,49 +1830,7 @@ The DWIM behaviour of this command is as follows:
 (global-set-key (kbd "C-c a") 'org-agenda)
 (global-set-key (kbd "C-c c") 'org-capture)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                          Firefox Integration Setup                        ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; To set up Firefox integration:
-;;
-;; 1. Create ~/.local/share/applications/org-protocol.desktop:
-;;    [Desktop Entry]
-;;    Name=org-protocol
-;;    Exec=emacsclient %u
-;;    Type=Application
-;;    Terminal=false
-;;    Categories=System;
-;;    MimeType=x-scheme-handler/org-protocol;
-;;
-;; 2. Register the handler:
-;;    xdg-mime default org-protocol.desktop x-scheme-handler/org-protocol
-;;
-;; 3. In Firefox about:config, create:
-;;    network.protocol-handler.expose.org-protocol = false
-;;
-;; 4. Install the org-protocol Firefox extension for easier use
-;;
-;; 5. For RSS feeds, use bookmarklet:
-;;    javascript:location.href='org-protocol://capture://r/'+
-;;    encodeURIComponent(location.href)+'/'+
-;;    encodeURIComponent(document.title)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                               Export Usage                                ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Export commands:
-;; - C-c C-e h h : Export to HTML
-;; - C-c C-e l p : Export to PDF via LaTeX
-;; - C-c C-e m m : Export to Markdown
-;; - C-c C-e o o : Export to ODT (can convert to DOCX)
-;; - C-c C-e g g : Export to GitHub Flavored Markdown (if ox-gfm installed)
-;; - C-c C-e p x : Export to DOCX via Pandoc (if ox-pandoc installed)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                   Magit/Forge                            ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; magit / forge
 
 (use-package magit
   :ensure t
@@ -1919,9 +1861,7 @@ The DWIM behaviour of this command is as follows:
 (use-package forge :ensure t :after magit)
 (use-package magit-todos :ensure t :after magit :config (magit-todos-mode 1))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                               Grep Ignorance                              ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; grep settings
 
 (use-package
   grep
@@ -1955,9 +1895,7 @@ The DWIM behaviour of this command is as follows:
            "workbench.xmi")
          grep-find-ignored-files)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                Misc Packages                              ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; recentf
 
 (use-package
   recentf
@@ -1973,9 +1911,7 @@ The DWIM behaviour of this command is as follows:
   ;;;; KEYBIND_CHANGE: C-c r conflicts with crux-rename-file-and-buffer, moved to C-c f r
   :bind (("C-c f r" . consult-recent-file)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                  Ibuffer                                  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; ibuffer
 
 (use-package
   ibuffer
@@ -2098,9 +2034,7 @@ The DWIM behaviour of this command is as follows:
       "/ p"
       "filter-project")))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                  Dired                                    ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; dired
 
 (use-package
   dired
@@ -2195,9 +2129,7 @@ The DWIM behaviour of this command is as follows:
     :after dired
     :config (dired-async-mode 1)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                     eww                                   ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; eww browser
 
 (use-package eww
   :ensure nil ; built-in package
@@ -2384,9 +2316,7 @@ This function integrates with exwm-firefox-core to open the current page."
     "C-c /" "new-search"
     "C-c C-o" "bookmark->firefox"))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                     pdf                                   ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; pdf-tools
 
 (use-package
   pdf-tools
@@ -2425,9 +2355,7 @@ This function integrates with exwm-firefox-core to open the current page."
      (display-line-numbers-mode -1)
      (hl-line-mode -1))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                  DENOTE                                   ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; denote
 
 (use-package
   denote
@@ -2525,9 +2453,7 @@ This function integrates with exwm-firefox-core to open the current page."
 
 (use-package denote-org :ensure t :defer t)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                     Native Tree-sitter Configuration for Emacs 30.1         ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; tree-sitter
 
 ;; Built-in tree-sitter configuration
 (use-package treesit
@@ -2727,9 +2653,7 @@ This function integrates with exwm-firefox-core to open the current page."
   (treesit-auto-add-to-auto-mode-alist 'all)
   (global-treesit-auto-mode))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                     Language-Specific Tree-sitter Configurations            ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; tree-sitter languages
 
 ;; Python with tree-sitter
 (use-package python
@@ -2870,9 +2794,7 @@ This function integrates with exwm-firefox-core to open the current page."
 ;;                      (setq-local treesit-primary-parser (treesit-parser-create 'elisp)))))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                          Built-in Folding with Tree-sitter                  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; tree-sitter folding
 
 ;; Use built-in outline-minor-mode for code folding with tree-sitter
 (use-package outline
@@ -2908,15 +2830,11 @@ This function integrates with exwm-firefox-core to open the current page."
 ;; For debugging tree-sitter, use the built-in:
 ;; M-x treesit-inspect-mode - inspect tree-sitter nodes interactively
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                So-long-mode                               ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; so-long
 
 (use-package so-long :ensure nil :config (global-so-long-mode 1))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                 Flymake Setup                            ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; flymake
 
 (use-package
   flymake
@@ -2961,9 +2879,7 @@ This function integrates with exwm-firefox-core to open the current page."
  ;;;; KEYBIND_CHANGE: C-c l conflicts with consult-lsp, using standard M-x
   :config (setq elisp-lint-ignored-validators '("package-lint")))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                        snippets (Yasnippet)                               ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; YAsnippet
 
 (use-package
   yasnippet
@@ -2996,9 +2912,7 @@ This function integrates with exwm-firefox-core to open the current page."
        "yasnippet-snippets directory %s not found; reinstall the package"
        snippets-dir))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                elisp coding                               ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; helpful
 
 (use-package
   helpful
@@ -3009,6 +2923,8 @@ This function integrates with exwm-firefox-core to open the current page."
   ([remap describe-symbol] . helpful-symbol)
   ([remap describe-key] . helpful-key))
 
+;;; elisp-demos
+
 (use-package
   elisp-demos
   :ensure t
@@ -3017,9 +2933,7 @@ This function integrates with exwm-firefox-core to open the current page."
    'helpful-update
    :after #'elisp-demos-advice-helpful-update))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                   0x0.st                                  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; 0x0
 
 (use-package
   0x0
@@ -3045,9 +2959,7 @@ This function integrates with exwm-firefox-core to open the current page."
   (with-eval-after-load 'which-key
     (which-key-add-key-based-replacements "C-c 0" "0x0-upload")))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                   eshell                                  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; eshell settings
 
 (use-package
   eshell
@@ -3229,18 +3141,7 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq message-auto-save-directory
         (expand-file-name "gnus-drafts" my-tmp-dir)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                   calc                                    ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package
-  calc
-  :ensure nil ;; calc is built-in, no need to install
-  :bind (("C-c \\" . 'calc)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                             Fix Emacsclient                               ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; emacsclient frame hack
 
 (defun my-after-make-frame-setup (&optional frame)
   "Initialize UI settings for new FRAMEs on Xorg, including daemon clients."
@@ -3273,9 +3174,7 @@ This function integrates with exwm-firefox-core to open the current page."
 ;;                (directory-files-recursively templates-dir "\\.el$"))
 ;;         (load-file file)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                    LINE NUMBERS                           ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; hl-line
 
 (use-package
   hl-line
@@ -3288,9 +3187,8 @@ This function integrates with exwm-firefox-core to open the current page."
   (prog-mode . hl-line-mode)
   (occur-mode . hl-line-mode))
 
-;;;
-;; SLIME
-;;;
+;;; slime
+
 (use-package
   slime
   :ensure t
@@ -3301,12 +3199,12 @@ This function integrates with exwm-firefox-core to open the current page."
   :bind
   (:map
    slime-mode-map
-   ("C-c C-c" . slime-compile-defun) ;; Compile defun
+   ("C-c C-c" . slime-compile-defun)         ;; Compile defun
    ("C-c C-k" . slime-compile-and-load-file) ;; Compile and load file
-   ("C-c C-s" . slime-complete-form) ;; Complete form at point
-   ("C-c C-d d" . slime-describe-symbol) ;; Describe symbol
+   ("C-c C-s" . slime-complete-form)         ;; Complete form at point
+   ("C-c C-d d" . slime-describe-symbol)     ;; Describe symbol
    ("C-c C-d h" . slime-documentation-lookup) ;;  Lookup in CLHS
-   ("M-." . slime-edit-definition) ;; Go to definition
+   ("M-." . slime-edit-definition)            ;; Go to definition
    ("M-," . slime-pop-find-definition-stack)) ;; Return from definition
   :custom
   ((slime-default-lisp 'sbcl) ;; Default to SBCL
@@ -3315,10 +3213,10 @@ This function integrates with exwm-firefox-core to open the current page."
       slime-repl slime-asdf slime-fuzzy slime-autodoc))
    (slime-complete-symbol-function 'slime-fuzzy-complete-symbol) ;; Fuzzy completion
    (slime-fuzzy-completion-in-place t) ;; Complete in buffer
-   (slime-autodoc-use-multiline-p t) ;; Better autodoc display
-   (slime-enable-evaluate-in-emacs t) ;; Allow Emacs to evaluate Lisp
-   (inferior-lisp-program "sbcl") ;; Path to SBCL
-   (slime-lisp-implementations ;; Support multiple Lisps
+   (slime-autodoc-use-multiline-p t)   ;; Better autodoc display
+   (slime-enable-evaluate-in-emacs t)  ;; Allow Emacs to evaluate Lisp
+   (inferior-lisp-program "sbcl")      ;; Path to SBCL
+   (slime-lisp-implementations         ;; Support multiple Lisps
     '((sbcl ("sbcl" "--noinform") :coding-system utf-8-unix)
       (ccl ("ccl"))
       (clisp ("clisp" "-q")))))
@@ -3346,23 +3244,20 @@ This function integrates with exwm-firefox-core to open the current page."
   (when (featurep 'paredit)
     (add-hook 'slime-repl-mode-hook #'enable-paredit-mode)))
 
-;;;;;
-;; xoauth2
-;;;;;
+;;; xoauth2
+
 (use-package
   auth-source-xoauth2-plugin
   :ensure t
   :custom (auth-source-xoauth2-plugin-mode t))
 
-;;;;;
-;; mailcap
-;;;;;
+;;; .mailcap
+
 (require 'mailcap)
 (mailcap-parse-mailcaps)
 
-;;;;;
-;; VTERM
-;;;;;
+;;; vterm settings
+
 (use-package vterm
   :ensure t
   :custom
@@ -3372,9 +3267,10 @@ This function integrates with exwm-firefox-core to open the current page."
   ;; Additional configurations or hooks can be placed here.
   )
 
-;;;;; EAT EAT EAT
+;;; EAT Terminal
+
 (use-package eat
-  :ensure t  ;; Automatically install eat from NonGNU ELPA
+  :ensure t ;; Automatically install eat from NonGNU ELPA
   :init
   ;; Preload Eat so everything is ready on first use
   (require 'eat)
@@ -3422,9 +3318,7 @@ This function integrates with exwm-firefox-core to open the current page."
   (eat-eshell-mode nil)
   (eat-eshell-visual-command-mode nil))
 
-;;;;;
-;; GPTEL
-;;;;;
+;;; gptel
 
 (use-package gptel
   :ensure t
@@ -3459,9 +3353,7 @@ This function integrates with exwm-firefox-core to open the current page."
                                 :max_tokens 4096))
   (setq gptel-api-key-from-auth-source t))
 
-;;;;;
-;; AGGRESSIVE INDENT
-;;;;;
+;;; aggressive indent
 
 (use-package aggressive-indent
   :ensure t
@@ -3469,7 +3361,8 @@ This function integrates with exwm-firefox-core to open the current page."
   (prog-mode . aggressive-indent-mode)
   (org-mode . aggressive-indent-mode))
 
-;;;; Tooltips (tooltip-mode)
+;;; Tooltips (tooltip-mode)
+
 (use-package tooltip
   :ensure nil
   :hook (after-init . tooltip-mode)
@@ -3483,25 +3376,28 @@ This function integrates with exwm-firefox-core to open the current page."
           (border-width . 0)
           (no-special-glyphs . t))))
 
-;;;; `man' (manpages)
+;;; `man' (manpages)
+
 (use-package man
   :ensure nil
   :commands (man)
   :config
   (setq Man-notify-method 'pushy))
 
-;;;; `proced' (process monitor, similar to `top')
+;;; `proced' (process monitor, similar to `top')
+
 (use-package proced
   :ensure nil
   :commands (proced)
   :config
   (setq proced-auto-update-flag 'visible) ; Emacs 30 supports more the `visible' value
-  (setq proced-enable-color-flag t) ; Emacs 29
+  (setq proced-enable-color-flag t)       ; Emacs 29
   (setq proced-auto-update-interval 5)
   (setq proced-descend t)
   (setq proced-filter 'user))
 
-;;;; Emacs server (allow emacsclient to connect to running session)
+;;; Emacs server (allow emacsclient to connect to running session)
+
 (use-package server
   :ensure nil
   :defer 1
@@ -3510,9 +3406,13 @@ This function integrates with exwm-firefox-core to open the current page."
   (unless (server-running-p)
     (server-start)))
 
+;;; pass (password-store) integration
+
 (use-package pass
   :ensure t
   :commands (pass))
+
+;;; isearch settings
 
 (use-package isearch
   :ensure nil
@@ -3533,7 +3433,7 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq list-matching-lines-jump-to-current-line nil)
   :bind
   ( :map global-map
-    ;;;; KEYBIND_CHANGE: C-. is better as universal-argument-more
+;;;; KEYBIND_CHANGE: C-. is better as universal-argument-more
     ("M-s ." . isearch-forward-symbol-at-point)
     :map minibuffer-local-isearch-map
     ("M-/" . isearch-complete-edit)
@@ -3544,6 +3444,7 @@ This function integrates with exwm-firefox-core to open the current page."
     ("M-/" . isearch-complete)))
 
 ;;; General window and buffer configurations
+
 (use-package uniquify
   :ensure nil
   :config
@@ -3554,12 +3455,13 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq uniquify-after-kill-buffer-p t))
 
 ;;; Show the name of the current definition or heading for context (which-function-mode)
+
 (use-package which-func
   :ensure nil
   :hook (after-init . which-function-mode)
   :config
   (setq which-func-modes '(prog-mode org-mode))
-  (setq which-func-display 'mode) ; Emacs 30
+  (setq which-func-display 'mode)       ; Emacs 30
   (setq which-func-unknown "")
   (setq which-func-format
         '((:propertize which-func-current
@@ -3567,6 +3469,7 @@ This function integrates with exwm-firefox-core to open the current page."
                        mouse-face mode-line-highlight))))
 
 ;;; General minibuffer settings
+
 (use-package minibuffer
   :ensure nil
   :demand t
@@ -3590,6 +3493,7 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq minibuffer-visible-completions nil))
 
 ;;; Shell (M-x shell)
+
 (use-package shell
   :ensure nil
   :bind
@@ -3602,10 +3506,10 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq shell-command-prompt-show-cwd t) ; Emacs 27.1
   (setq ansi-color-for-comint-mode t)
   (setq shell-input-autoexpand 'input)
-  (setq shell-highlight-undef-enable t) ; Emacs 29.1
-  (setq shell-has-auto-cd nil) ; Emacs 29.1
+  (setq shell-highlight-undef-enable t)                   ; Emacs 29.1
+  (setq shell-has-auto-cd nil)                            ; Emacs 29.1
   (setq shell-get-old-input-include-continuation-lines t) ; Emacs 30.1
-  (setq shell-kill-buffer-on-exit t) ; Emacs 29.1
+  (setq shell-kill-buffer-on-exit t)                      ; Emacs 29.1
   (setq shell-completion-fignore '("~" "#" "%"))
   (setq-default comint-scroll-to-bottom-on-input t)
   (setq-default comint-scroll-to-bottom-on-output nil)
@@ -3626,9 +3530,8 @@ This function integrates with exwm-firefox-core to open the current page."
   ;; this to see if there are any obvious advantages/disadvantages.
   (add-hook 'comint-output-filter-functions 'comint-osc-process-output))
 
-;;;;;
-;; definitions
-;;;;;
+;;; dictionary / definitions
+
 (use-package
   dictionary
   :ensure nil
@@ -3637,9 +3540,8 @@ This function integrates with exwm-firefox-core to open the current page."
   :bind
   ("<f6>" . dictionary-lookup-definition))
 
-;;;;;
-;; log viewing
-;;;;;
+;;; log file handling
+
 (use-package logview
   :ensure t
   :init
@@ -3648,9 +3550,8 @@ This function integrates with exwm-firefox-core to open the current page."
   :hook (
          ('log-mode 'logview-mode)))
 
-;;;;;
-;; pulsar
-;;;;;
+;;; pulsar
+
 (use-package pulsar
   :custom
   (pulsar-pulse t)
@@ -3666,13 +3567,15 @@ This function integrates with exwm-firefox-core to open the current page."
   (
    pulsar-global-mode 1))
 
-;;;;; volatile highlighting
+;;; volatile highlighting
+
 (use-package
   volatile-highlights
   :ensure t
   :init (volatile-highlights-mode 1))
 
-;; SMTP configuration for sending mail
+;;; SMTP configuration for sending mail
+
 (use-package smtpmail
   :ensure nil
   :config
@@ -3683,7 +3586,8 @@ This function integrates with exwm-firefox-core to open the current page."
         smtpmail-debug-info t
         smtpmail-debug-verb t))
 
-;;;;; mastodon
+;;; mastodon
+
 (use-package mastodon
   :ensure t
   :defer t
@@ -3692,13 +3596,15 @@ This function integrates with exwm-firefox-core to open the current page."
         mastodon-instance-url "https://defcon.social")
   (mastodon-discover))
 
-;;;;; HACKERNEWS
+;;; HACKERNEWS
+
 (use-package hnreader
   :ensure t
   :defer t)
 
-;;;;; stupid fucking emojis
+;;; stupid fucking emojis
 ;; im tired of the squares
+
 (use-package emojify
   :config
   (when (member "Noto Emoji" (font-family-list))
@@ -3708,9 +3614,8 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq emojify-emoji-styles '(unicode))
   :hook (after-init . global-emojify-mode))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                               Final Cleanup                               ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; final cleanup
+
 (put 'eshell 'disabled nil)
 (provide 'init)
 ;;; init.el ends here
