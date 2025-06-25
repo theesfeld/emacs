@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-25 10:08:09 by grim>
+;; Time-stamp: <Last changed 2025-06-25 10:08:45 by grim>
 
 ;;; Early Initial Settings
 
@@ -27,7 +27,7 @@
  '(eshell project-eshell overwrite-mode iconify-frame diary))
 
 (setq initial-buffer-choice t)
-(setq initial-major-mode lisp-interaction-mode)
+(setq initial-major-mode 'lisp-interaction-mode)
 (setq initial-scratch-message
       (format ";; This is `%s'.  Use `%s' to evaluate and print results.\n\n"
               'lisp-interaction-mode
