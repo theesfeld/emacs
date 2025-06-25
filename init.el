@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-25 13:53:06 by grim>
+;; Time-stamp: <Last changed 2025-06-25 15:49:40 by grim>
 
 ;;; Early Initial Settings
 
@@ -1278,49 +1278,55 @@ The DWIM behaviour of this command is as follows:
   :custom
   (rainbow-delimiters-max-face-count 9)) ;; Default 9 faces
 
-;; Highlight Thing at Point
+;;; Highlight Thing at Point
+
 (use-package
   highlight-thing
   :ensure t
   :defer t
   :custom
-  (highlight-thing-delay-seconds 0.5) ; Delay before highlighting
-  (highlight-thing-what-thing 'symbol) ; Highlight symbols
+  (highlight-thing-delay-seconds 0.5)   ; Delay before highlighting
+  (highlight-thing-what-thing 'symbol)  ; Highlight symbols
   :config
   (set-face-attribute 'highlight-thing nil
                       :background "#5e81ac" ; Soft blue from Modus
                       :weight 'normal)
   :hook (prog-mode . highlight-thing-mode))
 
-(use-package
-  indent-bars
+;;; indent-bars
+
+(use-package indent-bars
   :ensure t
   :diminish indent-bars-mode
   :hook
   ((prog-mode . indent-bars-mode)
-   (emacs-lisp-mode . indent-bars-mode)) ;; Ensure .el files work
+   (emacs-lisp-mode . indent-bars-mode))
   :custom
   ;; Appearance
-  (indent-bars-pattern ".") ;; Solid bars
-  (indent-bars-width-frac 0.2) ;; Thin bars
-  (indent-bars-pad-frac 0.1) ;; Minimal padding
-  (indent-bars-zigzag nil) ;; Straight bars
-  (indent-bars-display-on-blank-lines t) ;; Bars on blank lines (required)
-  (indent-bars-prefer-character nil) ;; Stipples for speed
-  ;; Highlight current level (required)
-  (indent-bars-highlight-current-depth '(:blend 0.6)) ;; Brighter current bar
+  (indent-bars-pattern ".")
+  (indent-bars-width-frac 0.2)
+  (indent-bars-pad-frac 0.1)
+  (indent-bars-zigzag nil)
+  (indent-bars-display-on-blank-lines t)
+  (indent-bars-prefer-character nil)
+  ;; Highlight current level
+  (indent-bars-highlight-current-depth '(:blend 0.6))
   ;; Behavior
-  (indent-bars-no-descend-strings t) ;; Lock depth in strings
-  (indent-bars-no-descend-lists t) ;; Lock depth in lists
-  (indent-bars-depth-update-delay 0.05) ;; Fast updates
-  ;; Tree-sitter
+  (indent-bars-no-descend-strings t)
+  (indent-bars-no-descend-lists t)
+  (indent-bars-depth-update-delay 0.05)
+  ;; Tree-sitter support
   (indent-bars-treesit-support t)
   (indent-bars-treesit-scope
    '((python function_definition class_definition)
-     (emacs-lisp function_definition)
-     (c function_declarator compound_statement)))
+     (emacs-lisp defun let progn)
+     (c function_definition compound_statement)
+     (cpp function_definition compound_statement class_specifier)
+     (rust function_item impl_item)
+     (javascript function_declaration arrow_function class_declaration)
+     (typescript function_declaration arrow_function class_declaration)))
   :config
-  ;; Force font-lock refresh for .el files
+  ;; Force font-lock refresh
   (defun indent-bars-refresh-font-lock ()
     (when indent-bars-mode
       (font-lock-flush)
@@ -1507,7 +1513,14 @@ The DWIM behaviour of this command is as follows:
 (use-package completion-preview
   :ensure nil
   :hook ((prog-mode . completion-preview-mode)
-         (emacs-lisp-mode . completion-preview-mode))
+         (emacs-lisp-mode . completion-preview-mode)
+         ;; Add tree-sitter modes explicitly
+         (python-ts-mode . completion-preview-mode)
+         (c-ts-mode . completion-preview-mode)
+         (c++-ts-mode . completion-preview-mode)
+         (js-ts-mode . completion-preview-mode)
+         (typescript-ts-mode . completion-preview-mode)
+         (rust-ts-mode . completion-preview-mode))
   :custom
   (completion-preview-minimum-symbol-length 2)
   (completion-preview-idle-delay 0.2)
@@ -1544,30 +1557,6 @@ The DWIM behaviour of this command is as follows:
         ("TAB" . my/completion-preview-insert-word)
         ([tab] . my/completion-preview-insert-word)))
 
-;; (use-package completion-preview
-;;   :ensure nil                           ; Built-in to Emacs 30.1
-;;   :hook ((prog-mode . completion-preview-mode)
-;;          (text-mode . completion-preview-mode)
-;;          (conf-mode . completion-preview-mode)
-;;          (eshell-mode . completion-preview-mode)
-;;          (eat-mode . completion-preview-mode)
-;;          (vterm-mode . completion-preview-mode)
-;;          (emacs-lisp-mode . completion-preview-mode))
-;;   :custom
-;;   ;; Start showing previews after 2 characters
-;;   (completion-preview-minimum-symbol-length 2)
-;;   ;; Show preview after a short delay
-;;   (completion-preview-idle-delay 0.2)
-;;   ;; Use a subtle face for the preview
-;;   (completion-preview-overlay-face '((t :inherit shadow)))
-;;   ;; Don't insert completion on RET by default
-;;   (completion-preview-insert-on-completion nil)
-;;   :config
-;;   ;; TAB to accept is already the default binding
-;;   ;; No need to rebind anything - using all defaults
-;;   )
-
-;; Optional: Configure completion-at-point (C-M-i or M-TAB)
 (use-package emacs
   :ensure nil
   :custom
@@ -1731,17 +1720,15 @@ The DWIM behaviour of this command is as follows:
 
 ;;; eglot / lsp
 
-(use-package
-  eglot
+(use-package eglot
   :ensure nil
   :hook
   ((prog-mode
     .
     (lambda ()
       (unless (or (string-match-p "^\\*.*\\*$" (buffer-name))
-                  (string=
-                   (buffer-file-name)
-                   (expand-file-name "init.el" user-emacs-directory)))
+                  (string= (buffer-file-name)
+                           (expand-file-name "init.el" user-emacs-directory)))
         (eglot-ensure))))
    (eglot-managed-mode
     .
@@ -1750,16 +1737,15 @@ The DWIM behaviour of this command is as follows:
       (setq eldoc-documentation-strategy #'eldoc-documentation-default)
       (eglot-inlay-hints-mode))))
   :config
-  (add-to-list
-   'eglot-server-programs
-   '(emacs-lisp-mode . nil)) ; No LSP server for Emacs Lisp
+  ;; Remove the elisp exclusion since tree-sitter can handle it
+  ;; (add-to-list 'eglot-server-programs '(emacs-lisp-mode . nil)) ; REMOVE THIS LINE
+
   ;; Disable python-flymake when eglot is active
   (add-hook
    'eglot-managed-mode-hook
    (lambda ()
      (when (derived-mode-p 'python-mode 'python-ts-mode)
-       (remove-hook 'flymake-diagnostic-functions 'python-flymake
-                    t)))))
+       (remove-hook 'flymake-diagnostic-functions 'python-flymake t)))))
 
 (use-package
   consult-lsp
@@ -2518,16 +2504,13 @@ This function integrates with exwm-firefox-core to open the current page."
 
 ;; Built-in tree-sitter configuration
 (use-package treesit
-
   :ensure nil
   :init
   ;; Tell Emacs where to look for tree-sitter libraries
-  ;; Your grammars are in ~/.config/emacs/tree-sitter
   (add-to-list 'treesit-extra-load-path
                (expand-file-name "tree-sitter" user-emacs-directory))
 
-  ;; Tree-sitter language sources with proper configurations
-  ;; Based on your installed grammars
+  ;; Comprehensive language source list
   (setq treesit-language-source-alist
         '((awk . ("https://github.com/Beaglefoot/tree-sitter-awk"))
           (bash . ("https://github.com/tree-sitter/tree-sitter-bash"))
@@ -2542,6 +2525,7 @@ This function integrates with exwm-firefox-core to open the current page."
           (css . ("https://github.com/tree-sitter/tree-sitter-css"))
           (dart . ("https://github.com/ast-grep/tree-sitter-dart"))
           (dockerfile . ("https://github.com/camdencheek/tree-sitter-dockerfile"))
+          (elisp . ("https://github.com/Wilfred/tree-sitter-elisp"))
           (elixir . ("https://github.com/elixir-lang/tree-sitter-elixir"))
           (glsl . ("https://github.com/theHamsta/tree-sitter-glsl"))
           (go . ("https://github.com/tree-sitter/tree-sitter-go"))
@@ -2569,6 +2553,7 @@ This function integrates with exwm-firefox-core to open the current page."
           (ruby . ("https://github.com/tree-sitter/tree-sitter-ruby"))
           (rust . ("https://github.com/tree-sitter/tree-sitter-rust"))
           (scala . ("https://github.com/tree-sitter/tree-sitter-scala"))
+          (scheme . ("https://github.com/6cdh/tree-sitter-scheme"))
           (sql . ("https://github.com/DerekStride/tree-sitter-sql"))
           (surface . ("https://github.com/connorlay/tree-sitter-surface"))
           (toml . ("https://github.com/tree-sitter/tree-sitter-toml"))
@@ -2583,50 +2568,7 @@ This function integrates with exwm-firefox-core to open the current page."
           (wgsl . ("https://github.com/mehmetoguzderin/tree-sitter-wgsl"))
           (yaml . ("https://github.com/ikatyang/tree-sitter-yaml"))))
 
-  ;; Automatic installation and updating of tree-sitter grammars
-  (defun my/treesit-install-all-languages ()
-    "Install all tree-sitter grammars in `treesit-language-source-alist'."
-    (interactive)
-    (let ((languages (mapcar #'car treesit-language-source-alist)))
-      (dolist (lang languages)
-        (unless (treesit-language-available-p lang)
-          (message "Installing tree-sitter grammar for %s..." lang)
-          (condition-case err
-              (treesit-install-language-grammar lang)
-            (error (message "Failed to install %s: %s" lang (error-message-string err)))))
-        (when (treesit-language-available-p lang)
-          (message "Tree-sitter grammar for %s is ready" lang)))))
-
-  ;; Update existing grammars
-  (defun my/treesit-update-all-languages ()
-    "Update all installed tree-sitter grammars."
-    (interactive)
-    (let ((languages (mapcar #'car treesit-language-source-alist)))
-      (dolist (lang languages)
-        (when (treesit-language-available-p lang)
-          (message "Updating tree-sitter grammar for %s..." lang)
-          (condition-case err
-              (treesit-install-language-grammar lang)
-            (error (message "Failed to update %s: %s" lang (error-message-string err)))))
-        (message "Updated tree-sitter grammar for %s" lang))))
-
-  ;; Check installed grammars
-  (defun my/treesit-check-grammars ()
-    "Check which tree-sitter grammars are installed."
-    (interactive)
-    (let ((languages (mapcar #'car treesit-language-source-alist))
-          (installed '())
-          (missing '()))
-      (dolist (lang languages)
-        (if (treesit-language-available-p lang)
-            (push lang installed)
-          (push lang missing)))
-      (message "Installed grammars: %s\nMissing grammars: %s"
-               (mapconcat #'symbol-name (nreverse installed) ", ")
-               (mapconcat #'symbol-name (nreverse missing) ", "))))
-
-  ;; Major mode remapping for tree-sitter variants
-  ;; Updated for Emacs 30.1 with improved inheritance
+  ;; Major mode remapping
   (setq major-mode-remap-alist
         '((awk-mode . awk-ts-mode)
           (bash-mode . bash-ts-mode)
@@ -2666,8 +2608,7 @@ This function integrates with exwm-firefox-core to open the current page."
           (verilog-mode . verilog-ts-mode)
           (yaml-mode . yaml-ts-mode)))
 
-  ;; Emacs 30.1: Add parent mode relationships for better integration
-  ;; This ensures dir-locals and other mode-specific settings work
+  ;; Emacs 30.1: Ensure parent mode relationships for proper integration
   (with-eval-after-load 'c-ts-mode
     (derived-mode-add-parents 'c-ts-mode '(c-mode)))
   (with-eval-after-load 'c++-ts-mode
@@ -2687,25 +2628,33 @@ This function integrates with exwm-firefox-core to open the current page."
   (with-eval-after-load 'yaml-ts-mode
     (derived-mode-add-parents 'yaml-ts-mode '(yaml-mode)))
 
-  ;; Font-lock and indentation settings
-  (setq treesit-font-lock-level 4)  ; Maximum highlighting
-
-  ;; Configure tree-sitter settings
-  (setq treesit-max-buffer-size (* 4 1024 1024))  ; 4MB max buffer size
+  ;; Tree-sitter settings
+  (setq treesit-font-lock-level 4)              ; Maximum highlighting
+  (setq treesit-max-buffer-size (* 4 1024 1024)) ; 4MB max buffer size
 
   :config
-  ;; Run grammar check on startup
-  (my/treesit-check-grammars)
+  ;; Built-in grammar installation command
+  ;; Use: M-x treesit-install-language-grammar RET <language> RET
 
-  ;; Note: Standard Emacs navigation commands work with tree-sitter:
-  ;; C-M-a / C-M-e - beginning/end of defun
-  ;; C-M-f / C-M-b - forward/backward sexp
-  ;; C-M-d / C-M-u - down-list/backward-up-list
-  ;; C-M-n / C-M-p - forward-list/backward-list
-  ;; C-M-h - mark-defun (works with tree-sitter)
-  )
+  ;; Check installed grammars
+  (defun my/treesit-check-grammars ()
+    "Check which tree-sitter grammars are installed."
+    (interactive)
+    (let ((languages (mapcar #'car treesit-language-source-alist))
+          (installed '())
+          (missing '()))
+      (dolist (lang languages)
+        (if (treesit-language-available-p lang)
+            (push lang installed)
+          (push lang missing)))
+      (message "Installed grammars: %s\nMissing grammars: %s"
+               (mapconcat #'symbol-name (nreverse installed) ", ")
+               (mapconcat #'symbol-name (nreverse missing) ", "))))
 
-;; Treesit-auto for automatic mode selection and grammar installation
+  ;; Run check on startup
+  (my/treesit-check-grammars))
+
+;; Use treesit-auto for automatic mode selection and fallback
 (use-package treesit-auto
   :ensure t
   :custom
@@ -2721,27 +2670,15 @@ This function integrates with exwm-firefox-core to open the current page."
   :ensure nil
   :hook
   (python-ts-mode . (lambda ()
-                      ;; Use built-in tree-sitter features
-                      (setq-local treesit-defun-type-regexp
-                                  (rx (or "function_definition"
-                                          "class_definition")))
-                      ;; Define tree-sitter things for navigation
-                      (setq-local treesit-thing-settings
-                                  `((python
-                                     (defun . ,(rx (or "function_definition"
-                                                       "class_definition")))
-                                     (sexp . ,(rx (or "expression"
-                                                      "statement")))
-                                     (sentence . ,(rx (or "simple_statement"
-                                                          "compound_statement"))))))
-                      ;; Enable outline-minor-mode for folding
-                      (outline-minor-mode 1)
-                      (setq-local outline-regexp
-                                  (rx (or "class" "def" "async def")))
-                      ;; Set primary parser
-                      (setq-local treesit-primary-parser (treesit-parser-create 'python))
-                      ;; Use eglot for LSP features
+                      ;; Tree-sitter handles these automatically via treesit-major-mode-setup:
+                      ;; - treesit-defun-type-regexp
+                      ;; - forward-sexp-function
+                      ;; - beginning-of-defun-function
+                      ;; - imenu-create-index-function
+                      ;; - which-function-functions
+                      ;; Just ensure eglot starts
                       (eglot-ensure))))
+
 
 ;; JavaScript/TypeScript with tree-sitter
 (use-package js
@@ -2749,93 +2686,30 @@ This function integrates with exwm-firefox-core to open the current page."
   :custom
   (js-indent-level 2)
   :hook
-  ((js-ts-mode typescript-ts-mode tsx-ts-mode) .
-   (lambda ()
-     (setq-local treesit-defun-type-regexp
-                 (rx (or "function_declaration"
-                         "function_expression"
-                         "arrow_function"
-                         "method_definition"
-                         "class_declaration")))
-     ;; Define tree-sitter things
-     (setq-local treesit-thing-settings
-                 `((,(treesit-language-at (point))
-                    (defun . ,(rx (or "function_declaration"
-                                      "function_expression"
-                                      "arrow_function"
-                                      "method_definition"
-                                      "class_declaration")))
-                    (sexp . ,(rx (or "expression" "statement")))
-                    (sentence . "statement"))))
-     ;; Enable outline-minor-mode for folding
-     (outline-minor-mode 1)
-     ;; Set primary parser
-     (when (derived-mode-p 'tsx-ts-mode)
-       (setq-local treesit-primary-parser (treesit-parser-create 'tsx)))
-     (when (derived-mode-p 'typescript-ts-mode)
-       (setq-local treesit-primary-parser (treesit-parser-create 'typescript)))
-     (when (derived-mode-p 'js-ts-mode)
-       (setq-local treesit-primary-parser (treesit-parser-create 'javascript)))
-     ;; Use eglot for LSP features
-     (eglot-ensure))))
+  ((js-ts-mode typescript-ts-mode tsx-ts-mode) . eglot-ensure))
+
+(use-package cc-mode
+  :ensure nil
+  :hook
+  ((c-ts-mode c++-ts-mode) . eglot-ensure))
 
 ;; Rust with tree-sitter
 (use-package rust-ts-mode
   :ensure nil
   :hook
-  (rust-ts-mode . (lambda ()
-                    (setq-local treesit-defun-type-regexp
-                                (rx (or "function_item"
-                                        "impl_item"
-                                        "trait_item"
-                                        "struct_item"
-                                        "enum_item")))
-                    (setq-local treesit-thing-settings
-                                `((rust
-                                   (defun . ,(rx (or "function_item"
-                                                     "impl_item")))
-                                   (class . ,(rx (or "struct_item"
-                                                     "enum_item"
-                                                     "trait_item")))
-                                   (sexp . "expression")
-                                   (sentence . "statement"))))
-                    (setq-local treesit-primary-parser (treesit-parser-create 'rust))
-                    (eglot-ensure))))
+  (rust-ts-mode . eglot-ensure))
 
 ;; Go with tree-sitter
 (use-package go-ts-mode
   :ensure nil
   :hook
-  (go-ts-mode . (lambda ()
-                  (setq-local treesit-defun-type-regexp
-                              (rx (or "function_declaration"
-                                      "method_declaration"
-                                      "type_declaration")))
-                  (setq-local treesit-thing-settings
-                              `((go
-                                 (defun . ,(rx (or "function_declaration"
-                                                   "method_declaration")))
-                                 (type . "type_declaration")
-                                 (sexp . "expression")
-                                 (sentence . "statement"))))
-                  (setq-local treesit-primary-parser (treesit-parser-create 'go))
-                  (eglot-ensure))))
+  (go-ts-mode . eglot-ensure))
 
 ;; Ruby with tree-sitter
 (use-package ruby-ts-mode
   :ensure nil
   :hook
-  (ruby-ts-mode . (lambda ()
-                    (setq-local treesit-defun-type-regexp
-                                (rx (or "method" "class" "module")))
-                    (setq-local treesit-thing-settings
-                                `((ruby
-                                   (defun . ,(rx (or "method" "singleton_method")))
-                                   (class . ,(rx (or "class" "module")))
-                                   (sexp . "expression")
-                                   (sentence . "statement"))))
-                    (setq-local treesit-primary-parser (treesit-parser-create 'ruby))
-                    (eglot-ensure))))
+  (ruby-ts-mode . eglot-ensure))
 
 ;; ;; Elisp with tree-sitter (if available)
 ;; (use-package elisp-ts-mode
@@ -2863,9 +2737,10 @@ This function integrates with exwm-firefox-core to open the current page."
   :hook
   ((prog-mode . outline-minor-mode))
   :custom
-  (outline-minor-mode-cycle t)  ; Enable cycling
-  (outline-minor-mode-highlight 'override))  ; Better highlighting
-;; Standard outline keybindings work out of the box:
+  (outline-minor-mode-cycle t)      ; Enable TAB cycling
+  (outline-minor-mode-highlight 'override))
+;; Built-in outline keybindings work automatically:
+;; TAB - cycle visibility (when outline-minor-mode-cycle is t)
 ;; C-c @ C-c - hide entry
 ;; C-c @ C-e - show entry
 ;; C-c @ C-l - hide leaves
@@ -2873,14 +2748,13 @@ This function integrates with exwm-firefox-core to open the current page."
 ;; C-c @ C-q - hide sublevels
 ;; C-c @ C-a - show all
 ;; C-c @ C-t - hide body
-;; TAB - cycle (when outline-minor-mode-cycle is t)
 
 ;; Hideshow as alternative folding method (works well with tree-sitter)
 (use-package hideshow
   :ensure nil
   :hook
   (prog-mode . hs-minor-mode))
-;; Standard hideshow keybindings:
+;; Built-in hideshow keybindings:
 ;; C-c @ C-h - hide block
 ;; C-c @ C-s - show block
 ;; C-c @ ESC C-h - hide all
@@ -2888,17 +2762,13 @@ This function integrates with exwm-firefox-core to open the current page."
 ;; C-c @ C-l - hide level
 ;; C-c @ C-c - toggle hiding
 
-;; For debugging tree-sitter, use the built-in:
-;; M-x treesit-inspect-mode - inspect tree-sitter nodes interactively
-
 ;;; so-long
 
 (use-package so-long :ensure nil :config (global-so-long-mode 1))
 
 ;;; flymake
 
-(use-package
-  flymake
+(use-package flymake
   :ensure nil
   :hook
   ((prog-mode . flymake-mode)
@@ -2908,30 +2778,33 @@ This function integrates with exwm-firefox-core to open the current page."
       ;; Only enable flymake-mode for file-backed buffers
       (when (buffer-file-name)
         (flymake-mode 1))))
+   ;; Add tree-sitter modes
+   (python-ts-mode . flymake-mode)
+   (c-ts-mode . flymake-mode)
+   (c++-ts-mode . flymake-mode)
+   (js-ts-mode . flymake-mode)
+   (typescript-ts-mode . flymake-mode)
+   (rust-ts-mode . flymake-mode)
    (after-init-hook
     .
     (lambda ()
       (with-current-buffer "*scratch*"
         (flymake-mode -1)))))
-  :config (setq flymake-fringe-indicator-position 'right-fringe)
-  (setq flymake-no-changes-timeout 1) ; Faster feedback after typing
+  :config
+  (setq flymake-fringe-indicator-position 'right-fringe)
+  (setq flymake-no-changes-timeout 1)
   (add-hook
    'emacs-lisp-mode-hook
    (lambda ()
      ;; Only add diagnostic functions for file-backed buffers
      (when (buffer-file-name)
-       (add-hook
-        'flymake-diagnostic-functions #'elisp-flymake-byte-compile
-        nil t)
-       (add-hook 'flymake-diagnostic-functions #'elisp-flymake-checkdoc
-                 nil
-                 t))))
+       (add-hook 'flymake-diagnostic-functions #'elisp-flymake-byte-compile nil t)
+       (add-hook 'flymake-diagnostic-functions #'elisp-flymake-checkdoc nil t))))
   :bind
-  (:map
-   flymake-mode-map
-   ("C-c ! l" . flymake-show-buffer-diagnostics)
-   ("C-c ! n" . flymake-goto-next-error)
-   ("C-c ! p" . flymake-goto-prev-error)))
+  (:map flymake-mode-map
+        ("C-c ! l" . flymake-show-buffer-diagnostics)
+        ("C-c ! n" . flymake-goto-next-error)
+        ("C-c ! p" . flymake-goto-prev-error)))
 
 (use-package
   elisp-lint
