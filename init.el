@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 19:56:24 by grim>
+;; Time-stamp: <Last changed 2025-06-24 20:10:56 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2557,7 +2557,6 @@ This function integrates with exwm-firefox-core to open the current page."
           (sql . ("https://github.com/DerekStride/tree-sitter-sql"))
           (csharp . ("https://github.com/tree-sitter/tree-sitter-c-sharp"))
           (php . ("https://github.com/tree-sitter/tree-sitter-php"))
-          (go-mod . ("https://github.com/camdencheek/tree-sitter-go-mod"))
           (latex . ("https://github.com/latex-lsp/tree-sitter-latex"))))
 
   ;; Automatic installation and updating of tree-sitter grammars
@@ -2598,7 +2597,6 @@ This function integrates with exwm-firefox-core to open the current page."
           (sh-mode . bash-ts-mode)
           (typescript-mode . typescript-ts-mode)
           (rust-mode . rust-ts-mode)
-          (go-mode . go-ts-mode)
           (yaml-mode . yaml-ts-mode)
           (ruby-mode . ruby-ts-mode)
           (dockerfile-mode . dockerfile-ts-mode)
