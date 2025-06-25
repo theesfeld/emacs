@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-25 12:34:18 by grim>
+;; Time-stamp: <Last changed 2025-06-25 13:14:48 by grim>
 
 ;;; Early Initial Settings
 
@@ -1528,35 +1528,75 @@ The DWIM behaviour of this command is as follows:
 ;;; completion-preview
 
 (use-package completion-preview
-  :ensure nil  ; Built-in to Emacs 30.1
+  :ensure nil
   :hook ((prog-mode . completion-preview-mode)
-         (text-mode . completion-preview-mode)
-         (conf-mode . completion-preview-mode)
-         (eshell-mode . completion-preview-mode)
-         (eat-mode . completion-preview-mode)
-         (vterm-mode . completion-preview-mode)
          (emacs-lisp-mode . completion-preview-mode))
   :custom
-  ;; Start showing previews after 2 characters
   (completion-preview-minimum-symbol-length 2)
-  ;; Show preview after a short delay
   (completion-preview-idle-delay 0.2)
-  ;; Use a subtle face for the preview
-  (completion-preview-overlay-face '((t :inherit shadow)))
-  ;; Don't insert completion on RET by default
-  (completion-preview-insert-on-completion nil)
   :config
-  ;; TAB to accept is already the default binding
-  ;; No need to rebind anything - using all defaults
-  )
+  ;; Make completion-preview work with paredit/smartparens
+  (defun my/completion-preview-insert-word ()
+    "Insert completion preview and move past any closing delimiters."
+    (interactive)
+    (when completion-preview--overlay
+      (completion-preview-insert)
+      ;; Move past closing parens/brackets if needed
+      (when (looking-at "[])]")
+        (forward-char 1))))
+
+  ;; Fix completion detection with paredit
+  (advice-add 'completion-preview--completion-at-point :around
+              (lambda (orig-fun &rest args)
+                (let ((result (apply orig-fun args)))
+                  ;; If no completion found and we're before a closing paren
+                  (when (and (not result) (looking-at-p "[])}\"]"))
+                    ;; Try again with a temporary marker past the paren
+                    (save-excursion
+                      (forward-char 1)
+                      (setq result (apply orig-fun args))))
+                  result)))
+
+  ;; Visible preview colors
+  (set-face-attribute 'completion-preview nil
+                      :foreground "#88c0d0"
+                      :background nil)
+
+  :bind
+  (:map completion-preview-active-mode-map
+        ("TAB" . my/completion-preview-insert-word)
+        ([tab] . my/completion-preview-insert-word)))
+
+;; (use-package completion-preview
+;;   :ensure nil                           ; Built-in to Emacs 30.1
+;;   :hook ((prog-mode . completion-preview-mode)
+;;          (text-mode . completion-preview-mode)
+;;          (conf-mode . completion-preview-mode)
+;;          (eshell-mode . completion-preview-mode)
+;;          (eat-mode . completion-preview-mode)
+;;          (vterm-mode . completion-preview-mode)
+;;          (emacs-lisp-mode . completion-preview-mode))
+;;   :custom
+;;   ;; Start showing previews after 2 characters
+;;   (completion-preview-minimum-symbol-length 2)
+;;   ;; Show preview after a short delay
+;;   (completion-preview-idle-delay 0.2)
+;;   ;; Use a subtle face for the preview
+;;   (completion-preview-overlay-face '((t :inherit shadow)))
+;;   ;; Don't insert completion on RET by default
+;;   (completion-preview-insert-on-completion nil)
+;;   :config
+;;   ;; TAB to accept is already the default binding
+;;   ;; No need to rebind anything - using all defaults
+;;   )
 
 ;; Optional: Configure completion-at-point (C-M-i or M-TAB)
 (use-package emacs
   :ensure nil
   :custom
   ;; Better completion behavior
-  (tab-always-indent 'complete)  ; TAB completes when at end of word
-  (completion-cycle-threshold 3)  ; TAB cycles through completions
+  (tab-always-indent 'complete)    ; TAB completes when at end of word
+  (completion-cycle-threshold 3)   ; TAB cycles through completions
   (completion-styles '(basic partial-completion emacs22 flex)))
 
 ;;; all-the-icons
