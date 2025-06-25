@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 20:59:59 by grim>
+;; Time-stamp: <Last changed 2025-06-25 07:09:44 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -30,7 +30,7 @@
  '(eshell project-eshell overwrite-mode iconify-frame diary))
 
 (setq initial-buffer-choice t)
-(setq initial-major-mode 'lisp-interaction-mode)
+(setq initial-major-mode p-interaction-mode)
 (setq initial-scratch-message
       (format ";; This is `%s'.  Use `%s' to evaluate and print results.\n\n"
               'lisp-interaction-mode
@@ -3667,9 +3667,7 @@ This function integrates with exwm-firefox-core to open the current page."
   (
    pulsar-global-mode 1))
 
-;;;;;
-;; volatile highlighting
-;;;;;
+;;;;; volatile highlighting
 (use-package
   volatile-highlights
   :ensure t
