@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 20:42:37 by grim>
+;; Time-stamp: <Last changed 2025-06-24 20:43:09 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2555,7 +2555,6 @@ This function integrates with exwm-firefox-core to open the current page."
           (css . ("https://github.com/tree-sitter/tree-sitter-css"))
           (dart . ("https://github.com/ast-grep/tree-sitter-dart"))
           (dockerfile . ("https://github.com/camdencheek/tree-sitter-dockerfile"))
-          (elisp . ("https://github.com/Wilfred/tree-sitter-elisp"))
           (elixir . ("https://github.com/elixir-lang/tree-sitter-elixir"))
           (glsl . ("https://github.com/theHamsta/tree-sitter-glsl"))
           (go . ("https://github.com/tree-sitter/tree-sitter-go"))
@@ -2652,7 +2651,6 @@ This function integrates with exwm-firefox-core to open the current page."
           (csharp-mode . csharp-ts-mode)
           (css-mode . css-ts-mode)
           (dockerfile-mode . dockerfile-ts-mode)
-          (elisp-mode . elisp-ts-mode)
           (elixir-mode . elixir-ts-mode)
           (go-mode . go-ts-mode)
           (html-mode . html-ts-mode)
@@ -2687,8 +2685,6 @@ This function integrates with exwm-firefox-core to open the current page."
     (derived-mode-add-parents 'c-ts-mode '(c-mode)))
   (with-eval-after-load 'c++-ts-mode
     (derived-mode-add-parents 'c++-ts-mode '(c++-mode)))
-  (with-eval-after-load 'elisp-ts-mode
-    (derived-mode-add-parents 'elisp-ts-mode '(elisp-mode)))
   (with-eval-after-load 'python-ts-mode
     (derived-mode-add-parents 'python-ts-mode '(python-mode)))
   (with-eval-after-load 'js-ts-mode
