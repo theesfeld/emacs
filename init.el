@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-25 16:01:11 by grim>
+;; Time-stamp: <Last changed 2025-06-25 16:03:31 by grim>
 
 ;;; Early Initial Settings
 
@@ -3547,43 +3547,6 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq emojify-display-style 'unicode)
   (setq emojify-emoji-styles '(unicode))
   :hook (after-init . global-emojify-mode))
-
-;;; default terminal setting
-
-;; Create a proper xterm replacement that handles arguments
-(defun my/xterm-replacement (args)
-  "Replace xterm with eat, handling -e flag and commands."
-  (let* ((cmd-list (member "-e" args))
-         (command (when cmd-list
-                    (mapconcat 'identity (cdr cmd-list) " "))))
-    (if command
-        ;; If there's a command, run it in eat
-        (eat nil command)
-      ;; Otherwise just open eat
-      (eat))))
-
-;; Write a wrapper script from Emacs
-(let ((wrapper-path (expand-file-name "~/.local/bin/xterm-emacs")))
-  (make-directory (file-name-directory wrapper-path) t)
-  (with-temp-file wrapper-path
-    (insert "#!/bin/bash\n")
-    (insert "# Auto-generated xterm wrapper for Emacs\n")
-    (insert "if [[ \"$1\" == \"-e\" ]]; then\n")
-    (insert "    shift\n")
-    (insert "    emacsclient -e \"(eat nil \\\"$*\\\")\"\n")
-    (insert "else\n")
-    (insert "    emacsclient -e '(eat)'\n")
-    (insert "fi\n"))
-  (chmod wrapper-path #o755)
-
-  ;; Set it as the terminal
-  (setenv "TERMINAL" wrapper-path))
-
-;; Also create an x-terminal-emulator symlink
-(let ((xterm-link (expand-file-name "~/.local/bin/xterm")))
-  (when (file-exists-p xterm-link)
-    (delete-file xterm-link))
-  (make-symbolic-link (expand-file-name "~/.local/bin/xterm-emacs") xterm-link))
 
 ;;; final cleanup
 
