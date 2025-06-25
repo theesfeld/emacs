@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-25 15:49:40 by grim>
+;; Time-stamp: <Last changed 2025-06-25 15:57:11 by grim>
 
 ;;; Early Initial Settings
 
@@ -3547,6 +3547,20 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq emojify-display-style 'unicode)
   (setq emojify-emoji-styles '(unicode))
   :hook (after-init . global-emojify-mode))
+
+;;; default terminal setting
+
+;; Make eat the default terminal
+(setenv "TERM" "xterm-256color")
+(setenv "TERMINAL" "emacsclient -e '(eat)'")
+
+;; Override xterm command
+(defun xterm (&rest args)
+  "Replace xterm with eat."
+  (eat))
+
+;; For when programs try to launch x-terminal-emulator
+(defalias 'x-terminal-emulator 'eat)
 
 ;;; final cleanup
 
