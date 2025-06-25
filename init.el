@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-25 13:14:48 by grim>
+;; Time-stamp: <Last changed 2025-06-25 13:53:06 by grim>
 
 ;;; Early Initial Settings
 
@@ -1362,32 +1362,9 @@ The DWIM behaviour of this command is as follows:
   :bind
   (:map
    smartparens-mode-map
-   ("C-M-f" . sp-forward-sexp)          ; Jump to next sexp
-   ("C-M-b" . sp-backward-sexp)         ; Jump to prev sexp
-   ("C-M-u" . sp-backward-up-sexp))) ; Up a level
-
-;;; paredit
-
-(use-package
-  paredit
-  :ensure t
-  :defer t
-  :hook
-  ((emacs-lisp-mode . paredit-mode)
-   (lisp-mode . paredit-mode)
-   (scheme-mode . paredit-mode)
-   (clojure-mode . paredit-mode)
-   (slime-repl-mode . paredit-mode)
-   (lisp-interaction-mode . (lambda () (local-set-key (kbd "C-j") 'eval-print-last-sexp)))
-   )
-  :bind
-  (:map
-   paredit-mode-map
-   ("C-j" . nil)
-   ("C-)" . paredit-forward-slurp-sexp)
-   ("C-}" . paredit-forward-barf-sexp)
-   ("C-(" . paredit-backward-slurp-sexp)
-   ("C-{" . paredit-backward-barf-sexp)))
+   ("C-)" . sp-forward-sexp)          ; Jump to next sexp
+   ("C-(" . sp-backward-sexp)         ; Jump to prev sexp
+   ("C-{" . sp-backward-up-sexp))) ; Up a level
 
 ;;; vertico
 
