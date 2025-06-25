@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-25 10:08:45 by grim>
+;; Time-stamp: <Last changed 2025-06-25 10:09:15 by grim>
 
 ;;; Early Initial Settings
 
@@ -3513,7 +3513,7 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq shell-completion-fignore '("~" "#" "%"))
   (setq-default comint-scroll-to-bottom-on-input t)
   (setq-default comint-scroll-to-bottom-on-output nil)
-  l  (setq-default comint-input-autoexpand 'input)
+  (setq-default comint-input-autoexpand 'input)
   (setq comint-prompt-read-only t)
   (setq comint-buffer-maximum-size 9999)
   (setq comint-completion-autolist t)
