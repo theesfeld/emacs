@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 20:39:33 by grim>
+;; Time-stamp: <Last changed 2025-06-24 20:42:37 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2652,6 +2652,7 @@ This function integrates with exwm-firefox-core to open the current page."
           (csharp-mode . csharp-ts-mode)
           (css-mode . css-ts-mode)
           (dockerfile-mode . dockerfile-ts-mode)
+          (elisp-mode . elisp-ts-mode)
           (elixir-mode . elixir-ts-mode)
           (go-mode . go-ts-mode)
           (html-mode . html-ts-mode)
@@ -2686,6 +2687,8 @@ This function integrates with exwm-firefox-core to open the current page."
     (derived-mode-add-parents 'c-ts-mode '(c-mode)))
   (with-eval-after-load 'c++-ts-mode
     (derived-mode-add-parents 'c++-ts-mode '(c++-mode)))
+  (with-eval-after-load 'elisp-ts-mode
+    (derived-mode-add-parents 'elisp-ts-mode '(elisp-mode)))
   (with-eval-after-load 'python-ts-mode
     (derived-mode-add-parents 'python-ts-mode '(python-mode)))
   (with-eval-after-load 'js-ts-mode
