@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 20:10:56 by grim>
+;; Time-stamp: <Last changed 2025-06-24 20:34:55 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1211,10 +1211,17 @@ The DWIM behaviour of this command is as follows:
   ;; Save place settings
   (setq save-place-file
         (expand-file-name "saveplace/saveplace" my-tmp-dir))
+  ;; Ensure the directory exists
+  (make-directory (file-name-directory save-place-file) t)
+  ;; Enable save-place-mode after setting the file
   (save-place-mode 1)
-                                        ; Enable save-place-mode
+  ;; Force save on kill
+  (add-hook 'kill-buffer-hook
+            (lambda ()
+              (when (and buffer-file-name save-place-mode)
+                (save-place-to-alist))))
 
-  ;; Define a minimal log-mode for .log files
+  ;; Rest of your existing config...
   (define-derived-mode
     log-mode
     fundamental-mode
@@ -1222,7 +1229,6 @@ The DWIM behaviour of this command is as follows:
     "A simple mode for log files."
     (setq font-lock-defaults '(log-mode-font-lock-keywords)))
 
-  ;; Define font-lock keywords for log levels
   (defvar log-mode-font-lock-keywords
     '(("\\bDEBUG\\b" . 'font-lock-comment-face)
       ("\\bINFO\\b" . 'font-lock-string-face)
@@ -1230,18 +1236,17 @@ The DWIM behaviour of this command is as follows:
       ("\\bERROR\\b" . 'font-lock-function-name-face))
     "Font-lock keywords for `log-mode' highlighting.")
 
-  ;; Associate .log files with log-mode
   (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
 
   :hook
-  ((log-mode . auto-revert-tail-mode) ; Enable tailing for log-mode
+  ((log-mode . auto-revert-tail-mode)
    (auto-revert-tail-mode
     .
     (lambda ()
       (when (derived-mode-p 'log-mode)
         (goto-char (point-max))
         (when (file-remote-p default-directory)
-          (setq buffer-read-only nil) ; Ensure writable for TRAMP
+          (setq buffer-read-only nil)
           (let ((tramp-connection-properties
                  (cons
                   `(,(tramp-make-tramp-file-name
@@ -2526,38 +2531,72 @@ This function integrates with exwm-firefox-core to open the current page."
 
 ;; Built-in tree-sitter configuration
 (use-package treesit
+
   :ensure nil
   :init
+  ;; Tell Emacs where to look for tree-sitter libraries
+  ;; Your grammars are in ~/.config/emacs/tree-sitter
+  (add-to-list 'treesit-extra-load-path
+               (expand-file-name "tree-sitter" user-emacs-directory))
+
   ;; Tree-sitter language sources with proper configurations
+  ;; Based on your installed grammars
   (setq treesit-language-source-alist
-        '((bash . ("https://github.com/tree-sitter/tree-sitter-bash"))
+        '((awk . ("https://github.com/Beaglefoot/tree-sitter-awk"))
+          (bash . ("https://github.com/tree-sitter/tree-sitter-bash"))
+          (bibtex . ("https://github.com/latex-lsp/tree-sitter-bibtex"))
+          (blueprint . ("https://github.com/huanie/tree-sitter-blueprint"))
           (c . ("https://github.com/tree-sitter/tree-sitter-c"))
+          (clojure . ("https://github.com/sogaiu/tree-sitter-clojure"))
+          (cmake . ("https://github.com/uyha/tree-sitter-cmake"))
+          (commonlisp . ("https://github.com/theHamsta/tree-sitter-commonlisp"))
           (cpp . ("https://github.com/tree-sitter/tree-sitter-cpp"))
+          (csharp . ("https://github.com/tree-sitter/tree-sitter-c-sharp"))
           (css . ("https://github.com/tree-sitter/tree-sitter-css"))
-          ;; Remove elisp - no official tree-sitter mode for emacs-lisp in Emacs 30
+          (dart . ("https://github.com/ast-grep/tree-sitter-dart"))
+          (dockerfile . ("https://github.com/camdencheek/tree-sitter-dockerfile"))
+          (elisp . ("https://github.com/Wilfred/tree-sitter-elisp"))
+          (elixir . ("https://github.com/elixir-lang/tree-sitter-elixir"))
+          (glsl . ("https://github.com/theHamsta/tree-sitter-glsl"))
           (go . ("https://github.com/tree-sitter/tree-sitter-go"))
+          (gomod . ("https://github.com/camdencheek/tree-sitter-go-mod"))
+          (heex . ("https://github.com/phoenixframework/tree-sitter-heex"))
           (html . ("https://github.com/tree-sitter/tree-sitter-html"))
+          (janet . ("https://github.com/GrayJack/tree-sitter-janet"))
           (java . ("https://github.com/tree-sitter/tree-sitter-java"))
           (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "master" "src"))
           (json . ("https://github.com/tree-sitter/tree-sitter-json"))
+          (julia . ("https://github.com/tree-sitter/tree-sitter-julia"))
+          (kotlin . ("https://github.com/fwcd/tree-sitter-kotlin"))
+          (latex . ("https://github.com/latex-lsp/tree-sitter-latex"))
           (lua . ("https://github.com/MunifTanjim/tree-sitter-lua"))
+          (magik . ("https://github.com/GIT-USERS/RobertCrosas/tree-sitter-magik"))
           (make . ("https://github.com/alemuller/tree-sitter-make"))
           (markdown . ("https://github.com/ikatyang/tree-sitter-markdown"))
+          (nix . ("https://github.com/nix-community/tree-sitter-nix"))
+          (nu . ("https://github.com/nushell/tree-sitter-nu"))
+          (org . ("https://github.com/milisims/tree-sitter-org"))
+          (perl . ("https://github.com/tree-sitter-perl/tree-sitter-perl"))
+          (php . ("https://github.com/tree-sitter/tree-sitter-php"))
+          (proto . ("https://github.com/mitchellh/tree-sitter-proto"))
           (python . ("https://github.com/tree-sitter/tree-sitter-python"))
+          (r . ("https://github.com/r-lib/tree-sitter-r"))
+          (ruby . ("https://github.com/tree-sitter/tree-sitter-ruby"))
           (rust . ("https://github.com/tree-sitter/tree-sitter-rust"))
+          (scala . ("https://github.com/tree-sitter/tree-sitter-scala"))
+          (sql . ("https://github.com/DerekStride/tree-sitter-sql"))
+          (surface . ("https://github.com/connorlay/tree-sitter-surface"))
           (toml . ("https://github.com/tree-sitter/tree-sitter-toml"))
           (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src"))
           (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src"))
-          (yaml . ("https://github.com/ikatyang/tree-sitter-yaml"))
-          (dockerfile . ("https://github.com/camdencheek/tree-sitter-dockerfile"))
-          (cmake . ("https://github.com/uyha/tree-sitter-cmake"))
-          (ruby . ("https://github.com/tree-sitter/tree-sitter-ruby"))
-          (elixir . ("https://github.com/elixir-lang/tree-sitter-elixir"))
-          (heex . ("https://github.com/phoenixframework/tree-sitter-heex"))
-          (sql . ("https://github.com/DerekStride/tree-sitter-sql"))
-          (csharp . ("https://github.com/tree-sitter/tree-sitter-c-sharp"))
-          (php . ("https://github.com/tree-sitter/tree-sitter-php"))
-          (latex . ("https://github.com/latex-lsp/tree-sitter-latex"))))
+          (typst . ("https://github.com/uben0/tree-sitter-typst"))
+          (verilog . ("https://github.com/tree-sitter/tree-sitter-verilog"))
+          (vhdl . ("https://github.com/gdkrmr/tree-sitter-vhdl"))
+          (vue . ("https://github.com/merico-dev/tree-sitter-vue"))
+          (wast . ("https://github.com/bytecodealliance/tree-sitter-wast"))
+          (wat . ("https://github.com/bytecodealliance/tree-sitter-wat"))
+          (wgsl . ("https://github.com/mehmetoguzderin/tree-sitter-wgsl"))
+          (yaml . ("https://github.com/ikatyang/tree-sitter-yaml"))))
 
   ;; Automatic installation and updating of tree-sitter grammars
   (defun my/treesit-install-all-languages ()
@@ -2567,8 +2606,11 @@ This function integrates with exwm-firefox-core to open the current page."
       (dolist (lang languages)
         (unless (treesit-language-available-p lang)
           (message "Installing tree-sitter grammar for %s..." lang)
-          (treesit-install-language-grammar lang))
-        (message "Tree-sitter grammar for %s is ready" lang))))
+          (condition-case err
+              (treesit-install-language-grammar lang)
+            (error (message "Failed to install %s: %s" lang (error-message-string err)))))
+        (when (treesit-language-available-p lang)
+          (message "Tree-sitter grammar for %s is ready" lang)))))
 
   ;; Update existing grammars
   (defun my/treesit-update-all-languages ()
@@ -2578,37 +2620,88 @@ This function integrates with exwm-firefox-core to open the current page."
       (dolist (lang languages)
         (when (treesit-language-available-p lang)
           (message "Updating tree-sitter grammar for %s..." lang)
-          (treesit-install-language-grammar lang))
+          (condition-case err
+              (treesit-install-language-grammar lang)
+            (error (message "Failed to update %s: %s" lang (error-message-string err)))))
         (message "Updated tree-sitter grammar for %s" lang))))
 
+  ;; Check installed grammars
+  (defun my/treesit-check-grammars ()
+    "Check which tree-sitter grammars are installed."
+    (interactive)
+    (let ((languages (mapcar #'car treesit-language-source-alist))
+          (installed '())
+          (missing '()))
+      (dolist (lang languages)
+        (if (treesit-language-available-p lang)
+            (push lang installed)
+          (push lang missing)))
+      (message "Installed grammars: %s\nMissing grammars: %s"
+               (mapconcat #'symbol-name (nreverse installed) ", ")
+               (mapconcat #'symbol-name (nreverse missing) ", "))))
+
   ;; Major mode remapping for tree-sitter variants
-  ;; REMOVE emacs-lisp-mode and lisp-interaction-mode remappings
+  ;; Updated for Emacs 30.1 with improved inheritance
   (setq major-mode-remap-alist
-        '((c-mode . c-ts-mode)
+        '((awk-mode . awk-ts-mode)
+          (bash-mode . bash-ts-mode)
+          (sh-mode . bash-ts-mode)
+          (bibtex-mode . bibtex-ts-mode)
+          (c-mode . c-ts-mode)
           (c++-mode . c++-ts-mode)
           (cmake-mode . cmake-ts-mode)
-          (conf-toml-mode . toml-ts-mode)
+          (csharp-mode . csharp-ts-mode)
           (css-mode . css-ts-mode)
-          (js-mode . js-ts-mode)
-          (js2-mode . js-ts-mode)
-          (javascript-mode . js-ts-mode)
-          (js-json-mode . json-ts-mode)
-          (python-mode . python-ts-mode)
-          (sh-mode . bash-ts-mode)
-          (typescript-mode . typescript-ts-mode)
-          (rust-mode . rust-ts-mode)
-          (yaml-mode . yaml-ts-mode)
-          (ruby-mode . ruby-ts-mode)
           (dockerfile-mode . dockerfile-ts-mode)
-          (java-mode . java-ts-mode)
+          (elixir-mode . elixir-ts-mode)
+          (go-mode . go-ts-mode)
+          (go-mod-mode . go-mod-ts-mode)
           (html-mode . html-ts-mode)
           (mhtml-mode . html-ts-mode)
-          (sgml-mode . html-ts-mode)
+          (java-mode . java-ts-mode)
+          (javascript-mode . js-ts-mode)
+          (js-mode . js-ts-mode)
+          (js2-mode . js-ts-mode)
+          (js-json-mode . json-ts-mode)
+          (json-mode . json-ts-mode)
           (lua-mode . lua-ts-mode)
-          (elixir-mode . elixir-ts-mode)
-          (heex-mode . heex-ts-mode)))
-  ;; REMOVED: (emacs-lisp-mode . emacs-lisp-ts-mode)
-  ;; REMOVED: (lisp-interaction-mode . emacs-lisp-ts-mode)
+          (makefile-mode . make-ts-mode)
+          (makefile-gmake-mode . make-ts-mode)
+          (markdown-mode . markdown-ts-mode)
+          (php-mode . php-ts-mode)
+          (python-mode . python-ts-mode)
+          (r-mode . r-ts-mode)
+          (ruby-mode . ruby-ts-mode)
+          (rust-mode . rust-ts-mode)
+          (scala-mode . scala-ts-mode)
+          (sql-mode . sql-ts-mode)
+          (toml-mode . toml-ts-mode)
+          (conf-toml-mode . toml-ts-mode)
+          (tsx-mode . tsx-ts-mode)
+          (typescript-mode . typescript-ts-mode)
+          (verilog-mode . verilog-ts-mode)
+          (yaml-mode . yaml-ts-mode)))
+
+  ;; Emacs 30.1: Add parent mode relationships for better integration
+  ;; This ensures dir-locals and other mode-specific settings work
+  (with-eval-after-load 'c-ts-mode
+    (derived-mode-add-parents 'c-ts-mode '(c-mode)))
+  (with-eval-after-load 'c++-ts-mode
+    (derived-mode-add-parents 'c++-ts-mode '(c++-mode)))
+  (with-eval-after-load 'python-ts-mode
+    (derived-mode-add-parents 'python-ts-mode '(python-mode)))
+  (with-eval-after-load 'js-ts-mode
+    (derived-mode-add-parents 'js-ts-mode '(js-mode)))
+  (with-eval-after-load 'typescript-ts-mode
+    (derived-mode-add-parents 'typescript-ts-mode '(typescript-mode)))
+  (with-eval-after-load 'rust-ts-mode
+    (derived-mode-add-parents 'rust-ts-mode '(rust-mode)))
+  (with-eval-after-load 'go-ts-mode
+    (derived-mode-add-parents 'go-ts-mode '(go-mode)))
+  (with-eval-after-load 'ruby-ts-mode
+    (derived-mode-add-parents 'ruby-ts-mode '(ruby-mode)))
+  (with-eval-after-load 'yaml-ts-mode
+    (derived-mode-add-parents 'yaml-ts-mode '(yaml-mode)))
 
   ;; Font-lock and indentation settings
   (setq treesit-font-lock-level 4)  ; Maximum highlighting
@@ -2617,9 +2710,8 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq treesit-max-buffer-size (* 4 1024 1024))  ; 4MB max buffer size
 
   :config
-  ;; Install grammars on first run
-  (unless (file-exists-p (expand-file-name "tree-sitter" user-emacs-directory))
-    (my/treesit-install-all-languages))
+  ;; Run grammar check on startup
+  (my/treesit-check-grammars)
 
   ;; Note: Standard Emacs navigation commands work with tree-sitter:
   ;; C-M-a / C-M-e - beginning/end of defun
@@ -2627,7 +2719,6 @@ This function integrates with exwm-firefox-core to open the current page."
   ;; C-M-d / C-M-u - down-list/backward-up-list
   ;; C-M-n / C-M-p - forward-list/backward-list
   ;; C-M-h - mark-defun (works with tree-sitter)
-  ;; No custom keybindings needed!
   )
 
 ;; Treesit-auto for automatic mode selection and grammar installation
@@ -2652,10 +2743,21 @@ This function integrates with exwm-firefox-core to open the current page."
                       (setq-local treesit-defun-type-regexp
                                   (rx (or "function_definition"
                                           "class_definition")))
+                      ;; Define tree-sitter things for navigation
+                      (setq-local treesit-thing-settings
+                                  `((python
+                                     (defun . ,(rx (or "function_definition"
+                                                       "class_definition")))
+                                     (sexp . ,(rx (or "expression"
+                                                      "statement")))
+                                     (sentence . ,(rx (or "simple_statement"
+                                                          "compound_statement"))))))
                       ;; Enable outline-minor-mode for folding
                       (outline-minor-mode 1)
                       (setq-local outline-regexp
                                   (rx (or "class" "def" "async def")))
+                      ;; Set primary parser
+                      (setq-local treesit-primary-parser (treesit-parser-create 'python))
                       ;; Use eglot for LSP features
                       (eglot-ensure))))
 
@@ -2673,8 +2775,25 @@ This function integrates with exwm-firefox-core to open the current page."
                          "arrow_function"
                          "method_definition"
                          "class_declaration")))
+     ;; Define tree-sitter things
+     (setq-local treesit-thing-settings
+                 `((,(treesit-language-at (point))
+                    (defun . ,(rx (or "function_declaration"
+                                      "function_expression"
+                                      "arrow_function"
+                                      "method_definition"
+                                      "class_declaration")))
+                    (sexp . ,(rx (or "expression" "statement")))
+                    (sentence . "statement"))))
      ;; Enable outline-minor-mode for folding
      (outline-minor-mode 1)
+     ;; Set primary parser
+     (when (derived-mode-p 'tsx-ts-mode)
+       (setq-local treesit-primary-parser (treesit-parser-create 'tsx)))
+     (when (derived-mode-p 'typescript-ts-mode)
+       (setq-local treesit-primary-parser (treesit-parser-create 'typescript)))
+     (when (derived-mode-p 'js-ts-mode)
+       (setq-local treesit-primary-parser (treesit-parser-create 'javascript)))
      ;; Use eglot for LSP features
      (eglot-ensure))))
 
@@ -2689,6 +2808,16 @@ This function integrates with exwm-firefox-core to open the current page."
                                         "trait_item"
                                         "struct_item"
                                         "enum_item")))
+                    (setq-local treesit-thing-settings
+                                `((rust
+                                   (defun . ,(rx (or "function_item"
+                                                     "impl_item")))
+                                   (class . ,(rx (or "struct_item"
+                                                     "enum_item"
+                                                     "trait_item")))
+                                   (sexp . "expression")
+                                   (sentence . "statement"))))
+                    (setq-local treesit-primary-parser (treesit-parser-create 'rust))
                     (eglot-ensure))))
 
 ;; Go with tree-sitter
@@ -2700,7 +2829,49 @@ This function integrates with exwm-firefox-core to open the current page."
                               (rx (or "function_declaration"
                                       "method_declaration"
                                       "type_declaration")))
+                  (setq-local treesit-thing-settings
+                              `((go
+                                 (defun . ,(rx (or "function_declaration"
+                                                   "method_declaration")))
+                                 (type . "type_declaration")
+                                 (sexp . "expression")
+                                 (sentence . "statement"))))
+                  (setq-local treesit-primary-parser (treesit-parser-create 'go))
                   (eglot-ensure))))
+
+;; Ruby with tree-sitter
+(use-package ruby-ts-mode
+  :ensure nil
+  :hook
+  (ruby-ts-mode . (lambda ()
+                    (setq-local treesit-defun-type-regexp
+                                (rx (or "method" "class" "module")))
+                    (setq-local treesit-thing-settings
+                                `((ruby
+                                   (defun . ,(rx (or "method" "singleton_method")))
+                                   (class . ,(rx (or "class" "module")))
+                                   (sexp . "expression")
+                                   (sentence . "statement"))))
+                    (setq-local treesit-primary-parser (treesit-parser-create 'ruby))
+                    (eglot-ensure))))
+
+;; Elisp with tree-sitter (if available)
+(use-package elisp-ts-mode
+  :ensure nil
+  :if (treesit-language-available-p 'elisp)
+  :hook
+  (elisp-ts-mode . (lambda ()
+                     (setq-local treesit-defun-type-regexp
+                                 (rx (or "function_definition"
+                                         "macro_definition")))
+                     (setq-local treesit-thing-settings
+                                 `((elisp
+                                    (defun . ,(rx (or "function_definition"
+                                                      "macro_definition")))
+                                    (sexp . "sexp")
+                                    (sentence . "sexp"))))
+                     (setq-local treesit-primary-parser (treesit-parser-create 'elisp)))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                          Built-in Folding with Tree-sitter                  ;;
@@ -3544,31 +3715,50 @@ This function integrates with exwm-firefox-core to open the current page."
   :hook (after-init . global-emojify-mode))
 
 ;;;;; for the funny
-(defun my/scratch-background-logo ()
-  "Add a centered background logo to *scratch* buffer."
-  (with-current-buffer "*scratch*"
-    (let* ((logo-path (expand-file-name "images/splash.svg" data-directory))
-           (logo (create-image logo-path nil nil :scale 0.3))
-           (img-width (car (image-size logo t)))
-           (img-height (cdr (image-size logo t)))
-           (window-width (window-width))
-           (window-height (window-height))
-           ;; Calculate center position
-           (x-pos (/ (- window-width (/ img-width (frame-char-width))) 2))
-           (y-pos (/ (- window-height (/ img-height (frame-char-height))) 2)))
-      ;; Create overlay for background effect
-      (let ((ov (make-overlay (point-min) (point-max))))
-        (overlay-put ov 'before-string
-                     (concat (make-string y-pos ?\n)
-                             (make-string x-pos ?\s)
-                             (propertize " " 'display logo)))
-        (overlay-put ov 'window (selected-window))
-        (overlay-put ov 'priority -100)))))
+(use-package emacs
+  :ensure nil
+  :config
+  (defun my/scratch-background-logo ()
+    "Add a centered background logo to *scratch* buffer."
+    (when (and (get-buffer "*scratch*")
+               (window-system))  ; Only in GUI mode
+      (with-current-buffer "*scratch*"
+        (let* ((logo-path (expand-file-name "images/splash.svg" data-directory)))
+          (when (file-exists-p logo-path)
+            (let* ((logo (create-image logo-path nil nil :scale 0.3))
+                   (img-width (car (image-size logo t)))
+                   (img-height (cdr (image-size logo t)))
+                   ;; Use frame dimensions for more reliable sizing
+                   (frame-width (frame-pixel-width))
+                   (frame-height (frame-pixel-height))
+                   (char-width (frame-char-width))
+                   (char-height (frame-char-height))
+                   ;; Calculate center position
+                   (x-pos (max 0 (/ (- (/ frame-width char-width)
+                                      (/ img-width char-width)) 2)))
+                   (y-pos (max 0 (/ (- (/ frame-height char-height)
+                                      (/ img-height char-height)) 2))))
+              ;; Remove any existing overlays first
+              (remove-overlays (point-min) (point-max) 'scratch-logo t)
+              ;; Create new overlay
+              (let ((ov (make-overlay (point-min) (point-min))))
+                (overlay-put ov 'before-string
+                             (concat (make-string y-pos ?\n)
+                                     (make-string x-pos ?\s)
+                                     (propertize " " 'display logo)))
+                (overlay-put ov 'scratch-logo t)
+                (overlay-put ov 'priority -100)
+                ;; Make overlay window-specific
+                (overlay-put ov 'window (get-buffer-window "*scratch*"))))))))
 
-(add-hook 'emacs-startup-hook
-          (lambda ()
-            (when (get-buffer "*scratch*")
-              (my/scratch-background-logo))))
+  ;; Run after frame is fully initialized
+  :hook
+  ((after-init . (lambda ()
+                   (run-with-idle-timer 0.1 nil #'my/scratch-background-logo)))
+   ;; Re-run when creating new frames
+   (after-make-frame-functions . (lambda (frame)
+                                   (with-selected-frame frame
+                                     (run-with-idle-timer 0.1 nil #'my/scratch-background-logo))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
