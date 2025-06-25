@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 20:34:55 by grim>
+;; Time-stamp: <Last changed 2025-06-24 20:35:30 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3735,9 +3735,9 @@ This function integrates with exwm-firefox-core to open the current page."
                    (char-height (frame-char-height))
                    ;; Calculate center position
                    (x-pos (max 0 (/ (- (/ frame-width char-width)
-                                      (/ img-width char-width)) 2)))
+                                       (/ img-width char-width)) 2)))
                    (y-pos (max 0 (/ (- (/ frame-height char-height)
-                                      (/ img-height char-height)) 2))))
+                                       (/ img-height char-height)) 2))))
               ;; Remove any existing overlays first
               (remove-overlays (point-min) (point-max) 'scratch-logo t)
               ;; Create new overlay
@@ -3751,14 +3751,14 @@ This function integrates with exwm-firefox-core to open the current page."
                 ;; Make overlay window-specific
                 (overlay-put ov 'window (get-buffer-window "*scratch*"))))))))
 
-  ;; Run after frame is fully initialized
-  :hook
-  ((after-init . (lambda ()
-                   (run-with-idle-timer 0.1 nil #'my/scratch-background-logo)))
-   ;; Re-run when creating new frames
-   (after-make-frame-functions . (lambda (frame)
-                                   (with-selected-frame frame
-                                     (run-with-idle-timer 0.1 nil #'my/scratch-background-logo))))))
+    ;; Run after frame is fully initialized
+    :hook
+    ((after-init . (lambda ()
+                     (run-with-idle-timer 0.1 nil #'my/scratch-background-logo)))
+     ;; Re-run when creating new frames
+     (after-make-frame-functions . (lambda (frame)
+                                     (with-selected-frame frame
+                                       (run-with-idle-timer 0.1 nil #'my/scratch-background-logo)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
