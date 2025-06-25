@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-24 20:47:52 by grim>
+;; Time-stamp: <Last changed 2025-06-24 20:54:40 by grim>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3710,52 +3710,6 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq emojify-display-style 'unicode)
   (setq emojify-emoji-styles '(unicode))
   :hook (after-init . global-emojify-mode))
-
-;;;;; for the funny
-(use-package emacs
-  :ensure nil
-  :config
-  (defun my/scratch-background-logo ()
-    "Add a centered background logo to *scratch* buffer."
-    (when (and (get-buffer "*scratch*")
-               (window-system))  ; Only in GUI mode
-      (with-current-buffer "*scratch*"
-        (let* ((logo-path (expand-file-name "images/splash.svg" data-directory)))
-          (when (file-exists-p logo-path)
-            (let* ((logo (create-image logo-path nil nil :scale 0.3))
-                   (img-width (car (image-size logo t)))
-                   (img-height (cdr (image-size logo t)))
-                   ;; Use frame dimensions for more reliable sizing
-                   (frame-width (frame-pixel-width))
-                   (frame-height (frame-pixel-height))
-                   (char-width (frame-char-width))
-                   (char-height (frame-char-height))
-                   ;; Calculate center position
-                   (x-pos (max 0 (/ (- (/ frame-width char-width)
-                                       (/ img-width char-width)) 2)))
-                   (y-pos (max 0 (/ (- (/ frame-height char-height)
-                                       (/ img-height char-height)) 2))))
-              ;; Remove any existing overlays first
-              (remove-overlays (point-min) (point-max) 'scratch-logo t)
-              ;; Create new overlay
-              (let ((ov (make-overlay (point-min) (point-min))))
-                (overlay-put ov 'before-string
-                             (concat (make-string y-pos ?\n)
-                                     (make-string x-pos ?\s)
-                                     (propertize " " 'display logo)))
-                (overlay-put ov 'scratch-logo t)
-                (overlay-put ov 'priority -100)
-                ;; Make overlay window-specific
-                (overlay-put ov 'window (get-buffer-window "*scratch*"))))))))
-
-    ;; Run after frame is fully initialized
-    :hook
-    ((after-init . (lambda ()
-                     (run-with-idle-timer 0.1 nil #'my/scratch-background-logo)))
-     ;; Re-run when creating new frames
-     (after-make-frame-functions . (lambda (frame)
-                                     (with-selected-frame frame
-                                       (run-with-idle-timer 0.1 nil #'my/scratch-background-logo)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                               Final Cleanup                               ;;
