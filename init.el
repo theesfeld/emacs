@@ -429,6 +429,36 @@ The DWIM behaviour of this command is as follows:
 
 ;;; EXWM
 
+;; Consolidated GUI Environment Detection Functions
+(defun grim/gui-available-p ()
+  "Check if GUI is available and suitable for EXWM/X11."
+  (and (display-graphic-p)
+       (eq window-system 'x)
+       (not (getenv "WAYLAND_DISPLAY"))))
+
+(defun grim/graphical-frame-p (&optional frame)
+  "Check if FRAME (or current frame) is graphical."
+  (display-graphic-p frame))
+
+(defun grim/x11-compatible-p ()
+  "Check if running on X11-compatible window system."
+  (memq window-system '(x)))
+
+(defun grim/multi-platform-gui-p ()
+  "Check if running on any GUI platform (X11, macOS, Windows)."
+  (memq window-system '(mac ns x w32)))
+
+;; Macro for GUI-dependent configuration blocks
+(defmacro grim/when-gui (&rest body)
+  "Execute BODY only when GUI is available and suitable for EXWM."
+  `(when (grim/gui-available-p)
+     ,@body))
+
+(defmacro grim/when-graphical (&rest body)
+  "Execute BODY only when current frame is graphical."
+  `(when (grim/graphical-frame-p)
+     ,@body))
+
 (when (eq window-system 'x)
   (defun grim/run-in-background (command)
     (condition-case err
@@ -445,11 +475,9 @@ The DWIM behaviour of this command is as follows:
                 command
                 (error-message-string err)))))
 
-  (defun my/gui-available-p ()
-    "Check if GUI is available and suitable for EXWM."
-    (and (display-graphic-p)
-         (eq window-system 'x)
-         (not (getenv "WAYLAND_DISPLAY"))))
+  ;;;; PENDING REMOVAL - Legacy compatibility alias
+  (defalias 'my/gui-available-p 'grim/gui-available-p
+    "DEPRECATED: Use grim/gui-available-p instead.")
 
   (defun grim/exwm-init-hook ()
     (exwm-workspace-switch-create 1)
@@ -472,8 +500,11 @@ The DWIM behaviour of this command is as follows:
       ("Firefox" (exwm-workspace-rename-buffer
                   (format "Firefox: %s" exwm-title)))))
 
-  ;; Only configure EXWM if running in suitable GUI environment
-  (when (my/gui-available-p)
+;;; UNIFIED EXWM AND GUI CONFIGURATION
+;; All EXWM and GUI-dependent configurations consolidated here
+
+(grim/when-gui
+  ;; Main EXWM Configuration
     (use-package
       exwm
       :ensure t
