@@ -49,12 +49,20 @@
     (set-window-scroll-bars (minibuffer-window frame) nil nil nil nil :persistent)))
 (add-hook 'after-make-frame-functions #'grim-emacs-no-minibuffer-scroll-bar)
 
-;; Temporarily increase the garbage collection threshold.  These
-;; changes help shave off about half a second of startup time.  The
+;; Enhanced GC optimization for Emacs 30.1 startup performance
+;; These changes help shave off significant startup time.  The
 ;; `most-positive-fixnum' is DANGEROUS AS A PERMANENT VALUE.  See the
 ;; `emacs-startup-hook' a few lines below for what I actually use.
 (setq gc-cons-threshold most-positive-fixnum
       gc-cons-percentage 0.5)
+
+;; Emacs 30.1: Optimize memory allocation during startup
+(when (fboundp 'startup-redirect-eln-cache)
+  (setq native-comp-eln-load-path 
+        (list (expand-file-name "eln-cache/" user-emacs-directory))))
+
+;; Emacs 30.1: Enhanced process handling during startup
+(setq process-adaptive-read-buffering nil) ; Disable adaptive buffering during startup
 
 ;; Same idea as above for the `file-name-handler-alist' and the
 ;; `vc-handled-backends' with regard to startup speed optimisation.
@@ -68,10 +76,15 @@
 
 (add-hook 'emacs-startup-hook
           (lambda ()
-            (setq gc-cons-threshold (* 100 100 8)
+            ;; Emacs 30.1 optimized GC settings for runtime performance
+            (setq gc-cons-threshold (* 100 1024 1024) ; 100MB threshold
                   gc-cons-percentage 0.1
                   file-name-handler-alist grim-emacs--file-name-handler-alist
-                  vc-handled-backends grim-emacs--vc-handled-backends)))
+                  vc-handled-backends grim-emacs--vc-handled-backends)
+            ;; Re-enable process adaptive buffering after startup
+            (setq process-adaptive-read-buffering t)
+            ;; Run GC after startup to clean up
+            (run-with-idle-timer 2 nil #'garbage-collect)))
 
 ;; Initialise installed packages at this early stage, by using the
 ;; available cache.  I had tried a setup with this set to nil in the

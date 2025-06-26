@@ -24,15 +24,51 @@
 
 ;;; Early Initial Settings
 
+;; Performance Monitoring and Startup Timing
+(defvar grim-emacs--startup-time-start (current-time)
+  "Time when Emacs startup began.")
+
+(defvar grim-emacs--startup-phases nil
+  "List of startup phases with their timing.")
+
+(defun grim-emacs--log-startup-phase (phase-name)
+  "Log a startup PHASE-NAME with current time."
+  (let ((current-time (current-time)))
+    (push (cons phase-name (float-time (time-subtract current-time grim-emacs--startup-time-start)))
+          grim-emacs--startup-phases)))
+
+(grim-emacs--log-startup-phase "init-start")
+
+;; Enhanced Native Compilation for Emacs 30.1
 (when (native-comp-available-p)
   (setq native-comp-async-report-warnings-errors 'silent) ; Emacs 28 with native compilation
-  (setq native-compile-prune-cache t)) ; Emacs 29
+  (setq native-compile-prune-cache t) ; Emacs 29
+  ;; Emacs 30.1 optimizations
+  (setq native-comp-jit-compilation t) ; Enable JIT compilation
+  (setq native-comp-deferred-compilation-deny-list nil) ; Allow all deferred compilation
+  ;; Increase async compilation jobs if system can handle it
+  (when (> (num-processors) 2)
+    (setq native-comp-async-jobs-number (min 8 (- (num-processors) 1))))
+  ;; Emacs 30.1: Optimize native compilation cache handling
+  (setq native-comp-speed 2) ; Balance between compilation speed and runtime performance
+  (setq native-comp-debug 0) ; Disable debugging for better performance
+
+(grim-emacs--log-startup-phase "native-comp-config")
 
 ;; Disable the damn thing by making it disposable.
 (setq custom-file (make-temp-file "emacs-custom-"))
 
-;; imenu support
+;; use-package support and performance settings
 (setq use-package-enable-imenu-support t)
+(setq use-package-expand-minimally t) ; Reduce use-package overhead in Emacs 30.1
+(setq use-package-compute-statistics t) ; Enable statistics for performance analysis
+
+;; Emacs 30.1 runtime performance optimizations
+(setq idle-update-delay 1.0) ; Reduce frequency of idle updates
+(setq-default bidi-paragraph-direction 'left-to-right) ; Disable bidirectional text for performance
+(setq bidi-inhibit-bpa t) ; Disable Bidirectional Parentheses Algorithm
+(setq fast-but-imprecise-scrolling t) ; Faster scrolling for large files
+(setq redisplay-skip-fontification-on-input t) ; Skip fontification during input for better responsiveness
 
 ;; Enable these
 (mapc
@@ -57,9 +93,12 @@
 
 ;;; MELPA
 
+(grim-emacs--log-startup-phase "melpa-start")
+
 (setq package-vc-register-as-project nil) ; Emacs 30
 
-(add-hook 'package-menu-mode-hook #'hl-line-mode)
+;;;; PENDING REMOVAL: Moved to use-package hl-line :hook
+;; (add-hook 'package-menu-mode-hook #'hl-line-mode)
 
 (setq package-archives
       '(("gnu-elpa" . "https://elpa.gnu.org/packages/")
@@ -73,7 +112,11 @@
         ("melpa" . 2)
         ("nongnu" . 1)))
 
+(grim-emacs--log-startup-phase "package-archives-configured")
+
 ;;; CUSTOM FUNCTIONS
+
+(grim-emacs--log-startup-phase "custom-functions-start")
 
 (defun prot-common-auth-get-field (host prop)
   "Find PROP in `auth-sources' for HOST entry."
@@ -209,6 +252,8 @@ The DWIM behaviour of this command is as follows:
 (declare-function completion-preview--hide "completion-preview")
 
 ;;; EDNC NOTIFICATIONS (DBUS)
+
+(grim-emacs--log-startup-phase "use-package-loading-start")
 
 (use-package ednc
   :ensure t
@@ -477,10 +522,10 @@ The DWIM behaviour of this command is as follows:
     (use-package
       exwm
       :ensure t
+      :hook ((exwm-update-class . grim/exwm-update-class)
+             (exwm-update-title . grim/exwm-update-title)
+             (exwm-init . grim/exwm-init-hook))
       :config (setq exwm-workspace-number 5)
-    (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
-    (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
-    (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
 
     (setq exwm-workspace-show-all-buffers t)
     (setq exwm-layout-show-all-buffers t)
@@ -897,14 +942,10 @@ The DWIM behaviour of this command is as follows:
   (require 'autoinsert)
   (auto-insert-mode 1)
 
+  ;;;; PENDING REMOVAL: Time-stamp configuration moved to use-package time-stamp
   ;; When there is a "Time-stamp: <>" string in the first 10 lines of the file,
   ;; Emacs will write time-stamp information there when saving the file.
   ;; (Borrowed from http://home.thep.lu.se/~karlf/emacs.html)
-  (setq
-   time-stamp-active t ; Do enable time-stamps.
-   time-stamp-line-limit 10 ; Check first 10 buffer lines for Time-stamp: <>
-   time-stamp-format "Last changed %Y-%02m-%02d %02H:%02M:%02S by %u")
-  (add-hook 'write-file-hooks 'time-stamp) ; Update when saving.
 
   ;; Define a function to generate the time-stamp line with appropriate comment syntax
   (defun my/insert-time-stamp ()
@@ -925,8 +966,8 @@ The DWIM behaviour of this command is as follows:
           (org-mode . [my/insert-time-stamp])
           ;; For text-mode
           (text-mode . [my/insert-time-stamp])))
+  ;;;; PENDING REMOVAL: Moved to use-package time-stamp :hook
   ;; Enable time-stamp updates on save
-  (add-hook 'before-save-hook 'time-stamp)
 
   :config
   (setq scroll-conservatively 101) ; Scroll line-by-line without recentering
@@ -1055,7 +1096,7 @@ The DWIM behaviour of this command is as follows:
 (use-package
   ediff
   :ensure nil
-  :defer t
+  :commands (ediff ediff-files ediff-buffers ediff-directories)
   :custom
   (ediff-split-window-function
    'split-window-right "Split windows vertically")
@@ -1164,7 +1205,7 @@ The DWIM behaviour of this command is as follows:
 (use-package
   tramp
   :ensure nil
-  :defer t
+  :commands (tramp-file-name-handler tramp-cleanup-all-connections)
   :config
   ;; Optimize TRAMP for auto-revert
   (setq tramp-auto-save-directory
@@ -1242,7 +1283,7 @@ The DWIM behaviour of this command is as follows:
 (use-package
   vundo
   :ensure t
-  :defer t
+  :commands (vundo)
   :bind ("C-x u" . vundo)
   :config
   (setq vundo-glyph-alist vundo-unicode-symbols)
@@ -1675,7 +1716,11 @@ The DWIM behaviour of this command is as follows:
   :hook
   ((text-mode-hook . flyspell-mode)
    (org-mode-hook . flyspell-mode)
-   (prog-mode-hook . flyspell-prog-mode))
+   (prog-mode-hook . flyspell-prog-mode)
+   (text-mode-hook . (lambda ()
+                       (setq-local completion-at-point-functions
+                                   (remove 'ispell-completion-at-point
+                                           completion-at-point-functions)))))
   :config
   (setq ispell-program-name "aspell")
   (setq ispell-dictionary "en_US")
@@ -1689,11 +1734,12 @@ The DWIM behaviour of this command is as follows:
   (setq ispell-alternate-dictionary nil)
 
   ;; Remove ispell completions from text modes since we use aspell
-  (add-hook 'text-mode-hook
-            (lambda ()
-              (setq-local completion-at-point-functions
-                          (remove 'ispell-completion-at-point
-                                  completion-at-point-functions))))
+  ;;;; PENDING REMOVAL: Converted to :hook
+  ;; (add-hook 'text-mode-hook
+  ;;           (lambda ()
+  ;;             (setq-local completion-at-point-functions
+  ;;                         (remove 'ispell-completion-at-point
+  ;;                                 completion-at-point-functions))))
 
   ;; Ensure aspell is installed
   (unless (executable-find "aspell")
@@ -1756,9 +1802,15 @@ The DWIM behaviour of this command is as follows:
 
 ;;; org-mode
 
-;; Core Org Mode Configuration
+;; Core Org Mode Configuration  
 (use-package org
   :ensure nil
+  :defer t
+  :hook ((org-mode . org-indent-mode)
+         (org-mode . visual-line-mode))
+  :bind (("C-c l" . org-store-link)
+         ("C-c a" . org-agenda)
+         ("C-c c" . org-capture))
   :config
   ;; Basic settings
   (setq org-directory "~/Documents/notes/")
@@ -1871,10 +1923,10 @@ The DWIM behaviour of this command is as follows:
   :ensure t
   :hook (org-mode . org-auto-tangle-mode))
 
-;; Standard Org keybindings
-(global-set-key (kbd "C-c l") 'org-store-link)
-(global-set-key (kbd "C-c a") 'org-agenda)
-(global-set-key (kbd "C-c c") 'org-capture)
+;;;; PENDING REMOVAL - Org keybindings moved to use-package :bind for lazy loading
+;; (global-set-key (kbd "C-c l") 'org-store-link)
+;; (global-set-key (kbd "C-c a") 'org-agenda)  
+;; (global-set-key (kbd "C-c c") 'org-capture)
 
 ;;; magit / forge
 
@@ -2789,17 +2841,15 @@ This function integrates with exwm-firefox-core to open the current page."
     .
     (lambda ()
       (with-current-buffer "*scratch*"
-        (flymake-mode -1)))))
+        (flymake-mode -1))))
+   (emacs-lisp-mode-hook . (lambda ()
+                             ;; Only add diagnostic functions for file-backed buffers
+                             (when (buffer-file-name)
+                               (add-hook 'flymake-diagnostic-functions #'elisp-flymake-byte-compile nil t)
+                               (add-hook 'flymake-diagnostic-functions #'elisp-flymake-checkdoc nil t)))))
   :config
   (setq flymake-fringe-indicator-position 'right-fringe)
   (setq flymake-no-changes-timeout 1)
-  (add-hook
-   'emacs-lisp-mode-hook
-   (lambda ()
-     ;; Only add diagnostic functions for file-backed buffers
-     (when (buffer-file-name)
-       (add-hook 'flymake-diagnostic-functions #'elisp-flymake-byte-compile nil t)
-       (add-hook 'flymake-diagnostic-functions #'elisp-flymake-checkdoc nil t))))
   :bind
   (:map flymake-mode-map
         ("C-c ! l" . flymake-show-buffer-diagnostics)
@@ -2828,7 +2878,7 @@ This function integrates with exwm-firefox-core to open the current page."
      (file-name-directory (find-library-name "yasnippet-snippets")))))
   (yas-prompt-functions
    '(yas-completing-prompt yas-ido-prompt yas-no-prompt))
-  :config (add-hook 'after-init-hook #'yas-reload-all)
+  :hook (after-init . yas-reload-all)
   :bind (:map yas-minor-mode-map ("C-c y" . yas-insert-snippet)))
 
 (use-package
@@ -3118,8 +3168,9 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq hl-line-sticky-flag nil)
   (setq hl-line-overlay-priority -50)
   :hook
-  (prog-mode . hl-line-mode)
-  (occur-mode . hl-line-mode))
+  ((prog-mode . hl-line-mode)
+   (occur-mode . hl-line-mode)
+   (package-menu-mode . hl-line-mode)))
 
 ;;; slime
 
@@ -3129,7 +3180,11 @@ This function integrates with exwm-firefox-core to open the current page."
   :defer t
   :hook
   ((lisp-mode . slime-mode) ;; Enable slime-mode for Lisp files
-   (inferior-lisp-mode . inferior-slime-mode)) ;; Enhance inferior-lisp buffers
+   (inferior-lisp-mode . inferior-slime-mode) ;; Enhance inferior-lisp buffers
+   (slime-mode . my/start-slime) ;; Start SLIME automatically when opening a Lisp file
+   (slime-repl-mode . (lambda () 
+                        (when (featurep 'paredit)
+                          (enable-paredit-mode)))))
   :bind
   (:map
    slime-mode-map
@@ -3173,10 +3228,12 @@ This function integrates with exwm-firefox-core to open the current page."
   (defun my/start-slime ()
     (unless (slime-connected-p)
       (save-excursion (slime))))
-  (add-hook 'slime-mode-hook #'my/start-slime)
+  ;;;; PENDING REMOVAL: Moved to use-package slime :hook
+  ;; (add-hook 'slime-mode-hook #'my/start-slime)
   ;; Enable paredit in SLIME REPL for better Lisp editing
-  (when (featurep 'paredit)
-    (add-hook 'slime-repl-mode-hook #'enable-paredit-mode)))
+  ;;;; PENDING REMOVAL: Moved to use-package slime :hook
+  ;; (when (featurep 'paredit)
+  ;;   (add-hook 'slime-repl-mode-hook #'enable-paredit-mode)))
 
 ;;; xoauth2
 
@@ -3294,6 +3351,17 @@ This function integrates with exwm-firefox-core to open the current page."
   :hook (emacs-lisp-mode . aggressive-indent-mode)
   (prog-mode . aggressive-indent-mode)
   (org-mode . aggressive-indent-mode))
+
+;;; time-stamp (automatic timestamps)
+
+(use-package time-stamp
+  :ensure nil
+  :hook ((write-file . time-stamp)
+         (before-save . time-stamp))
+  :config
+  (setq time-stamp-active t ; Do enable time-stamps.
+        time-stamp-line-limit 10 ; Check first 10 buffer lines for Time-stamp: <>
+        time-stamp-format "Last changed %Y-%02m-%02d %02H:%02M:%02S by %u"))
 
 ;;; Tooltips (tooltip-mode)
 
@@ -3493,10 +3561,9 @@ This function integrates with exwm-firefox-core to open the current page."
   (pulsar-iterations 15)
   (pulsar-face 'isearch)
   (pulsar-highlight-face 'pulsar-yellow)
-  :init
-  (add-hook 'minibuffer-setup-hook #'pulsar-pulse-line)
-  (add-hook 'consult-after-jump-hook #'pulsar-recenter-middle)
-  (add-hook 'consult-after-jump-hook #'pulsar-reveal-entry)
+  :hook ((minibuffer-setup . pulsar-pulse-line)
+         (consult-after-jump . pulsar-recenter-middle)
+         (consult-after-jump . pulsar-reveal-entry))
   :config
   (
    pulsar-global-mode 1))
@@ -3551,5 +3618,74 @@ This function integrates with exwm-firefox-core to open the current page."
 ;;; final cleanup
 
 (put 'eshell 'disabled nil)
+
+;; Performance monitoring completion
+(grim-emacs--log-startup-phase "init-complete")
+
+(defun grim-emacs--display-startup-time ()
+  "Display startup time and phase breakdown."
+  (let* ((total-time (float-time (time-subtract (current-time) grim-emacs--startup-time-start)))
+         (phases (reverse grim-emacs--startup-phases))
+         (max-name-length (apply #'max (mapcar (lambda (p) (length (symbol-name (car p)))) phases))))
+    (message "Emacs startup complete in %.3fs" total-time)
+    (with-current-buffer (get-buffer-create "*Startup Profile*")
+      (erase-buffer)
+      (insert (format "Emacs Startup Profile - Total: %.3fs\n" total-time))
+      (insert (make-string 60 ?-) "\n")
+      (dolist (phase phases)
+        (insert (format "%-*s : %.3fs\n" 
+                        max-name-length 
+                        (symbol-name (car phase))
+                        (cdr phase))))
+      (insert (make-string 60 ?-) "\n")
+      (insert (format "Packages loaded: %d use-package declarations\n" 
+                      (length (apropos-internal "use-package"))))
+      (when (featurep 'comp)
+        (insert (format "Native compilation: %s\n" 
+                        (if (native-comp-available-p) "Available" "Not available"))))
+      (insert (format "GC threshold: %s\n" gc-cons-threshold))
+      (insert (format "GC percentage: %s\n" gc-cons-percentage))
+      (when use-package-compute-statistics
+        (insert "\nuse-package statistics available with: M-x use-package-report\n"))
+      (goto-char (point-min))
+      (display-buffer (current-buffer)))))
+
+(defun grim-emacs-performance-report ()
+  "Generate a comprehensive performance report."
+  (interactive)
+  (let ((buffer (get-buffer-create "*Performance Report*")))
+    (with-current-buffer buffer
+      (erase-buffer)
+      (insert "Emacs Performance Report\n")
+      (insert (make-string 30 ?=) "\n\n")
+      
+      ;; Memory usage
+      (insert "Memory Usage:\n")
+      (insert (format "  GC runs: %d\n" gcs-done))
+      (insert (format "  GC threshold: %s\n" gc-cons-threshold))
+      (insert (format "  GC percentage: %s\n" gc-cons-percentage))
+      
+      ;; Native compilation
+      (when (native-comp-available-p)
+        (insert "\nNative Compilation:\n")
+        (insert (format "  Available: %s\n" (native-comp-available-p)))
+        (insert (format "  JIT compilation: %s\n" native-comp-jit-compilation))
+        (when (boundp 'native-comp-async-jobs-number)
+          (insert (format "  Async jobs: %s\n" native-comp-async-jobs-number))))
+      
+      ;; Feature analysis
+      (insert "\nLoaded Features:\n")
+      (insert (format "  Total features: %d\n" (length features)))
+      
+      ;; Process count
+      (insert "\nProcesses:\n")
+      (insert (format "  Active processes: %d\n" (length (process-list))))
+      
+      (goto-char (point-min))
+      (display-buffer buffer))))
+
+;; Display startup time after init
+(add-hook 'emacs-startup-hook #'grim-emacs--display-startup-time)
+
 (provide 'init)
 ;;; init.el ends here
