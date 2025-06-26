@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 08:16:30 by grim>
+;; Time-stamp: <Last changed 2025-06-26 12:01:37 by grim>
 
 ;;; Commentary:
 ;;
@@ -3487,6 +3487,7 @@ This function integrates with exwm-firefox-core to open the current page."
 ;;; pulsar
 
 (use-package pulsar
+  :ensure t
   :custom
   (pulsar-pulse t)
   (pulsar-delay 0.1)
