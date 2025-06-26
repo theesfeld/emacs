@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 12:17:06 by grim>
+;; Time-stamp: <Last changed 2025-06-26 12:18:22 by grim>
 
 ;;; Early Initial Settings
 
@@ -3115,68 +3115,6 @@ This function integrates with exwm-firefox-core to open the current page."
 
 (require 'mailcap)
 (mailcap-parse-mailcaps)
-
-;;; vterm settings
-
-(use-package vterm
-  :ensure t
-  :custom
-  (vterm-kill-buffer-on-exit t "Automatically kill the vterm buffer when the shell exits.")
-  (vterm-always-compile-module t "Always compile the vterm module when needed.")
-  :config
-  ;; Additional configurations or hooks can be placed here.
-  )
-
-;;; EAT Terminal
-
-(use-package eat
-  :ensure t ;; Automatically install eat from NonGNU ELPA
-  :init
-  ;; Preload Eat so everything is ready on first use
-  (require 'eat)
-
-  ;; Set EAT_SHELL_INTEGRATION_DIR early
-  (let ((eat-dir (file-name-directory (locate-library "eat"))))
-    (when eat-dir
-      (setenv "EAT_SHELL_INTEGRATION_DIR" eat-dir)))
-
-  ;; Optionally ensure integration file is sourced in ~/.bashrc
-  (let* ((eat-dir (file-name-directory (locate-library "eat")))
-         (integration-file (and eat-dir (expand-file-name "integration/bash" eat-dir)))
-         (bashrc (expand-file-name "~/.bashrc")))
-    (when (and integration-file (file-exists-p integration-file) (file-exists-p bashrc))
-      (unless (with-temp-buffer
-                (insert-file-contents bashrc)
-                (re-search-forward "EAT_SHELL_INTEGRATION_DIR/bash\\>" nil t))
-        (with-temp-buffer
-          (insert "[ -n \"$EAT_SHELL_INTEGRATION_DIR\" ] && \\\n")
-          (insert "  source \"$EAT_SHELL_INTEGRATION_DIR/bash\"\n")
-          (append-to-file (point-min) (point-max) bashrc)))))
-
-  :custom
-  (eat-shell (or (getenv "SHELL") "/sbin/bash"))
-  (eat-kill-buffer-on-exit t)
-  (eat-enable-blinking-text t)
-  (eat-enable-mouse t)
-  (eat-semi-char-non-bound-keys
-   '([?\C-x] [?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-:] [?\M-&] [?\C-\M-c]))
-  (eat-eshell-semi-char-non-bound-keys
-   '([?\C-x] [?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-:] [?\M-&] [?\C-\M-c]))
-  (eat-enable-shell-prompt-annotation t)
-  (eat-term-scrollback-size 100000)
-  (eat-term-resize t)
-
-  :hook
-  ((eshell-load-hook . eat-eshell-mode)
-   (eshell-load-hook . eat-eshell-visual-command-mode)
-   (eat-mode-hook . (lambda ()
-                      (eat-update-semi-char-mode-map)
-                      (eat-eshell-update-semi-char-mode-map)))
-   (eat-mode-hook . eat-semi-char-mode))
-
-  :delight
-  (eat-eshell-mode nil)
-  (eat-eshell-visual-command-mode nil))
 
 ;;; gptel
 
