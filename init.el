@@ -75,18 +75,22 @@
 
 ;;; CUSTOM FUNCTIONS
 
-(defun prot-common-auth-get-field (host prop)
-  "Find PROP in `auth-sources' for HOST entry.
+;;;; PENDING REMOVAL - Function audit by Agent 5 (2025-06-26)
+;;;; Function: prot-common-auth-get-field
+;;;; Reason: Never called or referenced in configuration
+;;;; Usage count: 0 references found
+;; (defun prot-common-auth-get-field (host prop)
+;;   "Find PROP in `auth-sources' for HOST entry.
 
-HOST is the hostname to search for in authentication sources.
-PROP is the property to retrieve (e.g., :user, :secret, :port).
+;; HOST is the hostname to search for in authentication sources.
+;; PROP is the property to retrieve (e.g., :user, :secret, :port).
 
-Returns the value of PROP for the matching HOST entry, or nil if not found.
-For :secret properties, the secret function is called to get the actual value."
-  (when-let* ((source (auth-source-search :host host)))
-    (if (eq prop :secret)
-        (funcall (plist-get (car source) prop))
-      (plist-get (flatten-list source) prop))))
+;; Returns the value of PROP for the matching HOST entry, or nil if not found.
+;; For :secret properties, the secret function is called to get the actual value."
+;;   (when-let* ((source (auth-source-search :host host)))
+;;     (if (eq prop :secret)
+;;         (funcall (plist-get (car source) prop))
+;;       (plist-get (flatten-list source) prop))))
 
 (defun prot/keyboard-quit-dwim ()
   "Do-What-I-Mean behaviour for a general `keyboard-quit'.
@@ -214,28 +218,32 @@ a hook in `org-capture-after-finalize-hook'."
    'org-capture-after-finalize-hook
    #'my-org-download-images-from-capture))
 
-(defun my/toggle-buffer (buffer-name command)
-  "Toggle a buffer with BUFFER-NAME, running COMMAND if it doesn't exist.
+;;;; PENDING REMOVAL - Function audit by Agent 5 (2025-06-26)
+;;;; Function: my/toggle-buffer
+;;;; Reason: Never called or referenced in configuration
+;;;; Usage count: 0 references found
+;; (defun my/toggle-buffer (buffer-name command)
+;;   "Toggle a buffer with BUFFER-NAME, running COMMAND if it doesn't exist.
 
-BUFFER-NAME is the name of the buffer to toggle visibility for.
-COMMAND must be an interactive command that creates the buffer.
+;; BUFFER-NAME is the name of the buffer to toggle visibility for.
+;; COMMAND must be an interactive command that creates the buffer.
 
-If the buffer exists and is visible, hide it by quitting the window.
-If the buffer exists but is not visible, switch to it.
-If the buffer doesn't exist, run COMMAND to create it.
+;; If the buffer exists and is visible, hide it by quitting the window.
+;; If the buffer exists but is not visible, switch to it.
+;; If the buffer doesn't exist, run COMMAND to create it.
 
-Signals an error if COMMAND is not an interactive command."
-  (interactive)
-  (unless (commandp command)
-    (error "Second argument must be an interactive command"))
-  (let ((buffer (get-buffer buffer-name)))
-    (if (and buffer (get-buffer-window buffer))
-        ;; If the buffer exists and is visible, hide it
-        (quit-window nil (get-buffer-window buffer))
-      ;; If it doesn't exist or isn't visible, start it or switch to it
-      (if buffer
-          (switch-to-buffer buffer)
-        (call-interactively command)))))
+;; Signals an error if COMMAND is not an interactive command."
+;;   (interactive)
+;;   (unless (commandp command)
+;;     (error "Second argument must be an interactive command"))
+;;   (let ((buffer (get-buffer buffer-name)))
+;;     (if (and buffer (get-buffer-window buffer))
+;;         ;; If the buffer exists and is visible, hide it
+;;         (quit-window nil (get-buffer-window buffer))
+;;       ;; If it doesn't exist or isn't visible, start it or switch to it
+;;       (if buffer
+;;           (switch-to-buffer buffer)
+;;         (call-interactively command)))))
 
 (defun my-org-capture-delete-file-after-kill (&rest _)
   "Delete file if capture is aborted.
