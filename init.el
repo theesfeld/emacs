@@ -1518,7 +1518,30 @@ The DWIM behaviour of this command is as follows:
   :custom
   (completion-preview-minimum-symbol-length 2)
   (completion-preview-idle-delay nil)
+  ;; Enable cycling through multiple candidates instead of exact match only
+  (completion-preview-exact-match-only nil)
+  ;; Show messages when cycling through candidates  
+  (completion-preview-message-format "Completion %i of %n")
+  ;; Use basic completion style for predictable cycling behavior
+  (completion-preview-completion-styles '(basic partial-completion))
   :config
+  ;; ===== COMPLETION PREVIEW CYCLING ENHANCEMENTS =====
+  ;; This section implements enhanced cycling through completion candidates.
+  ;; 
+  ;; Key bindings:
+  ;; - M-n: cycle to next completion candidate
+  ;; - M-p: cycle to previous completion candidate
+  ;; - TAB: insert current completion (with smartparens integration)
+  ;;
+  ;; The cycling functionality is provided by built-in Emacs 30.1 functions:
+  ;; - completion-preview-next-candidate
+  ;; - completion-preview-prev-candidate
+  ;;
+  ;; Configuration enables:
+  ;; - Multiple candidate cycling (exact-match-only disabled)
+  ;; - Visual feedback showing "Completion X of Y"
+  ;; - Integration with existing TAB completion workflow
+  
   ;; Make completion-preview work with paredit/smartparens
   (defun my/completion-preview-insert-word ()
     "Insert completion preview and move past any closing delimiters."
@@ -1549,7 +1572,16 @@ The DWIM behaviour of this command is as follows:
   :bind
   (:map completion-preview-active-mode-map
         ("TAB" . my/completion-preview-insert-word)
-        ([tab] . my/completion-preview-insert-word)))
+        ([tab] . my/completion-preview-insert-word)
+        ;; Cycling through completion candidates
+        ("M-n" . completion-preview-next-candidate)
+        ("M-p" . completion-preview-prev-candidate))
+
+  ;; Which-key integration for completion cycling
+  (with-eval-after-load 'which-key
+    (which-key-add-key-based-replacements
+      "M-n" "next-completion"
+      "M-p" "prev-completion")))
 
 (use-package emacs
   :ensure nil
