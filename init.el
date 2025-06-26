@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 18:25:32 by grim>
+;; Time-stamp: <Last changed 2025-06-26 19:59:39 by grim>
 
 ;;; Early Initial Settings
 
@@ -345,9 +345,18 @@ The DWIM behaviour of this command is as follows:
                  (let ((buffer-name (car data))
                        (position (ednc--calculate-position index)))
                    (when (posframe-workable-p)
-                     (posframe-refresh buffer-name
-                                       :x-pixel-offset (car position)
-                                       :y-pixel-offset (cdr position))))
+                     ;; Use posframe-show to reposition, not posframe-refresh
+                     (posframe-show buffer-name
+                                    :position (pcase ednc-notification-position
+                                                ((or 'top-right 'bottom-right) (point-max))
+                                                ((or 'top-left 'bottom-left) (point-min)))
+                                    :poshandler (pcase ednc-notification-position
+                                                  ('top-right #'posframe-poshandler-frame-top-right-corner)
+                                                  ('top-left #'posframe-poshandler-frame-top-left-corner)
+                                                  ('bottom-right #'posframe-poshandler-frame-bottom-right-corner)
+                                                  ('bottom-left #'posframe-poshandler-frame-bottom-left-corner))
+                                    :x-pixel-offset (car position)
+                                    :y-pixel-offset (cdr position))))
                  (cl-incf index))
                ednc--active-notifications)))
 
