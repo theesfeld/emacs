@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 17:48:37 by grim>
+;; Time-stamp: <Last changed 2025-06-26 17:53:28 by grim>
 
 ;;; Early Initial Settings
 
@@ -904,6 +904,14 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (add-hook 'before-save-hook 'time-stamp)
 
   :config
+  (require-theme 'modus-themes)
+  (setq modus-themes-italic-constructs t
+        modus-themes-bold-constructs t
+        modus-themes-common-palette-overrides
+        modus-themes-preset-overrides-intense)
+  (custom-set-faces
+   '(cursor ((t (:background "#FFC107")))))
+  (load-theme modus-vivendi)
   (setq scroll-conservatively 101) ; Scroll line-by-line without recentering
   (when (file-exists-p custom-file)
     (load custom-file))
@@ -960,41 +968,24 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    ("C-x K" . kill-buffer)
    ))) ; Close the when condition for exwm-related packages
 
-;; Modus themes configuration
-(use-package modus-themes
-  :ensure nil ; Built-in since Emacs 28
-  :demand t
-  :config
-  ;; Theme customization settings
-  (setq modus-themes-bold-constructs t
-        modus-themes-italic-constructs t)
-
-  ;; Load the theme
-  (load-theme 'modus-vivendi t)
-
-  ;; Custom cursor color for better visibility
-  ;; Using modus-vivendi palette color (amber) for consistency
-  (custom-set-faces
-   '(cursor ((t (:background "#FFC107"))))))
-
 (when (my/gui-available-p)
   (use-package windower
-  :ensure t
-  :after exwm
-  :config
-  (global-set-key (kbd "<s-tab>") 'windower-switch-to-last-buffer)
-  (global-set-key (kbd "<s-o>") 'windower-toggle-single)
-  (global-set-key (kbd "s-\\") 'windower-toggle-split)
+    :ensure t
+    :after exwm
+    :config
+    (global-set-key (kbd "<s-tab>") 'windower-switch-to-last-buffer)
+    (global-set-key (kbd "<s-o>") 'windower-toggle-single)
+    (global-set-key (kbd "s-\\") 'windower-toggle-split)
 
-  (global-set-key (kbd "<s-M-left>") 'windower-move-border-left)
-  (global-set-key (kbd "<s-M-down>") 'windower-move-border-below)
-  (global-set-key (kbd "<s-M-up>") 'windower-move-border-above)
-  (global-set-key (kbd "<s-M-right>") 'windower-move-border-right)
+    (global-set-key (kbd "<s-M-left>") 'windower-move-border-left)
+    (global-set-key (kbd "<s-M-down>") 'windower-move-border-below)
+    (global-set-key (kbd "<s-M-up>") 'windower-move-border-above)
+    (global-set-key (kbd "<s-M-right>") 'windower-move-border-right)
 
-  (global-set-key (kbd "<s-S-left>") 'windower-swap-left)
-  (global-set-key (kbd "<s-S-down>") 'windower-swap-below)
-  (global-set-key (kbd "<s-S-up>") 'windower-swap-above)
-  (global-set-key (kbd "<s-S-right>") 'windower-swap-right))) ; Close windower when block
+    (global-set-key (kbd "<s-S-left>") 'windower-swap-left)
+    (global-set-key (kbd "<s-S-down>") 'windower-swap-below)
+    (global-set-key (kbd "<s-S-up>") 'windower-swap-above)
+    (global-set-key (kbd "<s-S-right>") 'windower-swap-right))) ; Close windower when block
 
 ;;; shell environment (path, etc)
 
