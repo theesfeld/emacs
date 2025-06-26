@@ -1,26 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 12:02:40 by grim>
-
-;;; Commentary:
-;;
-;; This comprehensive Emacs configuration serves as both a text editor and
-;; a complete window manager using EXWM (Emacs X Window Manager).
-;;
-;; Key Design Decisions:
-;; - completion-preview for inline completion (not Corfu)
-;; - eat as primary terminal (not vterm)
-;; - outline-minor-mode for code folding (not hideshow)
-;; - Platform detection for EXWM (X11 only)
-;; - Performance optimizations for startup and runtime
-;;
-;; Major Components:
-;; - EXWM: Window manager with 5 workspaces, X11 integration
-;; - LSP: Eglot for language server integration
-;; - Completion: Vertico + Consult + completion-preview
-;; - Version Control: Magit + Forge for Git workflows
-;; - Communication: Slack, Mastodon, IRC, Email (Notmuch)
-;; - Org Mode: GTD workflow with agenda caching
+;; Time-stamp: <Last changed 2025-06-26 12:11:04 by grim>
 
 ;;; Early Initial Settings
 
@@ -1460,48 +1440,6 @@ The DWIM behaviour of this command is as follows:
 
 (use-package marginalia :ensure t :init (marginalia-mode 1))
 
-;;; corfu
-
-;; (use-package
-;;   corfu
-;;   :ensure t
-;;   :init
-;;   (global-corfu-mode 1)                 ; Enable Corfu globally
-;;   (corfu-popupinfo-mode 1)              ; Show documentation in popups
-;;   :custom
-;;   (corfu-cycle t)                 ; Cycle through candidates
-;;   (corfu-auto t)                  ; Auto-show completions after typing
-;;   (corfu-preselect 'directory)
-;;   (corfu-auto-prefix 2)          ; Show completions after 2 characters
-;;   (corfu-auto-delay 0.1)         ; Fast popup display
-;;   (corfu-quit-at-boundary t)     ; Quit if no match at word boundary
-;;   (corfu-quit-no-match t)        ; Quit if no matches
-;;   (corfu-preselect-first t)      ; Preselect first candidate
-;;   (corfu-popupinfo-delay '(0.5 . 0.2)) ; Delay for documentation popup
-;;   :bind
-;;   (:map
-;;    corfu-map
-;;    ("TAB" . corfu-complete)             ; Accept current suggestion
-;;    ([tab] . corfu-complete)             ; Ensure both TAB forms work
-;;    ("<down>" . corfu-next)              ; Cycle down with down arrow
-;;    ("<up>" . corfu-previous)            ; Cycle up with up arrow
-;;    ("M-d" . corfu-popupinfo-toggle))    ; Toggle documentation
-;;   :config
-;;   (keymap-set
-;;    corfu-map "RET"
-;;    `(menu-item
-;;      "" nil
-;;      :filter
-;;      ,(lambda (&optional _)
-;;         (and (derived-mode-p 'eshell-mode 'comint-mode)
-;;              #'corfu-send))))
-;;   ;; Disable Corfu in minibuffer to avoid conflicts with Vertico
-;;   (defun corfu-disable-in-minibuffer ()
-;;     "Disable Corfu in minibuffer."
-;;     (when (minibufferp)
-;;       (corfu-mode -1)))
-;;   (add-hook 'minibuffer-setup-hook #'corfu-disable-in-minibuffer))
-
 ;;; completion-preview
 
 (use-package completion-preview
@@ -1549,7 +1487,9 @@ The DWIM behaviour of this command is as follows:
   :bind
   (:map completion-preview-active-mode-map
         ("TAB" . my/completion-preview-insert-word)
-        ([tab] . my/completion-preview-insert-word)))
+        ([tab] . my/completion-preview-insert-word)
+        ("M-n" . #'completion-preview-next-candidate)
+        ("M-p" . #'completion-preview-prev-candidate)))
 
 (use-package emacs
   :ensure nil
