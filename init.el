@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-25 16:38:00 by grim>
+;; Time-stamp: <Last changed 2025-06-26 06:48:44 by grim>
 
 ;;; Early Initial Settings
 
@@ -1209,7 +1209,6 @@ The DWIM behaviour of this command is as follows:
     fundamental-mode
     "Log"
     "A simple mode for log files."
-    (setq font-lock-defaults '(log-mode-font-lock-keywords)))
 
   (defvar log-mode-font-lock-keywords
     '(("\\bDEBUG\\b" . 'font-lock-comment-face)
@@ -1737,8 +1736,6 @@ The DWIM behaviour of this command is as follows:
       (setq eldoc-documentation-strategy #'eldoc-documentation-default)
       (eglot-inlay-hints-mode))))
   :config
-  ;; Remove the elisp exclusion since tree-sitter can handle it
-  ;; (add-to-list 'eglot-server-programs '(emacs-lisp-mode . nil)) ; REMOVE THIS LINE
 
   ;; Disable python-flymake when eglot is active
   (add-hook
