@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 18:13:38 by grim>
+;; Time-stamp: <Last changed 2025-06-26 18:16:04 by grim>
 
 ;;; Early Initial Settings
 
@@ -781,7 +781,7 @@ The DWIM behaviour of this command is as follows:
     ;; File and Directory Management Setup
     ;;
     ;; This configuration centralizes all temporary files, backups, history files,
-    ;; and caches in ~/.tmp/ to keep the main .emacs.d directory clean and organized.
+    ;; and caches in ~/.tmp/ to keep the main ~/.config/emacs.d directory clean and organized.
     ;; Each type of file gets its own subdirectory for better organization.
     ;;
     ;; Alternative approach: You could use (locate-user-emacs-file "filename") for
@@ -2162,7 +2162,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   ;; Core eww settings for better browsing experience
   (setq eww-search-prefix "https://duckduckgo.com/html?q="  ; Privacy-focused search
         eww-download-directory "~/Downloads/"
-        eww-bookmarks-directory "~/.emacs.d/eww-bookmarks/"
+        eww-bookmarks-directory "~/.config/emacs/eww-bookmarks/"
         eww-history-limit 150
         eww-use-external-browser-for-content-type "\\`\\(video/\\|audio\\)" ; Use external browser for media
         eww-browse-url-new-window-is-tab nil
