@@ -76,7 +76,13 @@
 ;;; CUSTOM FUNCTIONS
 
 (defun prot-common-auth-get-field (host prop)
-  "Find PROP in `auth-sources' for HOST entry."
+  "Find PROP in `auth-sources' for HOST entry.
+
+HOST is the hostname to search for in authentication sources.
+PROP is the property to retrieve (e.g., :user, :secret, :port).
+
+Returns the value of PROP for the matching HOST entry, or nil if not found.
+For :secret properties, the secret function is called to get the actual value."
   (when-let* ((source (auth-source-search :host host)))
     (if (eq prop :secret)
         (funcall (plist-get (car source) prop))
@@ -109,7 +115,11 @@ The DWIM behaviour of this command is as follows:
 (global-set-key [remap keyboard-quit] #'prot/keyboard-quit-dwim)
 
 (defun my/consult-yasnippet-with-minor-modes ()
-  "Use Vertico to select YASnippets, considering active major and minor modes."
+  "Use Vertico to select YASnippets, considering active major and minor modes.
+
+This function collects snippets from both the current major mode and all
+active minor modes, then presents them using consult-yasnippet for selection.
+If no snippets are available, displays an informative message."
   (interactive)
   (require 'yasnippet)
   (require 'consult-yasnippet nil t)
@@ -140,8 +150,20 @@ The DWIM behaviour of this command is as follows:
 
 (global-set-key (kbd "C-& y") #'my/consult-yasnippet-with-minor-modes)
 
+;; which-key integration for utility bindings
+(with-eval-after-load 'which-key
+  (which-key-add-key-based-replacements
+    "C-& y" "yasnippet-with-modes"
+    "s-+" "increase-text-and-pane"
+    "s-_" "decrease-text-and-pane"))
+
 (defun increase-text-and-pane ()
-  "Increase text size and adjust window width proportionally."
+  "Increase text size and adjust window width proportionally.
+
+This interactive command increases the text scale by one step and
+automatically enlarges the current window horizontally to maintain
+readable line lengths. The window width adjustment is calculated
+based on the scaling factor to preserve visual proportions."
   (interactive)
   (let* ((orig-scale
           (or (car (get 'text-scale-mode-amount 'customized-value))
@@ -157,7 +179,12 @@ The DWIM behaviour of this command is as follows:
 (global-set-key (kbd "s-+") 'increase-text-and-pane)
 
 (defun decrease-text-and-pane ()
-  "Decrease text size and adjust window width proportionally."
+  "Decrease text size and adjust window width proportionally.
+
+This interactive command decreases the text scale by one step and
+automatically shrinks the current window horizontally to maintain
+readable line lengths. The window width adjustment is calculated
+based on the scaling factor to preserve visual proportions."
   (interactive)
   (let* ((orig-scale
           (or (car (get 'text-scale-mode-amount 'customized-value))
@@ -173,6 +200,12 @@ The DWIM behaviour of this command is as follows:
 (global-set-key (kbd "s-_") 'decrease-text-and-pane)
 
 (defun my-org-download-images-from-capture ()
+  "Download images from org-capture buffers tagged with :website:.
+
+This function searches the current buffer for the :website: tag and,
+if found, automatically downloads all images referenced by HTTP/HTTPS
+URLs in org-mode link format. The function is designed to be used as
+a hook in `org-capture-after-finalize-hook'."
   (when (string-match-p ":website:" (buffer-string))
     (goto-char (point-min))
     (while (re-search-forward "\\[\\[\\(http[^][]+\\)\\]\\[.*\\]\\]"
@@ -182,7 +215,16 @@ The DWIM behaviour of this command is as follows:
    #'my-org-download-images-from-capture))
 
 (defun my/toggle-buffer (buffer-name command)
-  "Toggle a buffer with BUFFER-NAME, running COMMAND if it doesn't exist."
+  "Toggle a buffer with BUFFER-NAME, running COMMAND if it doesn't exist.
+
+BUFFER-NAME is the name of the buffer to toggle visibility for.
+COMMAND must be an interactive command that creates the buffer.
+
+If the buffer exists and is visible, hide it by quitting the window.
+If the buffer exists but is not visible, switch to it.
+If the buffer doesn't exist, run COMMAND to create it.
+
+Signals an error if COMMAND is not an interactive command."
   (interactive)
   (unless (commandp command)
     (error "Second argument must be an interactive command"))
@@ -196,7 +238,15 @@ The DWIM behaviour of this command is as follows:
         (call-interactively command)))))
 
 (defun my-org-capture-delete-file-after-kill (&rest _)
-  "Delete file if capture is aborted."
+  "Delete file if capture is aborted.
+
+This function is designed to be used as advice or a hook function
+to clean up files when an org-capture session is killed or aborted.
+It checks if the current buffer has an associated file and deletes
+it if the file exists, then displays a confirmation message.
+
+The &rest _ parameter allows this function to be used as advice
+that ignores any arguments passed to it."
   (when (and (buffer-file-name) (file-exists-p (buffer-file-name)))
     (delete-file (buffer-file-name))
     (message "Deleted aborted capture file: %s" (buffer-file-name))))
@@ -679,6 +729,19 @@ The DWIM behaviour of this command is as follows:
                 map))
 
     :config
+    ;; which-key integration for Firefox bindings
+    (with-eval-after-load 'which-key
+      (which-key-add-key-based-replacements
+        "C-c F" "firefox-controls"
+        "C-c F n" "new-tab"
+        "C-c F t" "close-tab"
+        "C-c F <right>" "next-tab"
+        "C-c F <left>" "prev-tab"
+        "C-c F h" "back"
+        "C-c F l" "forward"
+        "C-c F f" "find"
+        "C-c F r" "reload"
+        "C-c F b" "bookmark"))
     ;; Load package safely
     (require 'exwm-firefox-core nil t)
 
@@ -1037,7 +1100,7 @@ The DWIM behaviour of this command is as follows:
   (setq exec-path-from-shell-shell-name "/bin/bash")
   (setq exec-path-from-shell-arguments '("-l"))
   ;; Only initialize if needed and not already done
-  (when (and (memq window-system '(mac ns x))
+  (when (and (grim/multi-platform-gui-p)
              (not (getenv "EMACS_SHELL_INITIALIZED")))
     (exec-path-from-shell-initialize)
     (setenv "EMACS_SHELL_INITIALIZED" "1"))
@@ -3110,20 +3173,28 @@ This function integrates with exwm-firefox-core to open the current page."
 ;;; emacsclient frame hack
 
 (defun my-after-make-frame-setup (&optional frame)
-  "Initialize UI settings for new FRAMEs on Xorg, including daemon clients."
-  (when (display-graphic-p) ; Only for graphical frames
+  "Initialize UI settings for new FRAMEs on Xorg, including daemon clients.
+
+FRAME is the frame to configure, defaults to the currently selected frame.
+This function disables menu-bar-mode, tool-bar-mode, and scroll-bar-mode
+for graphical frames only. It's designed to work with both regular Emacs
+instances and frames created by emacsclient when running as a daemon.
+
+The function only operates on graphical displays and safely handles
+both daemon and non-daemon configurations."
+  (when (grim/graphical-frame-p frame) ; Only for graphical frames
     (with-selected-frame (or frame (selected-frame))
       (menu-bar-mode -1)
       (tool-bar-mode -1)
       (scroll-bar-mode -1))))
 
 (unless (daemonp)
-  (when (display-graphic-p)
+  (when (grim/graphical-frame-p)
     (my-after-make-frame-setup)))
 (add-hook
  'after-make-frame-functions
  (lambda (frame)
-   (when (display-graphic-p frame)
+   (when (grim/graphical-frame-p frame)
      (my-after-make-frame-setup frame))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
