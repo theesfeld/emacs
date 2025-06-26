@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 17:53:28 by grim>
+;; Time-stamp: <Last changed 2025-06-26 17:54:44 by grim>
 
 ;;; Early Initial Settings
 
@@ -904,7 +904,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (add-hook 'before-save-hook 'time-stamp)
 
   :config
-  (require-theme 'modus-themes)
   (setq modus-themes-italic-constructs t
         modus-themes-bold-constructs t
         modus-themes-common-palette-overrides
