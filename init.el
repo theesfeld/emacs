@@ -627,9 +627,9 @@ The DWIM behaviour of this command is as follows:
             ([?\M-w] . [?\C-c])
             ([?\C-y] . [?\C-v])))
 
-    (exwm-enable))) ; Close the when condition
+    (exwm-enable)
 
-  (when (my/gui-available-p)
+  ;; EXWM Edit Package
     (use-package
       exwm-edit
       :ensure t
@@ -1037,7 +1037,7 @@ The DWIM behaviour of this command is as follows:
   (setq exec-path-from-shell-shell-name "/bin/bash")
   (setq exec-path-from-shell-arguments '("-l"))
   ;; Only initialize if needed and not already done
-  (when (and (memq window-system '(mac ns x))
+  (when (and (grim/multi-platform-gui-p)
              (not (getenv "EMACS_SHELL_INITIALIZED")))
     (exec-path-from-shell-initialize)
     (setenv "EMACS_SHELL_INITIALIZED" "1"))
@@ -3079,19 +3079,19 @@ This function integrates with exwm-firefox-core to open the current page."
 
 (defun my-after-make-frame-setup (&optional frame)
   "Initialize UI settings for new FRAMEs on Xorg, including daemon clients."
-  (when (display-graphic-p) ; Only for graphical frames
+  (when (grim/graphical-frame-p frame) ; Only for graphical frames
     (with-selected-frame (or frame (selected-frame))
       (menu-bar-mode -1)
       (tool-bar-mode -1)
       (scroll-bar-mode -1))))
 
 (unless (daemonp)
-  (when (display-graphic-p)
+  (when (grim/graphical-frame-p)
     (my-after-make-frame-setup)))
 (add-hook
  'after-make-frame-functions
  (lambda (frame)
-   (when (display-graphic-p frame)
+   (when (grim/graphical-frame-p frame)
      (my-after-make-frame-setup frame))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
