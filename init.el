@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 12:39:24 by grim>
+;; Time-stamp: <Last changed 2025-06-26 15:51:30 by grim>
 
 ;;; Early Initial Settings
 
@@ -1548,6 +1548,7 @@ The DWIM behaviour of this command is as follows:
   :ensure nil             ; Built-in since Emacs 29, no need to ensure
   :hook (after-init . which-key-mode)
   :config
+  ;; Basic settings
   (setq which-key-idle-delay 0.2)
   (setq which-key-idle-secondary-delay 0.1)
   (setq which-key-add-column-padding 1)
@@ -1557,7 +1558,127 @@ The DWIM behaviour of this command is as follows:
   (setq which-key-side-window-location 'bottom)
   (setq which-key-side-window-max-height 0.25)
   (setq which-key-separator " → ")
-  (setq which-key-prefix-prefix "+"))
+  (setq which-key-prefix-prefix "+")
+
+  ;; ===== PREFIX GROUP LABELS =====
+  ;; Add bracketed labels for all major prefix groups
+
+  ;; Main C-c prefix groups
+  (which-key-add-key-based-replacements
+    "C-c 0"   "[0x0] Upload Service"
+    "C-c F"   "[Firefox] EXWM Browser"
+    "C-c l"   "[LSP] Language Server"
+    "C-c n"   "[Notes] Denote System"
+    "C-c w"   "[AI] GPTel Assistant")
+
+  ;; Core C-c commands with descriptions
+  (which-key-add-key-based-replacements
+    "C-c >"   "[MC] Next Multiple Cursor"
+    "C-c <"   "[MC] Previous Multiple Cursor"
+    "C-c '"   "[Jump] Avy Goto Char"
+    "C-c a"   "[Org] Agenda"
+    "C-c c"   "[Org] Capture"
+    "C-c d"   "[Diff] Ediff Dispatch"
+    "C-c e"   "[EXWM] Edit Compose"
+    "C-c g"   "[Git] Magit Status"
+    "C-c r"   "[Recent] Consult Recent File"
+    "C-c s"   "[Search] Deadgrep"
+    "C-c y"   "[Snippet] YASnippet Insert")
+
+  ;; 0x0 Upload Service subcommands
+  (which-key-add-key-based-replacements
+    "C-c 0 f" "Upload File"
+    "C-c 0 s" "Shorten URI"
+    "C-c 0 t" "Upload Text"
+    "C-c 0 d" "Do What I Mean"
+    "C-c 0 p" "Upload Popup")
+
+  ;; Firefox EXWM subcommands
+  (which-key-add-key-based-replacements
+    "C-c F n" "New Tab"
+    "C-c F t" "Close Tab"
+    "C-c F <right>" "Next Tab"
+    "C-c F <left>" "Previous Tab"
+    "C-c F h" "Back"
+    "C-c F l" "Forward"
+    "C-c F f" "Find"
+    "C-c F r" "Reload"
+    "C-c F b" "Bookmark")
+
+  ;; LSP subcommands
+  (which-key-add-key-based-replacements
+    "C-c l a" "Code Actions"
+    "C-c l d" "Diagnostics"
+    "C-c l s" "Symbols"
+    "C-c l f" "File Symbols"
+    "C-c l i" "Implementation"
+    "C-c l r" "References"
+    "C-c l D" "Definition")
+
+  ;; Denote Notes subcommands
+  (which-key-add-key-based-replacements
+    "C-c n n" "New Note"
+    "C-c n j" "Journal Entry"
+    "C-c n d" "Dired Notes"
+    "C-c n g" "Grep Notes"
+    "C-c n l" "Link"
+    "C-c n L" "Add Links"
+    "C-c n b" "Backlinks"
+    "C-c n q" "[Query] Links"
+    "C-c n q c" "Query Contents Link"
+    "C-c n q f" "Query Filenames Link"
+    "C-c n r" "Rename File"
+    "C-c n R" "Rename Using Front Matter"
+    "C-c n f" "Find Note")
+
+  ;; GPTel AI Assistant subcommands
+  (which-key-add-key-based-replacements
+    "C-c w s" "Send to AI"
+    "C-c w m" "AI Menu"
+    "C-c w a" "Add Context"
+    "C-c w f" "Add File"
+    "C-c w r" "Rewrite")
+
+  ;; Enhanced navigation and utility keys
+  (which-key-add-key-based-replacements
+    "C-x u"   "[Undo] Vundo Tree"
+    "C-x o"   "[Window] Ace Window"
+    "C-x C-b" "[Buffer] IBuffer"
+    "C-="     "[Region] Expand"
+    "C-& y"   "[Snippet] Consult YASnippet")
+
+  ;; Super key bindings with windower
+  (which-key-add-key-based-replacements
+    "s-tab"   "[Windower] Last Buffer"
+    "s-o"     "[Windower] Toggle Single"
+    "s-\\"    "[Windower] Toggle Split"
+    "s-+"     "[Text] Increase Size & Pane"
+    "s-_"     "[Text] Decrease Size & Pane")
+
+  ;; ===== MODE-SPECIFIC KEYBINDINGS =====
+  ;; ibuffer mode keybindings
+  (which-key-add-key-based-replacements
+    "/ u"     "[IBuffer] Mark Unsaved"
+    "/ *"     "[IBuffer] Mark Special"
+    "/ d"     "[IBuffer] Mark Dired"
+    "/ t"     "[IBuffer] Toggle Filter Groups"
+    "/ p"     "[IBuffer] Filter Project")
+
+  ;; eww browser mode keybindings
+  (which-key-add-key-based-replacements
+    "C-c C-f" "[EWW] Open in Firefox"
+    "J"       "[EWW] Next Buffer"
+    "K"       "[EWW] Previous Buffer"
+    "+"       "[EWW] Increase Text Size"
+    "-"       "[EWW] Decrease Text Size"
+    "0"       "[EWW] Reset Text Size"
+    "V"       "[EWW] View Source"
+    "I"       "[EWW] Toggle Images"
+    "W"       "[EWW] Copy Page Title"
+    "D"       "[EWW] Download as PDF"
+    "B"       "[EWW] Bookmark with Tags"
+    "C-c /"   "[EWW] New Search"
+    "C-c C-o" "[EWW] Bookmark to Firefox"))
 
 ;;; avy
 
@@ -1931,7 +2052,7 @@ The DWIM behaviour of this command is as follows:
                         :foreground "#d8dee9" ; Light text
                         :box "#88c0d0")
     ;; Refresh buffer list
-    (ibuffer-update nil t))
+    (ibuffer-update nil t)))
 
   ;; Ensure all-the-icons for visual enhancement
   (use-package
@@ -1991,21 +2112,6 @@ The DWIM behaviour of this command is as follows:
    (kbd "C-c C-g")
    #'ibuffer-switch-to-saved-filter-groups)
 
-  ;; Which-key integration
-  (with-eval-after-load 'which-key
-    (which-key-add-key-based-replacements
-      "C-x C-b"
-      "ibuffer"
-      "/ u"
-      "mark-unsaved"
-      "/ *"
-      "mark-special"
-      "/ d"
-      "mark-dired"
-      "/ t"
-      "toggle-filter-groups"
-      "/ p"
-      "filter-project")))
 
 ;;; dired
 
@@ -2272,22 +2378,6 @@ This function integrates with exwm-firefox-core to open the current page."
   (:map eww-mode-map
         ("o" . ace-link-eww)))         ; Jump to any link with ace
 
-;; Which-key descriptions for better discoverability
-(with-eval-after-load 'which-key
-  (which-key-add-key-based-replacements
-    "C-c C-f" "open-in-firefox"
-    "J" "next-eww-buffer"
-    "K" "previous-eww-buffer"
-    "+" "increase-text-size"
-    "-" "decrease-text-size"
-    "0" "reset-text-size"
-    "V" "view-source"
-    "I" "toggle-images"
-    "W" "copy-page-title"
-    "D" "download-as-pdf"
-    "B" "bookmark-with-tags"
-    "C-c /" "new-search"
-    "C-c C-o" "bookmark->firefox"))
 
 ;;; pdf-tools
 
@@ -2817,8 +2907,7 @@ This function integrates with exwm-firefox-core to open the current page."
   (define-key my-0x0-prefix-map (kbd "d") '0x0-dwim)
   (define-key my-0x0-prefix-map (kbd "p") '0x0-popup)
   ;; Optional: Integrate with which-key
-  (with-eval-after-load 'which-key
-    (which-key-add-key-based-replacements "C-c 0" "0x0-upload")))
+)
 
 ;;; eshell settings
 
