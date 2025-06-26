@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 18:17:47 by grim>
+;; Time-stamp: <Last changed 2025-06-26 18:22:25 by grim>
 
 ;;; Early Initial Settings
 
@@ -1414,8 +1414,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   ;; Uses cyan foreground from modus-vivendi palette for consistency
   ;; Transparent background allows theme colors to show through
   (set-face-attribute 'completion-preview nil
-                      :foreground "#88c0d0" ; Soft cyan from modus-vivendi color scheme
-                      :background nil)      ; Transparent to preserve theme background
+                      :foreground "#FFC107"
+                      :background "unspecified")
 
   :bind
   (:map completion-preview-active-mode-map
@@ -1679,7 +1679,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   ;; Ensure aspell is installed
   (unless (executable-find "aspell")
     (message "Aspell not found; flyspell disabled")
-    (flyspell-mode -1))
+                      (flyspell-mode -1))
   :bind
   (:map
    flyspell-mode-map
