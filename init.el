@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 18:17:28 by grim>
+;; Time-stamp: <Last changed 2025-06-26 18:17:47 by grim>
 
 ;;; Early Initial Settings
 
@@ -1364,8 +1364,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    ("M-g i" . consult-imenu)
    ("M-s r" . consult-ripgrep)
    ("M-s l" . consult-line)
-   ("M-s f" . consult-find)
-   ))
+   ("M-s f" . consult-find)))
 
 (use-package consult-yasnippet :ensure t :after (consult yasnippet))
 
