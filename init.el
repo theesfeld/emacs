@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 06:51:26 by grim>
+;; Time-stamp: <Last changed 2025-06-26 06:52:50 by grim>
 
 ;;; Early Initial Settings
 
@@ -1215,32 +1215,32 @@ The DWIM behaviour of this command is as follows:
         ("\\bINFO\\b" . 'font-lock-string-face)
         ("\\bWARN\\b" . 'font-lock-warning-face)
         ("\\bERROR\\b" . 'font-lock-function-name-face))
-      "Font-lock keywords for `log-mode' highlighting.")
+      "Font-lock keywords for `log-mode' highlighting."))
 
-    (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
+  (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
 
-    :hook
-    ((log-mode . auto-revert-tail-mode)
-     (auto-revert-tail-mode
-      .
-      (lambda ()
-        (when (derived-mode-p 'log-mode)
-          (goto-char (point-max))
-          (when (file-remote-p default-directory)
-            (setq buffer-read-only nil)
-            (let ((tramp-connection-properties
-                   (cons
-                    `(,(tramp-make-tramp-file-name
-                        (tramp-file-name-method
-                         tramp-default-remote-file-name)
-                        (tramp-file-name-user
-                         tramp-default-remote-file-name)
-                        (tramp-file-name-host
-                         tramp-default-remote-file-name)
-                        nil)
-                      "connection-buffer" "auto-revert")
-                    tramp-connection-properties)))
-              (auto-revert-set-timer)))))))))
+  :hook
+  ((log-mode . auto-revert-tail-mode)
+   (auto-revert-tail-mode
+    .
+    (lambda ()
+      (when (derived-mode-p 'log-mode)
+        (goto-char (point-max))
+        (when (file-remote-p default-directory)
+          (setq buffer-read-only nil)
+          (let ((tramp-connection-properties
+                 (cons
+                  `(,(tramp-make-tramp-file-name
+                      (tramp-file-name-method
+                       tramp-default-remote-file-name)
+                      (tramp-file-name-user
+                       tramp-default-remote-file-name)
+                      (tramp-file-name-host
+                       tramp-default-remote-file-name)
+                      nil)
+                    "connection-buffer" "auto-revert")
+                  tramp-connection-properties)))
+            (auto-revert-set-timer))))))))
 
 ;;; vundo settings
 
