@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 15:51:30 by grim>
+;; Time-stamp: <Last changed 2025-06-26 15:53:18 by grim>
 
 ;;; Early Initial Settings
 
@@ -1549,14 +1549,14 @@ The DWIM behaviour of this command is as follows:
   :hook (after-init . which-key-mode)
   :config
   ;; Basic settings
-  (setq which-key-idle-delay 0.2)
-  (setq which-key-idle-secondary-delay 0.1)
+  (setq which-key-idle-delay 0)
+  (setq which-key-idle-secondary-delay 0)
   (setq which-key-add-column-padding 1)
   (setq which-key-max-description-length 40)
   (setq which-key-show-early-on-C-h t)
   (setq which-key-popup-type 'side-window)
   (setq which-key-side-window-location 'bottom)
-  (setq which-key-side-window-max-height 0.25)
+  (setq which-key-side-window-max-height 0.3)
   (setq which-key-separator " → ")
   (setq which-key-prefix-prefix "+")
 
