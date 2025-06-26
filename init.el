@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 17:56:59 by grim>
+;; Time-stamp: <Last changed 2025-06-26 18:02:17 by grim>
 
 ;;; Early Initial Settings
 
@@ -489,8 +489,8 @@ The DWIM behaviour of this command is as follows:
 	   (cond
 	    ;; Single monitor or only eDP-1 connected
 	    ((or (= (length connected-outputs) 1)
-			 (and (member "eDP-1" connected-outputs)
-		  (= (length (remove "eDP-1" connected-outputs)) 0)))
+					 (and (member "eDP-1" connected-outputs)
+		     (= (length (remove "eDP-1" connected-outputs)) 0)))
 	     (start-process-shell-command
 	      "xrandr"
 	      nil
@@ -499,8 +499,8 @@ The DWIM behaviour of this command is as follows:
 	      "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
 	     (dolist (output (remove "eDP-1" connected-outputs))
 	       (start-process-shell-command
-			"xrandr" nil
-			(format "xrandr --output %s --off" output)))
+		"xrandr" nil
+		(format "xrandr --output %s --off" output)))
 	     (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1")))
 	    ;; One or more external monitors
 	    ((>= (length (remove "eDP-1" connected-outputs)) 1)
@@ -512,17 +512,17 @@ The DWIM behaviour of this command is as follows:
 		    (format
 		     "xrandr --output %s --primary --auto --output %s --auto --left-of %s --output eDP-1 --off"
 		     primary secondary primary))
-			 (start-process-shell-command
-	  "xrandr" nil
-	  (format
-	  "xrandr --output %s --primary --auto --output eDP-1 --off"
-	  primary)))
+					 (start-process-shell-command
+																										 "xrandr" nil
+																										 (format
+	 "xrandr --output %s --primary --auto --output eDP-1 --off"
+	 primary)))
 	       ;; Reset DPI to default (96) for external monitors
 	       (start-process-shell-command
-			"xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
+		"xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
 	       (setq exwm-randr-workspace-monitor-plist
 		     (if secondary
-				 `(0 ,primary 1 ,secondary)
+						 `(0 ,primary 1 ,secondary)
 		       `(0 ,primary)))))))))
 
       (exwm-randr-mode 1)
@@ -546,50 +546,50 @@ The DWIM behaviour of this command is as follows:
 	       ([s-down] . windmove-down)
 	       ([?\s-w] . exwm-workspace-switch)
 	       ([?\s-&]
-			.
-			(lambda (cmd)
-	    (interactive (list (read-shell-command "$ ")))
-	    (start-process-shell-command cmd nil cmd)))
+		.
+		(lambda (cmd)
+																										  (interactive (list (read-shell-command "$ ")))
+																										  (start-process-shell-command cmd nil cmd)))
 	       ([?\s-x]
-			.
-			(lambda ()
-	    (interactive)
-	    (save-buffers-kill-emacs)))
+		.
+		(lambda ()
+																										  (interactive)
+																										  (save-buffers-kill-emacs)))
 	       ([?\s-\ ]
-			.
-			(lambda ()
-	    (interactive)
-	    (async-shell-command)))
+		.
+		(lambda ()
+																										  (interactive)
+																										  (async-shell-command)))
 	       ([?\s-v] . consult-yank-pop)
 	       ([?\s-q]
-			.
-			(lambda ()
-	    (interactive)
-	    (kill-buffer-and-window)))
+		.
+		(lambda ()
+																										  (interactive)
+																										  (kill-buffer-and-window)))
 	       ([XF86PowerOff]
-			.
-			(lambda ()
-	    (interactive)
-	    (when (executable-find "systemctl")
-	    (start-process-shell-command
-	  "poweroff" nil "systemctl poweroff")))))
+		.
+		(lambda ()
+																										  (interactive)
+																										  (when (executable-find "systemctl")
+	  (start-process-shell-command
+	   "poweroff" nil "systemctl poweroff")))))
 	     (mapcar
 	      (lambda (i)
-			(cons
-	 (kbd (format "s-%d" i))
-	 (lambda ()
-	      (interactive)
-	      (message "Switching to workspace %d" i)
-	      (exwm-workspace-switch-create i))))
+		(cons
+																										 (kbd (format "s-%d" i))
+																										 (lambda ()
+	  (interactive)
+	  (message "Switching to workspace %d" i)
+	  (exwm-workspace-switch-create i))))
 	      (number-sequence 0 9))
 	     (mapcar
 	      (lambda (i)
-			(cons
-	 (kbd (format "M-s-%d" i))
-	 (lambda ()
-	      (interactive)
-	      (message "Moving window to workspace %d" i)
-	      (exwm-workspace-move-window i))))
+		(cons
+																										 (kbd (format "M-s-%d" i))
+																										 (lambda ()
+	  (interactive)
+	  (message "Moving window to workspace %d" i)
+	  (exwm-workspace-move-window i))))
 	      (number-sequence 0 9))))
 
       ;; Simulation Keys
@@ -668,20 +668,20 @@ The DWIM behaviour of this command is as follows:
 	(when (and (derived-mode-p 'exwm-mode)
 		   (member (downcase (or exwm-class-name ""))
 			   '("firefox" "firefoxdeveloperedition")))
-	    ;; Enable Firefox mode
-	    (exwm-firefox-mode 1)
-	    ;; Rename buffer to page title
-	    (when exwm-title
-	  (exwm-workspace-rename-buffer exwm-title))))
+	  ;; Enable Firefox mode
+	  (exwm-firefox-mode 1)
+	  ;; Rename buffer to page title
+	  (when exwm-title
+	    (exwm-workspace-rename-buffer exwm-title))))
 
       ;; Function to handle buffer switches
       (defun exwm-firefox-maybe-enable ()
 	"Enable or disable Firefox mode based on current buffer."
 	(when (derived-mode-p 'exwm-mode)
-	    (if (member (downcase (or exwm-class-name ""))
-		    '("firefox" "firefoxdeveloperedition"))
-	    (exwm-firefox-mode 1)
-	  (exwm-firefox-mode -1))))
+	  (if (member (downcase (or exwm-class-name ""))
+		      '("firefox" "firefoxdeveloperedition"))
+	      (exwm-firefox-mode 1)
+	    (exwm-firefox-mode -1))))
 
       :hook
       ;; Set up Firefox buffers when they're created
@@ -738,10 +738,10 @@ The DWIM behaviour of this command is as follows:
 	;; Ensure dependencies are installed
 	(desktop-environment-mode 1)
 	(dolist (cmd '("scrot" "slock" "pactl" "brightnessctl"))
-	    (unless (executable-find cmd)
-	  (message
-	   "Warning: %s not found; desktop-environment may not work fully"
-	   cmd))))))
+	  (unless (executable-find cmd)
+	    (message
+	     "Warning: %s not found; desktop-environment may not work fully"
+	     cmd))))))
 
 ;;; init.el version control
 
@@ -752,14 +752,14 @@ The DWIM behaviour of this command is as follows:
     (defun my-auto-commit-init-el ()
       "Commit changes to init.el after saving."
       (when (and (buffer-file-name)
-			 (string=
-	  (file-name-nondirectory (buffer-file-name)) "init.el"))
+		 (string=
+																										  (file-name-nondirectory (buffer-file-name)) "init.el"))
 	(ignore-errors
-	    (vc-checkin
-	 (list (buffer-file-name))
-	 'git
-	 nil
-	 "Auto-commit init.el changes"))))
+	  (vc-checkin
+	   (list (buffer-file-name))
+	   'git
+	   nil
+	   "Auto-commit init.el changes"))))
     :hook (after-save . my-auto-commit-init-el))
 
 ;;; emacs configuration section
@@ -809,11 +809,11 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 		   "gnus-drafts"))  ; message-auto-save-directory
       (let ((subdir (expand-file-name dir my-tmp-dir)))
 	(unless (file-exists-p subdir)
-	    (make-directory subdir t))))
+	  (make-directory subdir t))))
 
     ;; Moved from Early Initial Settings
     (setq custom-file
-	    (expand-file-name "custom.el" user-emacs-directory))
+	  (expand-file-name "custom.el" user-emacs-directory))
     ;; Basic Emacs Information and pre-load settings
     (setq
      user-full-name "TJ"
@@ -862,11 +862,11 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
      auto-save-default t)
 
     (setq savehist-additional-variables
-	    '(kill-ring
-	  search-ring
-	  regexp-search-ring
-	  extended-command-history
-	  file-name-history))
+	  '(kill-ring
+	    search-ring
+	    regexp-search-ring
+	    extended-command-history
+	    file-name-history))
 
     (setenv "TZ" "America/New_York")
     (prefer-coding-system 'utf-8)
@@ -896,19 +896,41 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     ;; Simplified auto-insert: use inline lambdas instead of custom function
     ;; The time-stamp system already handles comment syntax automatically
     (setq auto-insert-alist
-	    '(;; Add time-stamps to programming and documentation files
-	  (prog-mode . (lambda () (insert (or comment-start "#") " Time-stamp: <>\n")))
-	  (org-mode . (lambda () (insert "#+Time-stamp: <>\n")))
-	  (text-mode . (lambda () (insert "# Time-stamp: <>\n")))))
+	  '(;; Add time-stamps to programming and documentation files
+	    (prog-mode . (lambda () (insert (or comment-start "#") " Time-stamp: <>\n")))
+	    (org-mode . (lambda () (insert "#+Time-stamp: <>\n")))
+	    (text-mode . (lambda () (insert "# Time-stamp: <>\n")))))
     ;; Enable time-stamp updates on save
     (add-hook 'before-save-hook 'time-stamp)
 
     :config
     (setq modus-themes-italic-constructs t
-	    modus-themes-bold-constructs t)
+	  modus-themes-bold-constructs t)
     (custom-set-faces
      '(cursor ((t (:background "#FFC107")))))
-    (load-theme modus-vivendi)
+    (set-face-attribute 'default nil :height 120)
+    (set-face-attribute 'variable-pitch nil :height 130)
+    (load-theme 'modus-vivendi t)
+
+    (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
+      (set-face-attribute 'default nil
+			  :font "BerkeleyMonoVariable Nerd Font Mono"
+			  :height 140))
+
+    ;; Set variable-pitch font (optional, for prose or Org-mode)
+    (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
+      (set-face-attribute 'variable-pitch nil
+			  :font "BerkeleyMonoVariable Nerd Font Mono"
+			  :height 160))
+
+    ;; Customize font-lock faces
+    (set-face-attribute 'font-lock-comment-face nil
+			:slant 'italic
+			:weight 'light)
+    (set-face-attribute 'font-lock-keyword-face nil
+			:weight 'black)
+
+
     (setq scroll-conservatively 101) ; Scroll line-by-line without recentering
     (when (file-exists-p custom-file)
       (load custom-file))
@@ -2970,8 +2992,7 @@ This function integrates with exwm-firefox-core to open the current page."
     (eshell/alias "g" "git") ;; Git shorthand
     (eshell/alias "d" "dired $1") ;; Open Dired
     (eshell/alias "fd" "find-dired $PWD $1")
-    (eshell/alias "rg" "rg --color=always") ;; Ripgrep with color
-    )
+    (eshell/alias "rg" "rg --color=always"))
 
   ;; Optimize Eshell performance
   (setq eshell-modules-list
