@@ -5,8 +5,8 @@
       use-dialog-box t     ; only for mouse events, which I seldom use
       use-file-dialog nil
       use-short-answers t
-      inhibit-splash-screen t
-      inhibit-startup-screen t
+      inhibit-splash-screen nil
+      inhibit-startup-screen nil
       inhibit-x-resources t
       inhibit-startup-echo-area-message user-login-name ; read the docstring
       inhibit-startup-buffer-menu t)
@@ -94,8 +94,7 @@ not retain the generic background set by the function
 ;; `mode-line-format' is specified again and (ii) the
 ;; `prot-emacs-theme-gsettings-dark-p' will load a dark theme.
 (defun grim-emacs-avoid-initial-flash-of-light ()
-  "Avoid flash of light when starting Emacs, if needed.
-New frames are instructed to call `prot-emacs-re-enable-frame-theme'."
+  "Avoid flash of light when starting Emacs, if needed."
   (setq mode-line-format nil)
   (set-face-attribute 'default nil :background "#000000" :foreground "#ffffff")
   (set-face-attribute 'mode-line nil :background "#000000" :foreground "#ffffff" :box 'unspecified)
