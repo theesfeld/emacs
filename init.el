@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 17:46:13 by grim>
+;; Time-stamp: <Last changed 2025-06-26 17:48:37 by grim>
 
 ;;; Early Initial Settings
 
@@ -963,6 +963,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 ;; Modus themes configuration
 (use-package modus-themes
   :ensure nil ; Built-in since Emacs 28
+  :demand t
   :config
   ;; Theme customization settings
   (setq modus-themes-bold-constructs t
@@ -981,7 +982,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :ensure t
   :after exwm
   :config
-  (global-set-key (kbd "s-<tab>") 'windower-switch-to-last-buffer)
+  (global-set-key (kbd "<s-tab>") 'windower-switch-to-last-buffer)
   (global-set-key (kbd "<s-o>") 'windower-toggle-single)
   (global-set-key (kbd "s-\\") 'windower-toggle-split)
 
@@ -1575,7 +1576,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
   ;; Super key bindings with windower
   (which-key-add-key-based-replacements
-    "s-tab"   "[Windower] Last Buffer"
+    "s-<tab>"   "[Windower] Last Buffer"
     "s-o"     "[Windower] Toggle Single"
     "s-\\"    "[Windower] Toggle Split"
     "s-+"     "[Text] Increase Size & Pane"
