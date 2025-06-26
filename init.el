@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 12:01:37 by grim>
+;; Time-stamp: <Last changed 2025-06-26 12:02:40 by grim>
 
 ;;; Commentary:
 ;;
@@ -3541,6 +3541,7 @@ This function integrates with exwm-firefox-core to open the current page."
 ;; im tired of the squares
 
 (use-package emojify
+  :ensure t
   :config
   (when (member "Noto Emoji" (font-family-list))
     (set-fontset-font
