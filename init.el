@@ -1,6 +1,26 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 06:52:50 by grim>
+;; Time-stamp: <Last changed 2025-06-26 08:16:30 by grim>
+
+;;; Commentary:
+;;
+;; This comprehensive Emacs configuration serves as both a text editor and
+;; a complete window manager using EXWM (Emacs X Window Manager).
+;;
+;; Key Design Decisions:
+;; - completion-preview for inline completion (not Corfu)
+;; - eat as primary terminal (not vterm)
+;; - outline-minor-mode for code folding (not hideshow)
+;; - Platform detection for EXWM (X11 only)
+;; - Performance optimizations for startup and runtime
+;;
+;; Major Components:
+;; - EXWM: Window manager with 5 workspaces, X11 integration
+;; - LSP: Eglot for language server integration
+;; - Completion: Vertico + Consult + completion-preview
+;; - Version Control: Magit + Forge for Git workflows
+;; - Communication: Slack, Mastodon, IRC, Email (Notmuch)
+;; - Org Mode: GTD workflow with agenda caching
 
 ;;; Early Initial Settings
 
@@ -119,19 +139,6 @@ The DWIM behaviour of this command is as follows:
        "No snippets available for current major/minor modes"))))
 
 (global-set-key (kbd "C-& y") #'my/consult-yasnippet-with-minor-modes)
-
-;; Map C-M-S-s-<key> for letters and symbols
-(let ((keys
-       (append
-        (number-sequence ?a ?z) ;; a-z
-        '(?= ?- ?+ ?_)))) ;; =, -, +, _
-  (dolist (char keys)
-    (define-key
-     key-translation-map
-     (kbd (concat "C-M-S-s-" (char-to-string char)))
-     `(lambda (&optional _event)
-        (interactive)
-        (my-hyper-translate ,char)))))
 
 (defun increase-text-and-pane ()
   "Increase text size and adjust window width proportionally."
@@ -438,6 +445,12 @@ The DWIM behaviour of this command is as follows:
                 command
                 (error-message-string err)))))
 
+  (defun my/gui-available-p ()
+    "Check if GUI is available and suitable for EXWM."
+    (and (display-graphic-p)
+         (eq window-system 'x)
+         (not (getenv "WAYLAND_DISPLAY"))))
+
   (defun grim/exwm-init-hook ()
     (exwm-workspace-switch-create 1)
     (display-battery-mode 1)
@@ -459,10 +472,12 @@ The DWIM behaviour of this command is as follows:
       ("Firefox" (exwm-workspace-rename-buffer
                   (format "Firefox: %s" exwm-title)))))
 
-  (use-package
-    exwm
-    :ensure t
-    :config (setq exwm-workspace-number 5)
+  ;; Only configure EXWM if running in suitable GUI environment
+  (when (my/gui-available-p)
+    (use-package
+      exwm
+      :ensure t
+      :config (setq exwm-workspace-number 5)
     (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
     (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
     (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
@@ -612,12 +627,13 @@ The DWIM behaviour of this command is as follows:
             ([?\M-w] . [?\C-c])
             ([?\C-y] . [?\C-v])))
 
-    (exwm-enable))
+    (exwm-enable))) ; Close the when condition
 
-  (use-package
-    exwm-edit
-    :ensure t
-    :after exwm
+  (when (my/gui-available-p)
+    (use-package
+      exwm-edit
+      :ensure t
+      :after exwm
     :init
     ;; Pre-load settings
     (setq exwm-edit-default-major-mode 'text-mode) ; Default mode for editing
@@ -991,13 +1007,10 @@ The DWIM behaviour of this command is as follows:
   :bind
   (("C-x k" . kill-current-buffer)
    ("C-x K" . kill-buffer)
-   ;;;; KEYBIND_CHANGE: Removed C-x C-i (imenu) - non-standard binding
-   ;;;; KEYBIND_CHANGE: Removed C-x C-; (comment-or-uncomment-region) - use M-; instead
-   ;;;; KEYBIND_CHANGE: Removed C-x C-' (mc/mark-all-like-this) - non-standard
-   ;;;; KEYBIND_CHANGE: Removed C-x f (find-file-at-point) - conflicts with set-fill-column
-   ))
+   ))) ; Close the when condition for exwm-related packages
 
-(use-package windower
+(when (my/gui-available-p)
+  (use-package windower
   :ensure t
   :after exwm
   :config
@@ -1013,7 +1026,7 @@ The DWIM behaviour of this command is as follows:
   (global-set-key (kbd "<s-S-left>") 'windower-swap-left)
   (global-set-key (kbd "<s-S-down>") 'windower-swap-below)
   (global-set-key (kbd "<s-S-up>") 'windower-swap-above)
-  (global-set-key (kbd "<s-S-right>") 'windower-swap-right))
+  (global-set-key (kbd "<s-S-right>") 'windower-swap-right))) ; Close windower when block
 
 ;;; shell environment (path, etc)
 
@@ -1021,31 +1034,13 @@ The DWIM behaviour of this command is as follows:
   exec-path-from-shell
   :ensure t
   :config
-  ;; (defun my-load-env-file ()
-  ;;   "Load environment variables from ~/.config/emacs/.env into Emacs."
-  ;;   (let ((env-file (expand-file-name ".env" user-emacs-directory)))
-  ;;     (when (file-readable-p env-file)
-  ;;       (with-temp-buffer
-  ;;         (insert-file-contents env-file)
-  ;;         (goto-char (point-min))
-  ;;         (while (not (eobp))
-  ;;           (let ((line
-  ;;                  (buffer-substring-no-properties
-  ;;                   (line-beginning-position) (line-end-position))))
-  ;;             (unless (or (string-empty-p line)
-  ;;                         (string-prefix-p "#" line))
-  ;;               (when (string-match "^\\([^=]+\\)=\\(.*\\)$" line)
-  ;;                 (let ((key (match-string 1 line))
-  ;;                       (value (match-string 2 line)))
-  ;;                   (setenv key value)
-  ;;                   (message "Loaded env: %s" key)))))
-  ;;           (forward-line 1))))
-  ;;     (unless (file-exists-p env-file)
-  ;;       (message "Warning: .env file not found at %s" env-file))))
-  ;; (my-load-env-file)
   (setq exec-path-from-shell-shell-name "/bin/bash")
   (setq exec-path-from-shell-arguments '("-l"))
-  (exec-path-from-shell-initialize) ;; Run unconditionally
+  ;; Only initialize if needed and not already done
+  (when (and (memq window-system '(mac ns x))
+             (not (getenv "EMACS_SHELL_INITIALIZED")))
+    (exec-path-from-shell-initialize)
+    (setenv "EMACS_SHELL_INITIALIZED" "1"))
   ;; Explicitly add ~/.local/bin to exec-path and PATH
   (let ((local-bin (expand-file-name "~/.local/bin")))
     (unless (member local-bin exec-path)
@@ -1777,15 +1772,22 @@ The DWIM behaviour of this command is as follows:
         '((sequence "TODO(t)" "NEXT(n)" "WAITING(w@/!)"
                     "|" "DONE(d!)" "CANCELED(c@)")))
 
-  ;; Agenda files - scan all .org files in notes directory
-  (setq org-agenda-files
-        (directory-files-recursively "~/Documents/notes/" "\\.org$"))
+  ;; Cache variables for org-agenda-files optimization
+  (defvar my/org-agenda-files-cache nil)
+  (defvar my/org-agenda-cache-time nil)
 
-  ;; Update agenda files before opening agenda
+  ;; Optimized function to update org-agenda-files with caching
   (defun my/update-org-agenda-files ()
-    "Update org-agenda-files to include all .org files in notes directory."
-    (setq org-agenda-files
-          (directory-files-recursively "~/Documents/notes/" "\\.org$")))
+    "Update org-agenda-files with caching (5 min cache)."
+    (when (or (null my/org-agenda-cache-time)
+              (> (- (float-time) my/org-agenda-cache-time) 300)) ; 5 minutes
+      (setq my/org-agenda-files-cache
+            (directory-files-recursively "~/Documents/notes/" "\\.org$"))
+      (setq my/org-agenda-cache-time (float-time)))
+    (setq org-agenda-files my/org-agenda-files-cache))
+
+  ;; Initial agenda files setup with cache
+  (my/update-org-agenda-files)
 
   :hook
   ((before-save . my/update-org-agenda-files)
@@ -2090,7 +2092,7 @@ The DWIM behaviour of this command is as follows:
    ("RET" . dired-find-alternate-file)
    ("<backspace>" . dired-up-directory)
    ("C-c C-e" . wdired-change-to-wdired-mode)
-   ("C-c g" . dired-git-info-mode)
+   ("C-c C-g" . dired-git-info-mode) ; Changed from C-c g to avoid conflict with magit-status
    ("C-c t" . dired-toggle-read-only)
    ("M-!" . dired-smart-shell-command)
    ("C-c o" . dired-open-externally)
@@ -2605,25 +2607,26 @@ This function integrates with exwm-firefox-core to open the current page."
           (verilog-mode . verilog-ts-mode)
           (yaml-mode . yaml-ts-mode)))
 
-  ;; Emacs 30.1: Ensure parent mode relationships for proper integration
-  (with-eval-after-load 'c-ts-mode
-    (derived-mode-add-parents 'c-ts-mode '(c-mode)))
-  (with-eval-after-load 'c++-ts-mode
-    (derived-mode-add-parents 'c++-ts-mode '(c++-mode)))
-  (with-eval-after-load 'python-ts-mode
-    (derived-mode-add-parents 'python-ts-mode '(python-mode)))
-  (with-eval-after-load 'js-ts-mode
-    (derived-mode-add-parents 'js-ts-mode '(js-mode)))
-  (with-eval-after-load 'typescript-ts-mode
-    (derived-mode-add-parents 'typescript-ts-mode '(typescript-mode)))
-  (with-eval-after-load 'rust-ts-mode
-    (derived-mode-add-parents 'rust-ts-mode '(rust-mode)))
-  (with-eval-after-load 'go-ts-mode
-    (derived-mode-add-parents 'go-ts-mode '(go-mode)))
-  (with-eval-after-load 'ruby-ts-mode
-    (derived-mode-add-parents 'ruby-ts-mode '(ruby-mode)))
-  (with-eval-after-load 'yaml-ts-mode
-    (derived-mode-add-parents 'yaml-ts-mode '(yaml-mode)))
+  ;; Emacs 30.1+: Ensure parent mode relationships for proper integration
+  (when (fboundp 'derived-mode-add-parents)
+    (with-eval-after-load 'c-ts-mode
+      (derived-mode-add-parents 'c-ts-mode '(c-mode)))
+    (with-eval-after-load 'c++-ts-mode
+      (derived-mode-add-parents 'c++-ts-mode '(c++-mode)))
+    (with-eval-after-load 'python-ts-mode
+      (derived-mode-add-parents 'python-ts-mode '(python-mode)))
+    (with-eval-after-load 'js-ts-mode
+      (derived-mode-add-parents 'js-ts-mode '(js-mode)))
+    (with-eval-after-load 'typescript-ts-mode
+      (derived-mode-add-parents 'typescript-ts-mode '(typescript-mode)))
+    (with-eval-after-load 'rust-ts-mode
+      (derived-mode-add-parents 'rust-ts-mode '(rust-mode)))
+    (with-eval-after-load 'go-ts-mode
+      (derived-mode-add-parents 'go-ts-mode '(go-mode)))
+    (with-eval-after-load 'ruby-ts-mode
+      (derived-mode-add-parents 'ruby-ts-mode '(ruby-mode)))
+    (with-eval-after-load 'yaml-ts-mode
+      (derived-mode-add-parents 'yaml-ts-mode '(yaml-mode))))
 
   ;; Tree-sitter settings
   (setq treesit-font-lock-level 4)              ; Maximum highlighting
