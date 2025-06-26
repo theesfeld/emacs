@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 18:16:04 by grim>
+;; Time-stamp: <Last changed 2025-06-26 18:17:28 by grim>
 
 ;;; Early Initial Settings
 
@@ -1184,7 +1184,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :custom
   (rainbow-delimiters-max-face-count 9)) ;; Default 9 faces
 
-;;; Highlight Thing at Point
+;; Highlight Thing at Point
 
 (use-package
   highlight-thing
@@ -1201,7 +1201,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                       :weight 'normal)      ; Keep text weight normal for readability
   :hook (prog-mode . highlight-thing-mode))
 
-;;; indent-bars
+;; indent-bars
 
 (use-package indent-bars
   :ensure t
