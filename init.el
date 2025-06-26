@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 12:11:04 by grim>
+;; Time-stamp: <Last changed 2025-06-26 12:17:06 by grim>
 
 ;;; Early Initial Settings
 
@@ -1532,19 +1532,6 @@ The DWIM behaviour of this command is as follows:
    ("C-c <" . mc/mark-previous-like-this)
    ("C-c C-<" . mc/mark-all-like-this)))
 
-;;; crux
-
-(use-package
-  crux
-  :ensure t
-  :bind
-  (("C-c o" . crux-open-with)
-   ("C-c D" . crux-delete-file-and-buffer)
-   ("C-c r" . crux-rename-file-and-buffer)
-   ("C-c k" . crux-kill-other-buffers)
-;;;; KEYBIND_CHANGE: Removed C-a override - use standard move-beginning-of-line
-   ))
-
 ;;; diff-hl
 
 (use-package
@@ -1894,8 +1881,7 @@ The DWIM behaviour of this command is as follows:
    recentf-max-menu-items 25
    recentf-auto-cleanup nil)
   (run-at-time nil (* 5 60) 'recentf-save-list) ; Save every 5 minutes
-  ;;;; KEYBIND_CHANGE: C-c r conflicts with crux-rename-file-and-buffer, moved to C-c f r
-  :bind (("C-c f r" . consult-recent-file)))
+  :bind (("C-c r" . consult-recent-file)))
 
 ;;; ibuffer
 
