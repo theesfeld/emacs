@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 17:55:58 by grim>
+;; Time-stamp: <Last changed 2025-06-26 17:56:59 by grim>
 
 ;;; Early Initial Settings
 
@@ -441,7 +441,7 @@ The DWIM behaviour of this command is as follows:
     (run-at-time 2 nil #'grim/run-in-background "nm-applet")
     (run-at-time 2 nil #'grim/run-in-background "udiskie -at")
     (run-at-time 2 nil #'grim/run-in-background "blueman-applet")
-    ;;(run-at-time 5 nil #'grim/run-in-background "mullvad-vpn")
+    (run-at-time 5 nil #'grim/run-in-background "mullvad-vpn")
     )
 
   (defun grim/exwm-update-class ()
@@ -458,512 +458,512 @@ The DWIM behaviour of this command is as follows:
       exwm
       :ensure t
       :config (setq exwm-workspace-number 5)
-    (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
-    (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
-    (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
+      (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
+      (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
+      (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
 
-    (setq exwm-workspace-show-all-buffers t)
-    (setq exwm-layout-show-all-buffers t)
-    (setq exwm-manage-force-tiling nil)
-    (setq mouse-autoselect-window t)
-    (setq focus-follows-mouse t)
-    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
-    (setq mouse-wheel-progressive-speed t)
-    (setq
-     x-select-enable-clipboard t
-     x-select-enable-primary t
-     select-enable-clipboard t)
+      (setq exwm-workspace-show-all-buffers t)
+      (setq exwm-layout-show-all-buffers t)
+      (setq exwm-manage-force-tiling nil)
+      (setq mouse-autoselect-window t)
+      (setq focus-follows-mouse t)
+      (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
+      (setq mouse-wheel-progressive-speed t)
+      (setq
+       x-select-enable-clipboard t
+       x-select-enable-primary t
+       select-enable-clipboard t)
 
-    (require 'exwm-randr)
-    (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
-    (add-hook
-     'exwm-randr-screen-change-hook
-     (lambda ()
-       (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
-	     connected-outputs)
-	 (with-temp-buffer
-	   (call-process "xrandr" nil t nil)
-	   (goto-char (point-min))
-	   (while (re-search-forward xrandr-output-regexp nil t)
-	     (push (match-string 1) connected-outputs)))
-	 (cond
-	  ;; Single monitor or only eDP-1 connected
-	  ((or (= (length connected-outputs) 1)
-	       (and (member "eDP-1" connected-outputs)
-		    (= (length (remove "eDP-1" connected-outputs)) 0)))
-	   (start-process-shell-command
-	    "xrandr"
-	    nil
-	    "xrandr --output eDP-1 --primary --auto --scale .75 --dpi 192")
-	   (start-process-shell-command
-	    "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
-	   (dolist (output (remove "eDP-1" connected-outputs))
+      (require 'exwm-randr)
+      (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
+      (add-hook
+       'exwm-randr-screen-change-hook
+       (lambda ()
+	 (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
+	       connected-outputs)
+	   (with-temp-buffer
+	     (call-process "xrandr" nil t nil)
+	     (goto-char (point-min))
+	     (while (re-search-forward xrandr-output-regexp nil t)
+	       (push (match-string 1) connected-outputs)))
+	   (cond
+	    ;; Single monitor or only eDP-1 connected
+	    ((or (= (length connected-outputs) 1)
+			 (and (member "eDP-1" connected-outputs)
+		  (= (length (remove "eDP-1" connected-outputs)) 0)))
 	     (start-process-shell-command
-	      "xrandr" nil
-	      (format "xrandr --output %s --off" output)))
-	   (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1")))
-	  ;; One or more external monitors
-	  ((>= (length (remove "eDP-1" connected-outputs)) 1)
-	   (let ((primary (car (remove "eDP-1" connected-outputs)))
-		 (secondary (cadr (remove "eDP-1" connected-outputs))))
-	     (if secondary
-		 (start-process-shell-command
-		  "xrandr" nil
-		  (format
-		   "xrandr --output %s --primary --auto --output %s --auto --left-of %s --output eDP-1 --off"
-		   primary secondary primary))
-	       (start-process-shell-command
-		"xrandr" nil
-		(format
-		 "xrandr --output %s --primary --auto --output eDP-1 --off"
-		 primary)))
-	     ;; Reset DPI to default (96) for external monitors
+	      "xrandr"
+	      nil
+	      "xrandr --output eDP-1 --primary --auto --scale .75 --dpi 192")
 	     (start-process-shell-command
 	      "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
-	     (setq exwm-randr-workspace-monitor-plist
-		   (if secondary
-		       `(0 ,primary 1 ,secondary)
-		     `(0 ,primary)))))))))
+	     (dolist (output (remove "eDP-1" connected-outputs))
+	       (start-process-shell-command
+			"xrandr" nil
+			(format "xrandr --output %s --off" output)))
+	     (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1")))
+	    ;; One or more external monitors
+	    ((>= (length (remove "eDP-1" connected-outputs)) 1)
+	     (let ((primary (car (remove "eDP-1" connected-outputs)))
+		   (secondary (cadr (remove "eDP-1" connected-outputs))))
+	       (if secondary
+		   (start-process-shell-command
+		    "xrandr" nil
+		    (format
+		     "xrandr --output %s --primary --auto --output %s --auto --left-of %s --output eDP-1 --off"
+		     primary secondary primary))
+			 (start-process-shell-command
+	  "xrandr" nil
+	  (format
+	  "xrandr --output %s --primary --auto --output eDP-1 --off"
+	  primary)))
+	       ;; Reset DPI to default (96) for external monitors
+	       (start-process-shell-command
+			"xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
+	       (setq exwm-randr-workspace-monitor-plist
+		     (if secondary
+				 `(0 ,primary 1 ,secondary)
+		       `(0 ,primary)))))))))
 
-    (exwm-randr-mode 1)
-    ;; Load the system tray before exwm-init
-    (require 'exwm-systemtray)
-    (setq exwm-systemtray-height 20)
-    (setq exwm-systemtray-icon-gap 5)
-    (exwm-systemtray-mode 1)
+      (exwm-randr-mode 1)
+      ;; Load the system tray before exwm-init
+      (require 'exwm-systemtray)
+      (setq exwm-systemtray-height 20)
+      (setq exwm-systemtray-icon-gap 5)
+      (exwm-systemtray-mode 1)
 
-    ;; Input Prefix Keys
-    (setq exwm-input-prefix-keys
-	  '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
+      ;; Input Prefix Keys
+      (setq exwm-input-prefix-keys
+	    '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
 
-    ;; Global keybindings
-    (setq exwm-input-global-keys
-	  (nconc
-	   `(([?\s-r] . exwm-reset)
-	     ([s-left] . windmove-left)
-	     ([s-right] . windmove-right)
-	     ([s-up] . windmove-up)
-	     ([s-down] . windmove-down)
-	     ([?\s-w] . exwm-workspace-switch)
-	     ([?\s-&]
-	      .
-	      (lambda (cmd)
-		(interactive (list (read-shell-command "$ ")))
-		(start-process-shell-command cmd nil cmd)))
-	     ([?\s-x]
-	      .
-	      (lambda ()
-		(interactive)
-		(save-buffers-kill-emacs)))
-	     ([?\s-\ ]
-	      .
-	      (lambda ()
-		(interactive)
-		(async-shell-command)))
-	     ([?\s-v] . consult-yank-pop)
-	     ([?\s-q]
-	      .
-	      (lambda ()
-		(interactive)
-		(kill-buffer-and-window)))
-	     ([XF86PowerOff]
-	      .
-	      (lambda ()
-		(interactive)
-		(when (executable-find "systemctl")
-		  (start-process-shell-command
-		   "poweroff" nil "systemctl poweroff")))))
-	   (mapcar
-	    (lambda (i)
-	      (cons
-	       (kbd (format "s-%d" i))
-	       (lambda ()
-		 (interactive)
-		 (message "Switching to workspace %d" i)
-		 (exwm-workspace-switch-create i))))
-	    (number-sequence 0 9))
-	   (mapcar
-	    (lambda (i)
-	      (cons
-	       (kbd (format "M-s-%d" i))
-	       (lambda ()
-		 (interactive)
-		 (message "Moving window to workspace %d" i)
-		 (exwm-workspace-move-window i))))
-	    (number-sequence 0 9))))
+      ;; Global keybindings
+      (setq exwm-input-global-keys
+	    (nconc
+	     `(([?\s-r] . exwm-reset)
+	       ([s-left] . windmove-left)
+	       ([s-right] . windmove-right)
+	       ([s-up] . windmove-up)
+	       ([s-down] . windmove-down)
+	       ([?\s-w] . exwm-workspace-switch)
+	       ([?\s-&]
+			.
+			(lambda (cmd)
+	    (interactive (list (read-shell-command "$ ")))
+	    (start-process-shell-command cmd nil cmd)))
+	       ([?\s-x]
+			.
+			(lambda ()
+	    (interactive)
+	    (save-buffers-kill-emacs)))
+	       ([?\s-\ ]
+			.
+			(lambda ()
+	    (interactive)
+	    (async-shell-command)))
+	       ([?\s-v] . consult-yank-pop)
+	       ([?\s-q]
+			.
+			(lambda ()
+	    (interactive)
+	    (kill-buffer-and-window)))
+	       ([XF86PowerOff]
+			.
+			(lambda ()
+	    (interactive)
+	    (when (executable-find "systemctl")
+	    (start-process-shell-command
+	  "poweroff" nil "systemctl poweroff")))))
+	     (mapcar
+	      (lambda (i)
+			(cons
+	 (kbd (format "s-%d" i))
+	 (lambda ()
+	      (interactive)
+	      (message "Switching to workspace %d" i)
+	      (exwm-workspace-switch-create i))))
+	      (number-sequence 0 9))
+	     (mapcar
+	      (lambda (i)
+			(cons
+	 (kbd (format "M-s-%d" i))
+	 (lambda ()
+	      (interactive)
+	      (message "Moving window to workspace %d" i)
+	      (exwm-workspace-move-window i))))
+	      (number-sequence 0 9))))
 
-    ;; Simulation Keys
-    (setq exwm-input-simulation-keys
-	  '(([?\C-b] . [left])
-	    ([?\C-f] . [right])
-	    ([?\C-p] . [up])
-	    ([?\C-n] . [down])
-	    ([?\C-a] . [home])
-	    ([?\C-e] . [end])
-	    ([?\M-v] . [prior])
-	    ([?\C-v] . [next])
-	    ([?\C-d] . [delete])
-	    ([?\C-k] . [S-end delete])
-	    ([?\M-w] . [?\C-c])
-	    ([?\C-y] . [?\C-v])))
+      ;; Simulation Keys
+      (setq exwm-input-simulation-keys
+	    '(([?\C-b] . [left])
+	      ([?\C-f] . [right])
+	      ([?\C-p] . [up])
+	      ([?\C-n] . [down])
+	      ([?\C-a] . [home])
+	      ([?\C-e] . [end])
+	      ([?\M-v] . [prior])
+	      ([?\C-v] . [next])
+	      ([?\C-d] . [delete])
+	      ([?\C-k] . [S-end delete])
+	      ([?\M-w] . [?\C-c])
+	      ([?\C-y] . [?\C-v])))
 
-    (exwm-enable))) ; Close the when condition
+      (exwm-enable))) ; Close the when condition
 
   (when (my/gui-available-p)
     (use-package
       exwm-edit
       :ensure t
       :after exwm
-    :init
-    ;; Pre-load settings
-    (setq exwm-edit-default-major-mode 'text-mode) ; Default mode for editing
-    :config
-    ;; Explicitly load exwm-edit
-    (require 'exwm-edit nil t)
-    (when (featurep 'exwm-edit)
-      (message "exwm-edit loaded successfully"))
-    ;; Optional: Customize split behavior
-    (setq exwm-edit-split 'below) ; Open edit buffer below current window
-    :bind (:map exwm-mode-map ("C-c e" . exwm-edit--compose))
-    :hook
-    ;; Log initialization
-    (exwm-init
-     .
-     (lambda ()
-       (when (featurep 'exwm-edit)
-	 (message "exwm-edit initialized")))))
+      :init
+      ;; Pre-load settings
+      (setq exwm-edit-default-major-mode 'text-mode) ; Default mode for editing
+      :config
+      ;; Explicitly load exwm-edit
+      (require 'exwm-edit nil t)
+      (when (featurep 'exwm-edit)
+	(message "exwm-edit loaded successfully"))
+      ;; Optional: Customize split behavior
+      (setq exwm-edit-split 'below) ; Open edit buffer below current window
+      :bind (:map exwm-mode-map ("C-c e" . exwm-edit--compose))
+      :hook
+      ;; Log initialization
+      (exwm-init
+       .
+       (lambda ()
+	 (when (featurep 'exwm-edit)
+	   (message "exwm-edit initialized")))))
 
-  (use-package exwm-firefox-core
-    :ensure t
-    :after exwm
-    :init
-    ;; Pre-load settings
-    (setq exwm-firefox-core-classes
-	  '("firefox" "firefoxdeveloperedition"))
+    (use-package exwm-firefox-core
+      :ensure t
+      :after exwm
+      :init
+      ;; Pre-load settings
+      (setq exwm-firefox-core-classes
+	    '("firefox" "firefoxdeveloperedition"))
 
-    ;; Define Firefox-specific minor mode before package loads
-    (define-minor-mode exwm-firefox-mode
-      "Minor mode for Firefox-specific keybindings in EXWM."
-      :init-value nil
-      :lighter " Firefox"
-      :keymap (let ((map (make-sparse-keymap)))
-		(define-key map (kbd "C-c F n") 'exwm-firefox-core-tab-new)
-		(define-key map (kbd "C-c F t") 'exwm-firefox-core-tab-close)
-		(define-key map (kbd "C-c F <right>") 'exwm-firefox-core-tab-right)
-		(define-key map (kbd "C-c F <left>") 'exwm-firefox-core-tab-left)
-		(define-key map (kbd "C-c F h") 'exwm-firefox-core-back)
-		(define-key map (kbd "C-c F l") 'exwm-firefox-core-forward)
-		(define-key map (kbd "C-c F f") 'exwm-firefox-core-find)
-		(define-key map (kbd "C-c F r") 'exwm-firefox-core-reload)
-		(define-key map (kbd "C-c F b") 'exwm-firefox-core-bookmark)
-		map))
+      ;; Define Firefox-specific minor mode before package loads
+      (define-minor-mode exwm-firefox-mode
+	"Minor mode for Firefox-specific keybindings in EXWM."
+	:init-value nil
+	:lighter " Firefox"
+	:keymap (let ((map (make-sparse-keymap)))
+		  (define-key map (kbd "C-c F n") 'exwm-firefox-core-tab-new)
+		  (define-key map (kbd "C-c F t") 'exwm-firefox-core-tab-close)
+		  (define-key map (kbd "C-c F <right>") 'exwm-firefox-core-tab-right)
+		  (define-key map (kbd "C-c F <left>") 'exwm-firefox-core-tab-left)
+		  (define-key map (kbd "C-c F h") 'exwm-firefox-core-back)
+		  (define-key map (kbd "C-c F l") 'exwm-firefox-core-forward)
+		  (define-key map (kbd "C-c F f") 'exwm-firefox-core-find)
+		  (define-key map (kbd "C-c F r") 'exwm-firefox-core-reload)
+		  (define-key map (kbd "C-c F b") 'exwm-firefox-core-bookmark)
+		  map))
 
-    :config
-    ;; Load package safely
-    (require 'exwm-firefox-core nil t)
+      :config
+      ;; Load package safely
+      (require 'exwm-firefox-core nil t)
 
-    ;; Function to manage Firefox buffer setup
-    (defun exwm-firefox-setup ()
-      "Set up Firefox-specific configuration for current buffer."
-      (when (and (derived-mode-p 'exwm-mode)
-		 (member (downcase (or exwm-class-name ""))
-			 '("firefox" "firefoxdeveloperedition")))
-	;; Enable Firefox mode
-	(exwm-firefox-mode 1)
-	;; Rename buffer to page title
-	(when exwm-title
+      ;; Function to manage Firefox buffer setup
+      (defun exwm-firefox-setup ()
+	"Set up Firefox-specific configuration for current buffer."
+	(when (and (derived-mode-p 'exwm-mode)
+		   (member (downcase (or exwm-class-name ""))
+			   '("firefox" "firefoxdeveloperedition")))
+	    ;; Enable Firefox mode
+	    (exwm-firefox-mode 1)
+	    ;; Rename buffer to page title
+	    (when exwm-title
 	  (exwm-workspace-rename-buffer exwm-title))))
 
-    ;; Function to handle buffer switches
-    (defun exwm-firefox-maybe-enable ()
-      "Enable or disable Firefox mode based on current buffer."
-      (when (derived-mode-p 'exwm-mode)
-	(if (member (downcase (or exwm-class-name ""))
+      ;; Function to handle buffer switches
+      (defun exwm-firefox-maybe-enable ()
+	"Enable or disable Firefox mode based on current buffer."
+	(when (derived-mode-p 'exwm-mode)
+	    (if (member (downcase (or exwm-class-name ""))
 		    '("firefox" "firefoxdeveloperedition"))
 	    (exwm-firefox-mode 1)
 	  (exwm-firefox-mode -1))))
 
-    :hook
-    ;; Set up Firefox buffers when they're created
-    ((exwm-manage-finish . exwm-firefox-setup)
-     ;; Update buffer name when title changes
-     (exwm-update-title . exwm-firefox-setup)
-     ;; Handle buffer switches to enable/disable mode
-     (window-configuration-change . exwm-firefox-maybe-enable))
+      :hook
+      ;; Set up Firefox buffers when they're created
+      ((exwm-manage-finish . exwm-firefox-setup)
+       ;; Update buffer name when title changes
+       (exwm-update-title . exwm-firefox-setup)
+       ;; Handle buffer switches to enable/disable mode
+       (window-configuration-change . exwm-firefox-maybe-enable))
 
-    :custom
-    ;; Optional: Customize Firefox-specific EXWM settings
-    (exwm-firefox-core-enable-auto-move-focus t)
+      :custom
+      ;; Optional: Customize Firefox-specific EXWM settings
+      (exwm-firefox-core-enable-auto-move-focus t)
 
-    :init
-    ;; Optional: Additional EXWM configuration for Firefox
-    (with-eval-after-load 'exwm
-      ;; Make Firefox windows floating by default (optional)
-      ;; (add-to-list 'exwm-manage-configurations
-      ;;              '((string-match "Firefox" exwm-class-name)
-      ;;                floating t
-      ;;                floating-mode-line nil))
-
-      ;; Set Firefox-specific workspace (optional)
-      ;; (add-to-list 'exwm-manage-configurations
-      ;;              '((string-match "Firefox" exwm-class-name)
-      ;;                workspace 2))
-      )
-
-
-    (use-package
-      desktop-environment
-      :ensure t
       :init
-      ;; Pre-configure settings before mode activation
-      (setq desktop-environment-notifications t) ; Enable notifications
-      (setq desktop-environment-screenshot-directory
-	    "~/Pictures/Screenshots")     ; Screenshot path
-      (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
-      (setq
-       desktop-environment-volume-get-command
-       "pactl get-sink-volume @DEFAULT_SINK@ | awk '/Volume:/ {print $5}'")
-      (setq desktop-environment-volume-get-regexp "\\([0-9]+%\\)")
-      (setq desktop-environment-volume-set-command
-	    "pactl set-sink-volume @DEFAULT_SINK@ %s%%") ; Set volume
-      (setq
-       desktop-environment-mute-get-command
-       "pactl get-sink-mute @DEFAULT_SINK@ | awk '{print ($2 == \"yes\") ? \"true\" : \"false\"}'")
-      (setq desktop-environment-volume-toggle-command
-	    "pactl set-sink-mute @DEFAULT_SINK@ toggle") ; Toggle mute
-      (setq desktop-environment-volume-normal-increment "+1") ; Volume step up
-      (setq desktop-environment-volume-normal-decrement "-1") ; Volume step down
+      ;; Optional: Additional EXWM configuration for Firefox
+      (with-eval-after-load 'exwm
+	;; Make Firefox windows floating by default (optional)
+	;; (add-to-list 'exwm-manage-configurations
+	;;              '((string-match "Firefox" exwm-class-name)
+	;;                floating t
+	;;                floating-mode-line nil))
 
-      :config
-      ;; Ensure dependencies are installed
-      (desktop-environment-mode 1)
-      (dolist (cmd '("scrot" "slock" "pactl" "brightnessctl"))
-	(unless (executable-find cmd)
+	;; Set Firefox-specific workspace (optional)
+	;; (add-to-list 'exwm-manage-configurations
+	;;              '((string-match "Firefox" exwm-class-name)
+	;;                workspace 2))
+	)
+
+
+      (use-package
+	desktop-environment
+	:ensure t
+	:init
+	;; Pre-configure settings before mode activation
+	(setq desktop-environment-notifications t) ; Enable notifications
+	(setq desktop-environment-screenshot-directory
+	      "~/Pictures/Screenshots")     ; Screenshot path
+	(setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
+	(setq
+	 desktop-environment-volume-get-command
+	 "pactl get-sink-volume @DEFAULT_SINK@ | awk '/Volume:/ {print $5}'")
+	(setq desktop-environment-volume-get-regexp "\\([0-9]+%\\)")
+	(setq desktop-environment-volume-set-command
+	      "pactl set-sink-volume @DEFAULT_SINK@ %s%%") ; Set volume
+	(setq
+	 desktop-environment-mute-get-command
+	 "pactl get-sink-mute @DEFAULT_SINK@ | awk '{print ($2 == \"yes\") ? \"true\" : \"false\"}'")
+	(setq desktop-environment-volume-toggle-command
+	      "pactl set-sink-mute @DEFAULT_SINK@ toggle") ; Toggle mute
+	(setq desktop-environment-volume-normal-increment "+1") ; Volume step up
+	(setq desktop-environment-volume-normal-decrement "-1") ; Volume step down
+
+	:config
+	;; Ensure dependencies are installed
+	(desktop-environment-mode 1)
+	(dolist (cmd '("scrot" "slock" "pactl" "brightnessctl"))
+	    (unless (executable-find cmd)
 	  (message
 	   "Warning: %s not found; desktop-environment may not work fully"
 	   cmd))))))
 
 ;;; init.el version control
 
-(use-package
-  vc
-  :ensure nil
-  :config
-  (defun my-auto-commit-init-el ()
-    "Commit changes to init.el after saving."
-    (when (and (buffer-file-name)
-	       (string=
-		(file-name-nondirectory (buffer-file-name)) "init.el"))
-      (ignore-errors
-	(vc-checkin
+  (use-package
+    vc
+    :ensure nil
+    :config
+    (defun my-auto-commit-init-el ()
+      "Commit changes to init.el after saving."
+      (when (and (buffer-file-name)
+			 (string=
+	  (file-name-nondirectory (buffer-file-name)) "init.el"))
+	(ignore-errors
+	    (vc-checkin
 	 (list (buffer-file-name))
 	 'git
 	 nil
 	 "Auto-commit init.el changes"))))
-  :hook (after-save . my-auto-commit-init-el))
+    :hook (after-save . my-auto-commit-init-el))
 
 ;;; emacs configuration section
-;;
-;; This section contains core Emacs configuration organized as follows:
-;; - Font configuration: All font setup (family, heights, font-lock faces) is in early-init.el
-;;   for optimal startup performance and consistent daemon/non-daemon behavior
-;; - Theme configuration: modus-themes package handles theme loading and cursor customization
-;; - UI setup: Frame parameters in early-init.el + explicit mode disabling for daemon compatibility
-;; - Face customizations: Package-specific faces use colors from modus-vivendi palette for consistency
-;;
-;; This approach separates startup optimization (early-init.el) from runtime configuration (init.el)
-;; while maintaining visual consistency through coordinated color choices.
-
-(use-package
-  emacs
-  :ensure nil ; Built-in, no need to install
-  :init (server-start)
-  ;; File and Directory Management Setup
   ;;
-  ;; This configuration centralizes all temporary files, backups, history files,
-  ;; and caches in ~/.tmp/ to keep the main .emacs.d directory clean and organized.
-  ;; Each type of file gets its own subdirectory for better organization.
+  ;; This section contains core Emacs configuration organized as follows:
+  ;; - Font configuration: All font setup (family, heights, font-lock faces) is in early-init.el
+  ;;   for optimal startup performance and consistent daemon/non-daemon behavior
+  ;; - Theme configuration: modus-themes package handles theme loading and cursor customization
+  ;; - UI setup: Frame parameters in early-init.el + explicit mode disabling for daemon compatibility
+  ;; - Face customizations: Package-specific faces use colors from modus-vivendi palette for consistency
   ;;
-  ;; Alternative approach: You could use (locate-user-emacs-file "filename") for
-  ;; individual files, but the centralized approach provides better organization
-  ;; and makes it easier to backup/clean cache files as needed.
+  ;; This approach separates startup optimization (early-init.el) from runtime configuration (init.el)
+  ;; while maintaining visual consistency through coordinated color choices.
 
-  (defvar my-tmp-dir (expand-file-name "~/.tmp/")
-    "Centralized directory for temporary files, backups, and history files.
+  (use-package
+    emacs
+    :ensure nil ; Built-in, no need to install
+    :init (server-start)
+    ;; File and Directory Management Setup
+    ;;
+    ;; This configuration centralizes all temporary files, backups, history files,
+    ;; and caches in ~/.tmp/ to keep the main .emacs.d directory clean and organized.
+    ;; Each type of file gets its own subdirectory for better organization.
+    ;;
+    ;; Alternative approach: You could use (locate-user-emacs-file "filename") for
+    ;; individual files, but the centralized approach provides better organization
+    ;; and makes it easier to backup/clean cache files as needed.
+
+    (defvar my-tmp-dir (expand-file-name "~/.tmp/")
+      "Centralized directory for temporary files, backups, and history files.
 This keeps the main .emacs.d directory clean and organizes cache files logically.")
 
-  ;; Create the main temporary directory
-  (unless (file-exists-p my-tmp-dir)
-    (make-directory my-tmp-dir t))
+    ;; Create the main temporary directory
+    (unless (file-exists-p my-tmp-dir)
+      (make-directory my-tmp-dir t))
 
-  ;; Create subdirectories for different types of files
-  ;; This single directory creation handles all file management needs
-  (dolist (dir '("backups"        ; backup-directory-alist
-		 "auto-saves"     ; auto-save-file-name-transforms
-		 "auto-save-list" ; auto-save-list-file-prefix
-		 "recentf"        ; recentf-save-file
-		 "eshell"         ; eshell-directory-name
-		 "tramp-auto-save" ; tramp-auto-save-directory
-		 "saveplace"      ; save-place-file
-		 "undos"          ; vundo-files-directory
-		 "gnus-drafts"))  ; message-auto-save-directory
-    (let ((subdir (expand-file-name dir my-tmp-dir)))
-      (unless (file-exists-p subdir)
-	(make-directory subdir t))))
+    ;; Create subdirectories for different types of files
+    ;; This single directory creation handles all file management needs
+    (dolist (dir '("backups"        ; backup-directory-alist
+		   "auto-saves"     ; auto-save-file-name-transforms
+		   "auto-save-list" ; auto-save-list-file-prefix
+		   "recentf"        ; recentf-save-file
+		   "eshell"         ; eshell-directory-name
+		   "tramp-auto-save" ; tramp-auto-save-directory
+		   "saveplace"      ; save-place-file
+		   "undos"          ; vundo-files-directory
+		   "gnus-drafts"))  ; message-auto-save-directory
+      (let ((subdir (expand-file-name dir my-tmp-dir)))
+	(unless (file-exists-p subdir)
+	    (make-directory subdir t))))
 
-  ;; Moved from Early Initial Settings
-  (setq custom-file
-	(expand-file-name "custom.el" user-emacs-directory))
-  ;; Basic Emacs Information and pre-load settings
-  (setq
-   user-full-name "TJ"
-   user-mail-address "william@theesfeld.net"
-   calendar-location-name "New York, NY"
-   calendar-time-zone-rule "EST"
-   calendar-standard-time-zone-name "EST"
-   calendar-daylight-time-zone-name "EDT"
-   auth-sources '("~/.authinfo.gpg")
-   epg-pinentry-mode 'loopback
-   create-lockfiles nil
-   password-cache-expiry nil
-   ;; this
-   delete-pair-blink-delay 0.1
-   next-error-recenter '(4)
-   find-library-include-other-files nil
-   remote-file-name-inhibit-delete-by-moving-to-trash t
-   remote-file-name-inhibit-auto-save t
-   save-interprogram-paste-before-kill t
-   eval-expression-print-length nil
-   scroll-error-top-bottom t
-   echo-keystrokes-help nil
-   delete-section-mode t
-   x-stretch-cursor t
-   help-window-select t
-   auth-source-cache-expiry nil
-   gc-cons-percentage 0.6
-   truncate-string-ellipsis "…" ; Visual ellipsis for truncated lines
-   scroll-margin 1
-   garbage-collection-messages nil
-   plstore-cache-directory my-tmp-dir
-   epg-gpg-program "gpg2"
-   gc-cons-threshold most-positive-fixnum ; From Garbage Collection
+    ;; Moved from Early Initial Settings
+    (setq custom-file
+	    (expand-file-name "custom.el" user-emacs-directory))
+    ;; Basic Emacs Information and pre-load settings
+    (setq
+     user-full-name "TJ"
+     user-mail-address "william@theesfeld.net"
+     calendar-location-name "New York, NY"
+     calendar-time-zone-rule "EST"
+     calendar-standard-time-zone-name "EST"
+     calendar-daylight-time-zone-name "EDT"
+     auth-sources '("~/.authinfo.gpg")
+     epg-pinentry-mode 'loopback
+     create-lockfiles nil
+     password-cache-expiry nil
+     ;; this
+     delete-pair-blink-delay 0.1
+     next-error-recenter '(4)
+     find-library-include-other-files nil
+     remote-file-name-inhibit-delete-by-moving-to-trash t
+     remote-file-name-inhibit-auto-save t
+     save-interprogram-paste-before-kill t
+     eval-expression-print-length nil
+     scroll-error-top-bottom t
+     echo-keystrokes-help nil
+     delete-section-mode t
+     x-stretch-cursor t
+     help-window-select t
+     auth-source-cache-expiry nil
+     gc-cons-percentage 0.6
+     truncate-string-ellipsis "…" ; Visual ellipsis for truncated lines
+     scroll-margin 1
+     garbage-collection-messages nil
+     plstore-cache-directory my-tmp-dir
+     epg-gpg-program "gpg2"
+     gc-cons-threshold most-positive-fixnum ; From Garbage Collection
 
-   ;; Backup settings
-   backup-by-copying t
-   backup-directory-alist `((".*" . ,(expand-file-name "backups" my-tmp-dir)))
-   delete-old-versions t
-   kept-new-versions 6
-   kept-old-versions 2
-   version-control t
+     ;; Backup settings
+     backup-by-copying t
+     backup-directory-alist `((".*" . ,(expand-file-name "backups" my-tmp-dir)))
+     delete-old-versions t
+     kept-new-versions 6
+     kept-old-versions 2
+     version-control t
 
-   ;; Auto-save settings
-   auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-saves/" my-tmp-dir) t))
-   auto-save-list-file-prefix (expand-file-name "auto-save-list/.saves-" my-tmp-dir)
-   auto-save-default t)
+     ;; Auto-save settings
+     auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-saves/" my-tmp-dir) t))
+     auto-save-list-file-prefix (expand-file-name "auto-save-list/.saves-" my-tmp-dir)
+     auto-save-default t)
 
-  (setq savehist-additional-variables
-	'(kill-ring
+    (setq savehist-additional-variables
+	    '(kill-ring
 	  search-ring
 	  regexp-search-ring
 	  extended-command-history
 	  file-name-history))
 
-  (setenv "TZ" "America/New_York")
-  (prefer-coding-system 'utf-8)
-  (set-default-coding-systems 'utf-8)
-  (set-terminal-coding-system 'utf-8)
-  (set-keyboard-coding-system 'utf-8)
-  (set-language-environment "UTF-8")
-  (save-place-mode 1)
-  (savehist-mode 1) ; Ensure history persistence is enabled
-  (setq history-length 1000) ; Consistent with consult
-  (setq history-delete-duplicates t)
-  (setq savehist-save-minibuffer-history t)
+    (setenv "TZ" "America/New_York")
+    (prefer-coding-system 'utf-8)
+    (set-default-coding-systems 'utf-8)
+    (set-terminal-coding-system 'utf-8)
+    (set-keyboard-coding-system 'utf-8)
+    (set-language-environment "UTF-8")
+    (save-place-mode 1)
+    (savehist-mode 1) ; Ensure history persistence is enabled
+    (setq history-length 1000) ; Consistent with consult
+    (setq history-delete-duplicates t)
+    (setq savehist-save-minibuffer-history t)
 
-  ;; Enable auto-insert for new files
-  (require 'autoinsert)
-  (auto-insert-mode 1)
+    ;; Enable auto-insert for new files
+    (require 'autoinsert)
+    (auto-insert-mode 1)
 
-  ;; When there is a "Time-stamp: <>" string in the first 10 lines of the file,
-  ;; Emacs will write time-stamp information there when saving the file.
-  ;; (Borrowed from http://home.thep.lu.se/~karlf/emacs.html)
-  (setq
-   time-stamp-active t ; Do enable time-stamps.
-   time-stamp-line-limit 10 ; Check first 10 buffer lines for Time-stamp: <>
-   time-stamp-format "Last changed %Y-%02m-%02d %02H:%02M:%02S by %u")
-  (add-hook 'write-file-hooks 'time-stamp) ; Update when saving.
+    ;; When there is a "Time-stamp: <>" string in the first 10 lines of the file,
+    ;; Emacs will write time-stamp information there when saving the file.
+    ;; (Borrowed from http://home.thep.lu.se/~karlf/emacs.html)
+    (setq
+     time-stamp-active t ; Do enable time-stamps.
+     time-stamp-line-limit 10 ; Check first 10 buffer lines for Time-stamp: <>
+     time-stamp-format "Last changed %Y-%02m-%02d %02H:%02M:%02S by %u")
+    (add-hook 'write-file-hooks 'time-stamp) ; Update when saving.
 
-  ;; Simplified auto-insert: use inline lambdas instead of custom function
-  ;; The time-stamp system already handles comment syntax automatically
-  (setq auto-insert-alist
-	'(;; Add time-stamps to programming and documentation files
+    ;; Simplified auto-insert: use inline lambdas instead of custom function
+    ;; The time-stamp system already handles comment syntax automatically
+    (setq auto-insert-alist
+	    '(;; Add time-stamps to programming and documentation files
 	  (prog-mode . (lambda () (insert (or comment-start "#") " Time-stamp: <>\n")))
 	  (org-mode . (lambda () (insert "#+Time-stamp: <>\n")))
 	  (text-mode . (lambda () (insert "# Time-stamp: <>\n")))))
-  ;; Enable time-stamp updates on save
-  (add-hook 'before-save-hook 'time-stamp)
+    ;; Enable time-stamp updates on save
+    (add-hook 'before-save-hook 'time-stamp)
 
-  :config
-  (setq modus-themes-italic-constructs t
-	modus-themes-bold-constructs t)
-  (custom-set-faces
-   '(cursor ((t (:background "#FFC107")))))
-  (load-theme modus-vivendi)
-  (setq scroll-conservatively 101) ; Scroll line-by-line without recentering
-  (when (file-exists-p custom-file)
-    (load custom-file))
-  ;; Global Emacs Settings
-  (global-visual-line-mode 1)
-  (setq-default
-   default-directory '~
-   kill-ring-max 5000
-   indent-tabs-mode nil) ; Use spaces instead of tabs
-  (setq
-   tab-always-indent 'complete
-   tab-width 2
-   standard-indent 2
-   scroll-conservatively 100000
-   scroll-preserve-screen-position 1
-   delete-by-moving-to-trash t
-   window-combination-resize t
-   display-time-load-average nil
-   savehist-file (expand-file-name "savehist" my-tmp-dir)
-   history-length 1000
-   history-delete-duplicates t
-   savehist-save-minibuffer-history t
-   undo-limit 800000
-   isearch-lazy-count t
-   lazy-count-prefix-format "(%s/%s) "
-   lazy-count-suffix-format nil
-   save-place-file (expand-file-name "saveplace/saveplace" my-tmp-dir))
-  (fset 'yes-or-no-p 'y-or-n-p)
-  (require 'auth-source)
-  (require 'epa-file)
-  (epa-file-enable)
+    :config
+    (setq modus-themes-italic-constructs t
+	    modus-themes-bold-constructs t)
+    (custom-set-faces
+     '(cursor ((t (:background "#FFC107")))))
+    (load-theme modus-vivendi)
+    (setq scroll-conservatively 101) ; Scroll line-by-line without recentering
+    (when (file-exists-p custom-file)
+      (load custom-file))
+    ;; Global Emacs Settings
+    (global-visual-line-mode 1)
+    (setq-default
+     default-directory '~
+     kill-ring-max 5000
+     indent-tabs-mode nil) ; Use spaces instead of tabs
+    (setq
+     tab-always-indent 'complete
+     tab-width 2
+     standard-indent 2
+     scroll-conservatively 100000
+     scroll-preserve-screen-position 1
+     delete-by-moving-to-trash t
+     window-combination-resize t
+     display-time-load-average nil
+     savehist-file (expand-file-name "savehist" my-tmp-dir)
+     history-length 1000
+     history-delete-duplicates t
+     savehist-save-minibuffer-history t
+     undo-limit 800000
+     isearch-lazy-count t
+     lazy-count-prefix-format "(%s/%s) "
+     lazy-count-suffix-format nil
+     save-place-file (expand-file-name "saveplace/saveplace" my-tmp-dir))
+    (fset 'yes-or-no-p 'y-or-n-p)
+    (require 'auth-source)
+    (require 'epa-file)
+    (epa-file-enable)
 
-  ;; UI Settings - Font configuration is handled in early-init.el
-  ;; Font family, heights, and font-lock faces are all configured there for optimal startup performance
-  ;; This avoids duplication and ensures consistent font handling across daemon and non-daemon instances
+    ;; UI Settings - Font configuration is handled in early-init.el
+    ;; Font family, heights, and font-lock faces are all configured there for optimal startup performance
+    ;; This avoids duplication and ensures consistent font handling across daemon and non-daemon instances
 
-  ;; Theme loading is handled in the modus-themes use-package block below
+    ;; Theme loading is handled in the modus-themes use-package block below
 
-  :hook
-  ((text-mode . visual-wrap-prefix-mode)
-   (before-save . whitespace-cleanup)
-   (prog-mode . display-line-numbers-mode)
-   (emacs-startup
-    .
-    (lambda ()
-      (line-number-mode 1)
-      (column-number-mode 1)
-      (size-indication-mode 1)
-      (global-auto-revert-mode 1)
-      (display-time-mode 1))))
+    :hook
+    ((text-mode . visual-wrap-prefix-mode)
+     (before-save . whitespace-cleanup)
+     (prog-mode . display-line-numbers-mode)
+     (emacs-startup
+      .
+      (lambda ()
+	(line-number-mode 1)
+	(column-number-mode 1)
+	(size-indication-mode 1)
+	(global-auto-revert-mode 1)
+	(display-time-mode 1))))
 
-  :bind
-  (("C-x k" . kill-current-buffer)
-   ("C-x K" . kill-buffer)
-   ))) ; Close the when condition for exwm-related packages
+    :bind
+    (("C-x k" . kill-current-buffer)
+     ("C-x K" . kill-buffer)
+     ))) ; Close the when condition for exwm-related packages
 
 (when (my/gui-available-p)
   (use-package windower
