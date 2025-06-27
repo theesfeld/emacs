@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 20:23:41 by grim>
+;; Time-stamp: <Last changed 2025-06-26 20:55:49 by grim>
 
 ;;; Early Initial Settings
 
@@ -2702,6 +2702,10 @@ This function integrates with exwm-firefox-core to open the current page."
   :config
   (setq flymake-fringe-indicator-position 'right-fringe)
   (setq flymake-no-changes-timeout 1)
+  (add-hook 'lisp-interaction-mode-hook
+            (lambda ()
+              (when (string= (buffer-name) "*scratch*")
+                (flymake-mode -1))))
   (add-hook
    'emacs-lisp-mode-hook
    (lambda ()
@@ -3248,11 +3252,21 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 ;;; pass (password-store) integration
 
+(use-package auth-source-pass
+  :ensure nil
+  :config
+  (auth-source-pass-enable))
+
 (use-package password-store
   :ensure t)
 
+(use-package password-store
+  :ensure t
+  :demand t)
+
 (use-package pass
   :ensure t
+  demand t
   :commands (pass))
 
 ;;; isearch settings
