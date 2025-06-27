@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 20:56:40 by grim>
+;; Time-stamp: <Last changed 2025-06-26 20:57:15 by grim>
 
 ;;; Early Initial Settings
 
