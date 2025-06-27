@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 20:09:04 by grim>
+;; Time-stamp: <Last changed 2025-06-26 20:17:17 by grim>
 
 ;;; Early Initial Settings
 
@@ -800,9 +800,9 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         (unless (file-exists-p subdir)
           (make-directory subdir t))))
 
-    ;; Moved from Early Initial Settings
-    (setq custom-file
-          (expand-file-name "custom.el" user-emacs-directory))
+    ;; ;; Moved from Early Initial Settings
+    ;; (setq custom-file
+    ;;       (expand-file-name "custom.el" user-emacs-directory))
     ;; Basic Emacs Information and pre-load settings
     (setq
      user-full-name "TJ"
