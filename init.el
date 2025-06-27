@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 21:08:23 by grim>
+;; Time-stamp: <Last changed 2025-06-26 21:13:04 by grim>
 
 ;;; Early Initial Settings
 
@@ -114,11 +114,9 @@ The DWIM behaviour of this command is as follows:
            (hash-table-values (yas--table-hash major-mode-snippets)))
          minor-mode-snippets)))
     (if all-snippets
-        (consult-yasnippet all-snippets)
-      (message
-       "No snippets available for current major/minor modes"))))
+        (consult-yasnippet all-snippets))))
 
-(global-set-key (kbd "C-& y") #'my/consult-yasnippet-with-minor-modes)
+  (global-set-key (kbd "C-& y") #'my/consult-yasnippet-with-minor-modes)
 
 (defun increase-text-and-pane ()
   "Increase text size and adjust window width proportionally."
@@ -1006,10 +1004,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (let ((local-bin (expand-file-name "~/.local/bin")))
     (unless (member local-bin exec-path)
       (add-to-list 'exec-path local-bin t) ;; Add to end of exec-path
-      (setenv "PATH" (concat local-bin ":" (getenv "PATH"))) ;; Add to PATH
-      (message "Added %s to exec-path and PATH" local-bin)))
-  (message "exec-path-from-shell ran with shell: %s"
-           exec-path-from-shell-shell-name))
+      (setenv "PATH" (concat local-bin ":" (getenv "PATH"))))))
 
 ;;; ediff settings
 
