@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 20:55:49 by grim>
+;; Time-stamp: <Last changed 2025-06-26 20:56:40 by grim>
 
 ;;; Early Initial Settings
 
@@ -3258,15 +3258,12 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (auth-source-pass-enable))
 
 (use-package password-store
-  :ensure t)
-
-(use-package password-store
   :ensure t
   :demand t)
 
 (use-package pass
   :ensure t
-  demand t
+  :demand t
   :commands (pass))
 
 ;;; isearch settings
