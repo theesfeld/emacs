@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 20:17:17 by grim>
+;; Time-stamp: <Last changed 2025-06-26 20:23:41 by grim>
 
 ;;; Early Initial Settings
 
@@ -3247,6 +3247,9 @@ parameters set in early-init.el to ensure robust UI element disabling."
     (server-start)))
 
 ;;; pass (password-store) integration
+
+(use-package password-store
+  :ensure t)
 
 (use-package pass
   :ensure t
