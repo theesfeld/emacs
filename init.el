@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-27 07:44:56 by grim>
+;; Time-stamp: <Last changed 2025-06-27 13:19:17 by grim>
 
 ;;; Early Initial Settings
 
@@ -1828,6 +1828,29 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (global-set-key (kbd "C-c l") 'org-store-link)
 (global-set-key (kbd "C-c a") 'org-agenda)
 (global-set-key (kbd "C-c c") 'org-capture)
+
+(with-eval-after-load 'ox-latex
+  (add-to-list 'org-latex-classes
+               '("citywide"
+                 "\\documentclass{citywide}"
+                 ("\\section{%s}" . "\\section*{%s}")
+                 ("\\subsection{%s}" . "\\subsection*{%s}")
+                 ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+                 ("\\paragraph{%s}" . "\\paragraph*{%s}")
+                 ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))))
+
+(setq org-latex-default-packages-alist
+      '(("AUTO" "inputenc" t ("pdflatex"))
+        ("T1" "fontenc" t ("pdflatex"))
+        ("" "graphicx" t)
+        ("" "longtable" nil)
+        ("" "wrapfig" nil)
+        ("" "rotating" nil)
+        ("normalem" "ulem" t)
+        ("" "amsmath" t)
+        ("" "amssymb" t)
+        ("" "capt-of" nil)
+        ("" "hyperref" nil)))
 
 ;;; magit / forge
 
