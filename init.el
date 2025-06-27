@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-27 07:32:49 by grim>
+;; Time-stamp: <Last changed 2025-06-27 07:44:56 by grim>
 
 ;;; Early Initial Settings
 
@@ -721,6 +721,7 @@ The DWIM behaviour of this command is as follows:
       (use-package
         desktop-environment
         :ensure t
+        :after exwm
         :init
         ;; Pre-configure settings before mode activation
         (setq desktop-environment-notifications t) ; Enable notifications
@@ -3247,16 +3248,13 @@ parameters set in early-init.el to ensure robust UI element disabling."
 ;;; pass (password-store) integration
 
 (use-package password-store
-  :ensure t
-  :defer t)
+  :ensure t)
 
 (use-package password-store-otp
-  :ensure t
-  :defer t)
+  :ensure t)
 
 (use-package pass
   :ensure t
-  :defer t
   :after (password-store password-store-otp)
   :bind (("C-c p" . pass))
   :commands (pass))
