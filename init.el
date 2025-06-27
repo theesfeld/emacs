@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 20:01:23 by grim>
+;; Time-stamp: <Last changed 2025-06-26 20:09:04 by grim>
 
 ;;; Early Initial Settings
 
@@ -498,8 +498,8 @@ The DWIM behaviour of this command is as follows:
            (cond
             ;; Single monitor or only eDP-1 connected
             ((or (= (length connected-outputs) 1)
-                                         (and (member "eDP-1" connected-outputs)
-                     (= (length (remove "eDP-1" connected-outputs)) 0)))
+                 (and (member "eDP-1" connected-outputs)
+                      (= (length (remove "eDP-1" connected-outputs)) 0)))
              (start-process-shell-command
               "xrandr"
               nil
@@ -521,17 +521,17 @@ The DWIM behaviour of this command is as follows:
                     (format
                      "xrandr --output %s --primary --auto --output %s --auto --left-of %s --output eDP-1 --off"
                      primary secondary primary))
-                                         (start-process-shell-command
-                                                                                                                                                                                                                 "xrandr" nil
-                                                                                                                                                                                                                 (format
-         "xrandr --output %s --primary --auto --output eDP-1 --off"
-         primary)))
+                 (start-process-shell-command
+                  "xrandr" nil
+                  (format
+                   "xrandr --output %s --primary --auto --output eDP-1 --off"
+                   primary)))
                ;; Reset DPI to default (96) for external monitors
                (start-process-shell-command
                 "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
                (setq exwm-randr-workspace-monitor-plist
                      (if secondary
-                                                 `(0 ,primary 1 ,secondary)
+                         `(0 ,primary 1 ,secondary)
                        `(0 ,primary)))))))))
 
       (exwm-randr-mode 1)
@@ -557,48 +557,48 @@ The DWIM behaviour of this command is as follows:
                ([?\s-&]
                 .
                 (lambda (cmd)
-                                                                                                                                                                                                                  (interactive (list (read-shell-command "$ ")))
-                                                                                                                                                                                                                  (start-process-shell-command cmd nil cmd)))
+                  (interactive (list (read-shell-command "$ ")))
+                  (start-process-shell-command cmd nil cmd)))
                ([?\s-x]
                 .
                 (lambda ()
-                                                                                                                                                                                                                  (interactive)
-                                                                                                                                                                                                                  (save-buffers-kill-emacs)))
+                  (interactive)
+                  (save-buffers-kill-emacs)))
                ([?\s-\ ]
                 .
                 (lambda ()
-                                                                                                                                                                                                                  (interactive)
-                                                                                                                                                                                                                  (async-shell-command)))
+                  (interactive)
+                  (async-shell-command)))
                ([?\s-v] . consult-yank-pop)
                ([?\s-q]
                 .
                 (lambda ()
-                                                                                                                                                                                                                  (interactive)
-                                                                                                                                                                                                                  (kill-buffer-and-window)))
+                  (interactive)
+                  (kill-buffer-and-window)))
                ([XF86PowerOff]
                 .
                 (lambda ()
-                                                                                                                                                                                                                  (interactive)
-                                                                                                                                                                                                                  (when (executable-find "systemctl")
-          (start-process-shell-command
-           "poweroff" nil "systemctl poweroff")))))
+                  (interactive)
+                  (when (executable-find "systemctl")
+                    (start-process-shell-command
+                     "poweroff" nil "systemctl poweroff")))))
              (mapcar
               (lambda (i)
                 (cons
-                                                                                                                                                                                                                 (kbd (format "s-%d" i))
-                                                                                                                                                                                                                 (lambda ()
-          (interactive)
-          (message "Switching to workspace %d" i)
-          (exwm-workspace-switch-create i))))
+                 (kbd (format "s-%d" i))
+                 (lambda ()
+                   (interactive)
+                   (message "Switching to workspace %d" i)
+                   (exwm-workspace-switch-create i))))
               (number-sequence 0 9))
              (mapcar
               (lambda (i)
                 (cons
-                                                                                                                                                                                                                 (kbd (format "M-s-%d" i))
-                                                                                                                                                                                                                 (lambda ()
-          (interactive)
-          (message "Moving window to workspace %d" i)
-          (exwm-workspace-move-window i))))
+                 (kbd (format "M-s-%d" i))
+                 (lambda ()
+                   (interactive)
+                   (message "Moving window to workspace %d" i)
+                   (exwm-workspace-move-window i))))
               (number-sequence 0 9))))
 
       ;; Simulation Keys
@@ -762,7 +762,7 @@ The DWIM behaviour of this command is as follows:
       "Commit changes to init.el after saving."
       (when (and (buffer-file-name)
                  (string=
-                                                                                                                                                                                                                  (file-name-nondirectory (buffer-file-name)) "init.el"))
+                  (file-name-nondirectory (buffer-file-name)) "init.el"))
         (ignore-errors
           (vc-checkin
            (list (buffer-file-name))
@@ -772,31 +772,11 @@ The DWIM behaviour of this command is as follows:
     :hook (after-save . my-auto-commit-init-el))
 
 ;;; emacs configuration section
-  ;;
-  ;; This section contains core Emacs configuration organized as follows:
-  ;; - Font configuration: All font setup (family, heights, font-lock faces) is in early-init.el
-  ;;   for optimal startup performance and consistent daemon/non-daemon behavior
-  ;; - Theme configuration: modus-themes package handles theme loading and cursor customization
-  ;; - UI setup: Frame parameters in early-init.el + explicit mode disabling for daemon compatibility
-  ;; - Face customizations: Package-specific faces use colors from modus-vivendi palette for consistency
-  ;;
-  ;; This approach separates startup optimization (early-init.el) from runtime configuration (init.el)
-  ;; while maintaining visual consistency through coordinated color choices.
 
   (use-package
     emacs
     :ensure nil ; Built-in, no need to install
     :init (server-start)
-    ;; File and Directory Management Setup
-    ;;
-    ;; This configuration centralizes all temporary files, backups, history files,
-    ;; and caches in ~/.tmp/ to keep the main ~/.config/emacs.d directory clean and organized.
-    ;; Each type of file gets its own subdirectory for better organization.
-    ;;
-    ;; Alternative approach: You could use (locate-user-emacs-file "filename") for
-    ;; individual files, but the centralized approach provides better organization
-    ;; and makes it easier to backup/clean cache files as needed.
-
     (defvar my-tmp-dir (expand-file-name "~/.tmp/")
       "Centralized directory for temporary files, backups, and history files.
 This keeps the main .emacs.d directory clean and organizes cache files logically.")
@@ -971,12 +951,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     (require 'auth-source)
     (require 'epa-file)
     (epa-file-enable)
-
-    ;; UI Settings - Font configuration is handled in early-init.el
-    ;; Font family, heights, and font-lock faces are all configured there for optimal startup performance
-    ;; This avoids duplication and ensures consistent font handling across daemon and non-daemon instances
-
-    ;; Theme loading is handled in the modus-themes use-package block below
 
     :hook
     ((text-mode . visual-wrap-prefix-mode)
@@ -1154,8 +1128,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
 
   :hook
-  ;; Simple log mode setup - complex TRAMP integration removed
-  ;; Basic auto-revert-tail-mode is sufficient for most log viewing needs
   (log-mode . auto-revert-tail-mode))
 
 ;;; vundo settings
@@ -1203,8 +1175,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (highlight-thing-delay-seconds 0.5)   ; Delay before highlighting
   (highlight-thing-what-thing 'symbol)  ; Highlight symbols
   :config
-  ;; Custom face for symbol highlighting that integrates with modus-vivendi theme
-  ;; Using a soft blue background that complements the theme's palette
   (set-face-attribute 'highlight-thing nil
                       :background "#5e81ac" ; Soft blue from modus-vivendi color scheme
                       :weight 'normal)      ; Keep text weight normal for readability
@@ -1419,9 +1389,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                       (setq result (apply orig-fun args))))
                   result)))
 
-  ;; Custom completion preview face for better visibility
-  ;; Uses cyan foreground from modus-vivendi palette for consistency
-  ;; Transparent background allows theme colors to show through
   (set-face-attribute 'completion-preview nil
                       :foreground "#FFC107"
                       :background "unspecified")
@@ -1883,9 +1850,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq git-commit-summary-max-length 50)
   (setq git-commit-style-convention-checks '(non-empty-second-line))
   (setq magit-diff-refine-hunk t)
-  ;; Show icons for files in the Magit status and other buffers.
-  ;; (with-eval-after-load 'magit
-  ;;   (setq magit-format-file-function #'magit-format-file-nerd-icons))
+  ;;  (with-eval-after-load 'magit
+  ;;    (setq magit-format-file-function #'magit-format-file-nerd-icons))
   )
 
 (use-package magit-repos
@@ -2475,76 +2441,61 @@ This function integrates with exwm-firefox-core to open the current page."
   (add-to-list 'treesit-extra-load-path
                (expand-file-name "tree-sitter" user-emacs-directory))
 
-  ;; Essential tree-sitter language sources for common programming languages
-  ;; This selective list covers the most commonly used languages while keeping startup fast.
-  ;;
-  ;; OPTIMIZATION RECOMMENDATION: The current list contains 54+ languages which may slow
-  ;; startup. Consider reducing to only essential languages you actually use:
-  ;; - Web: css, html, javascript, typescript, tsx, json
-  ;; - System: c, cpp, rust, go
-  ;; - Scripting: bash, python, ruby, lua
-  ;; - Config: yaml, toml, dockerfile
-  ;; - Docs: markdown
-  ;;
-  ;; To add more languages later:
-  ;; 1. Add the language source to this list
-  ;; 2. Add appropriate major-mode-remap-alist entry below
-  ;; 3. Install the grammar with M-x treesit-install-language-grammar
   (setq treesit-language-source-alist
         '((awk . ("https://github.com/Beaglefoot/tree-sitter-awk"))
           (bash . ("https://github.com/tree-sitter/tree-sitter-bash"))
           (bibtex . ("https://github.com/latex-lsp/tree-sitter-bibtex"))
-          (blueprint . ("https://github.com/huanie/tree-sitter-blueprint"))
+          ;;          (blueprint . ("https://github.com/huanie/tree-sitter-blueprint"))
           (c . ("https://github.com/tree-sitter/tree-sitter-c"))
           (clojure . ("https://github.com/sogaiu/tree-sitter-clojure"))
           (cmake . ("https://github.com/uyha/tree-sitter-cmake"))
           (commonlisp . ("https://github.com/theHamsta/tree-sitter-commonlisp"))
           (cpp . ("https://github.com/tree-sitter/tree-sitter-cpp"))
-          (csharp . ("https://github.com/tree-sitter/tree-sitter-c-sharp"))
+          ;;          (csharp . ("https://github.com/tree-sitter/tree-sitter-c-sharp"))
           (css . ("https://github.com/tree-sitter/tree-sitter-css"))
-          (dart . ("https://github.com/ast-grep/tree-sitter-dart"))
+          ;;          (dart . ("https://github.com/ast-grep/tree-sitter-dart"))
           (dockerfile . ("https://github.com/camdencheek/tree-sitter-dockerfile"))
           (elisp . ("https://github.com/Wilfred/tree-sitter-elisp"))
-          (elixir . ("https://github.com/elixir-lang/tree-sitter-elixir"))
-          (glsl . ("https://github.com/theHamsta/tree-sitter-glsl"))
-          (go . ("https://github.com/tree-sitter/tree-sitter-go"))
-          (heex . ("https://github.com/phoenixframework/tree-sitter-heex"))
+          ;;          (elixir . ("https://github.com/elixir-lang/tree-sitter-elixir"))
+          ;;          (glsl . ("https://github.com/theHamsta/tree-sitter-glsl"))
+          ;;          (go . ("https://github.com/tree-sitter/tree-sitter-go"))
+          ;;          (heex . ("https://github.com/phoenixframework/tree-sitter-heex"))
           (html . ("https://github.com/tree-sitter/tree-sitter-html"))
-          (janet . ("https://github.com/GrayJack/tree-sitter-janet"))
-          (java . ("https://github.com/tree-sitter/tree-sitter-java"))
+          ;;          (janet . ("https://github.com/GrayJack/tree-sitter-janet"))
+          ;;          (java . ("https://github.com/tree-sitter/tree-sitter-java"))
           (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "master" "src"))
           (json . ("https://github.com/tree-sitter/tree-sitter-json"))
-          (julia . ("https://github.com/tree-sitter/tree-sitter-julia"))
-          (kotlin . ("https://github.com/fwcd/tree-sitter-kotlin"))
+          ;;          (julia . ("https://github.com/tree-sitter/tree-sitter-julia"))
+          ;;          (kotlin . ("https://github.com/fwcd/tree-sitter-kotlin"))
           (latex . ("https://github.com/latex-lsp/tree-sitter-latex"))
           (lua . ("https://github.com/MunifTanjim/tree-sitter-lua"))
-          (magik . ("https://github.com/GIT-USERS/RobertCrosas/tree-sitter-magik"))
+          ;;          (magik . ("https://github.com/GIT-USERS/RobertCrosas/tree-sitter-magik"))
           (make . ("https://github.com/alemuller/tree-sitter-make"))
           (markdown . ("https://github.com/ikatyang/tree-sitter-markdown"))
-          (nix . ("https://github.com/nix-community/tree-sitter-nix"))
-          (nu . ("https://github.com/nushell/tree-sitter-nu"))
+          ;;          (nix . ("https://github.com/nix-community/tree-sitter-nix"))
+          ;;          (nu . ("https://github.com/nushell/tree-sitter-nu"))
           (org . ("https://github.com/milisims/tree-sitter-org"))
-          (perl . ("https://github.com/tree-sitter-perl/tree-sitter-perl"))
-          (php . ("https://github.com/tree-sitter/tree-sitter-php"))
-          (proto . ("https://github.com/mitchellh/tree-sitter-proto"))
+          ;;          (perl . ("https://github.com/tree-sitter-perl/tree-sitter-perl"))
+          ;;          (php . ("https://github.com/tree-sitter/tree-sitter-php"))
+          ;;          (proto . ("https://github.com/mitchellh/tree-sitter-proto"))
           (python . ("https://github.com/tree-sitter/tree-sitter-python"))
-          (r . ("https://github.com/r-lib/tree-sitter-r"))
+          ;;          (r . ("https://github.com/r-lib/tree-sitter-r"))
           (ruby . ("https://github.com/tree-sitter/tree-sitter-ruby"))
           (rust . ("https://github.com/tree-sitter/tree-sitter-rust"))
           (scala . ("https://github.com/tree-sitter/tree-sitter-scala"))
           (scheme . ("https://github.com/6cdh/tree-sitter-scheme"))
           (sql . ("https://github.com/DerekStride/tree-sitter-sql"))
-          (surface . ("https://github.com/connorlay/tree-sitter-surface"))
+          ;;          (surface . ("https://github.com/connorlay/tree-sitter-surface"))
           (toml . ("https://github.com/tree-sitter/tree-sitter-toml"))
           (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src"))
           (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src"))
           (typst . ("https://github.com/uben0/tree-sitter-typst"))
-          (verilog . ("https://github.com/tree-sitter/tree-sitter-verilog"))
-          (vhdl . ("https://github.com/gdkrmr/tree-sitter-vhdl"))
-          (vue . ("https://github.com/merico-dev/tree-sitter-vue"))
-          (wast . ("https://github.com/bytecodealliance/tree-sitter-wast"))
-          (wat . ("https://github.com/bytecodealliance/tree-sitter-wat"))
-          (wgsl . ("https://github.com/mehmetoguzderin/tree-sitter-wgsl"))
+          ;;          (verilog . ("https://github.com/tree-sitter/tree-sitter-verilog"))
+          ;;          (vhdl . ("https://github.com/gdkrmr/tree-sitter-vhdl"))
+          ;;          (vue . ("https://github.com/merico-dev/tree-sitter-vue"))
+          ;;          (wast . ("https://github.com/bytecodealliance/tree-sitter-wast"))
+          ;;          (wat . ("https://github.com/bytecodealliance/tree-sitter-wat"))
+          ;;          (wgsl . ("https://github.com/mehmetoguzderin/tree-sitter-wgsl"))
           (yaml . ("https://github.com/ikatyang/tree-sitter-yaml"))))
 
   ;; Major mode remapping
@@ -2556,14 +2507,14 @@ This function integrates with exwm-firefox-core to open the current page."
           (c-mode . c-ts-mode)
           (c++-mode . c++-ts-mode)
           (cmake-mode . cmake-ts-mode)
-          (csharp-mode . csharp-ts-mode)
+          ;;          (csharp-mode . csharp-ts-mode)
           (css-mode . css-ts-mode)
           (dockerfile-mode . dockerfile-ts-mode)
-          (elixir-mode . elixir-ts-mode)
-          (go-mode . go-ts-mode)
+          ;;          (elixir-mode . elixir-ts-mode)
+          ;;          (go-mode . go-ts-mode)
           (html-mode . html-ts-mode)
           (mhtml-mode . html-ts-mode)
-          (java-mode . java-ts-mode)
+          ;;          (java-mode . java-ts-mode)
           (javascript-mode . js-ts-mode)
           (js-mode . js-ts-mode)
           (js2-mode . js-ts-mode)
@@ -2573,10 +2524,10 @@ This function integrates with exwm-firefox-core to open the current page."
           (makefile-mode . make-ts-mode)
           (makefile-gmake-mode . make-ts-mode)
           (markdown-mode . markdown-ts-mode)
-          (php-mode . php-ts-mode)
+          ;;          (php-mode . php-ts-mode)
           (python-mode . python-ts-mode)
-          (r-mode . r-ts-mode)
-          (ruby-mode . ruby-ts-mode)
+          ;;          (r-mode . r-ts-mode)
+          ;;          (ruby-mode . ruby-ts-mode)
           (rust-mode . rust-ts-mode)
           (scala-mode . scala-ts-mode)
           (sql-mode . sql-ts-mode)
@@ -2584,7 +2535,7 @@ This function integrates with exwm-firefox-core to open the current page."
           (conf-toml-mode . toml-ts-mode)
           (tsx-mode . tsx-ts-mode)
           (typescript-mode . typescript-ts-mode)
-          (verilog-mode . verilog-ts-mode)
+          ;;          (verilog-mode . verilog-ts-mode)
           (yaml-mode . yaml-ts-mode)))
 
   ;; Emacs 30.1+: Ensure parent mode relationships for proper integration
