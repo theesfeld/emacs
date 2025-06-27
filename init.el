@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 21:13:04 by grim>
+;; Time-stamp: <Last changed 2025-06-27 07:32:49 by grim>
 
 ;;; Early Initial Settings
 
@@ -8,7 +8,7 @@
   (setq native-comp-async-report-warnings-errors 'silent) ; Emacs 28 with native compilation
   (setq native-compile-prune-cache t)) ; Emacs 29
 
-;; Disable the damn thing by making it disposable.
+;; Disable the damn custom.el by making it disposable.
 (setq custom-file (make-temp-file "emacs-custom-"))
 
 ;; imenu support
@@ -3258,6 +3258,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :ensure t
   :defer t
   :after (password-store password-store-otp)
+  :bind (("C-c p" . pass))
   :commands (pass))
 
 ;;; isearch settings
