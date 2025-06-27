@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 19:59:39 by grim>
+;; Time-stamp: <Last changed 2025-06-26 20:01:23 by grim>
 
 ;;; Early Initial Settings
 
@@ -2610,29 +2610,7 @@ This function integrates with exwm-firefox-core to open the current page."
 
   ;; Tree-sitter settings
   (setq treesit-font-lock-level 4)              ; Maximum highlighting
-  (setq treesit-max-buffer-size (* 4 1024 1024)) ; 4MB max buffer size
-
-  :config
-  ;; Built-in grammar installation command
-  ;; Use: M-x treesit-install-language-grammar RET <language> RET
-
-  ;; Check installed grammars
-  (defun my/treesit-check-grammars ()
-    "Check which tree-sitter grammars are installed."
-    (interactive)
-    (let ((languages (mapcar #'car treesit-language-source-alist))
-          (installed '())
-          (missing '()))
-      (dolist (lang languages)
-        (if (treesit-language-available-p lang)
-            (push lang installed)
-          (push lang missing)))
-      (message "Installed grammars: %s\nMissing grammars: %s"
-               (mapconcat #'symbol-name (nreverse installed) ", ")
-               (mapconcat #'symbol-name (nreverse missing) ", "))))
-
-  ;; Run check on startup
-  (my/treesit-check-grammars))
+  (setq treesit-max-buffer-size (* 4 1024 1024))) ; 4MB max buffer size
 
 ;; Use treesit-auto for automatic mode selection and fallback
 (use-package treesit-auto
