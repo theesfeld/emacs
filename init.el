@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-26 21:01:47 by grim>
+;; Time-stamp: <Last changed 2025-06-26 21:08:23 by grim>
 
 ;;; Early Initial Settings
 
@@ -3244,7 +3244,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 (use-package server
   :ensure nil
-  :defer 1
   :config
   (setq server-client-instructions nil)
   (unless (server-running-p)
@@ -3287,7 +3286,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (setq list-matching-lines-jump-to-current-line nil)
   :bind
   ( :map global-map
-;;;; KEYBIND_CHANGE: C-. is better as universal-argument-more
     ("M-s ." . isearch-forward-symbol-at-point)
     :map minibuffer-local-isearch-map
     ("M-/" . isearch-complete-edit)
@@ -3302,8 +3300,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
 (use-package uniquify
   :ensure nil
   :config
-
-;;;; `uniquify' (unique names for buffers)
   (setq uniquify-buffer-name-style 'forward)
   (setq uniquify-strip-common-suffix t)
   (setq uniquify-after-kill-buffer-p t))
@@ -3350,6 +3346,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 (use-package shell
   :ensure nil
+  :defer t
   :bind
   (
    ("C-c E" . shell)
