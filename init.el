@@ -459,12 +459,174 @@ The DWIM behaviour of this command is as follows:
       ("Firefox" (exwm-workspace-rename-buffer
                   (format "Firefox: %s" exwm-title)))))
 
+  ;; Modern EXWM Multi-Monitor Configuration
+  (defcustom grim/exwm-laptop-monitor "eDP-1"
+    "Name of the laptop's built-in monitor."
+    :type 'string
+    :group 'exwm)
+
+  (defcustom grim/exwm-laptop-scale 0.75
+    "Scale factor for the laptop monitor when used alone."
+    :type 'float
+    :group 'exwm)
+
+  (defcustom grim/exwm-laptop-dpi 192
+    "DPI setting for the laptop monitor when used alone."
+    :type 'integer
+    :group 'exwm)
+
+  (defcustom grim/exwm-external-dpi 96
+    "DPI setting for external monitors."
+    :type 'integer
+    :group 'exwm)
+
+  (defvar grim/exwm-debug-monitors nil
+    "Enable debug logging for monitor configuration.")
+
+  (defun grim/exwm-log (message &rest args)
+    "Log MESSAGE with ARGS if debugging is enabled."
+    (when grim/exwm-debug-monitors
+      (message "[EXWM Monitor] %s" (apply #'format message args))))
+
+  (defun grim/exwm-detect-monitors ()
+    "Detect connected monitors using EXWM's built-in capabilities.
+Returns a list of monitor names."
+    (condition-case err
+        (let ((monitors '()))
+          ;; Use EXWM's built-in workspace-monitor functionality
+          ;; This leverages EXWM's internal monitor tracking
+          (when (and (boundp 'exwm-randr--last-timestamp)
+                     (boundp 'exwm-randr--monitor-alias)
+                     exwm-randr--monitor-alias)
+            (grim/exwm-log "Using EXWM's built-in monitor tracking")
+            (dolist (alias-pair exwm-randr--monitor-alias)
+              (unless (member (car alias-pair) monitors)
+                (push (car alias-pair) monitors))))
+          ;; Fallback to RandR detection if built-in tracking not available
+          (unless monitors
+            (grim/exwm-log "Falling back to RandR detection")
+            (when (fboundp 'exwm-randr--get-monitors)
+              (dolist (monitor (exwm-randr--get-monitors))
+                (push (slot-value monitor 'name) monitors))))
+          (grim/exwm-log "Detected monitors: %s" monitors)
+          (if monitors
+              (nreverse monitors)
+            ;; Final fallback to xrandr if all else fails
+            (grim/exwm-detect-monitors-fallback)))
+      (error
+       (grim/exwm-log "Error detecting monitors: %s" err)
+       (grim/exwm-detect-monitors-fallback))))
+
+  (defun grim/exwm-detect-monitors-fallback ()
+    "Fallback monitor detection using xrandr command."
+    (grim/exwm-log "Using fallback xrandr detection")
+    (let ((monitors '()))
+      (with-temp-buffer
+        (when (zerop (call-process "xrandr" nil t nil))
+          (goto-char (point-min))
+          (while (re-search-forward "^\\([^ ]+\\) connected" nil t)
+            (push (match-string 1) monitors))))
+      (grim/exwm-log "Fallback detected monitors: %s" monitors)
+      (nreverse monitors)))
+
+  (defun grim/exwm-assign-workspaces (monitors)
+    "Assign workspaces to MONITORS, ensuring one workspace per monitor.
+Uses EXWM's built-in workspace numbering starting from 0."
+    (let ((workspace-monitor-plist '())
+          (workspace-index 0))
+      (dolist (monitor monitors)
+        (when (< workspace-index exwm-workspace-number)
+          (push workspace-index workspace-monitor-plist)
+          (push monitor workspace-monitor-plist)
+          (setq workspace-index (1+ workspace-index))))
+      (grim/exwm-log "Workspace assignment: %s" workspace-monitor-plist)
+      (grim/exwm-log "Assigned %d workspaces to %d monitors" 
+                     (/ (length workspace-monitor-plist) 2) 
+                     (length monitors))
+      workspace-monitor-plist))
+
+  (defun grim/exwm-configure-laptop-only ()
+    "Configure display for laptop monitor only."
+    (grim/exwm-log "Configuring laptop-only display")
+    (start-process-shell-command
+     "xrandr" nil
+     (format "xrandr --output %s --primary --auto --scale %.2f --dpi %d"
+             grim/exwm-laptop-monitor
+             grim/exwm-laptop-scale
+             grim/exwm-laptop-dpi))
+    (start-process-shell-command
+     "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge"))
+
+  (defun grim/exwm-configure-external-monitors (monitors)
+    "Configure display for external MONITORS."
+    (let ((external-monitors (remove grim/exwm-laptop-monitor monitors)))
+      (grim/exwm-log "Configuring external monitors: %s" external-monitors)
+      (when external-monitors
+        (let ((primary (car external-monitors))
+              (secondary (cadr external-monitors)))
+          ;; Configure primary external monitor
+          (if secondary
+              ;; Two external monitors
+              (start-process-shell-command
+               "xrandr" nil
+               (format "xrandr --output %s --primary --auto --output %s --auto --left-of %s --output %s --off"
+                       primary secondary primary grim/exwm-laptop-monitor))
+            ;; One external monitor
+            (start-process-shell-command
+             "xrandr" nil
+             (format "xrandr --output %s --primary --auto --output %s --off"
+                     primary grim/exwm-laptop-monitor)))
+          ;; Set DPI for external monitors
+          (start-process-shell-command
+           "xrdb" nil (format "echo 'Xft.dpi: %d' | xrdb -merge" grim/exwm-external-dpi))))))
+
+  (defun grim/exwm-handle-monitor-change ()
+    "Handle monitor configuration changes using modern EXWM approach."
+    (grim/exwm-log "Monitor change detected")
+    (let ((monitors (grim/exwm-detect-monitors)))
+      (cond
+       ;; No monitors detected (error case)
+       ((null monitors)
+        (grim/exwm-log "No monitors detected, using fallback")
+        (setq exwm-randr-workspace-monitor-plist `(0 ,grim/exwm-laptop-monitor)))
+       
+       ;; Only laptop monitor
+       ((and (= (length monitors) 1)
+             (member grim/exwm-laptop-monitor monitors))
+        (grim/exwm-log "Laptop monitor only")
+        (grim/exwm-configure-laptop-only)
+        (setq exwm-randr-workspace-monitor-plist `(0 ,grim/exwm-laptop-monitor)))
+       
+       ;; External monitors present
+       ((> (length (remove grim/exwm-laptop-monitor monitors)) 0)
+        (grim/exwm-log "External monitors detected")
+        (grim/exwm-configure-external-monitors monitors)
+        (setq exwm-randr-workspace-monitor-plist
+              (grim/exwm-assign-workspaces (remove grim/exwm-laptop-monitor monitors))))
+       
+       ;; Fallback: assign to first detected monitor
+       (t
+        (grim/exwm-log "Using fallback monitor assignment")
+        (setq exwm-randr-workspace-monitor-plist `(0 ,(car monitors)))))
+      
+      ;; Refresh EXWM workspaces if already initialized
+      (when (and (fboundp 'exwm-randr-refresh) exwm--connection)
+        (exwm-randr-refresh))))
+
+  (defun grim/exwm-refresh-monitors ()
+    "Manually refresh monitor configuration.
+Useful for debugging or when automatic detection fails."
+    (interactive)
+    (grim/exwm-log "Manual monitor refresh requested")
+    (grim/exwm-handle-monitor-change)
+    (message "Monitor configuration refreshed"))
+
   ;; Only configure EXWM if running in suitable GUI environment
   (when (my/gui-available-p)
     (use-package
       exwm
       :ensure t
-      :config (setq exwm-workspace-number 5)
+      :config (setq exwm-workspace-number 10) ; Increased for multi-monitor support
       (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
       (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
       (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
@@ -481,56 +643,19 @@ The DWIM behaviour of this command is as follows:
        x-select-enable-primary t
        select-enable-clipboard t)
 
+      ;; Modern EXWM RandR Configuration
       (require 'exwm-randr)
-      (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1"))
-      (add-hook
-       'exwm-randr-screen-change-hook
-       (lambda ()
-         (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
-               connected-outputs)
-           (with-temp-buffer
-             (call-process "xrandr" nil t nil)
-             (goto-char (point-min))
-             (while (re-search-forward xrandr-output-regexp nil t)
-               (push (match-string 1) connected-outputs)))
-           (cond
-            ;; Single monitor or only eDP-1 connected
-            ((or (= (length connected-outputs) 1)
-                 (and (member "eDP-1" connected-outputs)
-                      (= (length (remove "eDP-1" connected-outputs)) 0)))
-             (start-process-shell-command
-              "xrandr"
-              nil
-              "xrandr --output eDP-1 --primary --auto --scale .75 --dpi 192")
-             (start-process-shell-command
-              "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
-             (dolist (output (remove "eDP-1" connected-outputs))
-               (start-process-shell-command
-                "xrandr" nil
-                (format "xrandr --output %s --off" output)))
-             (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1")))
-            ;; One or more external monitors
-            ((>= (length (remove "eDP-1" connected-outputs)) 1)
-             (let ((primary (car (remove "eDP-1" connected-outputs)))
-                   (secondary (cadr (remove "eDP-1" connected-outputs))))
-               (if secondary
-                   (start-process-shell-command
-                    "xrandr" nil
-                    (format
-                     "xrandr --output %s --primary --auto --output %s --auto --left-of %s --output eDP-1 --off"
-                     primary secondary primary))
-                 (start-process-shell-command
-                  "xrandr" nil
-                  (format
-                   "xrandr --output %s --primary --auto --output eDP-1 --off"
-                   primary)))
-               ;; Reset DPI to default (96) for external monitors
-               (start-process-shell-command
-                "xrdb" nil "echo 'Xft.dpi: 96' | xrdb -merge")
-               (setq exwm-randr-workspace-monitor-plist
-                     (if secondary
-                         `(0 ,primary 1 ,secondary)
-                       `(0 ,primary)))))))))
+      
+      ;; Initialize with laptop monitor
+      (setq exwm-randr-workspace-monitor-plist `(0 ,grim/exwm-laptop-monitor))
+      
+      ;; Use modern monitor change handler
+      (add-hook 'exwm-randr-screen-change-hook #'grim/exwm-handle-monitor-change)
+      
+      ;; Run initial monitor configuration
+      (grim/exwm-handle-monitor-change)
+      
+      ;; To enable monitor debugging: (setq grim/exwm-debug-monitors t)
 
       (exwm-randr-mode 1)
       ;; Load the system tray before exwm-init
