@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-27 13:19:17 by grim>
+;; Time-stamp: <Last changed 2025-06-27 22:07:42 by grim>
 
 ;;; Early Initial Settings
 
@@ -3482,6 +3482,17 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (setq emojify-display-style 'unicode)
   (setq emojify-emoji-styles '(unicode))
   :hook (after-init . global-emojify-mode))
+
+;;; insert-uuid
+
+(use-package insert-uuid
+  :ensure t
+  :defer t
+  :vc (:url "https://github.com/theesfeld/insert-uuid")
+  :bind ("C-c u" . insert-uuid)
+  :custom
+  (insert-uuid-default-version 4)
+  (insert-uuid-uppercase nil))
 
 ;;; final cleanup
 
