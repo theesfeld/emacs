@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-29 21:22:00 by grim>
+;; Time-stamp: <Last changed 2025-06-29 21:27:24 by grim>
 
 ;; Enable these
 (mapc
@@ -1446,6 +1446,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :bind
   (
    ("C-x b" . consult-buffer)
+   ("C-x C-b" . consult-buffer)
    ("C-x 4 b" . consult-buffer-other-window)
    ("C-x 5 b" . consult-buffer-other-frame)
    ("M-y" . consult-yank-pop)
