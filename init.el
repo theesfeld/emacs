@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-30 08:03:02 by grim>
+;; Time-stamp: <Last changed 2025-06-30 08:47:35 by grim>
 
 ;; Enable these
 (mapc
@@ -15,13 +15,14 @@
  '(eshell project-eshell overwrite-mode iconify-frame diary))
 
 (setq initial-buffer-choice nil)
-(setq initial-major-mode 'lisp-interaction-mode)
-(setq initial-scratch-message
-      (format ";; This is `%s'.  Use `%s' to evaluate and print results.\n\n"
-              'lisp-interaction-mode
-              (propertize
-               (substitute-command-keys "\\<lisp-interaction-mode-map>\\[eval-print-last-sexp]")
-               'face 'help-key-binding)))
+
+;; (setq initial-major-mode 'lisp-interaction-mode)
+;; (setq initial-scratch-message
+;;       (format ";; This is `%s'.  Use `%s' to evaluate and print results.\n\n"
+;;               'lisp-interaction-mode
+;;               (propertize
+;;                (substitute-command-keys "\\<lisp-interaction-mode-map>\\[eval-print-last-sexp]")
+;;                'face 'help-key-binding)))
 
 ;;; MELPA
 
