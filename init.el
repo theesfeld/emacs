@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-30 08:54:09 by grim>
+;; Time-stamp: <Last changed 2025-06-30 09:11:25 by grim>
 
 ;; Enable these
 (mapc
@@ -785,7 +785,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
     (setq
      user-full-name "TJ"
-     user-mail-address "william@theesfeld.net"
+     user-mail-address "tj@emacs.su"
      calendar-location-name "New York, NY"
      calendar-time-zone-rule "EST"
      calendar-standard-time-zone-name "EST"
@@ -802,12 +802,12 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
      save-interprogram-paste-before-kill t
      eval-expression-print-length nil
      scroll-error-top-bottom t
-     echo-keystrokes-help nil
+     ;; this
+     echo-keystrokes-help t
      delete-section-mode t
      x-stretch-cursor t
      help-window-select t
      auth-source-cache-expiry nil
-     gc-cons-percentage 0.6
      truncate-string-ellipsis "…" ; Visual ellipsis for truncated lines
      scroll-margin 1
      garbage-collection-messages nil
@@ -843,7 +843,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     (set-language-environment "UTF-8")
     (save-place-mode 1)
     (savehist-mode 1) ; Ensure history persistence is enabled
-    (setq history-length 1000) ; Consistent with consult
+    (setq history-length 10000) ; Consistent with consult
     (setq history-delete-duplicates t)
     (setq savehist-save-minibuffer-history t)
 
@@ -915,9 +915,9 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
      scroll-preserve-screen-position 1
      delete-by-moving-to-trash t
      window-combination-resize t
-     display-time-load-average nil
+     display-time-load-average t
      savehist-file (expand-file-name "savehist" my-tmp-dir)
-     history-length 1000
+     history-length 10000
      history-delete-duplicates t
      savehist-save-minibuffer-history t
      undo-limit 800000
@@ -1130,7 +1130,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; visual enhancements (rainbow/indent/highlight/...)
 
-;; Rainbow Delimiters
+;;; Rainbow Delimiters
+
 (use-package
   rainbow-delimiters
   :ensure t
@@ -1140,7 +1141,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :custom
   (rainbow-delimiters-max-face-count 9)) ;; Default 9 faces
 
-;; Highlight Thing at Point
+;;; Highlight Thing at Point
 
 (use-package
   highlight-thing
@@ -1155,7 +1156,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                       :weight 'normal)      ; Keep text weight normal for readability
   :hook (prog-mode . highlight-thing-mode))
 
-;; indent-bars
+;;; indent-bars
 
 (use-package indent-bars
   :ensure t
@@ -1412,7 +1413,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :ensure t
   :bind
   (("C-S-c C-S-c" . mc/edit-lines)
-;;;; KEYBIND_CHANGE: Moved C-> and C-< to C-c prefix to avoid conflicts
    ("C-c >" . mc/mark-next-like-this)
    ("C-c <" . mc/mark-previous-like-this)
    ("C-c C-<" . mc/mark-all-like-this)))
@@ -1562,9 +1562,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :ensure t
   :defer t
   :bind (
-;;;; KEYBIND_CHANGE: M-j is acceptable - it's normally undefined
          ("M-j" . avy-goto-char-timer)
-;;;; KEYBIND_CHANGE: Moved C-' to C-c ' to avoid conflict with toggle-input-method
          ("C-c '" . avy-goto-char-2))
   :init (avy-setup-default)
   :config
@@ -1587,7 +1585,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (use-package ace-window
   :ensure t
   :after avy
-;;;; KEYBIND_CHANGE: Using C-x o for ace-window is fine as it enhances other-window
   :bind ("C-x o" . ace-window))
 
 ;;; flyspell
@@ -1632,7 +1629,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :ensure t
   :after flyspell
   :bind
-;;;; KEYBIND_CHANGE: Using M-$ for flyspell-correct (standard ispell key)
   (:map flyspell-mode-map ("M-$" . flyspell-correct-wrapper)))
 
 ;;; eglot / lsp
@@ -3202,7 +3198,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :config
   (setq completion-styles '(basic substring initials flex orderless))
   (setq completion-pcm-leading-wildcard t)
-  (setq completion-category-defaults nil)
+  (setq completion-category-defaults t)
   (setq completion-auto-deselect nil)
   (setq completion-auto-help 'always)
   (setq completion-auto-select 'second-tab)
