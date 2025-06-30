@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-30 09:11:25 by grim>
+;; Time-stamp: <Last changed 2025-06-30 10:43:59 by grim>
 
 ;; Enable these
 (mapc
@@ -803,7 +803,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
      eval-expression-print-length nil
      scroll-error-top-bottom t
      ;; this
-     echo-keystrokes-help t
+     echo-keystrokes-help nil
      delete-section-mode t
      x-stretch-cursor t
      help-window-select t
@@ -3198,7 +3198,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :config
   (setq completion-styles '(basic substring initials flex orderless))
   (setq completion-pcm-leading-wildcard t)
-  (setq completion-category-defaults t)
+  (setq completion-category-defaults nil)
   (setq completion-auto-deselect nil)
   (setq completion-auto-help 'always)
   (setq completion-auto-select 'second-tab)
@@ -3356,7 +3356,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :ensure t
   :bind(("C-c b" . #'beframe-prefix-map))
   :config
-  (setq beframe-global-buffers '("*scratch*" "*Messages*" "*Backtrace*"))
+  (setq beframe-global-buffers '("*Messages*" "*Backtrace*"))
   (beframe-mode 1)
   (defvar consult-buffer-sources)
   (declare-function consult--buffer-state "consult")
