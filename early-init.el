@@ -1,3 +1,19 @@
+;;; early-init.el -*- lexical-binding: t -*-
+
+;; Native compilation settings (Emacs 28+)
+(when (native-comp-available-p)
+  (setq native-comp-async-report-warnings-errors 'silent
+        native-compile-prune-cache t)
+  ;; Emacs 30.1: Redirect ELN cache during startup for better performance
+  (when (boundp 'startup-redirect-eln-cache)
+    (setq startup-redirect-eln-cache t)))
+
+;; Disable custom.el by making it disposable
+(setq custom-file (make-temp-file "emacs-custom-"))
+
+;; Enable use-package imenu support early
+(setq use-package-enable-imenu-support t)
+
 (setq frame-resize-pixelwise t
       frame-inhibit-implied-resize 'force
       frame-title-format '("%b")
@@ -50,7 +66,7 @@
 (add-hook 'after-make-frame-functions #'grim-emacs-no-minibuffer-scroll-bar)
 
 (setq gc-cons-threshold most-positive-fixnum
-      gc-cons-percentage 0.5)
+      gc-cons-percentage 0.9)
 
 (defvar grim-emacs--file-name-handler-alist file-name-handler-alist)
 (defvar grim-emacs--vc-handled-backends vc-handled-backends)
@@ -60,10 +76,14 @@
 
 (add-hook 'emacs-startup-hook
           (lambda ()
-            (setq gc-cons-threshold (* 100 100 8)
+            (setq gc-cons-threshold #x800000        ; 8MB
                   gc-cons-percentage 0.1
                   file-name-handler-alist grim-emacs--file-name-handler-alist
                   vc-handled-backends grim-emacs--vc-handled-backends)))
+
+;; Auto-adjust GC during minibuffer usage
+(add-hook 'minibuffer-setup-hook (lambda () (setq gc-cons-threshold most-positive-fixnum)))
+(add-hook 'minibuffer-exit-hook (lambda () (setq gc-cons-threshold #x800000)))
 
 (setq package-enable-at-startup t)
 
@@ -87,3 +107,5 @@ not retain the generic background set by the function
 (grim-emacs-avoid-initial-flash-of-light)
 
 (add-hook 'after-init-hook (lambda () (set-frame-name "home")))
+
+;;; early-init.el ends here
