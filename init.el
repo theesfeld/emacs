@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-30 08:47:35 by grim>
+;; Time-stamp: <Last changed 2025-06-30 08:54:09 by grim>
 
 ;; Enable these
 (mapc
@@ -13,16 +13,6 @@
  (lambda (command)
    (put command 'disabled t))
  '(eshell project-eshell overwrite-mode iconify-frame diary))
-
-(setq initial-buffer-choice nil)
-
-;; (setq initial-major-mode 'lisp-interaction-mode)
-;; (setq initial-scratch-message
-;;       (format ";; This is `%s'.  Use `%s' to evaluate and print results.\n\n"
-;;               'lisp-interaction-mode
-;;               (propertize
-;;                (substitute-command-keys "\\<lisp-interaction-mode-map>\\[eval-print-last-sexp]")
-;;                'face 'help-key-binding)))
 
 ;;; MELPA
 
@@ -513,7 +503,7 @@ The DWIM behaviour of this command is as follows:
       (add-hook 'exwm-randr-screen-change-hook
                 (lambda ()
                   (let ((monitors (split-string (shell-command-to-string
-                                                "xrandr --listmonitors | grep -v '^Monitors:' | awk '{print $4}'") "\n" t)))
+                                                 "xrandr --listmonitors | grep -v '^Monitors:' | awk '{print $4}'") "\n" t)))
                     (when (>= (length monitors) 2)
                       ;; Assign workspace 0 to first monitor, workspace 1 to second monitor
                       (setq exwm-randr-workspace-monitor-plist
@@ -793,10 +783,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         (unless (file-exists-p subdir)
           (make-directory subdir t))))
 
-    ;; ;; Moved from Early Initial Settings
-    ;; (setq custom-file
-    ;;       (expand-file-name "custom.el" user-emacs-directory))
-    ;; Basic Emacs Information and pre-load settings
     (setq
      user-full-name "TJ"
      user-mail-address "william@theesfeld.net"
@@ -808,7 +794,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
      epg-pinentry-mode 'loopback
      create-lockfiles nil
      password-cache-expiry nil
-     ;; this
      delete-pair-blink-delay 0.1
      next-error-recenter '(4)
      find-library-include-other-files nil
