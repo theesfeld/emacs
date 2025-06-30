@@ -3383,6 +3383,18 @@ With optional argument FRAME, return the list of buffers of FRAME."
 
     (add-to-list 'consult-buffer-sources 'beframe-consult-source)))
 
+;;; EXWM workspace startup screen
+
+(defun grim/show-startup-screen-in-new-frames (frame)
+  "Show the startup screen in new EXWM workspace frames."
+  (when (and (frame-live-p frame)
+             (not (frame-parameter frame 'grim/startup-shown)))
+    (with-selected-frame frame
+      (fancy-startup-screen))
+    (set-frame-parameter frame 'grim/startup-shown t)))
+
+(add-hook 'after-make-frame-functions #'grim/show-startup-screen-in-new-frames)
+
 ;;; final cleanup
 
 (put 'eshell 'disabled nil)

@@ -21,11 +21,12 @@
       use-dialog-box t     ; only for mouse events, which I seldom use
       use-file-dialog nil
       use-short-answers t
-      inhibit-splash-screen t
-      inhibit-startup-screen t
+      inhibit-splash-screen nil
+      inhibit-startup-screen nil
       inhibit-x-resources t
-      inhibit-startup-echo-area-message user-login-name ; read the docstring
-      inhibit-startup-buffer-menu t)
+      ;;      inhibit-startup-echo-area-message user-login-name ; read the docstring
+      inhibit-startup-buffer-menu nil
+      initial-buffer-choice nil)
 
 (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
   (set-face-attribute 'default nil
