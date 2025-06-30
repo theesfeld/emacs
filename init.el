@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-29 22:16:33 by grim>
+;; Time-stamp: <Last changed 2025-06-29 22:18:13 by grim>
 
 ;; Enable these
 (mapc
@@ -3482,7 +3482,8 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :ensure t
   :defer t
   :vc (:url "https://github.com/theesfeld/insert-uuid")
-  :bind ("C-c u" . insert-uuid)
+  :bind (("C-c u" . insert-uuid)
+         ("C-c U" . insert-uuid-random))
   :custom
   (insert-uuid-default-version 4)
   (insert-uuid-uppercase nil))
