@@ -1,18 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-27 22:07:42 by grim>
-
-;;; Early Initial Settings
-
-(when (native-comp-available-p)
-  (setq native-comp-async-report-warnings-errors 'silent) ; Emacs 28 with native compilation
-  (setq native-compile-prune-cache t)) ; Emacs 29
-
-;; Disable the damn custom.el by making it disposable.
-(setq custom-file (make-temp-file "emacs-custom-"))
-
-;; imenu support
-(setq use-package-enable-imenu-support t)
+;; Time-stamp: <Last changed 2025-06-29 21:22:00 by grim>
 
 ;; Enable these
 (mapc
@@ -540,8 +528,8 @@ Uses EXWM's built-in workspace numbering starting from 0."
           (push monitor workspace-monitor-plist)
           (setq workspace-index (1+ workspace-index))))
       (grim/exwm-log "Workspace assignment: %s" workspace-monitor-plist)
-      (grim/exwm-log "Assigned %d workspaces to %d monitors" 
-                     (/ (length workspace-monitor-plist) 2) 
+      (grim/exwm-log "Assigned %d workspaces to %d monitors"
+                     (/ (length workspace-monitor-plist) 2)
                      (length monitors))
       workspace-monitor-plist))
 
@@ -589,26 +577,26 @@ Uses EXWM's built-in workspace numbering starting from 0."
        ((null monitors)
         (grim/exwm-log "No monitors detected, using fallback")
         (setq exwm-randr-workspace-monitor-plist `(0 ,grim/exwm-laptop-monitor)))
-       
+
        ;; Only laptop monitor
        ((and (= (length monitors) 1)
              (member grim/exwm-laptop-monitor monitors))
         (grim/exwm-log "Laptop monitor only")
         (grim/exwm-configure-laptop-only)
         (setq exwm-randr-workspace-monitor-plist `(0 ,grim/exwm-laptop-monitor)))
-       
+
        ;; External monitors present
        ((> (length (remove grim/exwm-laptop-monitor monitors)) 0)
         (grim/exwm-log "External monitors detected")
         (grim/exwm-configure-external-monitors monitors)
         (setq exwm-randr-workspace-monitor-plist
               (grim/exwm-assign-workspaces (remove grim/exwm-laptop-monitor monitors))))
-       
+
        ;; Fallback: assign to first detected monitor
        (t
         (grim/exwm-log "Using fallback monitor assignment")
         (setq exwm-randr-workspace-monitor-plist `(0 ,(car monitors)))))
-      
+
       ;; Refresh EXWM workspaces if already initialized
       (when (and (fboundp 'exwm-randr-refresh) exwm--connection)
         (exwm-randr-refresh))))
@@ -645,16 +633,16 @@ Useful for debugging or when automatic detection fails."
 
       ;; Modern EXWM RandR Configuration
       (require 'exwm-randr)
-      
+
       ;; Initialize with laptop monitor
       (setq exwm-randr-workspace-monitor-plist `(0 ,grim/exwm-laptop-monitor))
-      
+
       ;; Use modern monitor change handler
       (add-hook 'exwm-randr-screen-change-hook #'grim/exwm-handle-monitor-change)
-      
+
       ;; Run initial monitor configuration
       (grim/exwm-handle-monitor-change)
-      
+
       ;; To enable monitor debugging: (setq grim/exwm-debug-monitors t)
 
       (exwm-randr-mode 1)
@@ -1673,7 +1661,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (which-key-add-key-based-replacements
     "C-x u"   "[Undo] Vundo Tree"
     "C-x o"   "[Window] Ace Window"
-    "C-x C-b" "[Buffer] IBuffer"
     "C-="     "[Region] Expand"
     "C-& y"   "[Snippet] Consult YASnippet")
 
@@ -1684,15 +1671,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     "s-\\"    "[Windower] Toggle Split"
     "s-+"     "[Text] Increase Size & Pane"
     "s-_"     "[Text] Decrease Size & Pane")
-
-  ;; ===== MODE-SPECIFIC KEYBINDINGS =====
-  ;; ibuffer mode keybindings
-  (which-key-add-key-based-replacements
-    "/ u"     "[IBuffer] Mark Unsaved"
-    "/ *"     "[IBuffer] Mark Special"
-    "/ d"     "[IBuffer] Mark Dired"
-    "/ t"     "[IBuffer] Toggle Filter Groups"
-    "/ p"     "[IBuffer] Filter Project")
 
   ;; eww browser mode keybindings
   (which-key-add-key-based-replacements
@@ -2056,115 +2034,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    recentf-auto-cleanup nil)
   (run-at-time nil (* 5 60) 'recentf-save-list) ; Save every 5 minutes
   :bind (("C-c r" . consult-recent-file)))
-
-;;; ibuffer
-
-(use-package
-  ibuffer
-  :ensure nil
-  :bind (("C-x C-b" . ibuffer)) ; Override default buffer switch
-  :hook
-  ((ibuffer-mode . my-ibuffer-setup-hook)
-   (ibuffer-mode . ibuffer-auto-mode)) ; Auto-update buffer list
-  :custom
-  (ibuffer-expert t) ; Skip confirmation for dangerous operations
-  (ibuffer-show-empty-filter-groups nil) ; Hide empty groups
-  (ibuffer-display-summary nil) ; Show summary at bottom
-  (ibuffer-default-sorting-mode 'major-mode)  ; Sort by major mode initially
-  (ibuffer-use-header-line t) ; Use header line for filter info
-  :config
-  ;; Define saved filter groups
-  (setq
-   ibuffer-saved-filter-groups
-   '(("default" ("Emacs Lisp"
-                 (derived-mode . emacs-lisp-mode)) ; Filter by derived mode
-      ("Org"
-       (derived-mode . org-mode)) ; Filter Org and derived modes
-      ("Programming"
-       (derived-mode . prog-mode)) ; All programming modes
-      ("Dired" (mode . dired-mode))
-      ("Special"
-       (name . "^\\*.*\\*$")) ; Buffers starting and ending with *
-      ("Files"
-       (and (filename . ".*") ; File-backed buffers
-            (not (name . "^\\*.*\\*$")))) ; Exclude special buffers
-      ("EXWM" (mode . exwm-mode))
-      ("Other"
-       (name . ".*"))))) ; Catch-all group
-
-  ;; Custom setup hook for ibuffer
-  (defun my-ibuffer-setup-hook ()
-    "Set up ibuffer with saved filters, auto-mode, and visual enhancements."
-    (ibuffer-switch-to-saved-filter-groups "default")
-    (ibuffer-auto-mode 1) ; Enable auto-updates
-    (hl-line-mode 1) ; Highlight current line
-    ;; Style header line to match modus-vivendi theme
-    (set-face-attribute 'header-line nil
-                        :background "#2e3440" ; Dark background from modus palette
-                        :foreground "#d8dee9" ; Light text from modus palette
-                        :box "#88c0d0")       ; Cyan accent from modus palette
-    ;; Refresh buffer list
-    (ibuffer-update nil t)))
-
-  ;; Ensure all-the-icons for visual enhancement
-  (use-package
-    all-the-icons-ibuffer
-    :ensure t
-    :hook (ibuffer-mode . all-the-icons-ibuffer-mode)
-    :config
-    (setq all-the-icons-ibuffer-icon-size 1.0)
-    (setq all-the-icons-ibuffer-icon-v-adjust 0.0)
-    (setq all-the-icons-ibuffer-human-readable-size t) ; Readable file sizes
-    ;; Custom icon colors for better integration with modus-vivendi theme
-    ;; Using colors from the modus-vivendi palette for visual consistency
-    (set-face-attribute 'all-the-icons-ibuffer-file-face nil
-                        :foreground "#88c0d0") ; Soft cyan for file icons (modus-vivendi accent)
-    (set-face-attribute 'all-the-icons-ibuffer-dir-face nil
-                        :foreground "#81a1c1"  ; Soft blue for directory icons (modus-vivendi accent)
-                        :weight 'bold)         ; Bold weight for better directory visibility)
-
-  ;; Custom functions for ibuffer
-  (defun my-ibuffer-mark-unsaved-buffers ()
-    "Mark all unsaved file-visiting buffers."
-    (interactive)
-    (ibuffer-mark-for-delete nil) ; Clear existing marks
-    (ibuffer-mark-unsaved-buffers))
-
-  (defun my-ibuffer-mark-special-buffers ()
-    "Mark all special buffers (starting with *)."
-    (interactive)
-    (ibuffer-mark-for-delete nil) ; Clear existing marks
-    (ibuffer-mark-by-name-regexp "^\\*.*\\*$"))
-
-  (defun my-ibuffer-mark-dired-buffers ()
-    "Mark all dired buffers."
-    (interactive)
-    (ibuffer-mark-for-delete nil) ; Clear existing marks
-    (ibuffer-mark-by-mode 'dired-mode))
-
-  (defun my-ibuffer-toggle-filter-group-display ()
-    "Toggle display of empty filter groups."
-    (interactive)
-    (setq ibuffer-show-empty-filter-groups
-          (not ibuffer-show-empty-filter-groups))
-    (ibuffer-update nil t))
-
-  ;; Keybindings for ibuffer
-  (define-key
-   ibuffer-mode-map (kbd "/ u") #'my-ibuffer-mark-unsaved-buffers)
-  (define-key
-   ibuffer-mode-map (kbd "/ *") #'my-ibuffer-mark-special-buffers)
-  (define-key
-   ibuffer-mode-map (kbd "/ d") #'my-ibuffer-mark-dired-buffers)
-  (define-key
-   ibuffer-mode-map
-   (kbd "/ t")
-   #'my-ibuffer-toggle-filter-group-display)
-  (define-key
-   ibuffer-mode-map
-   (kbd "C-c C-g")
-   #'ibuffer-switch-to-saved-filter-groups))
-
 
 ;;; dired
 
@@ -3429,8 +3298,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :bind
   ( :map global-map
     ("M-s ." . isearch-forward-symbol-at-point)
-    :map minibuffer-local-isearch-map
-    ("M-/" . isearch-complete-edit)
     :map occur-mode-map
     ("t" . toggle-truncate-lines)
     :map isearch-mode-map
