@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-01 08:13:06 by grim>
+;; Time-stamp: <Last changed 2025-07-01 08:15:32 by grim>
 
 ;; Enable these
 (mapc
@@ -3383,180 +3383,180 @@ With optional argument FRAME, return the list of buffers of FRAME."
 
 
 ;;; BACKGROUND?
-(use-package buffer-background
-  :vc(:url "https://github.com/theesfeld/buffer-background")
-  :ensure t
-  :custom
-  ;; Set global defaults (can be overridden per-buffer)
-  (buffer-background-opacity 0.2)
-  (buffer-background-scale 'fit)
-  (buffer-background-grayscale nil)
-  (buffer-background-auto-enable t)
-  :config
-  ;; Comprehensive buffer-to-background mappings using per-spec approach
-  (setq buffer-background-image-alist
-        '(;; === EXACT BUFFER NAME MATCHING ===
-          ;; Simple string assignment (uses global defaults)
-          ;; ("*dashboard*" . "~/Pictures/dashboard-bg.png")
+;; (use-package buffer-background
+;;   :vc(:url "https://github.com/theesfeld/buffer-background")
+;;   :ensure t
+;;   :custom
+;;   ;; Set global defaults (can be overridden per-buffer)
+;;   (buffer-background-opacity 0.2)
+;;   (buffer-background-scale 'fit)
+;;   (buffer-background-grayscale nil)
+;;   (buffer-background-auto-enable t)
+;;   :config
+;;   ;; Comprehensive buffer-to-background mappings using per-spec approach
+;;   (setq buffer-background-image-alist
+;;         '(;; === EXACT BUFFER NAME MATCHING ===
+;;           ;; Simple string assignment (uses global defaults)
+;;           ;; ("*dashboard*" . "~/Pictures/dashboard-bg.png")
 
-          ;; Detailed plist specifications with per-buffer overrides
-          ("*scratch*" . (:image "~/Pictures/splash.svg"
-                                 :opacity 0.15
-                                 :scale fit
-                                 :grayscale nil))
+;;           ;; Detailed plist specifications with per-buffer overrides
+;;           ("*scratch*" . (:image "~/Pictures/splash.svg"
+;;                                  :opacity 0.15
+;;                                  :scale fit
+;;                                  :grayscale nil))
 
-          ("*Messages*" . (:image "~/Pictures/splash.svg"
-                                  :opacity 0.1
-                                  :scale tile
-                                  :grayscale t))
+;;           ("*Messages*" . (:image "~/Pictures/splash.svg"
+;;                                   :opacity 0.1
+;;                                   :scale tile
+;;                                   :grayscale t))
 
-          ;; Color backgrounds with transparency
-          ("*Backtrace*" . (:color "#2d1b1b"  ; Dark red tint
-                                   :opacity 0.9))
+;;           ;; Color backgrounds with transparency
+;;           ("*Backtrace*" . (:color "#2d1b1b"  ; Dark red tint
+;;                                    :opacity 0.9))
 
-          ;; === REGEXP PATTERN MATCHING ===
-          ;; Help system buffers
-          ("\\*Help.*\\*" . (:color "#1e1e2e"  ; Catppuccin mocha base
-                                    :opacity 0.85))
+;;           ;; === REGEXP PATTERN MATCHING ===
+;;           ;; Help system buffers
+;;           ("\\*Help.*\\*" . (:color "#1e1e2e"  ; Catppuccin mocha base
+;;                                     :opacity 0.85))
 
-          ;; All compilation-related buffers
-          ("\\*Compile.*\\*" . (:color "#2d2d2d"
-                                       :opacity 0.9))
+;;           ;; All compilation-related buffers
+;;           ("\\*Compile.*\\*" . (:color "#2d2d2d"
+;;                                        :opacity 0.9))
 
-          ;; Shell and terminal buffers
-          ;; ("\\*.*shell.*\\*" . (:image "~/Pictures/terminal-bg.png"
-          ;;                              :opacity 0.3
-          ;;                              :scale tile))
+;;           ;; Shell and terminal buffers
+;;           ;; ("\\*.*shell.*\\*" . (:image "~/Pictures/terminal-bg.png"
+;;           ;;                              :opacity 0.3
+;;           ;;                              :scale tile))
 
-          ;; === MAJOR MODE ASSIGNMENTS ===
-          ;; Org mode with subtle background
-          (org-mode . (:color "#002b36"  ; Solarized dark base03
-                              :opacity 0.8))
+;;           ;; === MAJOR MODE ASSIGNMENTS ===
+;;           ;; Org mode with subtle background
+;;           (org-mode . (:color "#002b36"  ; Solarized dark base03
+;;                               :opacity 0.8))
 
-          ;; Programming languages with themed backgrounds
-          ;; (python-mode . (:image "~/Pictures/python-logo-subtle.svg"
-          ;;                        :opacity 0.2
-          ;;                        :grayscale t
-          ;;                        :scale fill
-          ;;                        :position bottom-right))
+;;           ;; Programming languages with themed backgrounds
+;;           ;; (python-mode . (:image "~/Pictures/python-logo-subtle.svg"
+;;           ;;                        :opacity 0.2
+;;           ;;                        :grayscale t
+;;           ;;                        :scale fill
+;;           ;;                        :position bottom-right))
 
-          ;; (emacs-lisp-mode . (:image "~/Pictures/emacs-spiral.png"
-          ;;                            :opacity 0.25
-          ;;                            :scale fit))
+;;           ;; (emacs-lisp-mode . (:image "~/Pictures/emacs-spiral.png"
+;;           ;;                            :opacity 0.25
+;;           ;;                            :scale fit))
 
-          ;; (c-mode . (:color "#1a1a1a"
-          ;;                   :opacity 0.85))
+;;           ;; (c-mode . (:color "#1a1a1a"
+;;           ;;                   :opacity 0.85))
 
-          ;; (rust-mode . (:image "~/Pictures/rust-gear.png"
-          ;;                      :opacity 0.15
-          ;;                      :scale actual
-          ;;                      :position center))
+;;           ;; (rust-mode . (:image "~/Pictures/rust-gear.png"
+;;           ;;                      :opacity 0.15
+;;           ;;                      :scale actual
+;;           ;;                      :position center))
 
-          ;; === ALTERNATIVE MODE SYNTAX ===
-          ;; Web development modes
-          ;; ((mode . js-mode) . (:image "~/Pictures/js-bg.png"
-          ;;                             :opacity 0.18
-          ;;                             :scale fill))
+;;           ;; === ALTERNATIVE MODE SYNTAX ===
+;;           ;; Web development modes
+;;           ;; ((mode . js-mode) . (:image "~/Pictures/js-bg.png"
+;;           ;;                             :opacity 0.18
+;;           ;;                             :scale fill))
 
-          ;; ((mode . typescript-mode) . (:image "~/Pictures/ts-bg.png"
-          ;;                                     :opacity 0.18
-          ;;                                     :scale fill))
+;;           ;; ((mode . typescript-mode) . (:image "~/Pictures/ts-bg.png"
+;;           ;;                                     :opacity 0.18
+;;           ;;                                     :scale fill))
 
-          ;; ((mode . css-mode) . (:color "#1a2b3c"
-          ;;                              :opacity 0.75))
+;;           ;; ((mode . css-mode) . (:color "#1a2b3c"
+;;           ;;                              :opacity 0.75))
 
-          ;; ((mode . html-mode) . (:image "~/Pictures/html-structure.svg"
-          ;;                               :opacity 0.12
-          ;;                               :grayscale t))
+;;           ;; ((mode . html-mode) . (:image "~/Pictures/html-structure.svg"
+;;           ;;                               :opacity 0.12
+;;           ;;                               :grayscale t))
 
-          ;; === FILE EXTENSION MATCHING ===
-          ;; Markdown files
-          ((file . "md") . (:color "#f8f8f2"  ; Light background for readability
-                                   :opacity 0.05))
+;;           ;; === FILE EXTENSION MATCHING ===
+;;           ;; Markdown files
+;;           ((file . "md") . (:color "#f8f8f2"  ; Light background for readability
+;;                                    :opacity 0.05))
 
-          ;; Text files with paper texture
-          ;; ((file . "txt") . (:image "~/Pictures/paper-texture.png"
-          ;;                           :scale tile
-          ;;                           :opacity 0.1))
+;;           ;; Text files with paper texture
+;;           ;; ((file . "txt") . (:image "~/Pictures/paper-texture.png"
+;;           ;;                           :scale tile
+;;           ;;                           :opacity 0.1))
 
-          ;; Configuration files
-          ((file . "json") . (:color "#1a1a1a"
-                                     :opacity 0.7))
+;;           ;; Configuration files
+;;           ((file . "json") . (:color "#1a1a1a"
+;;                                      :opacity 0.7))
 
-          ((file . "yaml") . (:color "#2a2a1a"
-                                     :opacity 0.7))
+;;           ((file . "yaml") . (:color "#2a2a1a"
+;;                                      :opacity 0.7))
 
-          ((file . "toml") . (:color "#1a2a1a"
-                                     :opacity 0.7))
+;;           ((file . "toml") . (:color "#1a2a1a"
+;;                                      :opacity 0.7))
 
-          ;; Image files - no background to avoid interference
-          ((file . "png") . nil)
-          ((file . "jpg") . nil)
-          ((file . "svg") . nil)
+;;           ;; Image files - no background to avoid interference
+;;           ((file . "png") . nil)
+;;           ((file . "jpg") . nil)
+;;           ((file . "svg") . nil)
 
-          ;; === CUSTOM PREDICATE MATCHING ===
-          ;; Remote files (TRAMP)
-          ((lambda (buf)
-             (and (buffer-file-name buf)
-                  (file-remote-p (buffer-file-name buf))))
-           . (:color "dark blue"
-                     :opacity 0.3))
+;;           ;; === CUSTOM PREDICATE MATCHING ===
+;;           ;; Remote files (TRAMP)
+;;           ((lambda (buf)
+;;              (and (buffer-file-name buf)
+;;                   (file-remote-p (buffer-file-name buf))))
+;;            . (:color "dark blue"
+;;                      :opacity 0.3))
 
-          ;; All programming modes
-          ;; ((lambda (buf)
-          ;;    (with-current-buffer buf
-          ;;      (derived-mode-p 'prog-mode)))
-          ;;  . (:image "~/Pictures/code-matrix.png"
-          ;;            :opacity 0.08
-          ;;            :grayscale t
-          ;;            :scale tile))
+;;           ;; All programming modes
+;;           ;; ((lambda (buf)
+;;           ;;    (with-current-buffer buf
+;;           ;;      (derived-mode-p 'prog-mode)))
+;;           ;;  . (:image "~/Pictures/code-matrix.png"
+;;           ;;            :opacity 0.08
+;;           ;;            :grayscale t
+;;           ;;            :scale tile))
 
-          ;; Test files
-          ((lambda (buf)
-             (string-match-p "\\(test\\|spec\\)" (buffer-name buf)))
-           . (:color "#0a2a0a"  ; Dark green for tests
-                     :opacity 0.85))
+;;           ;; Test files
+;;           ((lambda (buf)
+;;              (string-match-p "\\(test\\|spec\\)" (buffer-name buf)))
+;;            . (:color "#0a2a0a"  ; Dark green for tests
+;;                      :opacity 0.85))
 
-          ;; Large files (>1MB) - lighter background for performance
-          ((lambda (buf)
-             (and (buffer-file-name buf)
-                  (> (file-attribute-size (file-attributes (buffer-file-name buf))) 1048576)))
-           . (:color "#1a1a1a"
-                     :opacity 0.5))
+;;           ;; Large files (>1MB) - lighter background for performance
+;;           ((lambda (buf)
+;;              (and (buffer-file-name buf)
+;;                   (> (file-attribute-size (file-attributes (buffer-file-name buf))) 1048576)))
+;;            . (:color "#1a1a1a"
+;;                      :opacity 0.5))
 
-          ;; Git commit messages
-          ;; ((lambda (buf)
-          ;;    (string-match-p "COMMIT_EDITMSG" (buffer-name buf)))
-          ;;  . (:image "~/Pictures/git-branch-bg.png"
-          ;;            :opacity 0.15
-          ;;            :scale fit))
+;;           ;; Git commit messages
+;;           ;; ((lambda (buf)
+;;           ;;    (string-match-p "COMMIT_EDITMSG" (buffer-name buf)))
+;;           ;;  . (:image "~/Pictures/git-branch-bg.png"
+;;           ;;            :opacity 0.15
+;;           ;;            :scale fit))
 
-          ;; Dired buffers
-          ((lambda (buf)
-             (with-current-buffer buf
-               (derived-mode-p 'dired-mode)))
-           . (:color "#2a2a2a"
-                     :opacity 0.7))))
+;;           ;; Dired buffers
+;;           ((lambda (buf)
+;;              (with-current-buffer buf
+;;                (derived-mode-p 'dired-mode)))
+;;            . (:color "#2a2a2a"
+;;                      :opacity 0.7))))
 
-  ;; Enable global mode for automatic buffer assignment
-  (buffer-background-global-mode 1)
+;;   ;; Enable global mode for automatic buffer assignment
+;;   (buffer-background-global-mode 1)
 
-  ;; Comprehensive keybindings
-  ;; :bind (("C-c b s" . buffer-background-select-image)
-  ;;        ("C-c b t" . buffer-background-toggle)
-  ;;        ("C-c b c" . buffer-background-clear)
-  ;;        ("C-c b o" . buffer-background-set-opacity)
-  ;;        ("C-c b g" . buffer-background-toggle-grayscale)
-  ;;        ("C-c b r" . buffer-background-reload)
-  ;;        ("C-c b i" . buffer-background-show-image-source)
-  ;;        ("C-c b a" . buffer-background-apply-to-buffer)
-  ;;        ("C-c b C" . buffer-background-clear-cache))
+;;   ;; Comprehensive keybindings
+;;   ;; :bind (("C-c b s" . buffer-background-select-image)
+;;   ;;        ("C-c b t" . buffer-background-toggle)
+;;   ;;        ("C-c b c" . buffer-background-clear)
+;;   ;;        ("C-c b o" . buffer-background-set-opacity)
+;;   ;;        ("C-c b g" . buffer-background-toggle-grayscale)
+;;   ;;        ("C-c b r" . buffer-background-reload)
+;;   ;;        ("C-c b i" . buffer-background-show-image-source)
+;;   ;;        ("C-c b a" . buffer-background-apply-to-buffer)
+;;   ;;        ("C-c b C" . buffer-background-clear-cache))
 
-  ;; Optional hooks for additional customization
-  :hook ((buffer-background-after-enable . (lambda ()
-                                             (message "Background applied to %s" (buffer-name))))
-         (buffer-background-after-disable . (lambda ()
-                                              (message "Background removed from %s" (buffer-name))))))
+;;   ;; Optional hooks for additional customization
+;;   :hook ((buffer-background-after-enable . (lambda ()
+;;                                              (message "Background applied to %s" (buffer-name))))
+;;          (buffer-background-after-disable . (lambda ()
+;;                                               (message "Background removed from %s" (buffer-name))))))
 
 ;;; final cleanup
 
