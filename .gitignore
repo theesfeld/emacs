@@ -1,0 +1,39 @@
+# CLAUDE files (AI assistant instructions)
+CLAUDE.md
+.claude/
+claude.md
+.CLAUDE.md
+
+# Emacs temporary and cache files
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+.cache/
+eln-cache/
+
+# Package management
+elpa/archives/
+
+# Session and history files
+history
+bookmarks
+projects
+network-security.data
+tramp
+transient/
+
+# Database files
+forge-database.sqlite
+
+# Credentials and secrets
+mastodon.plstore
+*.gpg
+
+# Directory-specific files
+url/
+tree-sitter/
+latex/
+snippets/
