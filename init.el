@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-01 12:08:16 by grim>
+;; Time-stamp: <Last changed 2025-07-01 12:19:24 by grim>
 
 ;; Enable these
 (mapc
@@ -3387,12 +3387,12 @@ With optional argument FRAME, return the list of buffers of FRAME."
 (use-package buffer-background
   :ensure t
   :vc (:url "https://github.com/theesfeld/buffer-background")
-  :config
-  (setq buffer-background-color-alist
-        '(("*scratch*" . "#2d2d2d")
-          ("*Messages*" . "#7fdb22")
-          (org-mode . (:color "#1e1e2e" :opacity 0.9))))
-  (buffer-background-global-mode 1))
+  :hook (after-init . (lambda ()
+                        (setq buffer-background-color-alist
+                              '(("*scratch*" . "#2d2d2d")
+                                ("*Messages*" . "#7fdb22")
+                                (org-mode . (:color "#1e1e2e" :opacity 0.9))))
+                        (buffer-background-global-mode 1))))
 
 ;;; final cleanup
 
