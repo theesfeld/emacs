@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-01 08:35:31 by grim>
+;; Time-stamp: <Last changed 2025-07-01 08:38:50 by grim>
 
 ;; Enable these
 (mapc
@@ -3390,7 +3390,7 @@ With optional argument FRAME, return the list of buffers of FRAME."
   :config
   (setq buffer-background-color-alist
         '(("*scratch*" . "#2d2d2d")
-          ("*Messages*" . "#1a1a1a")
+          ("*Messages*" . "#7fdb22")
           (org-mode . (:color "#1e1e2e" :opacity 0.9))))
   (buffer-background-global-mode 1))
 
