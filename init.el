@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-06-30 10:43:59 by grim>
+;; Time-stamp: <Last changed 2025-06-30 21:27:43 by grim>
 
 ;; Enable these
 (mapc
@@ -1082,8 +1082,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   files
   :ensure nil
   :config
-  ;; Save place configuration handled in main emacs use-package block
-  ;; Directory creation handled by main my-tmp-dir initialization
 
   ;; Log mode configuration
   (defvar log-mode-font-lock-keywords
@@ -3382,16 +3380,6 @@ With optional argument FRAME, return the list of buffers of FRAME."
          :state    ,#'consult--buffer-state))
 
     (add-to-list 'consult-buffer-sources 'beframe-consult-source)))
-
-;;; EXWM workspace startup screen
-
-(defun grim/show-startup-screen-in-new-frames (frame)
-  "Show the startup screen in new EXWM workspace frames."
-  (when (and (frame-live-p frame)
-             (not (frame-parameter frame 'grim/startup-shown)))
-    (with-selected-frame frame
-      (fancy-startup-screen))
-    (set-frame-parameter frame 'grim/startup-shown t)))
 
 (add-hook 'after-make-frame-functions #'grim/show-startup-screen-in-new-frames)
 
