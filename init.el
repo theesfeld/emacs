@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-01 08:38:50 by grim>
+;; Time-stamp: <Last changed 2025-07-01 11:55:26 by grim>
 
 ;; Enable these
 (mapc
@@ -3385,8 +3385,8 @@ With optional argument FRAME, return the list of buffers of FRAME."
 ;;; BACKGROUND?
 
 (use-package buffer-background
-  :vc (:url "https://github.com/theesfeld/buffer-background")
   :ensure t
+  :vc (:url "https://github.com/theesfeld/buffer-background")
   :config
   (setq buffer-background-color-alist
         '(("*scratch*" . "#2d2d2d")
