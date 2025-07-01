@@ -7,7 +7,6 @@ claude.md
 # Emacs temporary and cache files
 *~
 \#*\#
-/.emacs.desktop
 /.emacs.desktop.lock
 *.elc
 auto-save-list
@@ -36,4 +35,3 @@ mastodon.plstore
 url/
 tree-sitter/
 latex/
-snippets/
