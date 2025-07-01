@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-01 11:55:26 by grim>
+;; Time-stamp: <Last changed 2025-07-01 12:03:41 by grim>
 
 ;; Enable these
 (mapc
@@ -3386,6 +3386,7 @@ With optional argument FRAME, return the list of buffers of FRAME."
 
 (use-package buffer-background
   :ensure t
+  :after emacs
   :vc (:url "https://github.com/theesfeld/buffer-background")
   :config
   (setq buffer-background-color-alist
