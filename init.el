@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-01 12:19:24 by grim>
+;; Time-stamp: <Last changed 2025-07-02 10:15:23 by grim>
 
 ;; Enable these
 (mapc
@@ -1075,7 +1075,23 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         tramp-verbose 1                    ; Minimal verbosity for performance
         tramp-default-method "ssh"         ; Reliable connection method
         auto-revert-remote-files t         ; Enable remote file auto-revert
-        remote-file-name-inhibit-locks t)  ; Avoid lock files on remote systems
+        remote-file-name-inhibit-locks t
+        tramp-use-scp-direct-remote-copying t
+        remote-file-name-inhibit-auto-save-visited t)
+  (setq tramp-copy-size-limit (* 1024 1024) ;; 1MB
+        tramp-verbose 2)
+  (connection-local-set-profile-variables
+   'remote-direct-async-process
+   '((tramp-direct-async-process . t)))
+
+  (connection-local-set-profiles
+   '(:application tramp :protocol "scp")
+   'remote-direct-async-process)
+
+  (setq magit-tramp-pipe-stty-settings 'pty)
+  (with-eval-after-load 'tramp
+    (with-eval-after-load 'compile
+      (remove-hook 'compilation-mode-hook #'tramp-compile-disable-ssh-controlmaster-options)))
   )
 
 (use-package
