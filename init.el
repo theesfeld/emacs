@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-03 17:24:25 by grim>
+;; Time-stamp: <Last changed 2025-07-03 17:46:16 by grim>
 
 ;; Enable these
 (mapc
@@ -489,8 +489,8 @@ The DWIM behaviour of this command is as follows:
       (setq exwm-workspace-show-all-buffers t)
       (setq exwm-layout-show-all-buffers t)
       (setq exwm-manage-force-tiling nil)
-      (setq mouse-autoselect-window t)
-      (setq focus-follows-mouse t)
+      (setq mouse-autoselect-window nil)
+      (setq focus-follows-mouse nil)
       (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
       (setq mouse-wheel-progressive-speed t)
       (setq
@@ -591,9 +591,9 @@ The DWIM behaviour of this command is as follows:
                    (exwm-workspace-move-window i))))
               (number-sequence 0 9))))
 
-      ;; Simulation Keys
       (setq exwm-input-simulation-keys
-            '(([?\C-b] . [left])
+            '(;; Emacs-style navigation
+              ([?\C-b] . [left])
               ([?\C-f] . [right])
               ([?\C-p] . [up])
               ([?\C-n] . [down])
@@ -603,8 +603,16 @@ The DWIM behaviour of this command is as follows:
               ([?\C-v] . [next])
               ([?\C-d] . [delete])
               ([?\C-k] . [S-end delete])
-              ([?\M-w] . [?\C-c])
-              ([?\C-y] . [?\C-v])))
+              ;; CUA compatibility
+              ([?\M-w] . [?\C-c])    ; Copy
+              ([?\C-y] . [?\C-v])    ; Paste
+              ([?\C-s] . [?\C-f])    ; Search
+              ([?\C-/] . [?\C-z])    ; Undo
+              ;; Word navigation
+              ([?\M-f] . [C-right])  ; Forward word
+              ([?\M-b] . [C-left])   ; Backward word
+              ([?\M-d] . [C-delete]) ; Delete word
+              ([?\M-\d] . [C-backspace]))) ; Delete word backward
 
       ;;(exwm-wm-mode 1)
       (exwm-enable))) ; Close the when condition
@@ -846,7 +854,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     (save-place-mode 1)
     (setq history-length 10000) ; Consistent with consult
     (setq history-delete-duplicates t)
-    (setq savehist-save-minibuffer-history t)
 
     ;; Enable auto-insert for new files
     (require 'autoinsert)
@@ -917,10 +924,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
      delete-by-moving-to-trash t
      window-combination-resize t
      display-time-load-average t
-     savehist-file (expand-file-name "savehist" my-tmp-dir)
      history-length 10000
      history-delete-duplicates t
-     savehist-save-minibuffer-history t
      undo-limit 800000
      isearch-lazy-count t
      lazy-count-prefix-format "(%s/%s) "
@@ -1255,9 +1260,20 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :init (vertico-mode 1)
   :custom
   (vertico-cycle t)
-  (vertico-count 10)
+  (vertico-count 15)
+  (vertico-resize nil)
+  (vertico-multiform-mode 1)
   (vertico-sort-function 'vertico-sort-history-length-alpha)
   :config
+  (setq vertico-multiform-commands
+        '((consult-line buffer)
+          (consult-imenu reverse buffer)
+          (execute-extended-command flat)))
+
+  ;; Enable extensions
+  (require 'vertico-directory)
+  (require 'vertico-repeat)
+  (require 'vertico-quick)
   (with-eval-after-load 'all-the-icons
     (defun my-consult-buffer-format (buffer)
       "Add all-the-icons to BUFFER name for consult-buffer."
@@ -1267,13 +1283,13 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
      'consult-buffer
      :filter-return
      (lambda (buffers) (mapcar #'my-consult-buffer-format buffers))))
-  :bind
-  (:map
-   vertico-map
-   ("DEL" . vertico-directory-delete-char)
-   ("M-DEL" . vertico-directory-delete-word)
-   ("s-<tab>" . vertico-next)
-   ("S-s-<tab>" . vertico-previous)))
+  ;; Directory navigation
+  :bind (:map vertico-map
+              ("RET" . vertico-directory-enter)
+              ("DEL" . vertico-directory-delete-char)
+              ("M-DEL" . vertico-directory-delete-word)
+              ("C-l" . vertico-directory-up)
+              ("M-r" . vertico-repeat)))
 
 ;;; orderless
 
@@ -1302,7 +1318,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (savehist-mode 1)
   :custom
   (history-length 1000)
-  (savehist-file "~/.tmp/savehist")
+  (setq savehist-save-minibuffer-history t)
+  (setq savehist-file (expand-file-name "savehist" my-tmp-dir))
   (savehist-additional-variables
    '(kill-ring
      mark-ring
@@ -1322,6 +1339,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :config (require 'consult) (setq history-length 1000)
   (global-set-key [remap isearch-forward] #'consult-line)
   (global-set-key [remap switch-to-buffer] #'consult-buffer)
+  (global-set-key [remap list-buffers] #'consult-buffer)
   ;;(global-set-key [remap execute-extended-command] #'consult-M-x)
   (setq consult-preview-key 'any) ;; Preview on any key
   (setq consult-narrow-key "<")   ;; Narrowing key
@@ -1347,11 +1365,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                t)
   :bind
   (
-                                        ;("C-x b" . consult-buffer)
-                                        ;("C-x C-b" . consult-buffer)
-                                        ;("C-x 4 b" . consult-buffer-other-window)
-                                        ;("C-x 5 b" . consult-buffer-other-frame)
-                                        ;("M-y" . consult-yank-pop)
    ("M-g i" . consult-imenu)
    ("M-s r" . consult-ripgrep)
    ("M-s l" . consult-line)
