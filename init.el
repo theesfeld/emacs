@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-03 16:33:15 by grim>
+;; Time-stamp: <Last changed 2025-07-03 17:22:23 by grim>
 
 ;; Enable these
 (mapc
@@ -31,6 +31,14 @@
       '(("gnu-elpa" . 3)
         ("melpa" . 2)
         ("nongnu" . 1)))
+
+;;; pinentry
+
+(setenv "GPG_AGENT_INFO" nil)  ; Use emacs pinentry
+(setq epa-pinentry-mode 'loopback
+      epg-pinentry-mode 'loopback)
+(when (fboundp 'pinentry-start)
+  (pinentry-start))
 
 ;;; CUSTOM FUNCTIONS
 
@@ -598,6 +606,7 @@ The DWIM behaviour of this command is as follows:
               ([?\M-w] . [?\C-c])
               ([?\C-y] . [?\C-v])))
 
+      ;;(exwm-wm-mode 1)
       (exwm-enable))) ; Close the when condition
 
   (when (my/gui-available-p)
@@ -813,7 +822,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
      garbage-collection-messages nil
      plstore-cache-directory my-tmp-dir
      epg-gpg-program "gpg2"
-     gc-cons-threshold most-positive-fixnum ; From Garbage Collection
 
      ;; Backup settings
      backup-by-copying t
@@ -827,13 +835,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
      auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-saves/" my-tmp-dir) t))
      auto-save-list-file-prefix (expand-file-name "auto-save-list/.saves-" my-tmp-dir)
      auto-save-default t)
-
-    (setq savehist-additional-variables
-          '(kill-ring
-            search-ring
-            regexp-search-ring
-            extended-command-history
-            file-name-history))
+    (setq fast-read-process-output t)
 
     (setenv "TZ" "America/New_York")
     (prefer-coding-system 'utf-8)
@@ -842,7 +844,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     (set-keyboard-coding-system 'utf-8)
     (set-language-environment "UTF-8")
     (save-place-mode 1)
-    (savehist-mode 1) ; Ensure history persistence is enabled
     (setq history-length 10000) ; Consistent with consult
     (setq history-delete-duplicates t)
     (setq savehist-save-minibuffer-history t)
@@ -874,7 +875,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     (setq modus-themes-italic-constructs t
           modus-themes-bold-constructs t)
     (custom-set-faces
-     '(cursor ((t (:background "#FFC107")))))
+     '(cursor ((t (:background "#FFC1check07")))))
     (set-face-attribute 'default nil :height 120)
     (set-face-attribute 'variable-pitch nil :height 130)
     (load-theme 'modus-vivendi t)
@@ -1224,9 +1225,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (delight
    '((global-hl-line-mode nil "hl-line")
      (save-place-mode nil "saveplace")
-                                        ; (global-auto-revert-mode nil "autorevert")
      (flyspell-mode " ✍" "flyspell")
-     (which-key-mode nil "which-key")
      (yas-minor-mode nil "yasnippet")
      (smartparens-mode nil "smartparens"))))
 
@@ -1287,9 +1286,31 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (completion-styles '(orderless partial-completion basic))
   (completion-category-defaults completion-category-overrides nil)
   (completion-category-overrides
-   '((eglot (styles orderless)) (eglot-capf (styles orderless))))
-  (completion-category-overrides
-   '((file (styles basic partial-completion)))))
+   '((eglot (styles orderless))
+     (eglot-capf (styles orderless))
+     (file (styles basic partial-completion orderless))
+     (buffer (styles orderless))
+     (info-menu (styles orderless))
+     (consult-multi (styles orderless))
+     (org-heading (styles orderless))
+     (unicode-name (styles orderless)))))
+
+;;; savehist
+(use-package savehist
+  :ensure nil
+  :init
+  (savehist-mode 1)
+  :custom
+  (history-length 1000)
+  (savehist-file "~/.tmp/savehist")
+  (savehist-additional-variables
+   '(kill-ring
+     mark-ring
+     global-mark-ring
+     search-ring
+     regexp-search-ring
+     extended-command-history
+     vertico-repeat-history)))
 
 ;;; consult
 
@@ -1299,10 +1320,10 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :after vertico
   :demand t
   :config (require 'consult) (setq history-length 1000)
-  (setq savehist-additional-variables
-        (append
-         savehist-additional-variables '(extended-command-history)))
-  (setq consult-preview-key 'any) ;; Preview on any key
+  (global-set-key [remap isearch-forward] #'consult-line)
+  (global-set-key [remap switch-to-buffer] #'consult-buffer)
+  ;;(global-set-key [remap execute-extended-command] #'consult-M-x)
+  check(setq consult-preview-key 'any) ;; Preview on any key
   (setq consult-narrow-key "<")   ;; Narrowing key
   (defvar my-consult-hidden-buffer-source
     `(:name
@@ -1326,11 +1347,11 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                t)
   :bind
   (
-   ("C-x b" . consult-buffer)
-   ("C-x C-b" . consult-buffer)
-   ("C-x 4 b" . consult-buffer-other-window)
-   ("C-x 5 b" . consult-buffer-other-frame)
-   ("M-y" . consult-yank-pop)
+                                        ;("C-x b" . consult-buffer)
+                                        ;("C-x C-b" . consult-buffer)
+                                        ;("C-x 4 b" . consult-buffer-other-window)
+                                        ;("C-x 5 b" . consult-buffer-other-frame)
+                                        ;("M-y" . consult-yank-pop)
    ("M-g i" . consult-imenu)
    ("M-s r" . consult-ripgrep)
    ("M-s l" . consult-line)
@@ -1466,7 +1487,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (which-key-add-key-based-replacements
     "C-c 0"   "[0x0] Upload Service"
     "C-c F"   "[Firefox] EXWM Browser"
-    "C-c l"   "[LSP] Language Server"
+    "C-c L"   "[LSP] Language Server"
     "C-c n"   "[Notes] Denote System"
     "C-c w"   "[AI] GPTel Assistant")
 
@@ -1506,13 +1527,13 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
   ;; LSP subcommands
   (which-key-add-key-based-replacements
-    "C-c l a" "Code Actions"
-    "C-c l d" "Diagnostics"
-    "C-c l s" "Symbols"
-    "C-c l f" "File Symbols"
-    "C-c l i" "Implementation"
-    "C-c l r" "References"
-    "C-c l D" "Definition")
+    "C-c L a" "Code Actions"
+    "C-c L d" "Diagnostics"
+    "C-c L s" "Symbols"
+    "C-c L f" "File Symbols"
+    "C-c L i" "Implementation"
+    "C-c L r" "References"
+    "C-c L D" "Definition")
 
   ;; Denote Notes subcommands
   (which-key-add-key-based-replacements
@@ -1665,27 +1686,37 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
       (eglot-inlay-hints-mode))))
   :config
 
+  (setq eglot-events-buffer-size 0) ; Disable event logging for performance
+  (setq eglot-sync-connect 1) ; Reduce connection timeout
+  (setq eglot-autoshutdown t) ; Shutdown unused servers
+  (setq eglot-send-changes-idle-time 0.5) ; Optimize idle time
+
   ;; Disable python-flymake when eglot is active
   (add-hook
    'eglot-managed-mode-hook
    (lambda ()
      (when (derived-mode-p 'python-mode 'python-ts-mode)
-       (remove-hook 'flymake-diagnostic-functions 'python-flymake t)))))
+       (remove-hook 'flymake-diagnostic-functions 'python-flymake t))))
 
-(use-package
-  consult-lsp
+  ;; Process cleanup on exit
+  (add-hook 'kill-emacs-hook
+            (lambda ()
+              (when (fboundp 'eglot-shutdown-all)
+                (eglot-shutdown-all)))))
+
+(use-package consult-lsp
   :ensure t
   :after (eglot consult)
   :bind
   (:map
    eglot-mode-map
-   ("C-c l a" . consult-lsp-code-actions)
-   ("C-c l d" . consult-lsp-diagnostics)
-   ("C-c l s" . consult-lsp-symbols)
-   ("C-c l f" . consult-lsp-file-symbols)
-   ("C-c l i" . consult-lsp-implementation)
-   ("C-c l r" . consult-lsp-references)
-   ("C-c l D" . consult-lsp-definition)))
+   ("C-c L a" . consult-lsp-code-actions)
+   ("C-c L d" . consult-lsp-diagnostics)
+   ("C-c L s" . consult-lsp-symbols)
+   ("C-c L f" . consult-lsp-file-symbols)
+   ("C-c L i" . consult-lsp-implementation)
+   ("C-c L r" . consult-lsp-references)
+   ("C-c L D" . consult-lsp-definition)))
 
 ;;; org-mode
 
@@ -3369,6 +3400,19 @@ parameters set in early-init.el to ensure robust UI element disabling."
                                 ("*Messages*" . "#7fdb22")
                                 (org-mode . (:color "#1e1e2e" :opacity 0.9))))
                         (buffer-background-global-mode 1))))
+
+;;; STARTUP INFORMATION
+
+(use-package benchmark-init
+  :ensure t
+  :demand t
+  :hook (after-init . benchmark-init/deactivate)
+  :config
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (message "Emacs started in %.2f seconds with %d garbage collections"
+                       (float-time (time-subtract after-init-time before-init-time))
+                       gcs-done))))
 
 ;;; final cleanup
 
