@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-03 17:22:23 by grim>
+;; Time-stamp: <Last changed 2025-07-03 17:23:40 by grim>
 
 ;; Enable these
 (mapc
@@ -22,15 +22,15 @@
 
 (setq package-archives
       '(("gnu-elpa" . "https://elpa.gnu.org/packages/")
-        ("gnu-elpa-devel" . "https://elpa.gnu.org/devel/")
-        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-        ("melpa" . "https://melpa.org/packages/")))
+	("gnu-elpa-devel" . "https://elpa.gnu.org/devel/")
+	("nongnu" . "https://elpa.nongnu.org/nongnu/")
+	("melpa" . "https://melpa.org/packages/")))
 
 ;; Highest number gets priority (what is not mentioned has priority 0)
 (setq package-archive-priorities
       '(("gnu-elpa" . 3)
-        ("melpa" . 2)
-        ("nongnu" . 1)))
+	("melpa" . 2)
+	("nongnu" . 1)))
 
 ;;; pinentry
 
@@ -46,7 +46,7 @@
   "Find PROP in `auth-sources' for HOST entry."
   (when-let* ((source (auth-source-search :host host)))
     (if (eq prop :secret)
-        (funcall (plist-get (car source) prop))
+	(funcall (plist-get (car source) prop))
       (plist-get (flatten-list source) prop))))
 
 (defun prot/keyboard-quit-dwim ()
@@ -83,25 +83,25 @@ The DWIM behaviour of this command is as follows:
   (let*
       ((major-mode-snippets (yas--table-get-create major-mode))
        (minor-mode-snippets
-        (cl-loop
-         for mode in minor-mode-list when
-         (and (boundp mode)
-              (symbol-value mode)
-              (not (eq mode 'all-the-icons-completion-mode))) ; Exclude problematic mode
-         append
-         (let ((table (yas--table-get-create mode)))
-           (when table
-             (if (fboundp 'yas--table-all-templates)
-                 (yas--table-all-templates table)
-               (hash-table-values (yas--table-hash table)))))))
+	(cl-loop
+	 for mode in minor-mode-list when
+	 (and (boundp mode)
+	      (symbol-value mode)
+	      (not (eq mode 'all-the-icons-completion-mode))) ; Exclude problematic mode
+	 append
+	 (let ((table (yas--table-get-create mode)))
+	   (when table
+	     (if (fboundp 'yas--table-all-templates)
+		 (yas--table-all-templates table)
+	       (hash-table-values (yas--table-hash table)))))))
        (all-snippets
-        (append
-         (if (fboundp 'yas--table-all-templates)
-             (yas--table-all-templates major-mode-snippets)
-           (hash-table-values (yas--table-hash major-mode-snippets)))
-         minor-mode-snippets)))
+	(append
+	 (if (fboundp 'yas--table-all-templates)
+	     (yas--table-all-templates major-mode-snippets)
+	   (hash-table-values (yas--table-hash major-mode-snippets)))
+	 minor-mode-snippets)))
     (if all-snippets
-        (consult-yasnippet all-snippets))))
+	(consult-yasnippet all-snippets))))
 
   (global-set-key (kbd "C-& y") #'my/consult-yasnippet-with-minor-modes)
 
@@ -109,12 +109,12 @@ The DWIM behaviour of this command is as follows:
   "Increase text size and adjust window width proportionally."
   (interactive)
   (let* ((orig-scale
-          (or (car (get 'text-scale-mode-amount 'customized-value))
-              text-scale-mode-amount))
-         (new-scale (+ orig-scale 1))
-         (scale-factor
-          (/ (float (expt text-scale-mode-step new-scale))
-             (float (expt text-scale-mode-step orig-scale)))))
+	  (or (car (get 'text-scale-mode-amount 'customized-value))
+	      text-scale-mode-amount))
+	 (new-scale (+ orig-scale 1))
+	 (scale-factor
+	  (/ (float (expt text-scale-mode-step new-scale))
+	     (float (expt text-scale-mode-step orig-scale)))))
     (text-scale-increase 1)
     (enlarge-window-horizontally
      (round (* (window-width) (- scale-factor 1))))))
@@ -125,12 +125,12 @@ The DWIM behaviour of this command is as follows:
   "Decrease text size and adjust window width proportionally."
   (interactive)
   (let* ((orig-scale
-          (or (car (get 'text-scale-mode-amount 'customized-value))
-              text-scale-mode-amount))
-         (new-scale (- orig-scale 1))
-         (scale-factor
-          (/ (float (expt text-scale-mode-step new-scale))
-             (float (expt text-scale-mode-step orig-scale)))))
+	  (or (car (get 'text-scale-mode-amount 'customized-value))
+	      text-scale-mode-amount))
+	 (new-scale (- orig-scale 1))
+	 (scale-factor
+	  (/ (float (expt text-scale-mode-step new-scale))
+	     (float (expt text-scale-mode-step orig-scale)))))
     (text-scale-decrease 1)
     (shrink-window-horizontally
      (round (* (window-width) (- 1 scale-factor))))))
@@ -141,7 +141,7 @@ The DWIM behaviour of this command is as follows:
   (when (string-match-p ":website:" (buffer-string))
     (goto-char (point-min))
     (while (re-search-forward "\\[\\[\\(http[^][]+\\)\\]\\[.*\\]\\]"
-                              (org-download-image (match-string 1)))))
+			      (org-download-image (match-string 1)))))
   (add-hook
    'org-capture-after-finalize-hook
    #'my-org-download-images-from-capture))
@@ -153,12 +153,12 @@ The DWIM behaviour of this command is as follows:
     (error "Second argument must be an interactive command"))
   (let ((buffer (get-buffer buffer-name)))
     (if (and buffer (get-buffer-window buffer))
-        ;; If the buffer exists and is visible, hide it
-        (quit-window nil (get-buffer-window buffer))
+	;; If the buffer exists and is visible, hide it
+	(quit-window nil (get-buffer-window buffer))
       ;; If it doesn't exist or isn't visible, start it or switch to it
       (if buffer
-          (switch-to-buffer buffer)
-        (call-interactively command)))))
+	  (switch-to-buffer buffer)
+	(call-interactively command)))))
 
 (defun my-org-capture-delete-file-after-kill (&rest _)
   "Delete file if capture is aborted."
@@ -168,9 +168,9 @@ The DWIM behaviour of this command is as follows:
 
 (declare-function completion-preview-insert "completion-preview")
 (declare-function completion-preview-next-candidate
-                  "completion-preview")
+		  "completion-preview")
 (declare-function completion-preview-prev-candidate
-                  "completion-preview")
+		  "completion-preview")
 (declare-function completion-preview--hide "completion-preview")
 
 ;;; EDNC NOTIFICATIONS (DBUS)
@@ -195,9 +195,9 @@ The DWIM behaviour of this command is as follows:
   (defcustom ednc-notification-position 'top-right
     "Position for notifications."
     :type '(choice (const top-right)
-                   (const top-left)
-                   (const bottom-right)
-                   (const bottom-left))
+		   (const top-left)
+		   (const bottom-right)
+		   (const bottom-left))
     :group 'ednc-enhanced)
 
   (defcustom ednc-notification-max-width 50
@@ -232,82 +232,82 @@ The DWIM behaviour of this command is as follows:
   (defun ednc--format-for-display (notification)
     "Format NOTIFICATION for posframe display."
     (let* ((app-name (ednc-notification-app-name notification))
-           (summary (ednc-notification-summary notification))
-           (body (ednc-notification-body notification)))
+	   (summary (ednc-notification-summary notification))
+	   (body (ednc-notification-body notification)))
       (concat
        (when app-name
-         (concat (propertize app-name 'face 'ednc-notification-app-face)
-                 "\n"))
+	 (concat (propertize app-name 'face 'ednc-notification-app-face)
+		 "\n"))
        (propertize summary 'face 'ednc-notification-default-face)
        (when (and body (not (string-empty-p body)))
-         (concat "\n" (propertize body 'face 'ednc-notification-default-face))))))
+	 (concat "\n" (propertize body 'face 'ednc-notification-default-face))))))
 
   (defun ednc--store-in-history (notification)
     "Store NOTIFICATION in history for consult browsing."
     (let* ((time (format-time-string "%Y-%m-%d %H:%M:%S"))
-           (app (ednc-notification-app-name notification))
-           (summary (ednc-notification-summary notification))
-           (body (ednc-notification-body notification))
-           (entry (propertize
-                   (format "%s │ %s: %s"
-                           (propertize time 'face 'ednc-notification-time-face)
-                           (propertize (or app "System") 'face 'font-lock-keyword-face)
-                           summary)
-                   'notification notification
-                   'time time
-                   'body body)))
+	   (app (ednc-notification-app-name notification))
+	   (summary (ednc-notification-summary notification))
+	   (body (ednc-notification-body notification))
+	   (entry (propertize
+		   (format "%s │ %s: %s"
+			   (propertize time 'face 'ednc-notification-time-face)
+			   (propertize (or app "System") 'face 'font-lock-keyword-face)
+			   summary)
+		   'notification notification
+		   'time time
+		   'body body)))
       (ring-insert ednc--notification-ring entry)
       (push entry ednc--notification-history)))
 
   (defun ednc--calculate-position (index)
     "Calculate position for notification at INDEX."
     (let ((spacing 10)
-          (height 80))
+	  (height 80))
       (pcase ednc-notification-position
-        ('top-right (cons -20 (+ 40 (* index (+ height spacing)))))
-        ('top-left (cons 20 (+ 40 (* index (+ height spacing)))))
-        ('bottom-right (cons -20 (- -40 (* index (+ height spacing)))))
-        ('bottom-left (cons 20 (- -40 (* index (+ height spacing))))))))
+	('top-right (cons -20 (+ 40 (* index (+ height spacing)))))
+	('top-left (cons 20 (+ 40 (* index (+ height spacing)))))
+	('bottom-right (cons -20 (- -40 (* index (+ height spacing)))))
+	('bottom-left (cons 20 (- -40 (* index (+ height spacing))))))))
 
   (defun ednc--show-notification (old new)
     "Main notification handler."
     (when new
       (ednc--store-in-history new)
       (let* ((id (ednc-notification-id new))
-             (buffer-name (format " *ednc-%d*" id))
-             (notification-count (hash-table-count ednc--active-notifications))
-             (position (ednc--calculate-position notification-count))
-             ;; Use theme colors
-             (bg-color (face-attribute 'mode-line :background))
-             (fg-color (face-attribute 'mode-line :foreground))
-             (border-color (face-attribute 'mode-line-inactive :background)))
+	     (buffer-name (format " *ednc-%d*" id))
+	     (notification-count (hash-table-count ednc--active-notifications))
+	     (position (ednc--calculate-position notification-count))
+	     ;; Use theme colors
+	     (bg-color (face-attribute 'mode-line :background))
+	     (fg-color (face-attribute 'mode-line :foreground))
+	     (border-color (face-attribute 'mode-line-inactive :background)))
 
-        ;; Show posframe
-        (posframe-show buffer-name
-                       :string (ednc--format-for-display new)
-                       :position (pcase ednc-notification-position
-                                   ((or 'top-right 'bottom-right) (point-max))
-                                   ((or 'top-left 'bottom-left) (point-min)))
-                       :poshandler (pcase ednc-notification-position
-                                     ('top-right #'posframe-poshandler-frame-top-right-corner)
-                                     ('top-left #'posframe-poshandler-frame-top-left-corner)
-                                     ('bottom-right #'posframe-poshandler-frame-bottom-right-corner)
-                                     ('bottom-left #'posframe-poshandler-frame-bottom-left-corner))
-                       :x-pixel-offset (car position)
-                       :y-pixel-offset (cdr position)
-                       :left-fringe 10
-                       :right-fringe 10
-                       :internal-border-width 12
-                       :internal-border-color border-color
-                       :background-color bg-color
-                       :foreground-color fg-color
-                       :accept-focus nil
-                       :width ednc-notification-max-width)
+	;; Show posframe
+	(posframe-show buffer-name
+		       :string (ednc--format-for-display new)
+		       :position (pcase ednc-notification-position
+				   ((or 'top-right 'bottom-right) (point-max))
+				   ((or 'top-left 'bottom-left) (point-min)))
+		       :poshandler (pcase ednc-notification-position
+				     ('top-right #'posframe-poshandler-frame-top-right-corner)
+				     ('top-left #'posframe-poshandler-frame-top-left-corner)
+				     ('bottom-right #'posframe-poshandler-frame-bottom-right-corner)
+				     ('bottom-left #'posframe-poshandler-frame-bottom-left-corner))
+		       :x-pixel-offset (car position)
+		       :y-pixel-offset (cdr position)
+		       :left-fringe 10
+		       :right-fringe 10
+		       :internal-border-width 12
+		       :internal-border-color border-color
+		       :background-color bg-color
+		       :foreground-color fg-color
+		       :accept-focus nil
+		       :width ednc-notification-max-width)
 
-        ;; Store and set timer
-        (let ((timer (run-with-timer ednc-notification-timeout nil
-                                     (lambda () (ednc--dismiss-notification id)))))
-          (puthash id (list buffer-name timer) ednc--active-notifications))))
+	;; Store and set timer
+	(let ((timer (run-with-timer ednc-notification-timeout nil
+				     (lambda () (ednc--dismiss-notification id)))))
+	  (puthash id (list buffer-name timer) ednc--active-notifications))))
 
     ;; Handle removal
     (when (and old (not new))
@@ -317,75 +317,75 @@ The DWIM behaviour of this command is as follows:
     "Dismiss notification with ID."
     (when-let ((data (gethash id ednc--active-notifications)))
       (let ((buffer-name (car data))
-            (timer (cadr data)))
-        (when (timerp timer) (cancel-timer timer))
-        (posframe-delete buffer-name)
-        (remhash id ednc--active-notifications)
-        (ednc--reposition-all))))
+	    (timer (cadr data)))
+	(when (timerp timer) (cancel-timer timer))
+	(posframe-delete buffer-name)
+	(remhash id ednc--active-notifications)
+	(ednc--reposition-all))))
 
   (defun ednc--reposition-all ()
     "Reposition all active notifications."
     (let ((index 0))
       (maphash (lambda (id data)
-                 (let ((buffer-name (car data))
-                       (position (ednc--calculate-position index)))
-                   (when (posframe-workable-p)
-                     ;; Use posframe-show to reposition, not posframe-refresh
-                     (posframe-show buffer-name
-                                    :position (pcase ednc-notification-position
-                                                ((or 'top-right 'bottom-right) (point-max))
-                                                ((or 'top-left 'bottom-left) (point-min)))
-                                    :poshandler (pcase ednc-notification-position
-                                                  ('top-right #'posframe-poshandler-frame-top-right-corner)
-                                                  ('top-left #'posframe-poshandler-frame-top-left-corner)
-                                                  ('bottom-right #'posframe-poshandler-frame-bottom-right-corner)
-                                                  ('bottom-left #'posframe-poshandler-frame-bottom-left-corner))
-                                    :x-pixel-offset (car position)
-                                    :y-pixel-offset (cdr position))))
-                 (cl-incf index))
-               ednc--active-notifications)))
+		 (let ((buffer-name (car data))
+		       (position (ednc--calculate-position index)))
+		   (when (posframe-workable-p)
+		     ;; Use posframe-show to reposition, not posframe-refresh
+		     (posframe-show buffer-name
+				    :position (pcase ednc-notification-position
+						((or 'top-right 'bottom-right) (point-max))
+						((or 'top-left 'bottom-left) (point-min)))
+				    :poshandler (pcase ednc-notification-position
+						  ('top-right #'posframe-poshandler-frame-top-right-corner)
+						  ('top-left #'posframe-poshandler-frame-top-left-corner)
+						  ('bottom-right #'posframe-poshandler-frame-bottom-right-corner)
+						  ('bottom-left #'posframe-poshandler-frame-bottom-left-corner))
+				    :x-pixel-offset (car position)
+				    :y-pixel-offset (cdr position))))
+		 (cl-incf index))
+	       ednc--active-notifications)))
 
   ;; === Interactive Commands ===
   (defun ednc-dismiss-all ()
     "Dismiss all active notifications."
     (interactive)
     (maphash (lambda (id _) (ednc--dismiss-notification id))
-             ednc--active-notifications))
+	     ednc--active-notifications))
 
   (defun ednc-browse-history ()
     "Browse notification history with consult."
     (interactive)
     (let* ((candidates (ring-elements ednc--notification-ring))
-           (selected
-            (consult--read
-             candidates
-             :prompt "Notification History: "
-             :category 'ednc-notification
-             :sort nil
-             :annotate
-             (lambda (cand)
-               (when-let ((body (get-text-property 0 'body cand)))
-                 (when (not (string-empty-p body))
-                   (concat " " (propertize (truncate-string-to-width body 50)
-                                           'face 'font-lock-doc-face)))))
-             :preview-key '(:debounce 0.2 any)
-             :state
-             (lambda (action cand)
-               (when (and (eq action 'preview) cand)
-                 (when-let ((notification (get-text-property 0 'notification cand)))
-                   (with-current-buffer (get-buffer-create "*EDNC Preview*")
-                     (let ((inhibit-read-only t))
-                       (erase-buffer)
-                       (ednc-view-mode)
-                       (insert "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
-                       (insert (ednc-format-notification notification t))
-                       (insert "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
-                       (goto-char (point-min))
-                       (display-buffer (current-buffer)
-                                       '(display-buffer-below-selected
-                                         (window-height . 0.3)))))))))))
+	   (selected
+	    (consult--read
+	     candidates
+	     :prompt "Notification History: "
+	     :category 'ednc-notification
+	     :sort nil
+	     :annotate
+	     (lambda (cand)
+	       (when-let ((body (get-text-property 0 'body cand)))
+		 (when (not (string-empty-p body))
+		   (concat " " (propertize (truncate-string-to-width body 50)
+					   'face 'font-lock-doc-face)))))
+	     :preview-key '(:debounce 0.2 any)
+	     :state
+	     (lambda (action cand)
+	       (when (and (eq action 'preview) cand)
+		 (when-let ((notification (get-text-property 0 'notification cand)))
+		   (with-current-buffer (get-buffer-create "*EDNC Preview*")
+		     (let ((inhibit-read-only t))
+		       (erase-buffer)
+		       (ednc-view-mode)
+		       (insert "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+		       (insert (ednc-format-notification notification t))
+		       (insert "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+		       (goto-char (point-min))
+		       (display-buffer (current-buffer)
+				       '(display-buffer-below-selected
+					 (window-height . 0.3)))))))))))
       (when selected
-        (message "Notification: %s" selected))))
+	(message "Notification: %s" selected))))
 
   (defun ednc-clear-history ()
     "Clear notification history."
@@ -393,7 +393,7 @@ The DWIM behaviour of this command is as follows:
     (when (yes-or-no-p "Clear all notification history? ")
       (setq ednc--notification-history nil)
       (dotimes (_ (ring-length ednc--notification-ring))
-        (ring-remove ednc--notification-ring))
+	(ring-remove ednc--notification-ring))
       (message "Notification history cleared")))
 
   ;; === Setup ===
@@ -412,18 +412,18 @@ The DWIM behaviour of this command is as follows:
 (when (eq window-system 'x)
   (defun grim/run-in-background (command)
     (condition-case err
-        (let ((command-parts (split-string command "[ ]+")))
-          (apply #'call-process
-                 `(,(car command-parts)
-                   nil
-                   0
-                   nil
-                   ,@
-                   (cdr command-parts))))
+	(let ((command-parts (split-string command "[ ]+")))
+	  (apply #'call-process
+		 `(,(car command-parts)
+		   nil
+		   0
+		   nil
+		   ,@
+		   (cdr command-parts))))
       (error
        (message "Failed to run %s: %s"
-                command
-                (error-message-string err)))))
+		command
+		(error-message-string err)))))
 
   (defun grim/exwm-init-hook ()
     (exwm-workspace-switch-create 1)
@@ -444,7 +444,7 @@ The DWIM behaviour of this command is as follows:
   (defun grim/exwm-update-title ()
     (pcase exwm-class-name
       ("Firefox" (exwm-workspace-rename-buffer
-                  (format "Firefox: %s" exwm-title)))))
+		  (format "Firefox: %s" exwm-title)))))
 
   ;; Modern EXWM Multi-Monitor Configuration
   (defcustom grim/exwm-laptop-monitor "eDP-1"
@@ -509,20 +509,20 @@ The DWIM behaviour of this command is as follows:
 
       ;; Simple monitor change handler
       (add-hook 'exwm-randr-screen-change-hook
-                (lambda ()
-                  (let ((monitors (split-string (shell-command-to-string
-                                                 "xrandr --listmonitors | grep -v '^Monitors:' | awk '{print $4}'") "\n" t)))
-                    (when (>= (length monitors) 2)
-                      ;; Assign workspace 0 to first monitor, workspace 1 to second monitor
-                      (setq exwm-randr-workspace-monitor-plist
-                            (list 0 (nth 0 monitors) 1 (nth 1 monitors)))
-                      ;; Configure monitors: left monitor first, right monitor second
-                      (start-process-shell-command
-                       "xrandr" nil
-                       (format "xrandr --output %s --auto --pos 0x0 --output %s --primary --auto --right-of %s --output eDP-1 --off"
-                               (nth 0 monitors) (nth 1 monitors) (nth 0 monitors))))
-                    (when (fboundp 'exwm-randr-refresh)
-                      (exwm-randr-refresh)))))
+		(lambda ()
+		  (let ((monitors (split-string (shell-command-to-string
+						 "xrandr --listmonitors | grep -v '^Monitors:' | awk '{print $4}'") "\n" t)))
+		    (when (>= (length monitors) 2)
+		      ;; Assign workspace 0 to first monitor, workspace 1 to second monitor
+		      (setq exwm-randr-workspace-monitor-plist
+			    (list 0 (nth 0 monitors) 1 (nth 1 monitors)))
+		      ;; Configure monitors: left monitor first, right monitor second
+		      (start-process-shell-command
+		       "xrandr" nil
+		       (format "xrandr --output %s --auto --pos 0x0 --output %s --primary --auto --right-of %s --output eDP-1 --off"
+			       (nth 0 monitors) (nth 1 monitors) (nth 0 monitors))))
+		    (when (fboundp 'exwm-randr-refresh)
+		      (exwm-randr-refresh)))))
 
       ;; To enable monitor debugging: (setq grim/exwm-debug-monitors t)
       ;; Load the system tray before exwm-init
@@ -533,78 +533,78 @@ The DWIM behaviour of this command is as follows:
 
       ;; Input Prefix Keys
       (setq exwm-input-prefix-keys
-            '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
+	    '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
 
       ;; Global keybindings
       (setq exwm-input-global-keys
-            (nconc
-             `(([?\s-r] . exwm-reset)
-               ([s-left] . windmove-left)
-               ([s-right] . windmove-right)
-               ([s-up] . windmove-up)
-               ([s-down] . windmove-down)
-               ([?\s-w] . exwm-workspace-switch)
-               ([?\s-&]
-                .
-                (lambda (cmd)
-                  (interactive (list (read-shell-command "$ ")))
-                  (start-process-shell-command cmd nil cmd)))
-               ([?\s-x]
-                .
-                (lambda ()
-                  (interactive)
-                  (save-buffers-kill-emacs)))
-               ([?\s-\ ]
-                .
-                (lambda ()
-                  (interactive)
-                  (async-shell-command)))
-               ([?\s-v] . consult-yank-pop)
-               ([?\s-q]
-                .
-                (lambda ()
-                  (interactive)
-                  (kill-buffer-and-window)))
-               ([XF86PowerOff]
-                .
-                (lambda ()
-                  (interactive)
-                  (when (executable-find "systemctl")
-                    (start-process-shell-command
-                     "poweroff" nil "systemctl poweroff")))))
-             (mapcar
-              (lambda (i)
-                (cons
-                 (kbd (format "s-%d" i))
-                 (lambda ()
-                   (interactive)
-                   (message "Switching to workspace %d" i)
-                   (exwm-workspace-switch-create i))))
-              (number-sequence 0 9))
-             (mapcar
-              (lambda (i)
-                (cons
-                 (kbd (format "M-s-%d" i))
-                 (lambda ()
-                   (interactive)
-                   (message "Moving window to workspace %d" i)
-                   (exwm-workspace-move-window i))))
-              (number-sequence 0 9))))
+	    (nconc
+	     `(([?\s-r] . exwm-reset)
+	       ([s-left] . windmove-left)
+	       ([s-right] . windmove-right)
+	       ([s-up] . windmove-up)
+	       ([s-down] . windmove-down)
+	       ([?\s-w] . exwm-workspace-switch)
+	       ([?\s-&]
+		.
+		(lambda (cmd)
+		  (interactive (list (read-shell-command "$ ")))
+		  (start-process-shell-command cmd nil cmd)))
+	       ([?\s-x]
+		.
+		(lambda ()
+		  (interactive)
+		  (save-buffers-kill-emacs)))
+	       ([?\s-\ ]
+		.
+		(lambda ()
+		  (interactive)
+		  (async-shell-command)))
+	       ([?\s-v] . consult-yank-pop)
+	       ([?\s-q]
+		.
+		(lambda ()
+		  (interactive)
+		  (kill-buffer-and-window)))
+	       ([XF86PowerOff]
+		.
+		(lambda ()
+		  (interactive)
+		  (when (executable-find "systemctl")
+		    (start-process-shell-command
+		     "poweroff" nil "systemctl poweroff")))))
+	     (mapcar
+	      (lambda (i)
+		(cons
+		 (kbd (format "s-%d" i))
+		 (lambda ()
+		   (interactive)
+		   (message "Switching to workspace %d" i)
+		   (exwm-workspace-switch-create i))))
+	      (number-sequence 0 9))
+	     (mapcar
+	      (lambda (i)
+		(cons
+		 (kbd (format "M-s-%d" i))
+		 (lambda ()
+		   (interactive)
+		   (message "Moving window to workspace %d" i)
+		   (exwm-workspace-move-window i))))
+	      (number-sequence 0 9))))
 
       ;; Simulation Keys
       (setq exwm-input-simulation-keys
-            '(([?\C-b] . [left])
-              ([?\C-f] . [right])
-              ([?\C-p] . [up])
-              ([?\C-n] . [down])
-              ([?\C-a] . [home])
-              ([?\C-e] . [end])
-              ([?\M-v] . [prior])
-              ([?\C-v] . [next])
-              ([?\C-d] . [delete])
-              ([?\C-k] . [S-end delete])
-              ([?\M-w] . [?\C-c])
-              ([?\C-y] . [?\C-v])))
+	    '(([?\C-b] . [left])
+	      ([?\C-f] . [right])
+	      ([?\C-p] . [up])
+	      ([?\C-n] . [down])
+	      ([?\C-a] . [home])
+	      ([?\C-e] . [end])
+	      ([?\M-v] . [prior])
+	      ([?\C-v] . [next])
+	      ([?\C-d] . [delete])
+	      ([?\C-k] . [S-end delete])
+	      ([?\M-w] . [?\C-c])
+	      ([?\C-y] . [?\C-v])))
 
       ;;(exwm-wm-mode 1)
       (exwm-enable))) ; Close the when condition
@@ -621,7 +621,7 @@ The DWIM behaviour of this command is as follows:
       ;; Explicitly load exwm-edit
       (require 'exwm-edit nil t)
       (when (featurep 'exwm-edit)
-        (message "exwm-edit loaded successfully"))
+	(message "exwm-edit loaded successfully"))
       ;; Optional: Customize split behavior
       (setq exwm-edit-split 'below) ; Open edit buffer below current window
       :bind (:map exwm-mode-map ("C-c e" . exwm-edit--compose))
@@ -630,8 +630,8 @@ The DWIM behaviour of this command is as follows:
       (exwm-init
        .
        (lambda ()
-         (when (featurep 'exwm-edit)
-           (message "exwm-edit initialized")))))
+	 (when (featurep 'exwm-edit)
+	   (message "exwm-edit initialized")))))
 
     (use-package exwm-firefox-core
       :ensure t
@@ -639,24 +639,24 @@ The DWIM behaviour of this command is as follows:
       :init
       ;; Pre-load settings
       (setq exwm-firefox-core-classes
-            '("firefox" "firefoxdeveloperedition"))
+	    '("firefox" "firefoxdeveloperedition"))
 
       ;; Define Firefox-specific minor mode before package loads
       (define-minor-mode exwm-firefox-mode
-        "Minor mode for Firefox-specific keybindings in EXWM."
-        :init-value nil
-        :lighter " Firefox"
-        :keymap (let ((map (make-sparse-keymap)))
-                  (define-key map (kbd "C-c F n") 'exwm-firefox-core-tab-new)
-                  (define-key map (kbd "C-c F t") 'exwm-firefox-core-tab-close)
-                  (define-key map (kbd "C-c F <right>") 'exwm-firefox-core-tab-right)
-                  (define-key map (kbd "C-c F <left>") 'exwm-firefox-core-tab-left)
-                  (define-key map (kbd "C-c F h") 'exwm-firefox-core-back)
-                  (define-key map (kbd "C-c F l") 'exwm-firefox-core-forward)
-                  (define-key map (kbd "C-c F f") 'exwm-firefox-core-find)
-                  (define-key map (kbd "C-c F r") 'exwm-firefox-core-reload)
-                  (define-key map (kbd "C-c F b") 'exwm-firefox-core-bookmark)
-                  map))
+	"Minor mode for Firefox-specific keybindings in EXWM."
+	:init-value nil
+	:lighter " Firefox"
+	:keymap (let ((map (make-sparse-keymap)))
+		  (define-key map (kbd "C-c F n") 'exwm-firefox-core-tab-new)
+		  (define-key map (kbd "C-c F t") 'exwm-firefox-core-tab-close)
+		  (define-key map (kbd "C-c F <right>") 'exwm-firefox-core-tab-right)
+		  (define-key map (kbd "C-c F <left>") 'exwm-firefox-core-tab-left)
+		  (define-key map (kbd "C-c F h") 'exwm-firefox-core-back)
+		  (define-key map (kbd "C-c F l") 'exwm-firefox-core-forward)
+		  (define-key map (kbd "C-c F f") 'exwm-firefox-core-find)
+		  (define-key map (kbd "C-c F r") 'exwm-firefox-core-reload)
+		  (define-key map (kbd "C-c F b") 'exwm-firefox-core-bookmark)
+		  map))
 
       :config
       ;; Load package safely
@@ -664,24 +664,24 @@ The DWIM behaviour of this command is as follows:
 
       ;; Function to manage Firefox buffer setup
       (defun exwm-firefox-setup ()
-        "Set up Firefox-specific configuration for current buffer."
-        (when (and (derived-mode-p 'exwm-mode)
-                   (member (downcase (or exwm-class-name ""))
-                           '("firefox" "firefoxdeveloperedition")))
-          ;; Enable Firefox mode
-          (exwm-firefox-mode 1)
-          ;; Rename buffer to page title
-          (when exwm-title
-            (exwm-workspace-rename-buffer exwm-title))))
+	"Set up Firefox-specific configuration for current buffer."
+	(when (and (derived-mode-p 'exwm-mode)
+		   (member (downcase (or exwm-class-name ""))
+			   '("firefox" "firefoxdeveloperedition")))
+	  ;; Enable Firefox mode
+	  (exwm-firefox-mode 1)
+	  ;; Rename buffer to page title
+	  (when exwm-title
+	    (exwm-workspace-rename-buffer exwm-title))))
 
       ;; Function to handle buffer switches
       (defun exwm-firefox-maybe-enable ()
-        "Enable or disable Firefox mode based on current buffer."
-        (when (derived-mode-p 'exwm-mode)
-          (if (member (downcase (or exwm-class-name ""))
-                      '("firefox" "firefoxdeveloperedition"))
-              (exwm-firefox-mode 1)
-            (exwm-firefox-mode -1))))
+	"Enable or disable Firefox mode based on current buffer."
+	(when (derived-mode-p 'exwm-mode)
+	  (if (member (downcase (or exwm-class-name ""))
+		      '("firefox" "firefoxdeveloperedition"))
+	      (exwm-firefox-mode 1)
+	    (exwm-firefox-mode -1))))
 
       :hook
       ;; Set up Firefox buffers when they're created
@@ -698,51 +698,51 @@ The DWIM behaviour of this command is as follows:
       :init
       ;; Optional: Additional EXWM configuration for Firefox
       (with-eval-after-load 'exwm
-        ;; Make Firefox windows floating by default (optional)
-        ;; (add-to-list 'exwm-manage-configurations
-        ;;              '((string-match "Firefox" exwm-class-name)
-        ;;                floating t
-        ;;                floating-mode-line nil))
+	;; Make Firefox windows floating by default (optional)
+	;; (add-to-list 'exwm-manage-configurations
+	;;              '((string-match "Firefox" exwm-class-name)
+	;;                floating t
+	;;                floating-mode-line nil))
 
-        ;; Set Firefox-specific workspace (optional)
-        ;; (add-to-list 'exwm-manage-configurations
-        ;;              '((string-match "Firefox" exwm-class-name)
-        ;;                workspace 2))
-        )
+	;; Set Firefox-specific workspace (optional)
+	;; (add-to-list 'exwm-manage-configurations
+	;;              '((string-match "Firefox" exwm-class-name)
+	;;                workspace 2))
+	)
 
 
       (use-package
-        desktop-environment
-        :ensure t
-        :after exwm
-        :init
-        ;; Pre-configure settings before mode activation
-        (setq desktop-environment-notifications t) ; Enable notifications
-        (setq desktop-environment-screenshot-directory
-              "~/Pictures/Screenshots")     ; Screenshot path
-        (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
-        (setq
-         desktop-environment-volume-get-command
-         "pactl get-sink-volume @DEFAULT_SINK@ | awk '/Volume:/ {print $5}'")
-        (setq desktop-environment-volume-get-regexp "\\([0-9]+%\\)")
-        (setq desktop-environment-volume-set-command
-              "pactl set-sink-volume @DEFAULT_SINK@ %s%%") ; Set volume
-        (setq
-         desktop-environment-mute-get-command
-         "pactl get-sink-mute @DEFAULT_SINK@ | awk '{print ($2 == \"yes\") ? \"true\" : \"false\"}'")
-        (setq desktop-environment-volume-toggle-command
-              "pactl set-sink-mute @DEFAULT_SINK@ toggle") ; Toggle mute
-        (setq desktop-environment-volume-normal-increment "+1") ; Volume step up
-        (setq desktop-environment-volume-normal-decrement "-1") ; Volume step down
+	desktop-environment
+	:ensure t
+	:after exwm
+	:init
+	;; Pre-configure settings before mode activation
+	(setq desktop-environment-notifications t) ; Enable notifications
+	(setq desktop-environment-screenshot-directory
+	      "~/Pictures/Screenshots")     ; Screenshot path
+	(setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
+	(setq
+	 desktop-environment-volume-get-command
+	 "pactl get-sink-volume @DEFAULT_SINK@ | awk '/Volume:/ {print $5}'")
+	(setq desktop-environment-volume-get-regexp "\\([0-9]+%\\)")
+	(setq desktop-environment-volume-set-command
+	      "pactl set-sink-volume @DEFAULT_SINK@ %s%%") ; Set volume
+	(setq
+	 desktop-environment-mute-get-command
+	 "pactl get-sink-mute @DEFAULT_SINK@ | awk '{print ($2 == \"yes\") ? \"true\" : \"false\"}'")
+	(setq desktop-environment-volume-toggle-command
+	      "pactl set-sink-mute @DEFAULT_SINK@ toggle") ; Toggle mute
+	(setq desktop-environment-volume-normal-increment "+1") ; Volume step up
+	(setq desktop-environment-volume-normal-decrement "-1") ; Volume step down
 
-        :config
-        ;; Ensure dependencies are installed
-        (desktop-environment-mode 1)
-        (dolist (cmd '("scrot" "slock" "pactl" "brightnessctl"))
-          (unless (executable-find cmd)
-            (message
-             "Warning: %s not found; desktop-environment may not work fully"
-             cmd))))))
+	:config
+	;; Ensure dependencies are installed
+	(desktop-environment-mode 1)
+	(dolist (cmd '("scrot" "slock" "pactl" "brightnessctl"))
+	  (unless (executable-find cmd)
+	    (message
+	     "Warning: %s not found; desktop-environment may not work fully"
+	     cmd))))))
 
 ;;; init.el version control
 
@@ -753,14 +753,14 @@ The DWIM behaviour of this command is as follows:
     (defun my-auto-commit-init-el ()
       "Commit changes to init.el after saving."
       (when (and (buffer-file-name)
-                 (string=
-                  (file-name-nondirectory (buffer-file-name)) "init.el"))
-        (ignore-errors
-          (vc-checkin
-           (list (buffer-file-name))
-           'git
-           nil
-           "Auto-commit init.el changes"))))
+		 (string=
+		  (file-name-nondirectory (buffer-file-name)) "init.el"))
+	(ignore-errors
+	  (vc-checkin
+	   (list (buffer-file-name))
+	   'git
+	   nil
+	   "Auto-commit init.el changes"))))
     :hook (after-save . my-auto-commit-init-el))
 
 ;;; emacs configuration section
@@ -780,17 +780,17 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     ;; Create subdirectories for different types of files
     ;; This single directory creation handles all file management needs
     (dolist (dir '("backups"        ; backup-directory-alist
-                   "auto-saves"     ; auto-save-file-name-transforms
-                   "auto-save-list" ; auto-save-list-file-prefix
-                   "recentf"        ; recentf-save-file
-                   "eshell"         ; eshell-directory-name
-                   "tramp-auto-save" ; tramp-auto-save-directory
-                   "saveplace"      ; save-place-file
-                   "undos"          ; vundo-files-directory
-                   "gnus-drafts"))  ; message-auto-save-directory
+		   "auto-saves"     ; auto-save-file-name-transforms
+		   "auto-save-list" ; auto-save-list-file-prefix
+		   "recentf"        ; recentf-save-file
+		   "eshell"         ; eshell-directory-name
+		   "tramp-auto-save" ; tramp-auto-save-directory
+		   "saveplace"      ; save-place-file
+		   "undos"          ; vundo-files-directory
+		   "gnus-drafts"))  ; message-auto-save-directory
       (let ((subdir (expand-file-name dir my-tmp-dir)))
-        (unless (file-exists-p subdir)
-          (make-directory subdir t))))
+	(unless (file-exists-p subdir)
+	  (make-directory subdir t))))
 
     (setq
      user-full-name "TJ"
@@ -864,39 +864,39 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     ;; Simplified auto-insert: use inline lambdas instead of custom function
     ;; The time-stamp system already handles comment syntax automatically
     (setq auto-insert-alist
-          '(;; Add time-stamps to programming and documentation files
-            (prog-mode . (lambda () (insert (or comment-start "#") " Time-stamp: <>\n")))
-            (org-mode . (lambda () (insert "#+Time-stamp: <>\n")))
-            (text-mode . (lambda () (insert "# Time-stamp: <>\n")))))
+	  '(;; Add time-stamps to programming and documentation files
+	    (prog-mode . (lambda () (insert (or comment-start "#") " Time-stamp: <>\n")))
+	    (org-mode . (lambda () (insert "#+Time-stamp: <>\n")))
+	    (text-mode . (lambda () (insert "# Time-stamp: <>\n")))))
     ;; Enable time-stamp updates on save
     (add-hook 'before-save-hook 'time-stamp)
 
     :config
     (setq modus-themes-italic-constructs t
-          modus-themes-bold-constructs t)
+	  modus-themes-bold-constructs t)
     (custom-set-faces
-     '(cursor ((t (:background "#FFC1check07")))))
+     '(cursor ((t (:background "#FFC107")))))
     (set-face-attribute 'default nil :height 120)
     (set-face-attribute 'variable-pitch nil :height 130)
     (load-theme 'modus-vivendi t)
 
     (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
       (set-face-attribute 'default nil
-                          :font "BerkeleyMonoVariable Nerd Font Mono"
-                          :height 140))
+			  :font "BerkeleyMonoVariable Nerd Font Mono"
+			  :height 140))
 
     ;; Set variable-pitch font (optional, for prose or Org-mode)
     (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
       (set-face-attribute 'variable-pitch nil
-                          :font "BerkeleyMonoVariable Nerd Font Mono"
-                          :height 160))
+			  :font "BerkeleyMonoVariable Nerd Font Mono"
+			  :height 160))
 
     ;; Customize font-lock faces
     (set-face-attribute 'font-lock-comment-face nil
-                        :slant 'italic
-                        :weight 'light)
+			:slant 'italic
+			:weight 'light)
     (set-face-attribute 'font-lock-keyword-face nil
-                        :weight 'black)
+			:weight 'black)
 
 
     (setq scroll-conservatively 101) ; Scroll line-by-line without recentering
@@ -938,11 +938,11 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
      (emacs-startup
       .
       (lambda ()
-        (line-number-mode 1)
-        (column-number-mode 1)
-        (size-indication-mode 1)
-        (global-auto-revert-mode 1)
-        (display-time-mode 1))))
+	(line-number-mode 1)
+	(column-number-mode 1)
+	(size-indication-mode 1)
+	(global-auto-revert-mode 1)
+	(display-time-mode 1))))
 
     :bind
     (("C-x k" . kill-current-buffer)
@@ -978,7 +978,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq exec-path-from-shell-arguments '("-l"))
   ;; Only initialize if needed and not already done
   (when (and (memq window-system '(mac ns x))
-             (not (getenv "EMACS_SHELL_INITIALIZED")))
+	     (not (getenv "EMACS_SHELL_INITIALIZED")))
     (exec-path-from-shell-initialize)
     (setenv "EMACS_SHELL_INITIALIZED" "1"))
   ;; Explicitly add ~/.local/bin to exec-path and PATH
@@ -1001,36 +1001,36 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :config
   ;; Customize faces to respect themes
   (custom-theme-set-faces 'user
-                          '(ediff-current-diff-A
-                            ((t
-                              (:foreground
-                               "red"
-                               :background unspecified))))
-                          '(ediff-fine-diff-A
-                            ((t
-                              (:foreground
-                               "red"
-                               :background unspecified))))
-                          '(ediff-current-diff-B
-                            ((t
-                              (:foreground
-                               "green"
-                               :background unspecified))))
-                          '(ediff-fine-diff-B
-                            ((t
-                              (:foreground
-                               "green"
-                               :background unspecified))))
-                          '(diff-added
-                            ((t
-                              (:foreground
-                               "green4"
-                               :background unspecified))))
-                          '(diff-removed
-                            ((t
-                              (:foreground
-                               "red3"
-                               :background unspecified)))))
+			  '(ediff-current-diff-A
+			    ((t
+			      (:foreground
+			       "red"
+			       :background unspecified))))
+			  '(ediff-fine-diff-A
+			    ((t
+			      (:foreground
+			       "red"
+			       :background unspecified))))
+			  '(ediff-current-diff-B
+			    ((t
+			      (:foreground
+			       "green"
+			       :background unspecified))))
+			  '(ediff-fine-diff-B
+			    ((t
+			      (:foreground
+			       "green"
+			       :background unspecified))))
+			  '(diff-added
+			    ((t
+			      (:foreground
+			       "green4"
+			       :background unspecified))))
+			  '(diff-removed
+			    ((t
+			      (:foreground
+			       "red3"
+			       :background unspecified)))))
 
 
 
@@ -1039,7 +1039,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     "Compare current buffer with its file on disk."
     (interactive)
     (if buffer-file-name
-        (ediff-current-file)
+	(ediff-current-file)
       (user-error "Current buffer is not visiting a file")))
 
   ;; Enhanced ediff quit that restores window configuration
@@ -1051,17 +1051,17 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
   ;; Add keybinding for enhanced quit function in ediff sessions
   (add-hook 'ediff-keymap-setup-hook
-            (lambda ()
-              (define-key ediff-mode-map (kbd "Q") #'my-ediff-quit-and-restore)))
+	    (lambda ()
+	      (define-key ediff-mode-map (kbd "Q") #'my-ediff-quit-and-restore)))
 
   :bind (("C-c d f" . ediff-files)        ; Compare two files
-         ("C-c d b" . ediff-buffers)      ; Compare two buffers
-         ("C-c d c" . my-ediff-current-buffer-with-file) ; Compare buffer with file
-         ("C-c d d" . ediff-directories))) ; Compare directories
+	 ("C-c d b" . ediff-buffers)      ; Compare two buffers
+	 ("C-c d c" . my-ediff-current-buffer-with-file) ; Compare buffer with file
+	 ("C-c d d" . ediff-directories))) ; Compare directories
 
 (with-eval-after-load 'ediff-wind
   (setq ediff-control-frame-parameters
-        (cons '(unsplittable . t) ediff-control-frame-parameters)))
+	(cons '(unsplittable . t) ediff-control-frame-parameters)))
 
 ;;; tramp settings
 
@@ -1073,14 +1073,14 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   ;; Essential TRAMP optimizations only
   ;; Most defaults are sensible - only override what's necessary for performance
   (setq tramp-auto-save-directory (expand-file-name "tramp-auto-save" my-tmp-dir)
-        tramp-verbose 1                    ; Minimal verbosity for performance
-        tramp-default-method "ssh"         ; Reliable connection method
-        auto-revert-remote-files t         ; Enable remote file auto-revert
-        remote-file-name-inhibit-locks t
-        tramp-use-scp-direct-remote-copying t
-        remote-file-name-inhibit-auto-save-visited t)
+	tramp-verbose 1                    ; Minimal verbosity for performance
+	tramp-default-method "ssh"         ; Reliable connection method
+	auto-revert-remote-files t         ; Enable remote file auto-revert
+	remote-file-name-inhibit-locks t
+	tramp-use-scp-direct-remote-copying t
+	remote-file-name-inhibit-auto-save-visited t)
   (setq tramp-copy-size-limit (* 1024 1024) ;; 1MB
-        tramp-verbose 2)
+	tramp-verbose 2)
   (connection-local-set-profile-variables
    'remote-direct-async-process
    '((tramp-direct-async-process . t)))
@@ -1167,8 +1167,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (highlight-thing-what-thing 'symbol)  ; Highlight symbols
   :config
   (set-face-attribute 'highlight-thing nil
-                      :background "#5e81ac" ; Soft blue from modus-vivendi color scheme
-                      :weight 'normal)      ; Keep text weight normal for readability
+		      :background "#5e81ac" ; Soft blue from modus-vivendi color scheme
+		      :weight 'normal)      ; Keep text weight normal for readability
   :hook (prog-mode . highlight-thing-mode))
 
 ;;; indent-bars
@@ -1262,7 +1262,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     (defun my-consult-buffer-format (buffer)
       "Add all-the-icons to BUFFER name for consult-buffer."
       (let ((icon (all-the-icons-icon-for-buffer buffer)))
-        (concat icon " " (buffer-name buffer))))
+	(concat icon " " (buffer-name buffer))))
     (advice-add
      'consult-buffer
      :filter-return
@@ -1335,23 +1335,23 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
       :state ,#'consult--buffer-state
       :items
       ,(lambda ()
-         (mapcar
-          #'buffer-name
-          (seq-filter
-           (lambda (buf)
-             (and (string-match-p "^\\*" (buffer-name buf))
-                  (not (get-buffer-window buf 'visible))))
-           (buffer-list)))))
+	 (mapcar
+	  #'buffer-name
+	  (seq-filter
+	   (lambda (buf)
+	     (and (string-match-p "^\\*" (buffer-name buf))
+		  (not (get-buffer-window buf 'visible))))
+	   (buffer-list)))))
     "Source for hidden buffers starting with *.")
   (add-to-list 'consult-buffer-sources 'my-consult-hidden-buffer-source
-               t)
+	       t)
   :bind
   (
-                                        ;("C-x b" . consult-buffer)
-                                        ;("C-x C-b" . consult-buffer)
-                                        ;("C-x 4 b" . consult-buffer-other-window)
-                                        ;("C-x 5 b" . consult-buffer-other-frame)
-                                        ;("M-y" . consult-yank-pop)
+					;("C-x b" . consult-buffer)
+					;("C-x C-b" . consult-buffer)
+					;("C-x 4 b" . consult-buffer-other-window)
+					;("C-x 5 b" . consult-buffer-other-frame)
+					;("M-y" . consult-yank-pop)
    ("M-g i" . consult-imenu)
    ("M-s r" . consult-ripgrep)
    ("M-s l" . consult-line)
@@ -1368,13 +1368,13 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (use-package completion-preview
   :ensure nil
   :hook ((prog-mode . completion-preview-mode)
-         ;; Add tree-sitter modes explicitly
-         (python-ts-mode . completion-preview-mode)
-         (c-ts-mode . completion-preview-mode)
-         (c++-ts-mode . completion-preview-mode)
-         (js-ts-mode . completion-preview-mode)
-         (typescript-ts-mode . completion-preview-mode)
-         (rust-ts-mode . completion-preview-mode))
+	 ;; Add tree-sitter modes explicitly
+	 (python-ts-mode . completion-preview-mode)
+	 (c-ts-mode . completion-preview-mode)
+	 (c++-ts-mode . completion-preview-mode)
+	 (js-ts-mode . completion-preview-mode)
+	 (typescript-ts-mode . completion-preview-mode)
+	 (rust-ts-mode . completion-preview-mode))
   :custom
   (completion-preview-minimum-symbol-length 2)
   (completion-preview-idle-delay nil)
@@ -1387,30 +1387,30 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
       (completion-preview-insert)
       ;; Move past closing parens/brackets if needed
       (when (looking-at "[])]")
-        (forward-char 1))))
+	(forward-char 1))))
 
   ;; Fix completion detection with paredit
   (advice-add 'completion-preview--completion-at-point :around
-              (lambda (orig-fun &rest args)
-                (let ((result (apply orig-fun args)))
-                  ;; If no completion found and we're before a closing paren
-                  (when (and (not result) (looking-at-p "[])}\"]"))
-                    ;; Try again with a temporary marker past the paren
-                    (save-excursion
-                      (forward-char 1)
-                      (setq result (apply orig-fun args))))
-                  result)))
+	      (lambda (orig-fun &rest args)
+		(let ((result (apply orig-fun args)))
+		  ;; If no completion found and we're before a closing paren
+		  (when (and (not result) (looking-at-p "[])}\"]"))
+		    ;; Try again with a temporary marker past the paren
+		    (save-excursion
+		      (forward-char 1)
+		      (setq result (apply orig-fun args))))
+		  result)))
 
   (set-face-attribute 'completion-preview nil
-                      :foreground "#FFC107"
-                      :background "unspecified")
+		      :foreground "#FFC107"
+		      :background "unspecified")
 
   :bind
   (:map completion-preview-active-mode-map
-        ("TAB" . my/completion-preview-insert-word)
-        ([tab] . my/completion-preview-insert-word)
-        ("M-n" . #'completion-preview-next-candidate)
-        ("M-p" . #'completion-preview-prev-candidate)))
+	("TAB" . my/completion-preview-insert-word)
+	([tab] . my/completion-preview-insert-word)
+	("M-n" . #'completion-preview-next-candidate)
+	("M-p" . #'completion-preview-prev-candidate)))
 
 (use-package emacs
   :ensure nil
@@ -1597,8 +1597,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :ensure t
   :defer t
   :bind (
-         ("M-j" . avy-goto-char-timer)
-         ("C-c '" . avy-goto-char-2))
+	 ("M-j" . avy-goto-char-timer)
+	 ("C-c '" . avy-goto-char-2))
   :init (avy-setup-default)
   :config
   (defun avy-action-exchange (pt)
@@ -1645,15 +1645,15 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
   ;; Remove ispell completions from text modes since we use aspell
   (add-hook 'text-mode-hook
-            (lambda ()
-              (setq-local completion-at-point-functions
-                          (remove 'ispell-completion-at-point
-                                  completion-at-point-functions))))
+	    (lambda ()
+	      (setq-local completion-at-point-functions
+			  (remove 'ispell-completion-at-point
+				  completion-at-point-functions))))
 
   ;; Ensure aspell is installed
   (unless (executable-find "aspell")
     (message "Aspell not found; flyspell disabled")
-                      (flyspell-mode -1))
+		      (flyspell-mode -1))
   :bind
   (:map
    flyspell-mode-map
@@ -1675,9 +1675,9 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     .
     (lambda ()
       (unless (or (string-match-p "^\\*.*\\*$" (buffer-name))
-                  (string= (buffer-file-name)
-                           (expand-file-name "init.el" user-emacs-directory)))
-        (eglot-ensure))))
+		  (string= (buffer-file-name)
+			   (expand-file-name "init.el" user-emacs-directory)))
+	(eglot-ensure))))
    (eglot-managed-mode
     .
     (lambda ()
@@ -1700,9 +1700,9 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
   ;; Process cleanup on exit
   (add-hook 'kill-emacs-hook
-            (lambda ()
-              (when (fboundp 'eglot-shutdown-all)
-                (eglot-shutdown-all)))))
+	    (lambda ()
+	      (when (fboundp 'eglot-shutdown-all)
+		(eglot-shutdown-all)))))
 
 (use-package consult-lsp
   :ensure t
@@ -1733,8 +1733,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
   ;; TODO states
   (setq org-todo-keywords
-        '((sequence "TODO(t)" "NEXT(n)" "WAITING(w@/!)"
-                    "|" "DONE(d!)" "CANCELED(c@)")))
+	'((sequence "TODO(t)" "NEXT(n)" "WAITING(w@/!)"
+		    "|" "DONE(d!)" "CANCELED(c@)")))
 
   ;; Cache variables for org-agenda-files optimization
   (defvar my/org-agenda-files-cache nil)
@@ -1744,9 +1744,9 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (defun my/update-org-agenda-files ()
     "Update org-agenda-files with caching (5 min cache)."
     (when (or (null my/org-agenda-cache-time)
-              (> (- (float-time) my/org-agenda-cache-time) 300)) ; 5 minutes
+	      (> (- (float-time) my/org-agenda-cache-time) 300)) ; 5 minutes
       (setq my/org-agenda-files-cache
-            (directory-files-recursively "~/Documents/notes/" "\\.org$"))
+	    (directory-files-recursively "~/Documents/notes/" "\\.org$"))
       (setq my/org-agenda-cache-time (float-time)))
     (setq org-agenda-files my/org-agenda-files-cache))
 
@@ -1763,14 +1763,14 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :after org
   :config
   (setq org-capture-templates
-        `(("t" "Todo" entry
-           (file ,(expand-file-name "todo.org" org-directory))
-           "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n"
-           :empty-lines 1)
-          ("r" "RSS Feed" entry
-           (file ,(expand-file-name "rss.org" org-directory))
-           "* %:description\n:PROPERTIES:\n:RSS_URL: %:link\n:END:\n"
-           :immediate-finish t))))
+	`(("t" "Todo" entry
+	   (file ,(expand-file-name "todo.org" org-directory))
+	   "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n"
+	   :empty-lines 1)
+	  ("r" "RSS Feed" entry
+	   (file ,(expand-file-name "rss.org" org-directory))
+	   "* %:description\n:PROPERTIES:\n:RSS_URL: %:link\n:END:\n"
+	   :immediate-finish t))))
 
 ;; Agenda Configuration
 (use-package org-agenda
@@ -1779,11 +1779,11 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :config
   ;; Simple agenda views
   (setq org-agenda-custom-commands
-        '(("t" "All TODOs" todo "TODO|NEXT|WAITING"
-           ((org-agenda-overriding-header "All Open TODOs")))
-          ("d" "Today's Agenda" agenda ""
-           ((org-agenda-span 'day)
-            (org-agenda-overriding-header "Today")))))
+	'(("t" "All TODOs" todo "TODO|NEXT|WAITING"
+	   ((org-agenda-overriding-header "All Open TODOs")))
+	  ("d" "Today's Agenda" agenda ""
+	   ((org-agenda-span 'day)
+	    (org-agenda-overriding-header "Today")))))
 
   ;; Start week on Monday
   (setq org-agenda-start-on-weekday 1))
@@ -1814,9 +1814,9 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
   ;; LaTeX/PDF export settings
   (setq org-latex-pdf-process
-        '("pdflatex -interaction nonstopmode -output-directory %o %f"
-          "pdflatex -interaction nonstopmode -output-directory %o %f"
-          "pdflatex -interaction nonstopmode -output-directory %o %f")))
+	'("pdflatex -interaction nonstopmode -output-directory %o %f"
+	  "pdflatex -interaction nonstopmode -output-directory %o %f"
+	  "pdflatex -interaction nonstopmode -output-directory %o %f")))
 
 ;; Optional: GitHub Flavored Markdown export
 (use-package ox-gfm
@@ -1842,26 +1842,26 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 (with-eval-after-load 'ox-latex
   (add-to-list 'org-latex-classes
-               '("citywide"
-                 "\\documentclass{citywide}"
-                 ("\\section{%s}" . "\\section*{%s}")
-                 ("\\subsection{%s}" . "\\subsection*{%s}")
-                 ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
-                 ("\\paragraph{%s}" . "\\paragraph*{%s}")
-                 ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))))
+	       '("citywide"
+		 "\\documentclass{citywide}"
+		 ("\\section{%s}" . "\\section*{%s}")
+		 ("\\subsection{%s}" . "\\subsection*{%s}")
+		 ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+		 ("\\paragraph{%s}" . "\\paragraph*{%s}")
+		 ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))))
 
 (setq org-latex-default-packages-alist
       '(("AUTO" "inputenc" t ("pdflatex"))
-        ("T1" "fontenc" t ("pdflatex"))
-        ("" "graphicx" t)
-        ("" "longtable" nil)
-        ("" "wrapfig" nil)
-        ("" "rotating" nil)
-        ("normalem" "ulem" t)
-        ("" "amsmath" t)
-        ("" "amssymb" t)
-        ("" "capt-of" nil)
-        ("" "hyperref" nil)))
+	("T1" "fontenc" t ("pdflatex"))
+	("" "graphicx" t)
+	("" "longtable" nil)
+	("" "wrapfig" nil)
+	("" "rotating" nil)
+	("normalem" "ulem" t)
+	("" "amsmath" t)
+	("" "amssymb" t)
+	("" "capt-of" nil)
+	("" "hyperref" nil)))
 
 ;;; magit / forge
 
@@ -1889,7 +1889,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :commands (magit-list-repositories)
   :init
   (setq magit-repository-directories
-        '(("~/Code" . 1))))
+	'(("~/Code" . 1))))
 
 (use-package forge :ensure t :after magit)
 (use-package magit-todos :ensure t :after magit :config (magit-todos-mode 1))
@@ -1900,33 +1900,33 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   grep
   :config
   (setq grep-find-ignored-directories
-        (append
-         '(".angular"
-           ".git"
-           ".hg"
-           ".idea"
-           ".project"
-           ".settings"
-           ".svn"
-           "3rdparty"
-           "bootstrap*"
-           "pyenv"
-           "target")
-         grep-find-ignored-directories))
+	(append
+	 '(".angular"
+	   ".git"
+	   ".hg"
+	   ".idea"
+	   ".project"
+	   ".settings"
+	   ".svn"
+	   "3rdparty"
+	   "bootstrap*"
+	   "pyenv"
+	   "target")
+	 grep-find-ignored-directories))
   (setq grep-find-ignored-files
-        (append
-         '("*.blob"
-           "*.class"
-           "*.gz"
-           "*.jar"
-           "*.pack"
-           "*.xd"
-           ".factorypath"
-           "TAGS"
-           "dependency-reduced-pom.xml"
-           "projectile.cache"
-           "workbench.xmi")
-         grep-find-ignored-files)))
+	(append
+	 '("*.blob"
+	   "*.class"
+	   "*.gz"
+	   "*.jar"
+	   "*.pack"
+	   "*.xd"
+	   ".factorypath"
+	   "TAGS"
+	   "dependency-reduced-pom.xml"
+	   "projectile.cache"
+	   "workbench.xmi")
+	 grep-find-ignored-files)))
 
 ;;; recentf
 
@@ -2001,7 +2001,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     (consult-focus-lines
      (lambda (file)
        (string-match-p
-        (regexp-quote (consult--read "Filter: ")) file))))
+	(regexp-quote (consult--read "Filter: ")) file))))
 
   (use-package diredfl :ensure t :config (diredfl-global-mode 1))
   (use-package
@@ -2014,7 +2014,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     ;; Custom directory icon color for modus-vivendi theme integration
     ;; Using soft blue from the modus-vivendi color scheme for consistency
     (set-face-attribute 'all-the-icons-dired-dir-face nil
-                        :foreground "#81a1c1")) ; Soft blue from modus-vivendi accent palette
+			:foreground "#81a1c1")) ; Soft blue from modus-vivendi accent palette
 
   (use-package
     dired-git-info
@@ -2037,7 +2037,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     ;; Subtle background for visual subtree depth indication
     ;; Using a dark, muted background from modus-vivendi palette for hierarchy
     (set-face-attribute 'dired-subtree-depth-1-face nil
-                        :background "#3b4252")) ; Dark subtle background from modus-vivendi scheme
+			:background "#3b4252")) ; Dark subtle background from modus-vivendi scheme
   (use-package
     dired-async
     :ensure nil
@@ -2056,22 +2056,22 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :config
   ;; Core eww settings for better browsing experience
   (setq eww-search-prefix "https://duckduckgo.com/html?q="  ; Privacy-focused search
-        eww-download-directory "~/Downloads/"
-        eww-bookmarks-directory "~/.config/emacs/eww-bookmarks/"
-        eww-history-limit 150
-        eww-use-external-browser-for-content-type "\\`\\(video/\\|audio\\)" ; Use external browser for media
-        eww-browse-url-new-window-is-tab nil
-        eww-form-checkbox-selected-symbol "[X]"
-        eww-form-checkbox-symbol "[ ]"
-        eww-header-line-format "%t: %u"
-        shr-use-colors t
-        shr-use-fonts t
-        shr-indentation 2
-        shr-width 80
-        shr-max-image-proportion 0.7
-        shr-image-animate nil  ; Don't animate images by default
-        shr-discard-aria-hidden t
-        shr-cookie-policy 'same-origin)
+	eww-download-directory "~/Downloads/"
+	eww-bookmarks-directory "~/.config/emacs/eww-bookmarks/"
+	eww-history-limit 150
+	eww-use-external-browser-for-content-type "\\`\\(video/\\|audio\\)" ; Use external browser for media
+	eww-browse-url-new-window-is-tab nil
+	eww-form-checkbox-selected-symbol "[X]"
+	eww-form-checkbox-symbol "[ ]"
+	eww-header-line-format "%t: %u"
+	shr-use-colors t
+	shr-use-fonts t
+	shr-indentation 2
+	shr-width 80
+	shr-max-image-proportion 0.7
+	shr-image-animate nil  ; Don't animate images by default
+	shr-discard-aria-hidden t
+	shr-cookie-policy 'same-origin)
 
   ;; Custom functions for enhanced functionality
   (defun eww-open-in-firefox ()
@@ -2080,26 +2080,26 @@ This function integrates with exwm-firefox-core to open the current page."
     (interactive)
     (when (derived-mode-p 'eww-mode)
       (let ((url (eww-current-url)))
-        (if url
-            (progn
-              (message "Opening %s in Firefox..." url)
-              (start-process "firefox" nil "firefox" url))
-          (message "No URL to open")))))
+	(if url
+	    (progn
+	      (message "Opening %s in Firefox..." url)
+	      (start-process "firefox" nil "firefox" url))
+	  (message "No URL to open")))))
 
   (defun eww-download-pdf ()
     "Download the current page as PDF using an external tool."
     (interactive)
     (let ((url (eww-current-url)))
       (if url
-          (let ((filename (expand-file-name
-                           (concat (format-time-string "%Y%m%d-%H%M%S")
-                                   "-"
-                                   (replace-regexp-in-string "[^a-zA-Z0-9]" "-" (or (plist-get eww-data :title) "page"))
-                                   ".pdf")
-                           eww-download-directory)))
-            (message "Downloading PDF to %s..." filename)
-            (start-process "wkhtmltopdf" nil "wkhtmltopdf" url filename))
-        (message "No URL to download"))))
+	  (let ((filename (expand-file-name
+			   (concat (format-time-string "%Y%m%d-%H%M%S")
+				   "-"
+				   (replace-regexp-in-string "[^a-zA-Z0-9]" "-" (or (plist-get eww-data :title) "page"))
+				   ".pdf")
+			   eww-download-directory)))
+	    (message "Downloading PDF to %s..." filename)
+	    (start-process "wkhtmltopdf" nil "wkhtmltopdf" url filename))
+	(message "No URL to download"))))
 
   (defun eww-toggle-images ()
     "Toggle whether images are loaded in EWW."
@@ -2128,28 +2128,28 @@ This function integrates with exwm-firefox-core to open the current page."
     (interactive)
     (let ((source (plist-get eww-data :source)))
       (when source
-        (with-current-buffer (get-buffer-create "*eww-source*")
-          (delete-region (point-min) (point-max))
-          (insert source)
-          (html-mode)
-          (display-buffer (current-buffer))))))
+	(with-current-buffer (get-buffer-create "*eww-source*")
+	  (delete-region (point-min) (point-max))
+	  (insert source)
+	  (html-mode)
+	  (display-buffer (current-buffer))))))
 
   (defun eww-copy-page-title ()
     "Copy the title of the current page to the kill ring."
     (interactive)
     (let ((title (plist-get eww-data :title)))
       (if title
-          (progn
-            (kill-new title)
-            (message "Copied: %s" title))
-        (message "No title found"))))
+	  (progn
+	    (kill-new title)
+	    (message "Copied: %s" title))
+	(message "No title found"))))
 
   (defun eww-open-bookmark-in-firefox ()
     "Open the selected bookmark in Firefox."
     (interactive)
     (let ((bookmark (eww-read-bookmark)))
       (when bookmark
-        (start-process "firefox" nil "firefox" (plist-get bookmark :url)))))
+	(start-process "firefox" nil "firefox" (plist-get bookmark :url)))))
 
   ;; Enhanced bookmark functionality
   (defun eww-bookmark-with-tags ()
@@ -2158,61 +2158,61 @@ This function integrates with exwm-firefox-core to open the current page."
     (let ((tags (read-string "Tags (comma-separated): ")))
       (eww-add-bookmark)
       (when (and tags (not (string-empty-p tags)))
-        ;; Store tags in bookmark (would need custom bookmark format)
-        (message "Bookmark saved with tags: %s" tags))))
+	;; Store tags in bookmark (would need custom bookmark format)
+	(message "Bookmark saved with tags: %s" tags))))
 
   :bind
   (:map eww-mode-map
-        ;; Custom keybindings only - not re-declaring defaults
-        ;; Default keys preserved: g (reload), G (search), l/r (back/forward),
-        ;; H (history), b (bookmarks), d (download), w (copy-url), & (external browser)
+	;; Custom keybindings only - not re-declaring defaults
+	;; Default keys preserved: g (reload), G (search), l/r (back/forward),
+	;; H (history), b (bookmarks), d (download), w (copy-url), & (external browser)
 
-        ;; Open in Firefox - using C-c C-f for consistency with Emacs conventions
-        ("C-c C-f" . eww-open-in-firefox)
+	;; Open in Firefox - using C-c C-f for consistency with Emacs conventions
+	("C-c C-f" . eww-open-in-firefox)
 
-        ;; Additional navigation helpers
-        ("J" . eww-next-buffer)      ; Quick buffer switching
-        ("K" . eww-previous-buffer)  ; Quick buffer switching
+	;; Additional navigation helpers
+	("J" . eww-next-buffer)      ; Quick buffer switching
+	("K" . eww-previous-buffer)  ; Quick buffer switching
 
-        ;; Content manipulation
-        ("+" . eww-increase-text-size)  ; Zoom in
-        ("-" . eww-decrease-text-size)  ; Zoom out
-        ("0" . eww-reset-text-size)     ; Reset zoom
+	;; Content manipulation
+	("+" . eww-increase-text-size)  ; Zoom in
+	("-" . eww-decrease-text-size)  ; Zoom out
+	("0" . eww-reset-text-size)     ; Reset zoom
 
-        ;; View and inspection
-        ("V" . eww-view-source)      ; View page source
-        ("I" . eww-toggle-images)    ; Toggle image loading
+	;; View and inspection
+	("V" . eww-view-source)      ; View page source
+	("I" . eww-toggle-images)    ; Toggle image loading
 
-        ;; Enhanced functionality
-        ("W" . eww-copy-page-title)  ; Copy page title (w is URL)
-        ("D" . eww-download-pdf)     ; Download as PDF (d is save)
-        ("B" . eww-bookmark-with-tags) ; Bookmark with tags
+	;; Enhanced functionality
+	("W" . eww-copy-page-title)  ; Copy page title (w is URL)
+	("D" . eww-download-pdf)     ; Download as PDF (d is save)
+	("B" . eww-bookmark-with-tags) ; Bookmark with tags
 
-        ;; Quick search with different engines
-        ("C-c /" . eww)              ; New search
-        ("C-c C-o" . eww-open-bookmark-in-firefox)) ; Open bookmark in Firefox
+	;; Quick search with different engines
+	("C-c /" . eww)              ; New search
+	("C-c C-o" . eww-open-bookmark-in-firefox)) ; Open bookmark in Firefox
 
   :hook
   ;; Hooks for better integration
   ((eww-mode . visual-line-mode)       ; Better line wrapping
    (eww-mode . (lambda ()
-                 (setq-local scroll-conservatively 100) ; Smooth scrolling
-                 (setq-local mouse-wheel-scroll-amount '(1 ((shift) . 1)))))))
+		 (setq-local scroll-conservatively 100) ; Smooth scrolling
+		 (setq-local mouse-wheel-scroll-amount '(1 ((shift) . 1)))))))
 
 ;; Optional: Configure eww-lnum for link selection with numbers
 (use-package eww-lnum
   :after eww
   :bind
   (:map eww-mode-map
-        ("f" . eww-lnum-follow)        ; Follow link by number
-        ("F" . eww-lnum-universal)))   ; Universal argument link selection
+	("f" . eww-lnum-follow)        ; Follow link by number
+	("F" . eww-lnum-universal)))   ; Universal argument link selection
 
 ;; Optional: ace-link integration for quick link selection
 (use-package ace-link
   :after eww
   :bind
   (:map eww-mode-map
-        ("o" . ace-link-eww)))         ; Jump to any link with ace
+	("o" . ace-link-eww)))         ; Jump to any link with ace
 
 
 ;;; pdf-tools
@@ -2228,15 +2228,15 @@ This function integrates with exwm-firefox-core to open the current page."
     (interactive "sPDF URL: ")
     (let ((temp-file (make-temp-file "emacs-pdf-" nil ".pdf")))
       (condition-case err
-          (progn
-            (url-copy-file url temp-file t)
-            (find-file temp-file))
-        (error
-         (message "Failed to open PDF from %s: %s"
-                  url
-                  (error-message-string err))))
+	  (progn
+	    (url-copy-file url temp-file t)
+	    (find-file temp-file))
+	(error
+	 (message "Failed to open PDF from %s: %s"
+		  url
+		  (error-message-string err))))
       (when (file-exists-p temp-file)
-        (delete-file temp-file))))
+	(delete-file temp-file))))
   :config
   (unless (featurep 'pdf-tools)   ; Install only if not already loaded
     (pdf-tools-install :no-query))
@@ -2308,14 +2308,14 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq denote-directory (expand-file-name "~/Documents/notes/"))
   (setq denote-save-buffers nil)
   (setq denote-known-keywords
-        '("emacs" "philosophy" "politics" "economics"))
+	'("emacs" "philosophy" "politics" "economics"))
   (setq denote-infer-keywords t)
   (setq denote-sort-keywords t)
   (setq denote-prompts '(title keywords))
   (setq denote-excluded-directories-regexp nil)
   (setq denote-excluded-keywords-regexp nil)
   (setq denote-rename-confirmations
-        '(rewrite-front-matter modify-file-name))
+	'(rewrite-front-matter modify-file-name))
 
   ;; Pick dates, where relevant, with Org's advanced interface:
   (setq denote-date-prompt-use-org-read-date t)
@@ -2343,7 +2343,7 @@ This function integrates with exwm-firefox-core to open the current page."
   ;; Use the "journal" subdirectory of the `denote-directory'.  Set this
   ;; to nil to use the `denote-directory' instead.
   (setq denote-journal-directory
-        (expand-file-name "journal" denote-directory))
+	(expand-file-name "journal" denote-directory))
   ;; Default keyword for new journal entries. It can also be a list of
   ;; strings.
   (setq denote-journal-keyword "journal")
@@ -2360,104 +2360,104 @@ This function integrates with exwm-firefox-core to open the current page."
   :init
   ;; Tell Emacs where to look for tree-sitter libraries
   (add-to-list 'treesit-extra-load-path
-               (expand-file-name "tree-sitter" user-emacs-directory))
+	       (expand-file-name "tree-sitter" user-emacs-directory))
 
   (setq treesit-language-source-alist
-        '((awk . ("https://github.com/Beaglefoot/tree-sitter-awk"))
-          (bash . ("https://github.com/tree-sitter/tree-sitter-bash"))
-          (bibtex . ("https://github.com/latex-lsp/tree-sitter-bibtex"))
-          ;;          (blueprint . ("https://github.com/huanie/tree-sitter-blueprint"))
-          (c . ("https://github.com/tree-sitter/tree-sitter-c"))
-          (clojure . ("https://github.com/sogaiu/tree-sitter-clojure"))
-          (cmake . ("https://github.com/uyha/tree-sitter-cmake"))
-          (commonlisp . ("https://github.com/theHamsta/tree-sitter-commonlisp"))
-          (cpp . ("https://github.com/tree-sitter/tree-sitter-cpp"))
-          ;;          (csharp . ("https://github.com/tree-sitter/tree-sitter-c-sharp"))
-          (css . ("https://github.com/tree-sitter/tree-sitter-css"))
-          ;;          (dart . ("https://github.com/ast-grep/tree-sitter-dart"))
-          (dockerfile . ("https://github.com/camdencheek/tree-sitter-dockerfile"))
-          (elisp . ("https://github.com/Wilfred/tree-sitter-elisp"))
-          ;;          (elixir . ("https://github.com/elixir-lang/tree-sitter-elixir"))
-          ;;          (glsl . ("https://github.com/theHamsta/tree-sitter-glsl"))
-          ;;          (go . ("https://github.com/tree-sitter/tree-sitter-go"))
-          ;;          (heex . ("https://github.com/phoenixframework/tree-sitter-heex"))
-          (html . ("https://github.com/tree-sitter/tree-sitter-html"))
-          ;;          (janet . ("https://github.com/GrayJack/tree-sitter-janet"))
-          ;;          (java . ("https://github.com/tree-sitter/tree-sitter-java"))
-          (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "master" "src"))
-          (json . ("https://github.com/tree-sitter/tree-sitter-json"))
-          ;;          (julia . ("https://github.com/tree-sitter/tree-sitter-julia"))
-          ;;          (kotlin . ("https://github.com/fwcd/tree-sitter-kotlin"))
-          (latex . ("https://github.com/latex-lsp/tree-sitter-latex"))
-          (lua . ("https://github.com/MunifTanjim/tree-sitter-lua"))
-          ;;          (magik . ("https://github.com/GIT-USERS/RobertCrosas/tree-sitter-magik"))
-          (make . ("https://github.com/alemuller/tree-sitter-make"))
-          (markdown . ("https://github.com/ikatyang/tree-sitter-markdown"))
-          ;;          (nix . ("https://github.com/nix-community/tree-sitter-nix"))
-          ;;          (nu . ("https://github.com/nushell/tree-sitter-nu"))
-          (org . ("https://github.com/milisims/tree-sitter-org"))
-          ;;          (perl . ("https://github.com/tree-sitter-perl/tree-sitter-perl"))
-          ;;          (php . ("https://github.com/tree-sitter/tree-sitter-php"))
-          ;;          (proto . ("https://github.com/mitchellh/tree-sitter-proto"))
-          (python . ("https://github.com/tree-sitter/tree-sitter-python"))
-          ;;          (r . ("https://github.com/r-lib/tree-sitter-r"))
-          (ruby . ("https://github.com/tree-sitter/tree-sitter-ruby"))
-          (rust . ("https://github.com/tree-sitter/tree-sitter-rust"))
-          (scala . ("https://github.com/tree-sitter/tree-sitter-scala"))
-          (scheme . ("https://github.com/6cdh/tree-sitter-scheme"))
-          (sql . ("https://github.com/DerekStride/tree-sitter-sql"))
-          ;;          (surface . ("https://github.com/connorlay/tree-sitter-surface"))
-          (toml . ("https://github.com/tree-sitter/tree-sitter-toml"))
-          (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src"))
-          (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src"))
-          (typst . ("https://github.com/uben0/tree-sitter-typst"))
-          ;;          (verilog . ("https://github.com/tree-sitter/tree-sitter-verilog"))
-          ;;          (vhdl . ("https://github.com/gdkrmr/tree-sitter-vhdl"))
-          ;;          (vue . ("https://github.com/merico-dev/tree-sitter-vue"))
-          ;;          (wast . ("https://github.com/bytecodealliance/tree-sitter-wast"))
-          ;;          (wat . ("https://github.com/bytecodealliance/tree-sitter-wat"))
-          ;;          (wgsl . ("https://github.com/mehmetoguzderin/tree-sitter-wgsl"))
-          (yaml . ("https://github.com/ikatyang/tree-sitter-yaml"))))
+	'((awk . ("https://github.com/Beaglefoot/tree-sitter-awk"))
+	  (bash . ("https://github.com/tree-sitter/tree-sitter-bash"))
+	  (bibtex . ("https://github.com/latex-lsp/tree-sitter-bibtex"))
+	  ;;          (blueprint . ("https://github.com/huanie/tree-sitter-blueprint"))
+	  (c . ("https://github.com/tree-sitter/tree-sitter-c"))
+	  (clojure . ("https://github.com/sogaiu/tree-sitter-clojure"))
+	  (cmake . ("https://github.com/uyha/tree-sitter-cmake"))
+	  (commonlisp . ("https://github.com/theHamsta/tree-sitter-commonlisp"))
+	  (cpp . ("https://github.com/tree-sitter/tree-sitter-cpp"))
+	  ;;          (csharp . ("https://github.com/tree-sitter/tree-sitter-c-sharp"))
+	  (css . ("https://github.com/tree-sitter/tree-sitter-css"))
+	  ;;          (dart . ("https://github.com/ast-grep/tree-sitter-dart"))
+	  (dockerfile . ("https://github.com/camdencheek/tree-sitter-dockerfile"))
+	  (elisp . ("https://github.com/Wilfred/tree-sitter-elisp"))
+	  ;;          (elixir . ("https://github.com/elixir-lang/tree-sitter-elixir"))
+	  ;;          (glsl . ("https://github.com/theHamsta/tree-sitter-glsl"))
+	  ;;          (go . ("https://github.com/tree-sitter/tree-sitter-go"))
+	  ;;          (heex . ("https://github.com/phoenixframework/tree-sitter-heex"))
+	  (html . ("https://github.com/tree-sitter/tree-sitter-html"))
+	  ;;          (janet . ("https://github.com/GrayJack/tree-sitter-janet"))
+	  ;;          (java . ("https://github.com/tree-sitter/tree-sitter-java"))
+	  (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "master" "src"))
+	  (json . ("https://github.com/tree-sitter/tree-sitter-json"))
+	  ;;          (julia . ("https://github.com/tree-sitter/tree-sitter-julia"))
+	  ;;          (kotlin . ("https://github.com/fwcd/tree-sitter-kotlin"))
+	  (latex . ("https://github.com/latex-lsp/tree-sitter-latex"))
+	  (lua . ("https://github.com/MunifTanjim/tree-sitter-lua"))
+	  ;;          (magik . ("https://github.com/GIT-USERS/RobertCrosas/tree-sitter-magik"))
+	  (make . ("https://github.com/alemuller/tree-sitter-make"))
+	  (markdown . ("https://github.com/ikatyang/tree-sitter-markdown"))
+	  ;;          (nix . ("https://github.com/nix-community/tree-sitter-nix"))
+	  ;;          (nu . ("https://github.com/nushell/tree-sitter-nu"))
+	  (org . ("https://github.com/milisims/tree-sitter-org"))
+	  ;;          (perl . ("https://github.com/tree-sitter-perl/tree-sitter-perl"))
+	  ;;          (php . ("https://github.com/tree-sitter/tree-sitter-php"))
+	  ;;          (proto . ("https://github.com/mitchellh/tree-sitter-proto"))
+	  (python . ("https://github.com/tree-sitter/tree-sitter-python"))
+	  ;;          (r . ("https://github.com/r-lib/tree-sitter-r"))
+	  (ruby . ("https://github.com/tree-sitter/tree-sitter-ruby"))
+	  (rust . ("https://github.com/tree-sitter/tree-sitter-rust"))
+	  (scala . ("https://github.com/tree-sitter/tree-sitter-scala"))
+	  (scheme . ("https://github.com/6cdh/tree-sitter-scheme"))
+	  (sql . ("https://github.com/DerekStride/tree-sitter-sql"))
+	  ;;          (surface . ("https://github.com/connorlay/tree-sitter-surface"))
+	  (toml . ("https://github.com/tree-sitter/tree-sitter-toml"))
+	  (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src"))
+	  (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src"))
+	  (typst . ("https://github.com/uben0/tree-sitter-typst"))
+	  ;;          (verilog . ("https://github.com/tree-sitter/tree-sitter-verilog"))
+	  ;;          (vhdl . ("https://github.com/gdkrmr/tree-sitter-vhdl"))
+	  ;;          (vue . ("https://github.com/merico-dev/tree-sitter-vue"))
+	  ;;          (wast . ("https://github.com/bytecodealliance/tree-sitter-wast"))
+	  ;;          (wat . ("https://github.com/bytecodealliance/tree-sitter-wat"))
+	  ;;          (wgsl . ("https://github.com/mehmetoguzderin/tree-sitter-wgsl"))
+	  (yaml . ("https://github.com/ikatyang/tree-sitter-yaml"))))
 
   ;; Major mode remapping
   (setq major-mode-remap-alist
-        '((awk-mode . awk-ts-mode)
-          (bash-mode . bash-ts-mode)
-          (sh-mode . bash-ts-mode)
-          (bibtex-mode . bibtex-ts-mode)
-          (c-mode . c-ts-mode)
-          (c++-mode . c++-ts-mode)
-          (cmake-mode . cmake-ts-mode)
-          ;;          (csharp-mode . csharp-ts-mode)
-          (css-mode . css-ts-mode)
-          (dockerfile-mode . dockerfile-ts-mode)
-          ;;          (elixir-mode . elixir-ts-mode)
-          ;;          (go-mode . go-ts-mode)
-          (html-mode . html-ts-mode)
-          (mhtml-mode . html-ts-mode)
-          ;;          (java-mode . java-ts-mode)
-          (javascript-mode . js-ts-mode)
-          (js-mode . js-ts-mode)
-          (js2-mode . js-ts-mode)
-          (js-json-mode . json-ts-mode)
-          (json-mode . json-ts-mode)
-          (lua-mode . lua-ts-mode)
-          (makefile-mode . make-ts-mode)
-          (makefile-gmake-mode . make-ts-mode)
-          (markdown-mode . markdown-ts-mode)
-          ;;          (php-mode . php-ts-mode)
-          (python-mode . python-ts-mode)
-          ;;          (r-mode . r-ts-mode)
-          ;;          (ruby-mode . ruby-ts-mode)
-          (rust-mode . rust-ts-mode)
-          (scala-mode . scala-ts-mode)
-          (sql-mode . sql-ts-mode)
-          (toml-mode . toml-ts-mode)
-          (conf-toml-mode . toml-ts-mode)
-          (tsx-mode . tsx-ts-mode)
-          (typescript-mode . typescript-ts-mode)
-          ;;          (verilog-mode . verilog-ts-mode)
-          (yaml-mode . yaml-ts-mode)))
+	'((awk-mode . awk-ts-mode)
+	  (bash-mode . bash-ts-mode)
+	  (sh-mode . bash-ts-mode)
+	  (bibtex-mode . bibtex-ts-mode)
+	  (c-mode . c-ts-mode)
+	  (c++-mode . c++-ts-mode)
+	  (cmake-mode . cmake-ts-mode)
+	  ;;          (csharp-mode . csharp-ts-mode)
+	  (css-mode . css-ts-mode)
+	  (dockerfile-mode . dockerfile-ts-mode)
+	  ;;          (elixir-mode . elixir-ts-mode)
+	  ;;          (go-mode . go-ts-mode)
+	  (html-mode . html-ts-mode)
+	  (mhtml-mode . html-ts-mode)
+	  ;;          (java-mode . java-ts-mode)
+	  (javascript-mode . js-ts-mode)
+	  (js-mode . js-ts-mode)
+	  (js2-mode . js-ts-mode)
+	  (js-json-mode . json-ts-mode)
+	  (json-mode . json-ts-mode)
+	  (lua-mode . lua-ts-mode)
+	  (makefile-mode . make-ts-mode)
+	  (makefile-gmake-mode . make-ts-mode)
+	  (markdown-mode . markdown-ts-mode)
+	  ;;          (php-mode . php-ts-mode)
+	  (python-mode . python-ts-mode)
+	  ;;          (r-mode . r-ts-mode)
+	  ;;          (ruby-mode . ruby-ts-mode)
+	  (rust-mode . rust-ts-mode)
+	  (scala-mode . scala-ts-mode)
+	  (sql-mode . sql-ts-mode)
+	  (toml-mode . toml-ts-mode)
+	  (conf-toml-mode . toml-ts-mode)
+	  (tsx-mode . tsx-ts-mode)
+	  (typescript-mode . typescript-ts-mode)
+	  ;;          (verilog-mode . verilog-ts-mode)
+	  (yaml-mode . yaml-ts-mode)))
 
   ;; Emacs 30.1+: Ensure parent mode relationships for proper integration
   (when (fboundp 'derived-mode-add-parents)
@@ -2500,14 +2500,14 @@ This function integrates with exwm-firefox-core to open the current page."
   :ensure nil
   :hook
   (python-ts-mode . (lambda ()
-                      ;; Tree-sitter handles these automatically via treesit-major-mode-setup:
-                      ;; - treesit-defun-type-regexp
-                      ;; - forward-sexp-function
-                      ;; - beginning-of-defun-function
-                      ;; - imenu-create-index-function
-                      ;; - which-function-functions
-                      ;; Just ensure eglot starts
-                      (eglot-ensure))))
+		      ;; Tree-sitter handles these automatically via treesit-major-mode-setup:
+		      ;; - treesit-defun-type-regexp
+		      ;; - forward-sexp-function
+		      ;; - beginning-of-defun-function
+		      ;; - imenu-create-index-function
+		      ;; - which-function-functions
+		      ;; Just ensure eglot starts
+		      (eglot-ensure))))
 
 
 ;; JavaScript/TypeScript with tree-sitter
@@ -2607,7 +2607,7 @@ This function integrates with exwm-firefox-core to open the current page."
     (lambda ()
       ;; Only enable flymake-mode for file-backed buffers
       (when (buffer-file-name)
-        (flymake-mode 1))))
+	(flymake-mode 1))))
    ;; Add tree-sitter modes
    (python-ts-mode . flymake-mode)
    (c-ts-mode . flymake-mode)
@@ -2619,14 +2619,14 @@ This function integrates with exwm-firefox-core to open the current page."
     .
     (lambda ()
       (with-current-buffer "*scratch*"
-        (flymake-mode -1)))))
+	(flymake-mode -1)))))
   :config
   (setq flymake-fringe-indicator-position 'right-fringe)
   (setq flymake-no-changes-timeout 1)
   (add-hook 'lisp-interaction-mode-hook
-            (lambda ()
-              (when (string= (buffer-name) "*scratch*")
-                (flymake-mode -1))))
+	    (lambda ()
+	      (when (string= (buffer-name) "*scratch*")
+		(flymake-mode -1))))
   (add-hook
    'emacs-lisp-mode-hook
    (lambda ()
@@ -2636,9 +2636,9 @@ This function integrates with exwm-firefox-core to open the current page."
        (add-hook 'flymake-diagnostic-functions #'elisp-flymake-checkdoc nil t))))
   :bind
   (:map flymake-mode-map
-        ("C-c ! l" . flymake-show-buffer-diagnostics)
-        ("C-c ! n" . flymake-goto-next-error)
-        ("C-c ! p" . flymake-goto-prev-error)))
+	("C-c ! l" . flymake-show-buffer-diagnostics)
+	("C-c ! n" . flymake-goto-next-error)
+	("C-c ! p" . flymake-goto-prev-error)))
 
 (use-package
   elisp-lint
@@ -2671,10 +2671,10 @@ This function integrates with exwm-firefox-core to open the current page."
   :after yasnippet
   :config
   (let ((snippets-dir
-         (expand-file-name "snippets/"
-                           (file-name-directory
-                            (find-library-name
-                             "yasnippet-snippets")))))
+	 (expand-file-name "snippets/"
+			   (file-name-directory
+			    (find-library-name
+			     "yasnippet-snippets")))))
     (unless (file-directory-p snippets-dir)
       (warn
        "yasnippet-snippets directory %s not found; reinstall the package"
@@ -2751,20 +2751,20 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq eshell-prefer-lisp-functions t) ;; Prefer external commands
   (setq eshell-destroy-buffer-when-process-dies t) ;; Kill buffer when process dies
   (setq eshell-visual-commands ;; Commands that need a terminal
-        '("htop"
-          "btop"
-          "top"
-          "less"
-          "more"
-          "vim"
-          "nano"
-          "ssh"
-          "tail"
-          "watch"
-          "claude"
-          "source"))
+	'("htop"
+	  "btop"
+	  "top"
+	  "less"
+	  "more"
+	  "vim"
+	  "nano"
+	  "ssh"
+	  "tail"
+	  "watch"
+	  "claude"
+	  "source"))
   (setq eshell-visual-subcommands ;; Subcommands needing terminal
-        '(("git" "log" "diff" "show")))
+	'(("git" "log" "diff" "show")))
   (setq eshell-buffer-maximum-lines 10000) ;; Buffer line limit
   (setq eshell-history-size 10000) ;; Large history size
   (setq eshell-prompt-regexp "^[^#$\n]*[#$] ") ;; Prompt regexp for parsing
@@ -2774,21 +2774,21 @@ This function integrates with exwm-firefox-core to open the current page."
   (defun my-eshell-prompt ()
     "Custom Eshell prompt with abbreviated path and Git branch."
     (let* ((path (abbreviate-file-name (eshell/pwd)))
-           (git-branch
-            (when (and (fboundp 'vc-git-branch) (vc-git-working-dir))
-              (let ((branch (vc-git-branch)))
-                (if branch
-                    (concat " (" branch ")")
-                  ""))))
-           (prompt
-            (concat
-             (propertize path 'face '(:foreground "cyan"))
-             (propertize (or git-branch "")
-                         'face
-                         '(:foreground "magenta"))
-             (propertize " $ "
-                         'face
-                         '(:foreground "green" :weight bold)))))
+	   (git-branch
+	    (when (and (fboundp 'vc-git-branch) (vc-git-working-dir))
+	      (let ((branch (vc-git-branch)))
+		(if branch
+		    (concat " (" branch ")")
+		  ""))))
+	   (prompt
+	    (concat
+	     (propertize path 'face '(:foreground "cyan"))
+	     (propertize (or git-branch "")
+			 'face
+			 '(:foreground "magenta"))
+	     (propertize " $ "
+			 'face
+			 '(:foreground "green" :weight bold)))))
       prompt))
 
   (setq eshell-prompt-function #'my-eshell-prompt)
@@ -2807,7 +2807,7 @@ This function integrates with exwm-firefox-core to open the current page."
     (interactive)
     (let ((file (thing-at-point 'filename t)))
       (when file
-        (find-file file))))
+	(find-file file))))
 
   ;; History navigation
   (defun eshell-history-backward ()
@@ -2834,11 +2834,11 @@ This function integrates with exwm-firefox-core to open the current page."
     "Truncate Eshell buffer to `eshell-buffer-maximum-lines'."
     (when eshell-buffer-maximum-lines
       (let ((inhibit-read-only t))
-        (save-excursion
-          (goto-char (point-min))
-          (forward-line (- eshell-buffer-maximum-lines))
-          (delete-region (point-min) (point))
-          (eshell-send-input)))))
+	(save-excursion
+	  (goto-char (point-min))
+	  (forward-line (- eshell-buffer-maximum-lines))
+	  (delete-region (point-min) (point))
+	  (eshell-send-input)))))
 
   ;; Common Eshell aliases
   (defun my-eshell-setup-aliases ()
@@ -2855,18 +2855,18 @@ This function integrates with exwm-firefox-core to open the current page."
 
   ;; Optimize Eshell performance
   (setq eshell-modules-list
-        '(eshell-alias
-          eshell-basic
-          eshell-cmpl
-          eshell-dirs
-          eshell-glob
-          eshell-hist
-          eshell-ls
-          eshell-pred
-          eshell-prompt
-          eshell-script
-          eshell-term
-          eshell-unix))
+	'(eshell-alias
+	  eshell-basic
+	  eshell-cmpl
+	  eshell-dirs
+	  eshell-glob
+	  eshell-hist
+	  eshell-ls
+	  eshell-pred
+	  eshell-prompt
+	  eshell-script
+	  eshell-term
+	  eshell-unix))
 
   ;; Enable eshell-syntax-highlighting for better readability
   (use-package
@@ -2901,11 +2901,11 @@ This function integrates with exwm-firefox-core to open the current page."
   :config
   (setq message-citation-line-format "On %a, %b %d %Y, %N wrote:\n")
   (setq message-citation-line-function
-        'message-insert-formatted-citation-line)
+	'message-insert-formatted-citation-line)
   (setq message-kill-buffer-on-exit t)
   (setq message-default-charset 'utf-8)
   (setq message-auto-save-directory
-        (expand-file-name "gnus-drafts" my-tmp-dir)))
+	(expand-file-name "gnus-drafts" my-tmp-dir)))
 
 ;;; Frame setup for daemon compatibility
 ;;
@@ -3048,16 +3048,16 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
   ;; Optionally ensure integration file is sourced in ~/.bashrc
   (let* ((eat-dir (file-name-directory (locate-library "eat")))
-         (integration-file (and eat-dir (expand-file-name "integration/bash" eat-dir)))
-         (bashrc (expand-file-name "~/.bashrc")))
+	 (integration-file (and eat-dir (expand-file-name "integration/bash" eat-dir)))
+	 (bashrc (expand-file-name "~/.bashrc")))
     (when (and integration-file (file-exists-p integration-file) (file-exists-p bashrc))
       (unless (with-temp-buffer
-                (insert-file-contents bashrc)
-                (re-search-forward "EAT_SHELL_INTEGRATION_DIR/bash\\>" nil t))
-        (with-temp-buffer
-          (insert "[ -n \"$EAT_SHELL_INTEGRATION_DIR\" ] && \\\n")
-          (insert "  source \"$EAT_SHELL_INTEGRATION_DIR/bash\"\n")
-          (append-to-file (point-min) (point-max) bashrc)))))
+		(insert-file-contents bashrc)
+		(re-search-forward "EAT_SHELL_INTEGRATION_DIR/bash\\>" nil t))
+	(with-temp-buffer
+	  (insert "[ -n \"$EAT_SHELL_INTEGRATION_DIR\" ] && \\\n")
+	  (insert "  source \"$EAT_SHELL_INTEGRATION_DIR/bash\"\n")
+	  (append-to-file (point-min) (point-max) bashrc)))))
 
   :custom
   (eat-shell (or (getenv "SHELL") "/sbin/bash"))
@@ -3076,8 +3076,8 @@ parameters set in early-init.el to ensure robust UI element disabling."
   ((eshell-load-hook . eat-eshell-mode)
    (eshell-load-hook . eat-eshell-visual-command-mode)
    (eat-mode-hook . (lambda ()
-                      (eat-update-semi-char-mode-map)
-                      (eat-eshell-update-semi-char-mode-map)))
+		      (eat-update-semi-char-mode-map)
+		      (eat-eshell-update-semi-char-mode-map)))
    (eat-mode-hook . eat-semi-char-mode))
 
   :delight
@@ -3109,14 +3109,14 @@ parameters set in early-init.el to ensure robust UI element disabling."
     :key #'gptel-api-key-from-auth-source
     :models '(claude-3-7-sonnet-20250219)
     :header (lambda ()
-              (when-let* ((key (gptel--get-api-key)))
-                `(("x-api-key" . ,key)
-                  ("anthropic-version" . "2023-06-01")
-                  ("anthropic-beta" . "pdfs-2024-09-25")
-                  ("anthropic-beta" . "output-128k-2025-02-19")
-                  ("anthropic-beta" . "prompt-caching-2024-07-31"))))
+	      (when-let* ((key (gptel--get-api-key)))
+		`(("x-api-key" . ,key)
+		  ("anthropic-version" . "2023-06-01")
+		  ("anthropic-beta" . "pdfs-2024-09-25")
+		  ("anthropic-beta" . "output-128k-2025-02-19")
+		  ("anthropic-beta" . "prompt-caching-2024-07-31"))))
     :request-params '(:thinking (:type "enabled" :budget_tokens 2048)
-                                :max_tokens 4096))
+				:max_tokens 4096))
   (setq gptel-api-key-from-auth-source t))
 
 ;;; aggressive indent
@@ -3124,7 +3124,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 (use-package aggressive-indent
   :ensure t
   :hook ((prog-mode . aggressive-indent-mode)
-         (org-mode . aggressive-indent-mode)))
+	 (org-mode . aggressive-indent-mode)))
 
 ;;; Tooltips (tooltip-mode)
 
@@ -3133,13 +3133,13 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :hook (after-init . tooltip-mode)
   :config
   (setq tooltip-delay 0.5
-        tooltip-short-delay 0.5
-        x-gtk-use-system-tooltips t
-        tooltip-frame-parameters
-        '((name . "tooltip")
-          (internal-border-width . 10)
-          (border-width . 0)
-          (no-special-glyphs . t))))
+	tooltip-short-delay 0.5
+	x-gtk-use-system-tooltips t
+	tooltip-frame-parameters
+	'((name . "tooltip")
+	  (internal-border-width . 10)
+	  (border-width . 0)
+	  (no-special-glyphs . t))))
 
 ;;; `man' (manpages)
 
@@ -3191,8 +3191,8 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :demand t
   :config
   (setq search-whitespace-regexp ".*?"
-        isearch-lax-whitespace t
-        isearch-regexp-lax-whitespace nil)
+	isearch-lax-whitespace t
+	isearch-regexp-lax-whitespace nil)
   (setq search-highlight t)
   (setq isearch-lazy-highlight t)
   (setq lazy-highlight-initial-delay 0.5)
@@ -3201,7 +3201,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (setq lazy-count-prefix-format "(%s/%s) ")
   (setq lazy-count-suffix-format nil)
   (setq isearch-wrap-pause t
-        isearch-repeat-on-direction-change t)
+	isearch-repeat-on-direction-change t)
   (setq list-matching-lines-jump-to-current-line nil)
   :bind
   ( :map global-map
@@ -3231,9 +3231,9 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (setq which-func-display 'mode)       ; Emacs 30
   (setq which-func-unknown "")
   (setq which-func-format
-        '((:propertize which-func-current
-                       face bold
-                       mouse-face mode-line-highlight))))
+	'((:propertize which-func-current
+		       face bold
+		       mouse-face mode-line-highlight))))
 
 ;;; General minibuffer settings
 
@@ -3289,9 +3289,9 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (setq tramp-default-remote-shell "/bin/bash")
 
   (setq shell-font-lock-keywords
-        '(("[ \t]\\([+-][^ \t\n]+\\)" 1 font-lock-builtin-face)
-          ("^[^ \t\n]+:.*" . font-lock-string-face)
-          ("^\\[[1-9][0-9]*\\]" . font-lock-constant-face)))
+	'(("[ \t]\\([+-][^ \t\n]+\\)" 1 font-lock-builtin-face)
+	  ("^[^ \t\n]+:.*" . font-lock-string-face)
+	  ("^\\[[1-9][0-9]*\\]" . font-lock-constant-face)))
 
   ;; Support for OS-specific escape sequences such as what `ls
   ;; --hyperlink' uses.  I normally don't use those, but I am checking
@@ -3316,7 +3316,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (add-to-list 'auto-mode-alist '("\\.log\\'" . logview-mode))
   (add-to-list 'auto-mode-alist '("log\\'" . logview-mode))
   :hook (
-         ('log-mode 'logview-mode)))
+	 ('log-mode 'logview-mode)))
 
 ;;; pulsar
 
@@ -3348,11 +3348,11 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :ensure nil
   :config
   (setq send-mail-function 'smtpmail-send-it
-        smtpmail-smtp-server "smtp.mailbox.org"
-        smtpmail-stream-type 'starttls
-        smtpmail-smtp-service 587
-        smtpmail-debug-info t
-        smtpmail-debug-verb t))
+	smtpmail-smtp-server "smtp.mailbox.org"
+	smtpmail-stream-type 'starttls
+	smtpmail-smtp-service 587
+	smtpmail-debug-info t
+	smtpmail-debug-verb t))
 
 ;;; mastodon
 
@@ -3361,7 +3361,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :defer t
   :config
   (setq mastodon-active-user "blackdream"
-        mastodon-instance-url "https://defcon.social")
+	mastodon-instance-url "https://defcon.social")
   (mastodon-discover))
 
 ;;; stupid fucking emojis
@@ -3384,7 +3384,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :defer t
   :vc (:url "https://github.com/theesfeld/insert-uuid")
   :bind (("C-c u" . insert-uuid)
-         ("C-c U" . insert-uuid-random))
+	 ("C-c U" . insert-uuid-random))
   :custom
   (insert-uuid-default-version 4)
   (insert-uuid-uppercase nil))
@@ -3395,11 +3395,11 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :ensure t
   :vc (:url "https://github.com/theesfeld/buffer-background")
   :hook (after-init . (lambda ()
-                        (setq buffer-background-color-alist
-                              '(("*scratch*" . "#2d2d2d")
-                                ("*Messages*" . "#7fdb22")
-                                (org-mode . (:color "#1e1e2e" :opacity 0.9))))
-                        (buffer-background-global-mode 1))))
+			(setq buffer-background-color-alist
+			      '(("*scratch*" . "#2d2d2d")
+				("*Messages*" . "#7fdb22")
+				(org-mode . (:color "#1e1e2e" :opacity 0.9))))
+			(buffer-background-global-mode 1))))
 
 ;;; STARTUP INFORMATION
 
@@ -3409,10 +3409,10 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :hook (after-init . benchmark-init/deactivate)
   :config
   (add-hook 'emacs-startup-hook
-            (lambda ()
-              (message "Emacs started in %.2f seconds with %d garbage collections"
-                       (float-time (time-subtract after-init-time before-init-time))
-                       gcs-done))))
+	    (lambda ()
+	      (message "Emacs started in %.2f seconds with %d garbage collections"
+		       (float-time (time-subtract after-init-time before-init-time))
+		       gcs-done))))
 
 ;;; final cleanup
 
