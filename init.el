@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-04 11:43:57 by grim>
+;; Time-stamp: <Last changed 2025-07-04 11:45:04 by grim>
 
 ;; Enable these
 (mapc
@@ -1323,6 +1323,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (global-set-key [remap isearch-forward] #'consult-line)
   (global-set-key [remap switch-to-buffer] #'consult-buffer)
   (global-set-key [remap list-buffers] #'consult-buffer)
+  (global-set-key [remap yank-pop] #'consult-yank-pop)
   ;;(global-set-key [remap execute-extended-command] #'consult-M-x)
   (setq consult-preview-key 'any) ;; Preview on any key
   (setq consult-narrow-key "<")   ;; Narrowing key
@@ -1348,11 +1349,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                t)
   :bind
   (
-                                        ;("C-x b" . consult-buffer)
-                                        ;("C-x C-b" . consult-buffer)
-                                        ;("C-x 4 b" . consult-buffer-other-window)
-                                        ;("C-x 5 b" . consult-buffer-other-frame)
-                                        ;("M-y" . consult-yank-pop)
    ("M-g i" . consult-imenu)
    ("M-s r" . consult-ripgrep)
    ("M-s l" . consult-line)
