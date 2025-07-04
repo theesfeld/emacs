@@ -105,6 +105,29 @@ The DWIM behaviour of this command is as follows:
 
   (global-set-key (kbd "C-& y") #'my/consult-yasnippet-with-minor-modes)
 
+(defun my/exwm-run-program ()
+  "Run a program using vertico completion with command history and PATH suggestions."
+  (interactive)
+  (let* ((history-commands
+          (when (boundp 'shell-command-history)
+            (delete-dups (copy-sequence shell-command-history))))
+         (path-commands
+          (when (executable-find "compgen")
+            (split-string
+             (shell-command-to-string "compgen -c | head -200")
+             "\n" t)))
+         (common-commands
+          '("firefox" "chromium" "code" "thunar" "alacritty" "kitty" 
+            "mpv" "vlc" "gimp" "libreoffice" "pavucontrol" "qjackctl"))
+         (all-commands
+          (delete-dups
+           (append history-commands common-commands path-commands)))
+         (command
+          (completing-read "Run program: " all-commands nil nil nil
+                          'shell-command-history)))
+    (when (and command (not (string-empty-p command)))
+      (start-process-shell-command command nil command))))
+
 (defun increase-text-and-pane ()
   "Increase text size and adjust window width proportionally."
   (interactive)
@@ -544,11 +567,7 @@ The DWIM behaviour of this command is as follows:
                ([s-up] . windmove-up)
                ([s-down] . windmove-down)
                ([?\s-w] . exwm-workspace-switch)
-               ([?\s-&]
-                .
-                (lambda (cmd)
-                  (interactive (list (read-shell-command "$ ")))
-                  (start-process-shell-command cmd nil cmd)))
+               ([?\s-&] . my/exwm-run-program)
                ([?\s-x]
                 .
                 (lambda ()
