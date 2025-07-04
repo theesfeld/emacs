@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-04 12:04:40 by grim>
+;; Time-stamp: <Last changed 2025-07-04 12:10:51 by grim>
 
 ;; Enable these
 (mapc
@@ -3388,69 +3388,69 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 ;;; BACKGROUND?
 
-;; (use-package buffer-background
-;;   :vc (:url "https://github.com/theesfeld/buffer-background" :branch "opacity")
-;;   :defer 1
-;;   :ensure t
-;;   :custom
-;;   ;; Set global defaults
-;;   (buffer-background-opacity 0.3)
-;;   (buffer-background-auto-enable t)
-;;   :config
-;; Comprehensive buffer-to-color mappings
-;; (setq buffer-background-color-alist
-;;       '(;; === EXACT BUFFER NAME MATCHING ===
-;;         ("*scratch*" . (:color "#2d2d2d" :opacity 0.8))
-;;         ("*Messages*" . "#1a1a1a")
-;;         ("*Warnings*" . (:color "#3d1a1a" :opacity 0.9))
+(use-package buffer-background
+  :vc (:url "https://github.com/theesfeld/buffer-background" :branch "opacity")
+  :defer 1
+  :ensure t
+  :custom
+  ;; Set global defaults
+  (buffer-background-opacity 0.3)
+  (buffer-background-auto-enable t)
+  :config
+  Comprehensive buffer-to-color mappings
+  (setq buffer-background-color-alist
+        '(;; === EXACT BUFFER NAME MATCHING ===
+          ("*scratch*" . (:color "#2d2d2d" :opacity 0.8))
+          ("*Messages*" . "#1a1a1a")
+          ("*Warnings*" . (:color "#3d1a1a" :opacity 0.9))
 
-;;         ;; === REGEXP PATTERN MATCHING ===
-;;         ("\\*Help.*\\*" . (:color "#1e1e2e" :opacity 0.85))
-;;         ("\\*Compile.*\\*" . (:color "#2d2d2d" :opacity 0.9))
-;;         ("\\*.*shell.*\\*" . (:color "#1a1a2d" :opacity 0.8))
+          ;; === REGEXP PATTERN MATCHING ===
+          ("\\*Help.*\\*" . (:color "#1e1e2e" :opacity 0.85))
+          ("\\*Compile.*\\*" . (:color "#2d2d2d" :opacity 0.9))
+          ("\\*.*shell.*\\*" . (:color "#1a1a2d" :opacity 0.8))
 
-;;         ;; === MAJOR MODE ASSIGNMENTS ===
-;;         (org-mode . (:color "#002b36" :opacity 0.8))        ; Solarized dark
-;;         (python-mode . (:color "#1a1a2d" :opacity 0.8))     ; Blue tint
-;;         (emacs-lisp-mode . (:color "#2d1a2d" :opacity 0.8)) ; Purple tint
-;;         (c-mode . (:color "#1a1a1a" :opacity 0.85))
+          ;; === MAJOR MODE ASSIGNMENTS ===
+          (org-mode . (:color "#002b36" :opacity 0.8))        ; Solarized dark
+          (python-mode . (:color "#1a1a2d" :opacity 0.8))     ; Blue tint
+          (emacs-lisp-mode . (:color "#2d1a2d" :opacity 0.8)) ; Purple tint
+          (c-mode . (:color "#1a1a1a" :opacity 0.85))
 
-;;         ;; === ALTERNATIVE MODE SYNTAX ===
-;;         ((mode . js-mode) . (:color "#2d2d1a" :opacity 0.75))      ; Yellow tint
-;;         ((mode . typescript-mode) . (:color "#1a2d2d" :opacity 0.75)) ; Cyan tint
-;;         ((mode . css-mode) . (:color "#1a2b3c" :opacity 0.75))
+          ;; === ALTERNATIVE MODE SYNTAX ===
+          ((mode . js-mode) . (:color "#2d2d1a" :opacity 0.75))      ; Yellow tint
+          ((mode . typescript-mode) . (:color "#1a2d2d" :opacity 0.75)) ; Cyan tint
+          ((mode . css-mode) . (:color "#1a2b3c" :opacity 0.75))
 
-;;         ;; === FILE EXTENSION MATCHING ===
-;;         ((file . "md") . (:color "#f8f8f2" :opacity 0.05))  ; Light for readability
-;;         ((file . "txt") . (:color "#1c1c1c" :opacity 0.7))
-;;         ((file . "json") . (:color "#1a1a1a" :opacity 0.7))
-;;         ((file . "yaml") . (:color "#2a2a1a" :opacity 0.7))
+          ;; === FILE EXTENSION MATCHING ===
+          ((file . "md") . (:color "#f8f8f2" :opacity 0.05))  ; Light for readability
+          ((file . "txt") . (:color "#1c1c1c" :opacity 0.7))
+          ((file . "json") . (:color "#1a1a1a" :opacity 0.7))
+          ((file . "yaml") . (:color "#2a2a1a" :opacity 0.7))
 
-;;         ;; === CUSTOM PREDICATE MATCHING ===
-;;         ;; Remote files (TRAMP)
-;;         ((lambda (buf)
-;;            (file-remote-p default-directory))
-;;          . (:color "#1a1a3d" :opacity 0.8))
+          ;; === CUSTOM PREDICATE MATCHING ===
+          ;; Remote files (TRAMP)
+          ((lambda (buf)
+             (file-remote-p default-directory))
+           . (:color "#1a1a3d" :opacity 0.8))
 
-;;         ;; All programming modes
-;;         ((lambda (buf)
-;;            (with-current-buffer buf
-;;              (derived-mode-p 'prog-mode)))
-;;          . (:color "#1a1a1a" :opacity 0.6))
+          ;; All programming modes
+          ((lambda (buf)
+             (with-current-buffer buf
+               (derived-mode-p 'prog-mode)))
+           . (:color "#1a1a1a" :opacity 0.6))
 
-;;         ;; Test files
-;;         ((lambda (buf)
-;;            (string-match-p "\\(test\\|spec\\)" (buffer-name buf)))
-;;          . (:color "#0a2a0a" :opacity 0.85))   ; Dark green
+          ;; Test files
+          ((lambda (buf)
+             (string-match-p "\\(test\\|spec\\)" (buffer-name buf)))
+           . (:color "#0a2a0a" :opacity 0.85))   ; Dark green
 
-;;         ;; Dired buffers
-;;         ((lambda (buf)
-;;            (with-current-buffer buf
-;;              (derived-mode-p 'dired-mode)))
-;;          . (:color "#2a2a2a" :opacity 0.7))))
+          ;; Dired buffers
+          ((lambda (buf)
+             (with-current-buffer buf
+               (derived-mode-p 'dired-mode)))
+           . (:color "#2a2a2a" :opacity 0.7))))
 
-;; ;; Enable global mode for automatic buffer assignment
-;; (buffer-background-global-mode 1))
+  ;; Enable global mode for automatic buffer assignment
+  (buffer-background-global-mode 1))
 
 ;; (use-package buffer-background
 ;;   :ensure t
