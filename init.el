@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-04 14:41:29 by grim>
+;; Time-stamp: <Last changed 2025-07-04 14:44:34 by grim>
 
 ;; Enable these
 (mapc
@@ -873,170 +873,169 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    remote-file-name-inhibit-auto-save t
    save-interprogram-paste-before-kill t
    eval-expression-print-length nil
-     scroll-error-top-bottom t
-     ;; this
-     echo-keystrokes-help nil
-     delete-section-mode t
-     x-stretch-cursor t
-     help-window-select t
-     auth-source-cache-expiry nil
-     truncate-string-ellipsis "…" ; Visual ellipsis for truncated lines
-     scroll-margin 1
-     garbage-collection-messages nil
-     plstore-cache-directory my-tmp-dir
-     epg-gpg-program "gpg2"
+   scroll-error-top-bottom t
+   ;; this
+   echo-keystrokes-help nil
+   delete-section-mode t
+   x-stretch-cursor t
+   help-window-select t
+   auth-source-cache-expiry nil
+   truncate-string-ellipsis "…" ; Visual ellipsis for truncated lines
+   scroll-margin 1
+   garbage-collection-messages nil
+   plstore-cache-directory my-tmp-dir
+   epg-gpg-program "gpg2"
 
-     ;; Backup settings
-     backup-by-copying t
-     backup-directory-alist `((".*" . ,(expand-file-name "backups" my-tmp-dir)))
-     delete-old-versions t
-     kept-new-versions 6
-     kept-old-versions 2
-     version-control t
+   ;; Backup settings
+   backup-by-copying t
+   backup-directory-alist `((".*" . ,(expand-file-name "backups" my-tmp-dir)))
+   delete-old-versions t
+   kept-new-versions 6
+   kept-old-versions 2
+   version-control t
 
-     ;; Auto-save settings
-     auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-saves/" my-tmp-dir) t))
-     auto-save-list-file-prefix (expand-file-name "auto-save-list/.saves-" my-tmp-dir)
-     auto-save-default t)
-    (setq fast-read-process-output t)
+   ;; Auto-save settings
+   auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-saves/" my-tmp-dir) t))
+   auto-save-list-file-prefix (expand-file-name "auto-save-list/.saves-" my-tmp-dir)
+   auto-save-default t)
+  (setq fast-read-process-output t)
 
-    (setenv "TZ" "America/New_York")
-    (prefer-coding-system 'utf-8)
-    (set-default-coding-systems 'utf-8)
-    (set-terminal-coding-system 'utf-8)
-    (set-keyboard-coding-system 'utf-8)
-    (set-language-environment "UTF-8")
-    (save-place-mode 1)
-    ;; History settings consolidated - see main emacs config block
-    (setq history-delete-duplicates t)
-    (setq savehist-save-minibuffer-history t)
+  (setenv "TZ" "America/New_York")
+  (prefer-coding-system 'utf-8)
+  (set-default-coding-systems 'utf-8)
+  (set-terminal-coding-system 'utf-8)
+  (set-keyboard-coding-system 'utf-8)
+  (set-language-environment "UTF-8")
+  (save-place-mode 1)
+  ;; History settings consolidated - see main emacs config block
+  (setq history-delete-duplicates t)
+  (setq savehist-save-minibuffer-history t)
 
-    ;; Enable auto-insert for new files
-    (require 'autoinsert)
-    (auto-insert-mode 1)
+  ;; Enable auto-insert for new files
+  (require 'autoinsert)
+  (auto-insert-mode 1)
 
-    ;; When there is a "Time-stamp: <>" string in the first 10 lines of the file,
-    ;; Emacs will write time-stamp information there when saving the file.
-    ;; (Borrowed from http://home.thep.lu.se/~karlf/emacs.html)
-    (setq
-     time-stamp-active t ; Do enable time-stamps.
-     time-stamp-line-limit 10 ; Check first 10 buffer lines for Time-stamp: <>
-     time-stamp-format "Last changed %Y-%02m-%02d %02H:%02M:%02S by %u")
-    (add-hook 'write-file-hooks 'time-stamp) ; Update when saving.
+  ;; When there is a "Time-stamp: <>" string in the first 10 lines of the file,
+  ;; Emacs will write time-stamp information there when saving the file.
+  ;; (Borrowed from http://home.thep.lu.se/~karlf/emacs.html)
+  (setq
+   time-stamp-active t ; Do enable time-stamps.
+   time-stamp-line-limit 10 ; Check first 10 buffer lines for Time-stamp: <>
+   time-stamp-format "Last changed %Y-%02m-%02d %02H:%02M:%02S by %u")
+  (add-hook 'write-file-hooks 'time-stamp) ; Update when saving.
 
-    ;; Simplified auto-insert: use inline lambdas instead of custom function
-    ;; The time-stamp system already handles comment syntax automatically
-    (setq auto-insert-alist
-          '(;; Add time-stamps to programming and documentation files
-            (prog-mode . (lambda () (insert (or comment-start "#") " Time-stamp: <>\n")))
-            (org-mode . (lambda () (insert "#+Time-stamp: <>\n")))
-            (text-mode . (lambda () (insert "# Time-stamp: <>\n")))))
-    ;; Enable time-stamp updates on save
-    (add-hook 'before-save-hook 'time-stamp)
+  ;; Simplified auto-insert: use inline lambdas instead of custom function
+  ;; The time-stamp system already handles comment syntax automatically
+  (setq auto-insert-alist
+        '(;; Add time-stamps to programming and documentation files
+          (prog-mode . (lambda () (insert (or comment-start "#") " Time-stamp: <>\n")))
+          (org-mode . (lambda () (insert "#+Time-stamp: <>\n")))
+          (text-mode . (lambda () (insert "# Time-stamp: <>\n")))))
+  ;; Enable time-stamp updates on save
+  (add-hook 'before-save-hook 'time-stamp)
 
-    :config
-    (setq modus-themes-italic-constructs t
-          modus-themes-bold-constructs t)
-    ;; Font configuration moved to consolidated section below
-    (custom-set-faces
-     '(cursor ((t (:background "#FFC107")))))
-    (load-theme 'modus-vivendi t)
+  :config
+  (setq modus-themes-italic-constructs t
+        modus-themes-bold-constructs t)
+  ;; Font configuration moved to consolidated section below
+  (custom-set-faces
+   '(cursor ((t (:background "#FFC107")))))
+  (load-theme 'modus-vivendi t)
 
-    ;; === CONSOLIDATED FONT CONFIGURATION ===
-    ;; Primary font setup with fallback
-    (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
-      ;; Main editing font
-      (set-face-attribute 'default nil
-                          :font "BerkeleyMonoVariable Nerd Font Mono"
-                          :height 140)
-      ;; Variable-pitch font for prose/org-mode
-      (set-face-attribute 'variable-pitch nil
-                          :font "BerkeleyMonoVariable Nerd Font Mono"
-                          :height 160))
+  ;; === CONSOLIDATED FONT CONFIGURATION ===
+  ;; Primary font setup with fallback
+  (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
+    ;; Main editing font
+    (set-face-attribute 'default nil
+                        :font "BerkeleyMonoVariable Nerd Font Mono"
+                        :height 140)
+    ;; Variable-pitch font for prose/org-mode
+    (set-face-attribute 'variable-pitch nil
+                        :font "BerkeleyMonoVariable Nerd Font Mono"
+                        :height 160))
 
-    ;; Fallback font sizing if custom font not available
-    (unless (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
-      (set-face-attribute 'default nil :height 140)
-      (set-face-attribute 'variable-pitch nil :height 160))
+  ;; Fallback font sizing if custom font not available
+  (unless (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
+    (set-face-attribute 'default nil :height 140)
+    (set-face-attribute 'variable-pitch nil :height 160))
 
-    ;; Font-lock face customization
-    (set-face-attribute 'font-lock-comment-face nil
-                        :slant 'italic
-                        :weight 'light)
-    (set-face-attribute 'font-lock-keyword-face nil
-                        :weight 'black)
+  ;; Font-lock face customization
+  (set-face-attribute 'font-lock-comment-face nil
+                      :slant 'italic
+                      :weight 'light)
+  (set-face-attribute 'font-lock-keyword-face nil
+                      :weight 'black)
 
 
-    (setq scroll-conservatively 101) ; Scroll line-by-line without recentering
-    (when (file-exists-p custom-file)
-      (load custom-file))
-    ;; Global Emacs Settings
-    (global-visual-line-mode 1)
-    (setq-default
-     default-directory '~
-     kill-ring-max 5000
-     indent-tabs-mode nil) ; Use spaces instead of tabs
-    (setq
-     tab-always-indent 'complete
-     tab-width 2
-     standard-indent 2
-     scroll-conservatively 100000
-     scroll-preserve-screen-position 1
-     delete-by-moving-to-trash t
-     window-combination-resize t
-     display-time-load-average t
-     savehist-file (expand-file-name "savehist" my-tmp-dir)
-     ;; history-length set in main emacs config block
-     history-delete-duplicates t
-     savehist-save-minibuffer-history t
-     undo-limit 800000
-     ;; History settings - consolidated here for consistency
-     history-length 10000
-     history-delete-duplicates t
-     isearch-lazy-count t
-     lazy-count-prefix-format "(%s/%s) "
-     lazy-count-suffix-format nil
-     save-place-file (expand-file-name "saveplace/saveplace" my-tmp-dir))
-    (fset 'yes-or-no-p 'y-or-n-p)
-    (require 'auth-source)
-    (require 'epa-file)
-    (epa-file-enable)
+  (setq scroll-conservatively 101) ; Scroll line-by-line without recentering
+  (when (file-exists-p custom-file)
+    (load custom-file))
+  ;; Global Emacs Settings
+  (global-visual-line-mode 1)
+  (setq-default
+   default-directory '~
+   kill-ring-max 5000
+   indent-tabs-mode nil) ; Use spaces instead of tabs
+  (setq
+   tab-always-indent 'complete
+   tab-width 2
+   standard-indent 2
+   scroll-conservatively 100000
+   scroll-preserve-screen-position 1
+   delete-by-moving-to-trash t
+   window-combination-resize t
+   display-time-load-average t
+   savehist-file (expand-file-name "savehist" my-tmp-dir)
+   ;; history-length set in main emacs config block
+   history-delete-duplicates t
+   savehist-save-minibuffer-history t
+   undo-limit 800000
+   ;; History settings - consolidated here for consistency
+   history-length 10000
+   history-delete-duplicates t
+   isearch-lazy-count t
+   lazy-count-prefix-format "(%s/%s) "
+   lazy-count-suffix-format nil
+   save-place-file (expand-file-name "saveplace/saveplace" my-tmp-dir))
+  (fset 'yes-or-no-p 'y-or-n-p)
+  (require 'auth-source)
+  (require 'epa-file)
+  (epa-file-enable)
 
-    :hook
-    ((text-mode . visual-wrap-prefix-mode)
-     (before-save . whitespace-cleanup)
-     (prog-mode . display-line-numbers-mode)
-     (emacs-startup
-      .
-      (lambda ()
-        (line-number-mode 1)
-        (column-number-mode 1)
-        (size-indication-mode 1)
-        (global-auto-revert-mode 1)
-        (display-time-mode 1))))
+  :hook
+  ((text-mode . visual-wrap-prefix-mode)
+   (before-save . whitespace-cleanup)
+   (prog-mode . display-line-numbers-mode)
+   (emacs-startup
+    .
+    (lambda ()
+      (line-number-mode 1)
+      (column-number-mode 1)
+      (size-indication-mode 1)
+      (global-auto-revert-mode 1)
+      (display-time-mode 1))))
 
   :bind
   (("C-x k" . kill-current-buffer)
    ("C-x K" . kill-buffer))) ; Close the use-package emacs block
 
-(when (my/gui-available-p)
-  (use-package windower
-    :ensure t
-    :after exwm
-    :config
-    (global-set-key (kbd "<s-tab>") 'windower-switch-to-last-buffer)
-    (global-set-key (kbd "<s-o>") 'windower-toggle-single)
-    (global-set-key (kbd "s-\\") 'windower-toggle-split)
+(use-package windower
+  :ensure t
+  :after exwm
+  :config
+  (global-set-key (kbd "<s-tab>") 'windower-switch-to-last-buffer)
+  (global-set-key (kbd "<s-o>") 'windower-toggle-single)
+  (global-set-key (kbd "s-\\") 'windower-toggle-split)
 
-    (global-set-key (kbd "<s-M-left>") 'windower-move-border-left)
-    (global-set-key (kbd "<s-M-down>") 'windower-move-border-below)
-    (global-set-key (kbd "<s-M-up>") 'windower-move-border-above)
-    (global-set-key (kbd "<s-M-right>") 'windower-move-border-right)
+  (global-set-key (kbd "<s-M-left>") 'windower-move-border-left)
+  (global-set-key (kbd "<s-M-down>") 'windower-move-border-below)
+  (global-set-key (kbd "<s-M-up>") 'windower-move-border-above)
+  (global-set-key (kbd "<s-M-right>") 'windower-move-border-right)
 
-    (global-set-key (kbd "<s-S-left>") 'windower-swap-left)
-    (global-set-key (kbd "<s-S-down>") 'windower-swap-below)
-    (global-set-key (kbd "<s-S-up>") 'windower-swap-above)
-    (global-set-key (kbd "<s-S-right>") 'windower-swap-right))) ; Close windower use-package and when block
+  (global-set-key (kbd "<s-S-left>") 'windower-swap-left)
+  (global-set-key (kbd "<s-S-down>") 'windower-swap-below)
+  (global-set-key (kbd "<s-S-up>") 'windower-swap-above)
+  (global-set-key (kbd "<s-S-right>") 'windower-swap-right)) ; Close windower use-package and when block
 
 ;;; shell environment (path, etc)
 
