@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-04 14:38:36 by grim>
+;; Time-stamp: <Last changed 2025-07-04 14:41:29 by grim>
 
 ;; Enable these
 (mapc
@@ -544,137 +544,133 @@ The DWIM behaviour of this command is as follows:
     (when grim/exwm-debug-monitors
       (message "[EXWM Monitor] %s" (apply #'format message args))))
 
+  (use-package
+    exwm
+    :ensure t
+    :config (setq exwm-workspace-number 10) ; Increased for multi-monitor support
+    (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
+    (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
+    (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
 
-  ;; Only configure EXWM if running in suitable GUI environment
-  (when (my/gui-available-p)
-    (use-package
-      exwm
-      :ensure t
-      :config (setq exwm-workspace-number 10) ; Increased for multi-monitor support
-      (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
-      (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
-      (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
+    (setq exwm-workspace-show-all-buffers t)
+    (setq exwm-layout-show-all-buffers t)
+    (setq exwm-manage-force-tiling nil)
+    (setq mouse-autoselect-window t)
+    (setq focus-follows-mouse t)
+    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
+    (setq mouse-wheel-progressive-speed t)
+    (setq
+     x-select-enable-clipboard t
+     x-select-enable-primary t
+     select-enable-clipboard t)
 
-      (setq exwm-workspace-show-all-buffers t)
-      (setq exwm-layout-show-all-buffers t)
-      (setq exwm-manage-force-tiling nil)
-      (setq mouse-autoselect-window t)
-      (setq focus-follows-mouse t)
-      (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
-      (setq mouse-wheel-progressive-speed t)
-      (setq
-       x-select-enable-clipboard t
-       x-select-enable-primary t
-       select-enable-clipboard t)
+    ;; Modern EXWM RandR Configuration
+    (require 'exwm-randr)
 
-      ;; Modern EXWM RandR Configuration
-      (require 'exwm-randr)
+    ;; Enable randr mode first
+    (exwm-randr-mode 1)
 
-      ;; Enable randr mode first
-      (exwm-randr-mode 1)
+    ;; Initialize empty - will be set by simple monitor handler
+    (setq exwm-randr-workspace-monitor-plist nil)
 
-      ;; Initialize empty - will be set by simple monitor handler
-      (setq exwm-randr-workspace-monitor-plist nil)
-
-      ;; Simple monitor change handler
-      (add-hook 'exwm-randr-screen-change-hook
-                (lambda ()
-                  (let ((monitors (split-string (shell-command-to-string
-                                                 "xrandr --listmonitors | grep -v '^Monitors:' | awk '{print $4}'") "\n" t)))
-                    (when (>= (length monitors) 2)
-                      ;; Assign workspace 0 to first monitor, workspace 1 to second monitor
-                      (setq exwm-randr-workspace-monitor-plist
-                            (list 0 (nth 0 monitors) 1 (nth 1 monitors)))
-                      ;; Configure monitors: left monitor first, right monitor second
-                      (start-process-shell-command
-                       "xrandr" nil
-                       (format "xrandr --output %s --auto --pos 0x0 --output %s --primary --auto --right-of %s --output eDP-1 --off"
-                               (nth 0 monitors) (nth 1 monitors) (nth 0 monitors))))
-                    (when (fboundp 'exwm-randr-refresh)
-                      (exwm-randr-refresh)))))
-
-      ;; To enable monitor debugging: (setq grim/exwm-debug-monitors t)
-      ;; Load the system tray before exwm-init
-      (require 'exwm-systemtray)
-      (setq exwm-systemtray-height 20)
-      (setq exwm-systemtray-icon-gap 5)
-      (exwm-systemtray-mode 1)
-
-      ;; Input Prefix Keys
-      (setq exwm-input-prefix-keys
-            '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
-
-      ;; Global keybindings
-      (setq exwm-input-global-keys
-            (nconc
-             `(([?\s-r] . exwm-reset)
-               ([s-left] . windmove-left)
-               ([s-right] . windmove-right)
-               ([s-up] . windmove-up)
-               ([s-down] . windmove-down)
-               ([?\s-w] . exwm-workspace-switch)
-               ([?\s-&] . my/exwm-run-program)
-               ([?\s-x]
-                .
-                (lambda ()
-                  (interactive)
-                  (save-buffers-kill-emacs)))
-               ([?\s-\ ]
-                .
-                (lambda ()
-                  (interactive)
-                  (async-shell-command)))
-               ([?\s-v] . consult-yank-pop)
-               ([?\s-q]
-                .
-                (lambda ()
-                  (interactive)
-                  (kill-buffer-and-window)))
-               ([XF86PowerOff]
-                .
-                (lambda ()
-                  (interactive)
-                  (when (executable-find "systemctl")
+    ;; Simple monitor change handler
+    (add-hook 'exwm-randr-screen-change-hook
+              (lambda ()
+                (let ((monitors (split-string (shell-command-to-string
+                                               "xrandr --listmonitors | grep -v '^Monitors:' | awk '{print $4}'") "\n" t)))
+                  (when (>= (length monitors) 2)
+                    ;; Assign workspace 0 to first monitor, workspace 1 to second monitor
+                    (setq exwm-randr-workspace-monitor-plist
+                          (list 0 (nth 0 monitors) 1 (nth 1 monitors)))
+                    ;; Configure monitors: left monitor first, right monitor second
                     (start-process-shell-command
-                     "poweroff" nil "systemctl poweroff")))))
-             (mapcar
-              (lambda (i)
-                (cons
-                 (kbd (format "s-%d" i))
-                 (lambda ()
-                   (interactive)
-                   (message "Switching to workspace %d" i)
-                   (exwm-workspace-switch-create i))))
-              (number-sequence 0 9))
-             (mapcar
-              (lambda (i)
-                (cons
-                 (kbd (format "M-s-%d" i))
-                 (lambda ()
-                   (interactive)
-                   (message "Moving window to workspace %d" i)
-                   (exwm-workspace-move-window i))))
-              (number-sequence 0 9))))
+                     "xrandr" nil
+                     (format "xrandr --output %s --auto --pos 0x0 --output %s --primary --auto --right-of %s --output eDP-1 --off"
+                             (nth 0 monitors) (nth 1 monitors) (nth 0 monitors))))
+                  (when (fboundp 'exwm-randr-refresh)
+                    (exwm-randr-refresh)))))
 
-      ;; Simulation Keys
-      (setq exwm-input-simulation-keys
-            '(([?\C-b] . [left])
-              ([?\C-f] . [right])
-              ([?\C-p] . [up])
-              ([?\C-n] . [down])
-              ([?\C-a] . [home])
-              ([?\C-e] . [end])
-              ([?\M-v] . [prior])
-              ([?\C-v] . [next])
-              ([?\C-d] . [delete])
-              ([?\C-k] . [S-end delete])
-              ([?\M-w] . [?\C-c])
-              ([?\C-y] . [?\C-v])))
+    ;; To enable monitor debugging: (setq grim/exwm-debug-monitors t)
+    ;; Load the system tray before exwm-init
+    (require 'exwm-systemtray)
+    (setq exwm-systemtray-height 20)
+    (setq exwm-systemtray-icon-gap 5)
+    (exwm-systemtray-mode 1)
 
-      ;;(exwm-wm-mode 1)
-      (exwm-enable)))) ; Close the when condition
+    ;; Input Prefix Keys
+    (setq exwm-input-prefix-keys
+          '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
 
-(when (my/gui-available-p)
+    ;; Global keybindings
+    (setq exwm-input-global-keys
+          (nconc
+           `(([?\s-r] . exwm-reset)
+             ([s-left] . windmove-left)
+             ([s-right] . windmove-right)
+             ([s-up] . windmove-up)
+             ([s-down] . windmove-down)
+             ([?\s-w] . exwm-workspace-switch)
+             ([?\s-&] . my/exwm-run-program)
+             ([?\s-x]
+              .
+              (lambda ()
+                (interactive)
+                (save-buffers-kill-emacs)))
+             ([?\s-\ ]
+              .
+              (lambda ()
+                (interactive)
+                (async-shell-command)))
+             ([?\s-v] . consult-yank-pop)
+             ([?\s-q]
+              .
+              (lambda ()
+                (interactive)
+                (kill-buffer-and-window)))
+             ([XF86PowerOff]
+              .
+              (lambda ()
+                (interactive)
+                (when (executable-find "systemctl")
+                  (start-process-shell-command
+                   "poweroff" nil "systemctl poweroff")))))
+           (mapcar
+            (lambda (i)
+              (cons
+               (kbd (format "s-%d" i))
+               (lambda ()
+                 (interactive)
+                 (message "Switching to workspace %d" i)
+                 (exwm-workspace-switch-create i))))
+            (number-sequence 0 9))
+           (mapcar
+            (lambda (i)
+              (cons
+               (kbd (format "M-s-%d" i))
+               (lambda ()
+                 (interactive)
+                 (message "Moving window to workspace %d" i)
+                 (exwm-workspace-move-window i))))
+            (number-sequence 0 9))))
+
+    ;; Simulation Keys
+    (setq exwm-input-simulation-keys
+          '(([?\C-b] . [left])
+            ([?\C-f] . [right])
+            ([?\C-p] . [up])
+            ([?\C-n] . [down])
+            ([?\C-a] . [home])
+            ([?\C-e] . [end])
+            ([?\M-v] . [prior])
+            ([?\C-v] . [next])
+            ([?\C-d] . [delete])
+            ([?\C-k] . [S-end delete])
+            ([?\M-w] . [?\C-c])
+            ([?\C-y] . [?\C-v])))
+
+    ;;(exwm-wm-mode 1)
+    (exwm-enable))
+
   (use-package
     exwm-edit
     :ensure t
