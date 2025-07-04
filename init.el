@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-04 12:10:51 by grim>
+;; Time-stamp: <Last changed 2025-07-04 12:11:44 by grim>
 
 ;; Enable these
 (mapc
@@ -3397,7 +3397,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (buffer-background-opacity 0.3)
   (buffer-background-auto-enable t)
   :config
-  Comprehensive buffer-to-color mappings
   (setq buffer-background-color-alist
         '(;; === EXACT BUFFER NAME MATCHING ===
           ("*scratch*" . (:color "#2d2d2d" :opacity 0.8))
