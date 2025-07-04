@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-04 13:47:43 by grim>
+;; Time-stamp: <Last changed 2025-07-04 14:33:12 by grim>
 
 ;; Enable these
 (mapc
@@ -209,8 +209,8 @@ The DWIM behaviour of this command is as follows:
 (defun my-org-download-images-from-capture ()
   (when (string-match-p ":website:" (buffer-string))
     (goto-char (point-min))
-    (while (re-search-forward "\\[\\[\\(http[^][]+\\)\\]\\[.*\\]\\]"
-                              (org-download-image (match-string 1)))))
+    (while (re-search-forward "\\[\\[\\(http[^][]+\\)\\]\\[.*\\]\\]" nil t)
+      (org-download-image (match-string 1))))
   (add-hook
    'org-capture-after-finalize-hook
    #'my-org-download-images-from-capture))
@@ -807,7 +807,7 @@ The DWIM behaviour of this command is as follows:
           (unless (executable-find cmd)
             (message
              "Warning: %s not found; desktop-environment may not work fully"
-             cmd))))))
+             cmd)))))))
 
 ;;; init.el version control
 
@@ -830,51 +830,53 @@ The DWIM behaviour of this command is as follows:
 
 ;;; emacs configuration section
 
-  (use-package
-    emacs
-    :ensure nil ; Built-in, no need to install
-    :init (server-start)
-    (defvar my-tmp-dir (expand-file-name "~/.tmp/")
-      "Centralized directory for temporary files, backups, and history files.
+;; Define my-tmp-dir early so it's available for other packages
+(defvar my-tmp-dir (expand-file-name "~/.tmp/")
+  "Centralized directory for temporary files, backups, and history files.
 This keeps the main .emacs.d directory clean and organizes cache files logically.")
 
-    ;; Create the main temporary directory
-    (unless (file-exists-p my-tmp-dir)
-      (make-directory my-tmp-dir t))
+;; Create the main temporary directory
+(unless (file-exists-p my-tmp-dir)
+  (make-directory my-tmp-dir t))
 
-    ;; Create subdirectories for different types of files
-    ;; This single directory creation handles all file management needs
-    (dolist (dir '("backups"        ; backup-directory-alist
-                   "auto-saves"     ; auto-save-file-name-transforms
-                   "auto-save-list" ; auto-save-list-file-prefix
-                   "recentf"        ; recentf-save-file
-                   "eshell"         ; eshell-directory-name
-                   "tramp-auto-save" ; tramp-auto-save-directory
-                   "saveplace"      ; save-place-file
-                   "undos"          ; vundo-files-directory
-                   "gnus-drafts"))  ; message-auto-save-directory
-      (let ((subdir (expand-file-name dir my-tmp-dir)))
-        (unless (file-exists-p subdir)
-          (make-directory subdir t))))
+;; Create subdirectories for different types of files
+;; This single directory creation handles all file management needs
+(dolist (dir '("backups"        ; backup-directory-alist
+               "auto-saves"     ; auto-save-file-name-transforms
+               "auto-save-list" ; auto-save-list-file-prefix
+               "recentf"        ; recentf-save-file
+               "eshell"         ; eshell-directory-name
+               "tramp-auto-save" ; tramp-auto-save-directory
+               "saveplace"      ; save-place-file
+               "undos"          ; vundo-files-directory
+               "gnus-drafts"))  ; message-auto-save-directory
+  (let ((subdir (expand-file-name dir my-tmp-dir)))
+    (unless (file-exists-p subdir)
+      (make-directory subdir t))))
 
-    (setq
-     user-full-name "TJ"
-     user-mail-address "tj@emacs.su"
-     calendar-location-name "New York, NY"
-     calendar-time-zone-rule "EST"
-     calendar-standard-time-zone-name "EST"
-     calendar-daylight-time-zone-name "EDT"
-     auth-sources '("~/.authinfo.gpg")
-     epg-pinentry-mode 'loopback
-     create-lockfiles nil
-     password-cache-expiry nil
-     delete-pair-blink-delay 0.1
-     next-error-recenter '(4)
-     find-library-include-other-files nil
-     remote-file-name-inhibit-delete-by-moving-to-trash t
-     remote-file-name-inhibit-auto-save t
-     save-interprogram-paste-before-kill t
-     eval-expression-print-length nil
+(use-package
+  emacs
+  :ensure nil ; Built-in, no need to install
+  :init (server-start)
+
+  (setq
+   user-full-name "TJ"
+   user-mail-address "tj@emacs.su"
+   calendar-location-name "New York, NY"
+   calendar-time-zone-rule "EST"
+   calendar-standard-time-zone-name "EST"
+   calendar-daylight-time-zone-name "EDT"
+   auth-sources '("~/.authinfo.gpg")
+   epg-pinentry-mode 'loopback
+   create-lockfiles nil
+   password-cache-expiry nil
+   delete-pair-blink-delay 0.1
+   next-error-recenter '(4)
+   find-library-include-other-files nil
+   remote-file-name-inhibit-delete-by-moving-to-trash t
+   remote-file-name-inhibit-auto-save t
+   save-interprogram-paste-before-kill t
+   eval-expression-print-length nil
      scroll-error-top-bottom t
      ;; this
      echo-keystrokes-help nil
@@ -1017,10 +1019,9 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         (global-auto-revert-mode 1)
         (display-time-mode 1))))
 
-    :bind
-    (("C-x k" . kill-current-buffer)
-     ("C-x K" . kill-buffer)
-     ))) ; Close the when condition for exwm-related packages
+  :bind
+  (("C-x k" . kill-current-buffer)
+   ("C-x K" . kill-buffer))) ; Close the use-package emacs block
 
 (when (my/gui-available-p)
   (use-package windower
@@ -1039,7 +1040,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     (global-set-key (kbd "<s-S-left>") 'windower-swap-left)
     (global-set-key (kbd "<s-S-down>") 'windower-swap-below)
     (global-set-key (kbd "<s-S-up>") 'windower-swap-above)
-    (global-set-key (kbd "<s-S-right>") 'windower-swap-right))) ; Close windower when block
+    (global-set-key (kbd "<s-S-right>") 'windower-swap-right))) ; Close windower use-package and when block
 
 ;;; shell environment (path, etc)
 
@@ -1399,7 +1400,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :config
   ;; history-length set in main emacs config block
   (consult-customize
-   consult-theme :preview-key '(:debounce 0.2 any)
+   'consult-theme :preview-key '(:debounce 0.2 any)
    consult-ripgrep consult-git-grep consult-grep
    consult-bookmark consult-recent-file consult-xref
    consult--source-bookmark consult--source-file-register
@@ -1502,7 +1503,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     (when completion-preview--overlay
       (completion-preview-insert)
       ;; Move past closing parens/brackets if needed
-      (when (looking-at "[])]")
+      (when (looking-at "[])\\]]")
         (forward-char 1))))
 
   ;; Fix completion detection with paredit
@@ -1510,7 +1511,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
               (lambda (orig-fun &rest args)
                 (let ((result (apply orig-fun args)))
                   ;; If no completion found and we're before a closing paren
-                  (when (and (not result) (looking-at-p "[])}\"]"))
+                  (when (and (not result) (looking-at-p "[})\\]\"]"))
                     ;; Try again with a temporary marker past the paren
                     (save-excursion
                       (forward-char 1)
@@ -1766,7 +1767,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   ;; Ensure aspell is installed
   (unless (executable-find "aspell")
     (message "Aspell not found; flyspell disabled")
-                      (flyspell-mode -1))
+    (flyspell-mode -1))
   :bind
   (:map
    flyspell-mode-map
@@ -2998,7 +2999,7 @@ This function integrates with exwm-firefox-core to open the current page."
    (eshell-mode . my-eshell-setup-aliases) ;; Setup aliases
    (eshell-pre-output-filter . my-eshell-truncate-buffer) ;; Truncate buffer
    (eshell-visual-subprocess-hook . my-eshell-disable-distractions)
-   ('eshell-mode . eat-eshell-visual-command-mode))) ;; Subprocess distractions
+   (eshell-mode . eat-eshell-visual-command-mode))) ;; Subprocess distractions
 
 ;; E MA I L EMAIL
 
