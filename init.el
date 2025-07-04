@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-04 12:21:57 by grim>
+;; Time-stamp: <Last changed 2025-07-04 12:24:27 by grim>
 
 ;; Enable these
 (mapc
@@ -87,7 +87,7 @@ The DWIM behaviour of this command is as follows:
          for mode in minor-mode-list when
          (and (boundp mode)
               (symbol-value mode)
-              (not (eq mode 'all-the-icons-completion-mode))) ; Exclude problematic mode
+              (not (eq mode 'nerd-icons-completion-mode))) ; Exclude problematic mode
          append
          (let ((table (yas--table-get-create mode)))
            (when table
@@ -1258,10 +1258,10 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (vertico-count 10)
   (vertico-sort-function 'vertico-sort-history-length-alpha)
   :config
-  (with-eval-after-load 'all-the-icons
+  (with-eval-after-load 'nerd-icons
     (defun my-consult-buffer-format (buffer)
-      "Add all-the-icons to BUFFER name for consult-buffer."
-      (let ((icon (all-the-icons-icon-for-buffer buffer)))
+      "Add nerd-icons to BUFFER name for consult-buffer."
+      (let ((icon (nerd-icons-icon-for-buffer buffer)))
         (concat icon " " (buffer-name buffer))))
     (advice-add
      'consult-buffer
@@ -1281,14 +1281,12 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   orderless
   :ensure t
   :demand t
-  :after minibuffer
   :custom
-  (completion-styles '(orderless partial-completion basic))
-  (completion-category-defaults completion-category-overrides nil)
+  (completion-styles '(orderless basic))
   (completion-category-overrides
-   '((eglot (styles orderless))
+   '((file (styles basic partial-completion))
+     (eglot (styles orderless))
      (eglot-capf (styles orderless))
-     (file (styles basic partial-completion orderless))
      (buffer (styles orderless))
      (info-menu (styles orderless))
      (consult-multi (styles orderless))
@@ -1317,16 +1315,30 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (use-package
   consult
   :ensure t
-  :after vertico
   :demand t
-  :config (require 'consult) (setq history-length 1000)
+  :custom
+  (consult-narrow-key "<")
+  (consult-line-numbers-widen t)
+  (consult-async-min-input 2)
+  (consult-async-refresh-delay 0.15)
+  (consult-async-input-throttle 0.2)
+  (consult-async-input-debounce 0.1)
+  :config
+  (setq history-length 1000)
+  (consult-customize
+   consult-theme :preview-key '(:debounce 0.2 any)
+   consult-ripgrep consult-git-grep consult-grep
+   consult-bookmark consult-recent-file consult-xref
+   consult--source-bookmark consult--source-file-register
+   consult--source-recent-file consult--source-project-recent-file
+   :preview-key '(:debounce 0.4 any))
   (global-set-key [remap isearch-forward] #'consult-line)
   (global-set-key [remap switch-to-buffer] #'consult-buffer)
   (global-set-key [remap list-buffers] #'consult-buffer)
   (global-set-key [remap yank-pop] #'consult-yank-pop)
-  ;;(global-set-key [remap execute-extended-command] #'consult-M-x)
-  (setq consult-preview-key 'any) ;; Preview on any key
-  (setq consult-narrow-key "<")   ;; Narrowing key
+  (global-set-key [remap goto-line] #'consult-goto-line)
+  (global-set-key [remap imenu] #'consult-imenu)
+  (global-set-key [remap bookmark-jump] #'consult-bookmark)
   (defvar my-consult-hidden-buffer-source
     `(:name
       "Hidden Buffers"
@@ -1348,17 +1360,50 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (add-to-list 'consult-buffer-sources 'my-consult-hidden-buffer-source
                t)
   :bind
-  (
+  (("C-c M-x" . consult-mode-command)
+   ("C-c h" . consult-history)
+   ("C-c k" . consult-kmacro)
+   ("C-c m" . consult-man)
+   ("C-c i" . consult-info)
+   ([remap Info-search] . consult-info)
+   ("M-g e" . consult-compile-error)
+   ("M-g f" . consult-flymake)
+   ("M-g g" . consult-goto-line)
+   ("M-g M-g" . consult-goto-line)
+   ("M-g o" . consult-outline)
+   ("M-g m" . consult-mark)
+   ("M-g k" . consult-global-mark)
    ("M-g i" . consult-imenu)
+   ("M-g I" . consult-imenu-multi)
+   ("M-s d" . consult-find)
+   ("M-s D" . consult-locate)
+   ("M-s g" . consult-grep)
+   ("M-s G" . consult-git-grep)
    ("M-s r" . consult-ripgrep)
    ("M-s l" . consult-line)
-   ("M-s f" . consult-find)))
+   ("M-s L" . consult-line-multi)
+   ("M-s k" . consult-keep-lines)
+   ("M-s u" . consult-focus-lines)
+   ("M-s e" . consult-isearch-history)
+   :map isearch-mode-map
+   ("M-e" . consult-isearch-history)
+   ("M-s e" . consult-isearch-history)
+   ("M-s l" . consult-line)
+   ("M-s L" . consult-line-multi)
+   :map minibuffer-local-map
+   ("M-s" . consult-history)
+   ("M-r" . consult-history))
 
 (use-package consult-yasnippet :ensure t :after (consult yasnippet))
 
 ;;; marginalia
 
-(use-package marginalia :ensure t :init (marginalia-mode 1))
+(use-package marginalia
+  :ensure t
+  :bind (:map minibuffer-local-map
+         ("M-A" . marginalia-cycle))
+  :init
+  (marginalia-mode 1))
 
 ;;; completion-preview
 
@@ -1417,24 +1462,23 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (completion-cycle-threshold 3)   ; TAB cycles through completions
   (completion-styles '(basic partial-completion emacs22 flex)))
 
-;;; all-the-icons
+;;; nerd-icons
 
 (use-package
-  all-the-icons
+  nerd-icons
   :ensure t
   :config
-  (setq all-the-icons-scale-factor 1.1) ; Similar to your nerd-icons setting
-  ;; Install fonts if not already present (run once manually if needed)
-  (unless (find-font (font-spec :name "all-the-icons"))
-    (all-the-icons-install-fonts t)))
+  ;; Install fonts if not already present
+  (unless (find-font (font-spec :name "Symbols Nerd Font Mono"))
+    (nerd-icons-install-fonts t)))
 
 (use-package
-  all-the-icons-completion
+  nerd-icons-completion
   :ensure t
-  :after (all-the-icons marginalia)
-  :config (all-the-icons-completion-mode)
+  :after (nerd-icons marginalia)
+  :config (nerd-icons-completion-mode)
   :hook
-  (marginalia-mode . all-the-icons-completion-marginalia-setup))
+  (marginalia-mode . nerd-icons-completion-marginalia-setup))
 
 (use-package expand-region :ensure t :bind ("C-=" . er/expand-region))
 
@@ -1960,7 +2004,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    ("C-c f" . dired-consult-filter))
   :hook
   (;;(dired-mode . dired-hide-details-mode)
-   (dired-mode . all-the-icons-dired-mode)
+   (dired-mode . nerd-icons-dired-mode)
    ;;   (dired-mode . dired-preview-mode)
    (dired-mode . hl-line-mode))
   :custom
@@ -2002,16 +2046,10 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
   (use-package diredfl :ensure t :config (diredfl-global-mode 1))
   (use-package
-    all-the-icons-dired
+    nerd-icons-dired
     :ensure t
-    :after (all-the-icons dired)
-    :hook (dired-mode . all-the-icons-dired-mode)
-    :config
-    (setq all-the-icons-dired-monochrome nil)
-    ;; Custom directory icon color for modus-vivendi theme integration
-    ;; Using soft blue from the modus-vivendi color scheme for consistency
-    (set-face-attribute 'all-the-icons-dired-dir-face nil
-                        :foreground "#81a1c1")) ; Soft blue from modus-vivendi accent palette
+    :after (nerd-icons dired)
+    :hook (dired-mode . nerd-icons-dired-mode))
 
   (use-package
     dired-git-info
@@ -3238,7 +3276,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :ensure nil
   :demand t
   :config
-  (setq completion-styles '(basic substring initials flex orderless))
+  ;; Global completion-styles set by orderless package
   (setq completion-pcm-leading-wildcard t)
   (setq completion-category-defaults nil)
   (setq completion-auto-deselect nil)
@@ -3388,68 +3426,68 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 ;;; BACKGROUND?
 
-(use-package buffer-background
-  :vc (:url "https://github.com/theesfeld/buffer-background" :branch "opacity")
-  :defer 1
-  :ensure t
-  :custom
-  ;; Set global defaults
-  (buffer-background-opacity 0.3)
-  (buffer-background-auto-enable t)
-  :config
-  (setq buffer-background-color-alist
-        '(;; === EXACT BUFFER NAME MATCHING ===
-          ("*scratch*" . (:color "#2d2d2d" :opacity 0.8))
-          ("*Messages*" . "#1a1a1a")
-          ("*Warnings*" . (:color "#3d1a1a" :opacity 0.9))
+;; (use-package buffer-background
+;;   :vc (:url "https://github.com/theesfeld/buffer-background" :branch "opacity")
+;;   :defer 1
+;;   :ensure t
+;;   :custom
+;;   ;; Set global defaults
+;;   (buffer-background-opacity 0.3)
+;;   (buffer-background-auto-enable t)
+;;   :config
+;;   (setq buffer-background-color-alist
+;;         '(;; === EXACT BUFFER NAME MATCHING ===
+;;           ("*scratch*" . (:color "#2d2d2d" :opacity 0.8))
+;;           ("*Messages*" . "#1a1a1a")
+;;           ("*Warnings*" . (:color "#3d1a1a" :opacity 0.9))
 
-          ;; === REGEXP PATTERN MATCHING ===
-          ("\\*Help.*\\*" . (:color "#1e1e2e" :opacity 0.85))
-          ("\\*Compile.*\\*" . (:color "#2d2d2d" :opacity 0.9))
-          ("\\*.*shell.*\\*" . (:color "#1a1a2d" :opacity 0.8))
+;;           ;; === REGEXP PATTERN MATCHING ===
+;;           ("\\*Help.*\\*" . (:color "#1e1e2e" :opacity 0.85))
+;;           ("\\*Compile.*\\*" . (:color "#2d2d2d" :opacity 0.9))
+;;           ("\\*.*shell.*\\*" . (:color "#1a1a2d" :opacity 0.8))
 
-          ;; === MAJOR MODE ASSIGNMENTS ===
-          (org-mode . (:color "#002b36" :opacity 0.8))        ; Solarized dark
-          (python-mode . (:color "#1a1a2d" :opacity 0.8))     ; Blue tint
-          (emacs-lisp-mode . (:color "#2d1a2d" :opacity 0.8)) ; Purple tint
-          (c-mode . (:color "#1a1a1a" :opacity 0.85))
+;;           ;; === MAJOR MODE ASSIGNMENTS ===
+;;           (org-mode . (:color "#002b36" :opacity 0.8))        ; Solarized dark
+;;           (python-mode . (:color "#1a1a2d" :opacity 0.8))     ; Blue tint
+;;           (emacs-lisp-mode . (:color "#2d1a2d" :opacity 0.8)) ; Purple tint
+;;           (c-mode . (:color "#1a1a1a" :opacity 0.85))
 
-          ;; === ALTERNATIVE MODE SYNTAX ===
-          ((mode . js-mode) . (:color "#2d2d1a" :opacity 0.75))      ; Yellow tint
-          ((mode . typescript-mode) . (:color "#1a2d2d" :opacity 0.75)) ; Cyan tint
-          ((mode . css-mode) . (:color "#1a2b3c" :opacity 0.75))
+;;           ;; === ALTERNATIVE MODE SYNTAX ===
+;;           ((mode . js-mode) . (:color "#2d2d1a" :opacity 0.75))      ; Yellow tint
+;;           ((mode . typescript-mode) . (:color "#1a2d2d" :opacity 0.75)) ; Cyan tint
+;;           ((mode . css-mode) . (:color "#1a2b3c" :opacity 0.75))
 
-          ;; === FILE EXTENSION MATCHING ===
-          ((file . "md") . (:color "#f8f8f2" :opacity 0.05))  ; Light for readability
-          ((file . "txt") . (:color "#1c1c1c" :opacity 0.7))
-          ((file . "json") . (:color "#1a1a1a" :opacity 0.7))
-          ((file . "yaml") . (:color "#2a2a1a" :opacity 0.7))
+;;           ;; === FILE EXTENSION MATCHING ===
+;;           ((file . "md") . (:color "#f8f8f2" :opacity 0.05))  ; Light for readability
+;;           ((file . "txt") . (:color "#1c1c1c" :opacity 0.7))
+;;           ((file . "json") . (:color "#1a1a1a" :opacity 0.7))
+;;           ((file . "yaml") . (:color "#2a2a1a" :opacity 0.7))
 
-          ;; === CUSTOM PREDICATE MATCHING ===
-          ;; Remote files (TRAMP)
-          ((lambda (buf)
-             (file-remote-p default-directory))
-           . (:color "#1a1a3d" :opacity 0.8))
+;;           ;; === CUSTOM PREDICATE MATCHING ===
+;;           ;; Remote files (TRAMP)
+;;           ((lambda (buf)
+;;              (file-remote-p default-directory))
+;;            . (:color "#1a1a3d" :opacity 0.8))
 
-          ;; All programming modes
-          ((lambda (buf)
-             (with-current-buffer buf
-               (derived-mode-p 'prog-mode)))
-           . (:color "#1a1a1a" :opacity 0.6))
+;;           ;; All programming modes
+;;           ((lambda (buf)
+;;              (with-current-buffer buf
+;;                (derived-mode-p 'prog-mode)))
+;;            . (:color "#1a1a1a" :opacity 0.6))
 
-          ;; Test files
-          ((lambda (buf)
-             (string-match-p "\\(test\\|spec\\)" (buffer-name buf)))
-           . (:color "#0a2a0a" :opacity 0.85))   ; Dark green
+;;           ;; Test files
+;;           ((lambda (buf)
+;;              (string-match-p "\\(test\\|spec\\)" (buffer-name buf)))
+;;            . (:color "#0a2a0a" :opacity 0.85))   ; Dark green
 
-          ;; Dired buffers
-          ((lambda (buf)
-             (with-current-buffer buf
-               (derived-mode-p 'dired-mode)))
-           . (:color "#2a2a2a" :opacity 0.7))))
+;;           ;; Dired buffers
+;;           ((lambda (buf)
+;;              (with-current-buffer buf
+;;                (derived-mode-p 'dired-mode)))
+;;            . (:color "#2a2a2a" :opacity 0.7))))
 
-  ;; Enable global mode for automatic buffer assignment
-  (buffer-background-global-mode 1))
+;;   ;; Enable global mode for automatic buffer assignment
+;;   (buffer-background-global-mode 1))
 
 ;; (use-package buffer-background
 ;;   :ensure t
