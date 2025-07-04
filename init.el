@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-04 14:33:12 by grim>
+;; Time-stamp: <Last changed 2025-07-04 14:35:00 by grim>
 
 ;; Enable these
 (mapc
@@ -1400,7 +1400,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :config
   ;; history-length set in main emacs config block
   (consult-customize
-   'consult-theme :preview-key '(:debounce 0.2 any)
+   ;'consult-theme :preview-key '(:debounce 0.2 any)
    consult-ripgrep consult-git-grep consult-grep
    consult-bookmark consult-recent-file consult-xref
    consult--source-bookmark consult--source-file-register
