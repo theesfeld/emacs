@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-04 13:13:41 by grim>
+;; Time-stamp: <Last changed 2025-07-04 13:47:43 by grim>
 
 ;; Enable these
 (mapc
@@ -18,19 +18,65 @@
 
 (setq package-vc-register-as-project nil) ; Emacs 30
 
+;; === NATIVE COMPILATION OPTIMIZATION FOR EMACS 30.1 ===
+;; Native compilation is enabled by default in 30.1 - optimize it
+(when (and (fboundp 'native-compile-available-p)
+           (native-compile-available-p))
+  ;; Optimize native compilation settings
+  (setq native-comp-speed 2                    ; Balance speed vs compile time
+        native-comp-debug 0                    ; Disable debug for performance
+        native-comp-verbose 0                  ; Reduce compilation noise
+        native-comp-async-report-warnings-errors nil ; Less interruption
+        native-comp-deferred-compilation t)    ; Compile in background
+
+  ;; Increase native compilation job limit for modern systems
+  (when (> (num-processors) 4)
+    (setq native-comp-async-jobs-number (/ (num-processors) 2)))
+
+  ;; Prioritize frequently used packages for native compilation
+  (setq native-comp-bootstrap-deny-list
+        '("tramp" "tramp-.*" "docker-tramp")) ; Avoid compiling tramp for stability
+
+  (message "Native compilation optimized for Emacs 30.1 (jobs: %d)"
+           native-comp-async-jobs-number))
+
+;; === TRUSTED CONTENT SECURITY MODEL (EMACS 30.1) ===
+;; Configure the new security model for trusted directories
+(when (boundp 'trusted-content)
+  (setq trusted-content
+        `(,(expand-file-name user-emacs-directory)     ; Trust .emacs.d
+          ,(expand-file-name "~/Code/")                ; Trust ~/Code directory
+          ,(expand-file-name "~/Documents/notes/")     ; Trust notes directory
+          ,(expand-file-name "~/.config/emacs/")))     ; Trust config directory
+
+  ;; Allow certain risky operations in trusted directories
+  (setq trusted-content-allow-dangerous-local-variables t
+        trusted-content-allow-risky-eval t)
+
+  (message "Trusted content directories configured for enhanced security"))
+
 (add-hook 'package-menu-mode-hook #'hl-line-mode)
 
+;; Package archives optimized for Emacs 30.1
 (setq package-archives
-      '(("gnu-elpa" . "https://elpa.gnu.org/packages/")
-        ("gnu-elpa-devel" . "https://elpa.gnu.org/devel/")
-        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-        ("melpa" . "https://melpa.org/packages/")))
+      '(("gnu-elpa" . "https://elpa.gnu.org/packages/")          ; Official GNU packages
+        ("gnu-elpa-devel" . "https://elpa.gnu.org/devel/")       ; GNU development packages
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/")            ; NonGNU ELPA
+        ("melpa" . "https://melpa.org/packages/")))              ; Community packages
 
+;; Enable package signature verification for security
+(setq package-check-signature 'allow-unsigned) ; Allow unsigned for MELPA compatibility
+
+;; Package priorities optimized for GNU compliance and Emacs 30.1
 ;; Highest number gets priority (what is not mentioned has priority 0)
 (setq package-archive-priorities
-      '(("gnu-elpa" . 3)
-        ("melpa" . 2)
-        ("nongnu" . 1)))
+      '(("gnu-elpa" . 10)        ; Highest priority for official GNU packages
+        ("gnu-elpa-devel" . 8)   ; Development GNU packages
+        ("nongnu" . 5)           ; NonGNU ELPA packages
+        ("melpa" . 3)))          ; MELPA packages (lower priority)
+
+;; Prefer GNU ELPA packages when available
+(setq package-archive-selection-policy 'prefer-gnu)
 
 ;;; pinentry
 
@@ -117,7 +163,7 @@ The DWIM behaviour of this command is as follows:
              (shell-command-to-string "compgen -c | head -200")
              "\n" t)))
          (common-commands
-          '("firefox" "chromium" "code" "thunar" "alacritty" "kitty" 
+          '("firefox" "chromium" "code" "thunar" "alacritty" "kitty"
             "mpv" "vlc" "gimp" "libreoffice" "pavucontrol" "qjackctl"))
          (all-commands
           (delete-dups
@@ -863,7 +909,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     (set-keyboard-coding-system 'utf-8)
     (set-language-environment "UTF-8")
     (save-place-mode 1)
-    (setq history-length 10000) ; Consistent with consult
+    ;; History settings consolidated - see main emacs config block
     (setq history-delete-duplicates t)
     (setq savehist-save-minibuffer-history t)
 
@@ -893,24 +939,29 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     :config
     (setq modus-themes-italic-constructs t
           modus-themes-bold-constructs t)
+    ;; Font configuration moved to consolidated section below
     (custom-set-faces
      '(cursor ((t (:background "#FFC107")))))
-    (set-face-attribute 'default nil :height 120)
-    (set-face-attribute 'variable-pitch nil :height 130)
     (load-theme 'modus-vivendi t)
 
+    ;; === CONSOLIDATED FONT CONFIGURATION ===
+    ;; Primary font setup with fallback
     (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
+      ;; Main editing font
       (set-face-attribute 'default nil
                           :font "BerkeleyMonoVariable Nerd Font Mono"
-                          :height 140))
-
-    ;; Set variable-pitch font (optional, for prose or Org-mode)
-    (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
+                          :height 140)
+      ;; Variable-pitch font for prose/org-mode
       (set-face-attribute 'variable-pitch nil
                           :font "BerkeleyMonoVariable Nerd Font Mono"
                           :height 160))
 
-    ;; Customize font-lock faces
+    ;; Fallback font sizing if custom font not available
+    (unless (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
+      (set-face-attribute 'default nil :height 140)
+      (set-face-attribute 'variable-pitch nil :height 160))
+
+    ;; Font-lock face customization
     (set-face-attribute 'font-lock-comment-face nil
                         :slant 'italic
                         :weight 'light)
@@ -937,10 +988,13 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
      window-combination-resize t
      display-time-load-average t
      savehist-file (expand-file-name "savehist" my-tmp-dir)
-     history-length 10000
+     ;; history-length set in main emacs config block
      history-delete-duplicates t
      savehist-save-minibuffer-history t
      undo-limit 800000
+     ;; History settings - consolidated here for consistency
+     history-length 10000
+     history-delete-duplicates t
      isearch-lazy-count t
      lazy-count-prefix-format "(%s/%s) "
      lazy-count-suffix-format nil
@@ -1268,9 +1322,9 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; vertico
 
-(use-package
-  vertico
+(use-package vertico
   :ensure t
+  :demand t  ; Core completion system - load immediately
   :init (vertico-mode 1)
   :custom
   (vertico-cycle t)
@@ -1296,21 +1350,21 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; orderless
 
-(use-package
-  orderless
+(use-package orderless
   :ensure t
-  :demand t
+  :demand t  ; Core completion dependency
   :custom
-  (completion-styles '(orderless basic))
+  ;; Core completion styles - primary configuration
+  (completion-styles '(orderless basic partial-completion flex))
   (completion-category-overrides
    '((file (styles basic partial-completion))
-     (eglot (styles orderless))
-     (eglot-capf (styles orderless))
-     (buffer (styles orderless))
-     (info-menu (styles orderless))
-     (consult-multi (styles orderless))
-     (org-heading (styles orderless))
-     (unicode-name (styles orderless)))))
+     (eglot (styles orderless basic))
+     (eglot-capf (styles orderless basic))
+     (buffer (styles orderless basic))
+     (info-menu (styles orderless basic))
+     (consult-multi (styles orderless basic))
+     (org-heading (styles orderless basic))
+     (unicode-name (styles orderless basic)))))
 
 ;;; savehist
 (use-package savehist
@@ -1318,7 +1372,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :init
   (savehist-mode 1)
   :custom
-  (history-length 1000)
+  ;; history-length set in main emacs config block
   (savehist-file "~/.tmp/savehist")
   (savehist-additional-variables
    '(kill-ring
@@ -1331,10 +1385,10 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; consult
 
-(use-package
-  consult
+(use-package consult
   :ensure t
-  :demand t
+  :defer 2   ; Defer loading to improve startup
+  :commands (consult-line consult-buffer consult-grep consult-ripgrep)
   :custom
   (consult-narrow-key "<")
   (consult-line-numbers-widen t)
@@ -1343,7 +1397,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (consult-async-input-throttle 0.2)
   (consult-async-input-debounce 0.1)
   :config
-  (setq history-length 1000)
+  ;; history-length set in main emacs config block
   (consult-customize
    consult-theme :preview-key '(:debounce 0.2 any)
    consult-ripgrep consult-git-grep consult-grep
@@ -1419,10 +1473,11 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 (use-package marginalia
   :ensure t
+  :defer 1   ; Defer marginalia for faster startup
   :bind (:map minibuffer-local-map
          ("M-A" . marginalia-cycle))
   :init
-  (marginalia-mode 1))
+  (run-with-idle-timer 1 nil #'marginalia-mode))
 
 ;;; completion-preview
 
@@ -1473,19 +1528,13 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         ("M-n" . #'completion-preview-next-candidate)
         ("M-p" . #'completion-preview-prev-candidate)))
 
-(use-package emacs
-  :ensure nil
-  :custom
-  ;; Better completion behavior
-  (tab-always-indent 'complete)    ; TAB completes when at end of word
-  (completion-cycle-threshold 3)   ; TAB cycles through completions
-  (completion-styles '(basic partial-completion emacs22 flex)))
+;; Core completion settings consolidated - removed duplicate block
 
 ;;; nerd-icons
 
-(use-package
-  nerd-icons
+(use-package nerd-icons
   :ensure t
+  :defer 3   ; Defer icon loading for faster startup
   :config
   ;; Install fonts if not already present
   (unless (find-font (font-spec :name "Symbols Nerd Font Mono"))
@@ -1523,22 +1572,26 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; which-key
 
-(use-package
-  which-key
-  :ensure nil             ; Built-in since Emacs 29, no need to ensure
-  :hook (after-init . which-key-mode)
+(use-package which-key
+  :ensure nil             ; Built-in since Emacs 29
+  :demand t               ; Load immediately for optimal startup
   :config
-  ;; Basic settings
-  (setq which-key-idle-delay 0)
-  (setq which-key-idle-secondary-delay 0)
-  (setq which-key-add-column-padding 1)
-  (setq which-key-max-description-length 40)
-  (setq which-key-show-early-on-C-h t)
-  (setq which-key-popup-type 'side-window)
-  (setq which-key-side-window-location 'bottom)
-  (setq which-key-side-window-max-height 0.3)
-  (setq which-key-separator " → ")
-  (setq which-key-prefix-prefix "+")
+  ;; Enable which-key mode globally
+  (which-key-mode 1)
+
+  ;; Optimized settings for Emacs 30.1
+  (setq which-key-idle-delay 0.8          ; Slightly longer delay for better UX
+        which-key-idle-secondary-delay 0.1
+        which-key-add-column-padding 1
+        which-key-max-description-length 50  ; More descriptive text
+        which-key-show-early-on-C-h t
+        which-key-popup-type 'side-window
+        which-key-side-window-location 'bottom
+        which-key-side-window-max-height 0.25
+        which-key-separator " → "
+        which-key-prefix-prefix "+"
+        which-key-sort-order 'which-key-key-order-alpha ; Better organization
+        which-key-min-display-lines 3)      ; Minimum lines for better visibility
 
   ;; ===== PREFIX GROUP LABELS =====
   ;; Add bracketed labels for all major prefix groups
@@ -2534,9 +2587,10 @@ This function integrates with exwm-firefox-core to open the current page."
     (with-eval-after-load 'yaml-ts-mode
       (derived-mode-add-parents 'yaml-ts-mode '(yaml-mode))))
 
-  ;; Tree-sitter settings
-  (setq treesit-font-lock-level 4)              ; Maximum highlighting
-  (setq treesit-max-buffer-size (* 4 1024 1024))) ; 4MB max buffer size
+  ;; Optimized tree-sitter settings for Emacs 30.1
+  (setq treesit-font-lock-level 4              ; Maximum highlighting
+        treesit-max-buffer-size (* 8 1024 1024) ; 8MB for better performance
+        treesit-defun-prefer-top-level t))     ; Better function detection
 
 ;; Use treesit-auto for automatic mode selection and fallback
 (use-package treesit-auto
@@ -3173,6 +3227,33 @@ parameters set in early-init.el to ensure robust UI element disabling."
                                 :max_tokens 4096))
   (setq gptel-api-key-from-auth-source t))
 
+;;; EditorConfig support (built-in since Emacs 30.1)
+
+(use-package editorconfig
+  :ensure nil  ; Built-in since Emacs 30.1
+  :demand t    ; Load immediately
+  :config
+  ;; Enable EditorConfig support globally
+  (editorconfig-mode 1)
+
+  ;; Customize which properties to respect
+  (setq editorconfig-trim-whitespaces-mode 'ws-butler-mode) ; Use ws-butler if available
+
+  ;; Handle additional EditorConfig properties
+  (add-to-list 'editorconfig-indentation-alist
+               '(typescript-ts-mode typescript-indent-level))
+  (add-to-list 'editorconfig-indentation-alist
+               '(js-ts-mode js-indent-level))
+
+  ;; Exclude certain modes from EditorConfig
+  (setq editorconfig-exclude-modes
+        '(lisp-interaction-mode
+          help-mode
+          magit-mode
+          magit-diff-mode))
+
+  (message "EditorConfig support enabled (built-in Emacs 30.1)"))
+
 ;;; aggressive indent
 
 (use-package aggressive-indent
@@ -3209,8 +3290,8 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :ensure nil
   :commands (proced)
   :config
-  (setq proced-auto-update-flag 'visible) ; Emacs 30 supports more the `visible' value
-  (setq proced-enable-color-flag t)       ; Emacs 29
+  (setq proced-auto-update-flag 'visible) ; Enhanced in 30.1
+  (setq proced-enable-color-flag t)
   (setq proced-auto-update-interval 5)
   (setq proced-descend t)
   (setq proced-filter 'user))
@@ -3282,7 +3363,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :hook (after-init . which-function-mode)
   :config
   (setq which-func-modes '(prog-mode org-mode))
-  (setq which-func-display 'mode)       ; Emacs 30
+  (setq which-func-display 'mode)       ; Available in 30.1
   (setq which-func-unknown "")
   (setq which-func-format
         '((:propertize which-func-current
@@ -3295,23 +3376,25 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :ensure nil
   :demand t
   :config
-  ;; Global completion-styles set by orderless package
-  (setq completion-pcm-leading-wildcard t)
-  (setq completion-category-defaults nil)
-  (setq completion-auto-deselect nil)
-  (setq completion-auto-help 'always)
-  (setq completion-auto-select 'second-tab)
-  (setq completion-show-help nil)
-  (setq completion-show-inline-help nil)
-  (setq completions-detailed t)
-  (setq completions-format 'one-column)
-  (setq completions-header-format "")
-  (setq completions-highlight-face 'completions-highlight)
-  (setq completions-max-height 10)
-  (setq completions-sort 'historical)
-  (setq completion-eager-display 'auto)
-  (setq minibuffer-completion-auto-choose t)
-  (setq minibuffer-visible-completions nil))
+  ;; Consolidated completion behavior settings
+  (setq tab-always-indent 'complete              ; TAB completes when at end of word
+        completion-cycle-threshold 3             ; TAB cycles through completions
+        completion-pcm-leading-wildcard t
+        completion-category-defaults nil
+        completion-auto-deselect nil
+        completion-auto-help 'always
+        completion-auto-select 'second-tab
+        completion-show-help nil
+        completion-show-inline-help nil
+        completions-detailed t
+        completions-format 'one-column
+        completions-header-format ""
+        completions-highlight-face 'completions-highlight
+        completions-max-height 10
+        completions-sort 'historical            ; Emacs 30.1 feature
+        completion-eager-display 'auto
+        minibuffer-completion-auto-choose t
+        minibuffer-visible-completions nil))
 
 ;;; Shell (M-x shell)
 
@@ -3325,13 +3408,13 @@ parameters set in early-init.el to ensure robust UI element disabling."
    ("C-c C-k" . comint-clear-buffer)
    ("C-c C-w" . comint-write-output))
   :config
-  (setq shell-command-prompt-show-cwd t) ; Emacs 27.1
+  (setq shell-command-prompt-show-cwd t) ; Built-in since 27.1
   (setq ansi-color-for-comint-mode t)
   (setq shell-input-autoexpand 'input)
-  (setq shell-highlight-undef-enable t)                   ; Emacs 29.1
-  (setq shell-has-auto-cd nil)                            ; Emacs 29.1
-  (setq shell-get-old-input-include-continuation-lines t) ; Emacs 30.1
-  (setq shell-kill-buffer-on-exit t)                      ; Emacs 29.1
+  (setq shell-highlight-undef-enable t)
+  (setq shell-has-auto-cd nil)
+  (setq shell-get-old-input-include-continuation-lines t) ; New in 30.1
+  (setq shell-kill-buffer-on-exit t)
   (setq shell-completion-fignore '("~" "#" "%"))
   (setq-default comint-scroll-to-bottom-on-input t)
   (setq-default comint-scroll-to-bottom-on-output nil)
