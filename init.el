@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-03 17:46:16 by grim>
+;; Time-stamp: <Last changed 2025-07-03 20:58:38 by grim>
 
 ;; Enable these
 (mapc
@@ -475,6 +475,43 @@ The DWIM behaviour of this command is as follows:
     (when grim/exwm-debug-monitors
       (message "[EXWM Monitor] %s" (apply #'format message args))))
 
+  (defun grim/setup-monitors ()
+    "Configure monitors with robust error handling and autorandr integration."
+    (condition-case err
+        (let* ((monitors-output (shell-command-to-string
+                                "xrandr --listmonitors | tail -n +2 | awk '{print $4}'"))
+               (monitors (split-string monitors-output "\n" t)))
+          (grim/exwm-log "Detected monitors: %s" monitors)
+          (cond
+           ;; Triple monitor setup
+           ((>= (length monitors) 3)
+            (setq exwm-randr-workspace-monitor-plist
+                  (list 0 (nth 0 monitors) 1 (nth 1 monitors) 2 (nth 2 monitors)
+                        3 (nth 0 monitors) 4 (nth 1 monitors) 5 (nth 2 monitors)))
+            (grim/exwm-log "Configured triple monitor setup")
+            (when (executable-find "autorandr")
+              (start-process-shell-command "autorandr" nil "autorandr --change --force")))
+           ;; Dual monitor setup
+           ((= (length monitors) 2)
+            (setq exwm-randr-workspace-monitor-plist
+                  (list 0 (nth 0 monitors) 1 (nth 1 monitors)
+                        2 (nth 0 monitors) 3 (nth 1 monitors)))
+            (grim/exwm-log "Configured dual monitor setup")
+            ;; Configure physical layout: left monitor first, right monitor second
+            (start-process-shell-command
+             "xrandr" nil
+             (format "xrandr --output %s --auto --pos 0x0 --output %s --primary --auto --right-of %s --output eDP-1 --off"
+                     (nth 0 monitors) (nth 1 monitors) (nth 0 monitors))))
+           ;; Single monitor fallback
+           (t
+            (setq exwm-randr-workspace-monitor-plist nil)
+            (grim/exwm-log "Using single monitor configuration")))
+          (when (fboundp 'exwm-randr-refresh)
+            (exwm-randr-refresh)))
+      (error
+       (grim/exwm-log "Monitor setup failed: %s" (error-message-string err))
+       (message "EXWM: Monitor configuration failed, using defaults"))))
+
 
   ;; Only configure EXWM if running in suitable GUI environment
   (when (my/gui-available-p)
@@ -504,25 +541,11 @@ The DWIM behaviour of this command is as follows:
       ;; Enable randr mode first
       (exwm-randr-mode 1)
 
-      ;; Initialize empty - will be set by simple monitor handler
+      ;; Initialize empty - will be set by advanced monitor handler
       (setq exwm-randr-workspace-monitor-plist nil)
 
-      ;; Simple monitor change handler
-      (add-hook 'exwm-randr-screen-change-hook
-                (lambda ()
-                  (let ((monitors (split-string (shell-command-to-string
-                                                 "xrandr --listmonitors | grep -v '^Monitors:' | awk '{print $4}'") "\n" t)))
-                    (when (>= (length monitors) 2)
-                      ;; Assign workspace 0 to first monitor, workspace 1 to second monitor
-                      (setq exwm-randr-workspace-monitor-plist
-                            (list 0 (nth 0 monitors) 1 (nth 1 monitors)))
-                      ;; Configure monitors: left monitor first, right monitor second
-                      (start-process-shell-command
-                       "xrandr" nil
-                       (format "xrandr --output %s --auto --pos 0x0 --output %s --primary --auto --right-of %s --output eDP-1 --off"
-                               (nth 0 monitors) (nth 1 monitors) (nth 0 monitors))))
-                    (when (fboundp 'exwm-randr-refresh)
-                      (exwm-randr-refresh)))))
+      ;; Advanced monitor change handler
+      (add-hook 'exwm-randr-screen-change-hook #'grim/setup-monitors)
 
       ;; To enable monitor debugging: (setq grim/exwm-debug-monitors t)
       ;; Load the system tray before exwm-init
@@ -1849,7 +1872,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :hook (org-mode . org-auto-tangle-mode))
 
 ;; Standard Org keybindings
-(global-set-key (kbd "C-c l") 'org-store-link)
+;;(global-set-key (kbd "C-c l") 'org-store-link)
 (global-set-key (kbd "C-c a") 'org-agenda)
 (global-set-key (kbd "C-c c") 'org-capture)
 
@@ -2657,7 +2680,6 @@ This function integrates with exwm-firefox-core to open the current page."
   elisp-lint
   :ensure t
   :commands (elisp-lint-buffer elisp-lint-file)
- ;;;; KEYBIND_CHANGE: C-c l conflicts with consult-lsp, using standard M-x
   :config (setq elisp-lint-ignored-validators '("package-lint")))
 
 ;;; YAsnippet
