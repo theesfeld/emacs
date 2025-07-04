@@ -13,7 +13,7 @@
 
 ;; Enable use-package imenu support early
 (setq use-package-enable-imenu-support t)
-
+(setq read-process-output-max (* 1024 1024))
 (setq frame-resize-pixelwise t
       frame-inhibit-implied-resize 'force
       frame-title-format '("%b")
