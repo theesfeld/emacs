@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-04 14:36:27 by grim>
+;; Time-stamp: <Last changed 2025-07-04 14:38:36 by grim>
 
 ;; Enable these
 (mapc
@@ -672,161 +672,161 @@ The DWIM behaviour of this command is as follows:
               ([?\C-y] . [?\C-v])))
 
       ;;(exwm-wm-mode 1)
-      (exwm-enable))) ; Close the when condition
+      (exwm-enable)))) ; Close the when condition
 
-  (when (my/gui-available-p)
+(when (my/gui-available-p)
+  (use-package
+    exwm-edit
+    :ensure t
+    :after exwm
+    :init
+    ;; Pre-load settings
+    (setq exwm-edit-default-major-mode 'text-mode) ; Default mode for editing
+    :config
+    ;; Explicitly load exwm-edit
+    (require 'exwm-edit nil t)
+    (when (featurep 'exwm-edit)
+      (message "exwm-edit loaded successfully"))
+    ;; Optional: Customize split behavior
+    (setq exwm-edit-split 'below) ; Open edit buffer below current window
+    :bind (:map exwm-mode-map ("C-c e" . exwm-edit--compose))
+    :hook
+    ;; Log initialization
+    (exwm-init
+     .
+     (lambda ()
+       (when (featurep 'exwm-edit)
+         (message "exwm-edit initialized")))))
+
+  (use-package exwm-firefox-core
+    :ensure t
+    :after exwm
+    :init
+    ;; Pre-load settings
+    (setq exwm-firefox-core-classes
+          '("firefox" "firefoxdeveloperedition"))
+
+    ;; Define Firefox-specific minor mode before package loads
+    (define-minor-mode exwm-firefox-mode
+      "Minor mode for Firefox-specific keybindings in EXWM."
+      :init-value nil
+      :lighter " Firefox"
+      :keymap (let ((map (make-sparse-keymap)))
+                (define-key map (kbd "C-c F n") 'exwm-firefox-core-tab-new)
+                (define-key map (kbd "C-c F t") 'exwm-firefox-core-tab-close)
+                (define-key map (kbd "C-c F <right>") 'exwm-firefox-core-tab-right)
+                (define-key map (kbd "C-c F <left>") 'exwm-firefox-core-tab-left)
+                (define-key map (kbd "C-c F h") 'exwm-firefox-core-back)
+                (define-key map (kbd "C-c F l") 'exwm-firefox-core-forward)
+                (define-key map (kbd "C-c F f") 'exwm-firefox-core-find)
+                (define-key map (kbd "C-c F r") 'exwm-firefox-core-reload)
+                (define-key map (kbd "C-c F b") 'exwm-firefox-core-bookmark)
+                map))
+
+    :config
+    ;; Load package safely
+    (require 'exwm-firefox-core nil t)
+
+    ;; Function to manage Firefox buffer setup
+    (defun exwm-firefox-setup ()
+      "Set up Firefox-specific configuration for current buffer."
+      (when (and (derived-mode-p 'exwm-mode)
+                 (member (downcase (or exwm-class-name ""))
+                         '("firefox" "firefoxdeveloperedition")))
+        ;; Enable Firefox mode
+        (exwm-firefox-mode 1)
+        ;; Rename buffer to page title
+        (when exwm-title
+          (exwm-workspace-rename-buffer exwm-title))))
+
+    ;; Function to handle buffer switches
+    (defun exwm-firefox-maybe-enable ()
+      "Enable or disable Firefox mode based on current buffer."
+      (when (derived-mode-p 'exwm-mode)
+        (if (member (downcase (or exwm-class-name ""))
+                    '("firefox" "firefoxdeveloperedition"))
+            (exwm-firefox-mode 1)
+          (exwm-firefox-mode -1))))
+
+    :hook
+    ;; Set up Firefox buffers when they're created
+    ((exwm-manage-finish . exwm-firefox-setup)
+     ;; Update buffer name when title changes
+     (exwm-update-title . exwm-firefox-setup)
+     ;; Handle buffer switches to enable/disable mode
+     (window-configuration-change . exwm-firefox-maybe-enable))
+
+    :custom
+    ;; Optional: Customize Firefox-specific EXWM settings
+    (exwm-firefox-core-enable-auto-move-focus t)
+
+    :init
+    ;; Optional: Additional EXWM configuration for Firefox
+    (with-eval-after-load 'exwm
+      ;; Make Firefox windows floating by default (optional)
+      ;; (add-to-list 'exwm-manage-configurations
+      ;;              '((string-match "Firefox" exwm-class-name)
+      ;;                floating t
+      ;;                floating-mode-line nil))
+
+      ;; Set Firefox-specific workspace (optional)
+      ;; (add-to-list 'exwm-manage-configurations
+      ;;              '((string-match "Firefox" exwm-class-name)
+      ;;                workspace 2))
+      )
+
+
     (use-package
-      exwm-edit
+      desktop-environment
       :ensure t
       :after exwm
       :init
-      ;; Pre-load settings
-      (setq exwm-edit-default-major-mode 'text-mode) ; Default mode for editing
-      :config
-      ;; Explicitly load exwm-edit
-      (require 'exwm-edit nil t)
-      (when (featurep 'exwm-edit)
-        (message "exwm-edit loaded successfully"))
-      ;; Optional: Customize split behavior
-      (setq exwm-edit-split 'below) ; Open edit buffer below current window
-      :bind (:map exwm-mode-map ("C-c e" . exwm-edit--compose))
-      :hook
-      ;; Log initialization
-      (exwm-init
-       .
-       (lambda ()
-         (when (featurep 'exwm-edit)
-           (message "exwm-edit initialized")))))
-
-    (use-package exwm-firefox-core
-      :ensure t
-      :after exwm
-      :init
-      ;; Pre-load settings
-      (setq exwm-firefox-core-classes
-            '("firefox" "firefoxdeveloperedition"))
-
-      ;; Define Firefox-specific minor mode before package loads
-      (define-minor-mode exwm-firefox-mode
-        "Minor mode for Firefox-specific keybindings in EXWM."
-        :init-value nil
-        :lighter " Firefox"
-        :keymap (let ((map (make-sparse-keymap)))
-                  (define-key map (kbd "C-c F n") 'exwm-firefox-core-tab-new)
-                  (define-key map (kbd "C-c F t") 'exwm-firefox-core-tab-close)
-                  (define-key map (kbd "C-c F <right>") 'exwm-firefox-core-tab-right)
-                  (define-key map (kbd "C-c F <left>") 'exwm-firefox-core-tab-left)
-                  (define-key map (kbd "C-c F h") 'exwm-firefox-core-back)
-                  (define-key map (kbd "C-c F l") 'exwm-firefox-core-forward)
-                  (define-key map (kbd "C-c F f") 'exwm-firefox-core-find)
-                  (define-key map (kbd "C-c F r") 'exwm-firefox-core-reload)
-                  (define-key map (kbd "C-c F b") 'exwm-firefox-core-bookmark)
-                  map))
+      ;; Pre-configure settings before mode activation
+      (setq desktop-environment-notifications t) ; Enable notifications
+      (setq desktop-environment-screenshot-directory
+            "~/Pictures/Screenshots")     ; Screenshot path
+      (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
+      (setq
+       desktop-environment-volume-get-command
+       "pactl get-sink-volume @DEFAULT_SINK@ | awk '/Volume:/ {print $5}'")
+      (setq desktop-environment-volume-get-regexp "\\([0-9]+%\\)")
+      (setq desktop-environment-volume-set-command
+            "pactl set-sink-volume @DEFAULT_SINK@ %s%%") ; Set volume
+      (setq
+       desktop-environment-mute-get-command
+       "pactl get-sink-mute @DEFAULT_SINK@ | awk '{print ($2 == \"yes\") ? \"true\" : \"false\"}'")
+      (setq desktop-environment-volume-toggle-command
+            "pactl set-sink-mute @DEFAULT_SINK@ toggle") ; Toggle mute
+      (setq desktop-environment-volume-normal-increment "+1") ; Volume step up
+      (setq desktop-environment-volume-normal-decrement "-1") ; Volume step down
 
       :config
-      ;; Load package safely
-      (require 'exwm-firefox-core nil t)
-
-      ;; Function to manage Firefox buffer setup
-      (defun exwm-firefox-setup ()
-        "Set up Firefox-specific configuration for current buffer."
-        (when (and (derived-mode-p 'exwm-mode)
-                   (member (downcase (or exwm-class-name ""))
-                           '("firefox" "firefoxdeveloperedition")))
-          ;; Enable Firefox mode
-          (exwm-firefox-mode 1)
-          ;; Rename buffer to page title
-          (when exwm-title
-            (exwm-workspace-rename-buffer exwm-title))))
-
-      ;; Function to handle buffer switches
-      (defun exwm-firefox-maybe-enable ()
-        "Enable or disable Firefox mode based on current buffer."
-        (when (derived-mode-p 'exwm-mode)
-          (if (member (downcase (or exwm-class-name ""))
-                      '("firefox" "firefoxdeveloperedition"))
-              (exwm-firefox-mode 1)
-            (exwm-firefox-mode -1))))
-
-      :hook
-      ;; Set up Firefox buffers when they're created
-      ((exwm-manage-finish . exwm-firefox-setup)
-       ;; Update buffer name when title changes
-       (exwm-update-title . exwm-firefox-setup)
-       ;; Handle buffer switches to enable/disable mode
-       (window-configuration-change . exwm-firefox-maybe-enable))
-
-      :custom
-      ;; Optional: Customize Firefox-specific EXWM settings
-      (exwm-firefox-core-enable-auto-move-focus t)
-
-      :init
-      ;; Optional: Additional EXWM configuration for Firefox
-      (with-eval-after-load 'exwm
-        ;; Make Firefox windows floating by default (optional)
-        ;; (add-to-list 'exwm-manage-configurations
-        ;;              '((string-match "Firefox" exwm-class-name)
-        ;;                floating t
-        ;;                floating-mode-line nil))
-
-        ;; Set Firefox-specific workspace (optional)
-        ;; (add-to-list 'exwm-manage-configurations
-        ;;              '((string-match "Firefox" exwm-class-name)
-        ;;                workspace 2))
-        )
-
-
-      (use-package
-        desktop-environment
-        :ensure t
-        :after exwm
-        :init
-        ;; Pre-configure settings before mode activation
-        (setq desktop-environment-notifications t) ; Enable notifications
-        (setq desktop-environment-screenshot-directory
-              "~/Pictures/Screenshots")     ; Screenshot path
-        (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
-        (setq
-         desktop-environment-volume-get-command
-         "pactl get-sink-volume @DEFAULT_SINK@ | awk '/Volume:/ {print $5}'")
-        (setq desktop-environment-volume-get-regexp "\\([0-9]+%\\)")
-        (setq desktop-environment-volume-set-command
-              "pactl set-sink-volume @DEFAULT_SINK@ %s%%") ; Set volume
-        (setq
-         desktop-environment-mute-get-command
-         "pactl get-sink-mute @DEFAULT_SINK@ | awk '{print ($2 == \"yes\") ? \"true\" : \"false\"}'")
-        (setq desktop-environment-volume-toggle-command
-              "pactl set-sink-mute @DEFAULT_SINK@ toggle") ; Toggle mute
-        (setq desktop-environment-volume-normal-increment "+1") ; Volume step up
-        (setq desktop-environment-volume-normal-decrement "-1") ; Volume step down
-
-        :config
-        ;; Ensure dependencies are installed
-        (desktop-environment-mode 1)
-        (dolist (cmd '("scrot" "slock" "pactl" "brightnessctl"))
-          (unless (executable-find cmd)
-            (message
-             "Warning: %s not found; desktop-environment may not work fully"
-             cmd)))))))
+      ;; Ensure dependencies are installed
+      (desktop-environment-mode 1)
+      (dolist (cmd '("scrot" "slock" "pactl" "brightnessctl"))
+        (unless (executable-find cmd)
+          (message
+           "Warning: %s not found; desktop-environment may not work fully"
+           cmd))))))
 
 ;;; init.el version control
 
-  (use-package
-    vc
-    :ensure nil
-    :config
-    (defun my-auto-commit-init-el ()
-      "Commit changes to init.el after saving."
-      (when (and (buffer-file-name)
-                 (string=
-                  (file-name-nondirectory (buffer-file-name)) "init.el"))
-        (ignore-errors
-          (vc-checkin
-           (list (buffer-file-name))
-           'git
-           nil
-           "Auto-commit init.el changes"))))
-    :hook (after-save . my-auto-commit-init-el))
+(use-package
+  vc
+  :ensure nil
+  :config
+  (defun my-auto-commit-init-el ()
+    "Commit changes to init.el after saving."
+    (when (and (buffer-file-name)
+               (string=
+                (file-name-nondirectory (buffer-file-name)) "init.el"))
+      (ignore-errors
+        (vc-checkin
+         (list (buffer-file-name))
+         'git
+         nil
+         "Auto-commit init.el changes"))))
+  :hook (after-save . my-auto-commit-init-el))
 
 ;;; emacs configuration section
 
