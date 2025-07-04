@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-04 12:24:27 by grim>
+;; Time-stamp: <Last changed 2025-07-04 13:13:41 by grim>
 
 ;; Enable these
 (mapc
@@ -1385,14 +1385,14 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    ("M-s k" . consult-keep-lines)
    ("M-s u" . consult-focus-lines)
    ("M-s e" . consult-isearch-history)
-   :map isearch-mode-map
+   (:map isearch-mode-map
    ("M-e" . consult-isearch-history)
    ("M-s e" . consult-isearch-history)
    ("M-s l" . consult-line)
-   ("M-s L" . consult-line-multi)
-   :map minibuffer-local-map
+   ("M-s L" . consult-line-multi))
+   (:map minibuffer-local-map
    ("M-s" . consult-history)
-   ("M-r" . consult-history))
+   ("M-r" . consult-history))))
 
 (use-package consult-yasnippet :ensure t :after (consult yasnippet))
 
