@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-04 14:44:34 by grim>
+;; Time-stamp: <Last changed 2025-07-04 23:23:11 by grim>
 
 ;; Enable these
 (mapc
@@ -241,6 +241,7 @@ The DWIM behaviour of this command is as follows:
 (declare-function completion-preview-prev-candidate
                   "completion-preview")
 (declare-function completion-preview--hide "completion-preview")
+
 
 ;;; EDNC NOTIFICATIONS (DBUS)
 
@@ -552,6 +553,7 @@ The DWIM behaviour of this command is as follows:
     (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
     (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
 
+
     (setq exwm-workspace-show-all-buffers t)
     (setq exwm-layout-show-all-buffers t)
     (setq exwm-manage-force-tiling nil)
@@ -588,7 +590,9 @@ The DWIM behaviour of this command is as follows:
                      (format "xrandr --output %s --auto --pos 0x0 --output %s --primary --auto --right-of %s --output eDP-1 --off"
                              (nth 0 monitors) (nth 1 monitors) (nth 0 monitors))))
                   (when (fboundp 'exwm-randr-refresh)
-                    (exwm-randr-refresh)))))
+                    (exwm-randr-refresh))
+                  ;; Refresh display after screen change
+                  (redisplay t))))
 
     ;; To enable monitor debugging: (setq grim/exwm-debug-monitors t)
     ;; Load the system tray before exwm-init
@@ -668,8 +672,44 @@ The DWIM behaviour of this command is as follows:
             ([?\M-w] . [?\C-c])
             ([?\C-y] . [?\C-v])))
 
-    ;;(exwm-wm-mode 1)
-    (exwm-enable))
+    (exwm-wm-mode 1)
+    ;;(exwm-enable)
+
+    ;; AGGRESSIVE FIX: Force modeline to appear after EXWM loads
+    (run-with-timer 1.0 nil
+                    (lambda ()
+                      ;; Force modeline on for all buffers
+                      (setq-default mode-line-format
+                                    (or mode-line-format
+                                        '("%e" mode-line-front-space
+                                          mode-line-mule-info
+                                          mode-line-client
+                                          mode-line-modified
+                                          mode-line-remote
+                                          mode-line-frame-identification
+                                          mode-line-buffer-identification
+                                          "   "
+                                          mode-line-position
+                                          (vc-mode vc-mode)
+                                          "  "
+                                          mode-line-modes
+                                          mode-line-misc-info
+                                          mode-line-end-spaces)))
+                      ;; Force refresh of all windows
+                      (dolist (frame (frame-list))
+                        (select-frame frame)
+                        (dolist (window (window-list frame))
+                          (set-window-buffer window (window-buffer window))))
+                      (force-mode-line-update t)
+                      (redisplay t)
+                      ;; Force theme to apply to modeline
+                      (when (car custom-enabled-themes)
+                        (enable-theme (car custom-enabled-themes)))
+                      ;; Mimic what workspace switching does
+                      (when (fboundp 'exwm-layout--refresh)
+                        (exwm-layout--refresh))
+                      (when (fboundp 'exwm-workspace--update-switch-history)
+                        (exwm-workspace--update-switch-history)))))
 
   (use-package
     exwm-edit
@@ -910,6 +950,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   ;; History settings consolidated - see main emacs config block
   (setq history-delete-duplicates t)
   (setq savehist-save-minibuffer-history t)
+
 
   ;; Enable auto-insert for new files
   (require 'autoinsert)
