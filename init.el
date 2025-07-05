@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-04 23:23:11 by grim>
+;; Time-stamp: <Last changed 2025-07-04 23:45:50 by grim>
 
 ;; Enable these
 (mapc
@@ -3650,6 +3650,14 @@ parameters set in early-init.el to ensure robust UI element disabling."
               (message "Emacs started in %.2f seconds with %d garbage collections"
                        (float-time (time-subtract after-init-time before-init-time))
                        gcs-done))))
+
+;;; nerd icons completion
+(use-package nerd-icons-completion
+  :ensure t
+  :after marginalia
+  :config
+  (nerd-icons-completion-mode)
+  (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
 
 ;;; final cleanup
 
