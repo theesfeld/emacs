@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-05 20:49:53 by grim>
+;; Time-stamp: <Last changed 2025-07-05 20:51:09 by grim>
 
 ;; Enable these
 (mapc
@@ -675,42 +675,41 @@ The DWIM behaviour of this command is as follows:
     (exwm-wm-mode 1)
     ;;(exwm-enable)
 
-    ;; AGGRESSIVE FIX: Force modeline to appear after EXWM loads
-    ;; (run-with-timer 1.0 nil
-    ;;                 (lambda ()
-    ;;                   ;; Force modeline on for all buffers
-    ;;                   (setq-default mode-line-format
-    ;;                                 (or mode-line-format
-    ;;                                     '("%e" mode-line-front-space
-    ;;                                       mode-line-mule-info
-    ;;                                       mode-line-client
-    ;;                                       mode-line-modified
-    ;;                                       mode-line-remote
-    ;;                                       mode-line-frame-identification
-    ;;                                       mode-line-buffer-identification
-    ;;                                       "   "
-    ;;                                       mode-line-position
-    ;;                                       (vc-mode vc-mode)
-    ;;                                       "  "
-    ;;                                       mode-line-modes
-    ;;                                       mode-line-misc-info
-    ;;                                       mode-line-end-spaces)))
-    ;;                   ;; Force refresh of all windows
-    ;;                   (dolist (frame (frame-list))
-    ;;                     (select-frame frame)
-    ;;                     (dolist (window (window-list frame))
-    ;;                       (set-window-buffer window (window-buffer window))))
-    ;;                   (force-mode-line-update t)
-    ;;                   (redisplay t)
-    ;;                   ;; Force theme to apply to modeline
-    ;;                   (when (car custom-enabled-themes)
-    ;;                     (enable-theme (car custom-enabled-themes)))
-    ;;                   ;; Mimic what workspace switching does
-    ;;                   (when (fboundp 'exwm-layout--refresh)
-    ;;                     (exwm-layout--refresh))
-    ;;                   (when (fboundp 'exwm-workspace--update-switch-history)
-    ;;                     (exwm-workspace--update-switch-history))))
-    )
+    AGGRESSIVE FIX: Force modeline to appear after EXWM loads
+    (run-with-timer 1.0 nil
+                    (lambda ()
+                      ;; Force modeline on for all buffers
+                      (setq-default mode-line-format
+                                    (or mode-line-format
+                                        '("%e" mode-line-front-space
+                                          mode-line-mule-info
+                                          mode-line-client
+                                          mode-line-modified
+                                          mode-line-remote
+                                          mode-line-frame-identification
+                                          mode-line-buffer-identification
+                                          "   "
+                                          mode-line-position
+                                          (vc-mode vc-mode)
+                                          "  "
+                                          mode-line-modes
+                                          mode-line-misc-info
+                                          mode-line-end-spaces)))
+                      ;; Force refresh of all windows
+                      (dolist (frame (frame-list))
+                        (select-frame frame)
+                        (dolist (window (window-list frame))
+                          (set-window-buffer window (window-buffer window))))
+                      (force-mode-line-update t)
+                      (redisplay t)
+                      ;; Force theme to apply to modeline
+                      (when (car custom-enabled-themes)
+                        (enable-theme (car custom-enabled-themes)))
+                      ;; Mimic what workspace switching does
+                      (when (fboundp 'exwm-layout--refresh)
+                        (exwm-layout--refresh))
+                      (when (fboundp 'exwm-workspace--update-switch-history)
+                        (exwm-workspace--update-switch-history)))))
 
   (use-package
     exwm-edit
