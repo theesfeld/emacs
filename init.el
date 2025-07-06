@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-05 20:54:51 by grim>
+;; Time-stamp: <Last changed 2025-07-05 21:15:32 by grim>
 
 ;; Enable these
 (mapc
@@ -675,40 +675,40 @@ The DWIM behaviour of this command is as follows:
     (exwm-wm-mode 1)
     ;;(exwm-enable)
 
-    (run-with-timer 1.0 nil
-                    (lambda ()
-                      ;; Force modeline on for all buffers
-                      (setq-default mode-line-format
-                                    (or mode-line-format
-                                        '("%e" mode-line-front-space
-                                          mode-line-mule-info
-                                          mode-line-client
-                                          mode-line-modified
-                                          mode-line-remote
-                                          mode-line-frame-identification
-                                          mode-line-buffer-identification
-                                          "   "
-                                          mode-line-position
-                                          (vc-mode vc-mode)
-                                          "  "
-                                          mode-line-modes
-                                          mode-line-misc-info
-                                          mode-line-end-spaces)))
-                      ;; Force refresh of all windows
-                      (dolist (frame (frame-list))
-                        (select-frame frame)
-                        (dolist (window (window-list frame))
-                          (set-window-buffer window (window-buffer window))))
-                      (force-mode-line-update t)
-                      (redisplay t)
-                      ;; Force theme to apply to modeline
-                      (when (car custom-enabled-themes)
-                        (enable-theme (car custom-enabled-themes)))
-                      ;; Mimic what workspace switching does
-                      (when (fboundp 'exwm-layout--refresh)
-                        (exwm-layout--refresh))
-                      (when (fboundp 'exwm-workspace--update-switch-history)
-                        (exwm-workspace--update-switch-history)))))
+    ;; (run-with-timer 1.0 nil
+    ;;                 (lambda ()
+    ;;                   ;; Force modeline on for all buffers
+    ;;                   (setq-default mode-line-format
+    ;;                                 (or mode-line-format
+    ;;                                     '("%e" mode-line-front-space
+    ;;                                       mode-line-mule-info
+    ;;                                       mode-line-client
+    ;;                                       mode-line-modified
+    ;;                                       mode-line-remote
+    ;;                                       mode-line-frame-identification
+    ;;                                       mode-line-buffer-identification
+    ;;                                       "   "
+    ;;                                       mode-line-position
+    ;;                                       (vc-mode vc-mode)
+    ;;                                       "  "
+    ;;                                       mode-line-modes
+    ;;                                       mode-line-misc-info
+    ;;                                       mode-line-end-spaces)))
+    ;;                   ;; Force refresh of all windows
+    ;;                   (dolist (frame (frame-list))
+    ;;                     (select-frame frame)
+    ;;                     (dolist (window (window-list frame))
+    ;;                       (set-window-buffer window (window-buffer window))))
+    ;;                   (force-mode-line-update t)
+    ;;                   (redisplay t)
+    ;;                   ;; Force theme to apply to modeline
+    ;;                   (when (car custom-enabled-themes)
+    ;;                     (enable-theme (car custom-enabled-themes)))
+    ;;                   ;; Mimic what workspace switching does
+    ;;                   (when (fboundp 'exwm-layout--refresh)
+    ;;                     (exwm-layout--refresh))
+    ;;                   (when (fboundp 'exwm-workspace--update-switch-history)
+    ;;                     (exwm-workspace--update-switch-history)))))
 
   (use-package
     exwm-edit
@@ -849,6 +849,7 @@ The DWIM behaviour of this command is as follows:
 (use-package
   vc
   :ensure nil
+  :demand t
   :config
   (defun my-auto-commit-init-el ()
     "Commit changes to init.el after saving."
@@ -980,7 +981,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   ;; Font configuration moved to consolidated section below
   (custom-set-faces
    '(cursor ((t (:background "#FFC107")))))
-  (load-theme 'modus-vivendi t)
+  ;; Theme is now loaded early in early-init.el to prevent white flash
+  ;; (load-theme 'modus-vivendi t)
 
   ;; === CONSOLIDATED FONT CONFIGURATION ===
   ;; Primary font setup with fallback
@@ -1737,38 +1739,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     "B"       "[EWW] Bookmark with Tags"
     "C-c /"   "[EWW] New Search"
     "C-c C-o" "[EWW] Bookmark to Firefox"))
-
-;;; avy
-
-(use-package
-  avy
-  :ensure t
-  :defer t
-  :bind (
-         ("M-j" . avy-goto-char-timer)
-         ("C-c '" . avy-goto-char-2))
-  :init (avy-setup-default)
-  :config
-  (defun avy-action-exchange (pt)
-    "Exchange sexp at PT with the one at point."
-    (set-mark pt)
-    (transpose-sexps 0))
-  (add-to-list 'avy-dispatch-alist '(?e . avy-action-exchange))
-  (defun avy-action-embark (pt)
-    "Invoke Embark at PT."
-    (save-excursion
-      (goto-char pt)
-      (embark-act))
-    (select-window (cdr (ring-ref avy-ring 0)))
-    t)
-  (setf (alist-get ?. avy-dispatch-alist) 'avy-action-embark))
-
-;;; ace-window
-
-(use-package ace-window
-  :ensure t
-  :after avy
-  :bind ("C-x o" . ace-window))
 
 ;;; flyspell
 
