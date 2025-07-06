@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-05 21:27:26 by grim>
+;; Time-stamp: <Last changed 2025-07-05 21:52:55 by grim>
 
 ;; Enable these
 (mapc
@@ -18,27 +18,6 @@
 
 (setq package-vc-register-as-project nil) ; Emacs 30
 
-;; === NATIVE COMPILATION OPTIMIZATION FOR EMACS 30.1 ===
-;; Native compilation is enabled by default in 30.1 - optimize it
-(when (and (fboundp 'native-compile-available-p)
-           (native-compile-available-p))
-  ;; Optimize native compilation settings
-  (setq native-comp-speed 2                    ; Balance speed vs compile time
-        native-comp-debug 0                    ; Disable debug for performance
-        native-comp-verbose 0                  ; Reduce compilation noise
-        native-comp-async-report-warnings-errors nil ; Less interruption
-        native-comp-deferred-compilation t)    ; Compile in background
-
-  ;; Increase native compilation job limit for modern systems
-  (when (> (num-processors) 4)
-    (setq native-comp-async-jobs-number (/ (num-processors) 2)))
-
-  ;; Prioritize frequently used packages for native compilation
-  (setq native-comp-bootstrap-deny-list
-        '("tramp" "tramp-.*" "docker-tramp")) ; Avoid compiling tramp for stability
-
-  (message "Native compilation optimized for Emacs 30.1 (jobs: %d)"
-           native-comp-async-jobs-number))
 
 ;; === TRUSTED CONTENT SECURITY MODEL (EMACS 30.1) ===
 ;; Configure the new security model for trusted directories
@@ -57,26 +36,6 @@
 
 (add-hook 'package-menu-mode-hook #'hl-line-mode)
 
-;; Package archives optimized for Emacs 30.1
-(setq package-archives
-      '(("gnu-elpa" . "https://elpa.gnu.org/packages/")          ; Official GNU packages
-        ("gnu-elpa-devel" . "https://elpa.gnu.org/devel/")       ; GNU development packages
-        ("nongnu" . "https://elpa.nongnu.org/nongnu/")            ; NonGNU ELPA
-        ("melpa" . "https://melpa.org/packages/")))              ; Community packages
-
-;; Enable package signature verification for security
-(setq package-check-signature 'allow-unsigned) ; Allow unsigned for MELPA compatibility
-
-;; Package priorities optimized for GNU compliance and Emacs 30.1
-;; Highest number gets priority (what is not mentioned has priority 0)
-(setq package-archive-priorities
-      '(("gnu-elpa" . 10)        ; Highest priority for official GNU packages
-        ("gnu-elpa-devel" . 8)   ; Development GNU packages
-        ("nongnu" . 5)           ; NonGNU ELPA packages
-        ("melpa" . 3)))          ; MELPA packages (lower priority)
-
-;; Prefer GNU ELPA packages when available
-(setq package-archive-selection-policy 'prefer-gnu)
 
 ;;; pinentry
 
@@ -119,7 +78,7 @@ The DWIM behaviour of this command is as follows:
    (t
     (keyboard-quit))))
 
-(global-set-key [remap keyboard-quit] #'prot/keyboard-quit-dwim)
+(keymap-global-set "<remap> <keyboard-quit>" #'prot/keyboard-quit-dwim)
 
 (defun my/consult-yasnippet-with-minor-modes ()
   "Use Vertico to select YASnippets, considering active major and minor modes."
@@ -149,7 +108,7 @@ The DWIM behaviour of this command is as follows:
     (if all-snippets
         (consult-yasnippet all-snippets))))
 
-  (global-set-key (kbd "C-& y") #'my/consult-yasnippet-with-minor-modes)
+  (keymap-global-set "C-& y" #'my/consult-yasnippet-with-minor-modes)
 
 (defun my/exwm-run-program ()
   "Run a program using vertico completion with command history and PATH suggestions."
@@ -177,34 +136,26 @@ The DWIM behaviour of this command is as follows:
 (defun increase-text-and-pane ()
   "Increase text size and adjust window width proportionally."
   (interactive)
-  (let* ((orig-scale
-          (or (car (get 'text-scale-mode-amount 'customized-value))
-              text-scale-mode-amount))
-         (new-scale (+ orig-scale 1))
-         (scale-factor
-          (/ (float (expt text-scale-mode-step new-scale))
-             (float (expt text-scale-mode-step orig-scale)))))
+  (let* ((orig-scale (or text-scale-mode-amount 0))
+         (scale-factor text-scale-mode-step))
     (text-scale-increase 1)
-    (enlarge-window-horizontally
-     (round (* (window-width) (- scale-factor 1))))))
-
-(global-set-key (kbd "s-+") 'increase-text-and-pane)
+    (when (> (length (window-list)) 1) ; Only resize if multiple windows
+      (enlarge-window-horizontally
+       (round (* (window-width) (- scale-factor 1)))))))
 
 (defun decrease-text-and-pane ()
   "Decrease text size and adjust window width proportionally."
   (interactive)
-  (let* ((orig-scale
-          (or (car (get 'text-scale-mode-amount 'customized-value))
-              text-scale-mode-amount))
-         (new-scale (- orig-scale 1))
-         (scale-factor
-          (/ (float (expt text-scale-mode-step new-scale))
-             (float (expt text-scale-mode-step orig-scale)))))
+  (let* ((orig-scale (or text-scale-mode-amount 0))
+         (scale-factor (/ 1.0 text-scale-mode-step)))
     (text-scale-decrease 1)
-    (shrink-window-horizontally
-     (round (* (window-width) (- 1 scale-factor))))))
+    (when (> (length (window-list)) 1) ; Only resize if multiple windows
+      (shrink-window-horizontally
+       (round (* (window-width) (- 1 scale-factor)))))))
 
-(global-set-key (kbd "s-_") 'decrease-text-and-pane)
+;; Use modern keybinding approach
+(keymap-global-set "s-+" #'increase-text-and-pane)
+(keymap-global-set "s--" #'decrease-text-and-pane)
 
 (defun my-org-download-images-from-capture ()
   (when (string-match-p ":website:" (buffer-string))
@@ -216,18 +167,19 @@ The DWIM behaviour of this command is as follows:
    #'my-org-download-images-from-capture))
 
 (defun my/toggle-buffer (buffer-name command)
-  "Toggle a buffer with BUFFER-NAME, running COMMAND if it doesn't exist."
+  "Toggle a buffer with BUFFER-NAME, running COMMAND if it doesn't exist.
+Uses built-in window management for better integration."
   (interactive)
   (unless (commandp command)
-    (error "Second argument must be an interactive command"))
-  (let ((buffer (get-buffer buffer-name)))
-    (if (and buffer (get-buffer-window buffer))
-        ;; If the buffer exists and is visible, hide it
-        (quit-window nil (get-buffer-window buffer))
-      ;; If it doesn't exist or isn't visible, start it or switch to it
-      (if buffer
-          (switch-to-buffer buffer)
-        (call-interactively command)))))
+    (user-error "Second argument must be an interactive command"))
+  (if-let ((buffer (get-buffer buffer-name))
+           (window (get-buffer-window buffer)))
+      ;; Buffer exists and is visible - hide it
+      (quit-window nil window)
+    ;; Buffer doesn't exist or isn't visible
+    (if buffer
+        (pop-to-buffer buffer) ; Better window management than switch-to-buffer
+      (call-interactively command))))
 
 (defun my-org-capture-delete-file-after-kill (&rest _)
   "Delete file if capture is aborted."
@@ -1003,8 +955,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; THEME CONFIGURATION
 
-;; Ensure scratch buffer starts in lisp-interaction-mode
-(setq initial-major-mode 'lisp-interaction-mode)
 
 ;; Load modus-themes package and configure
 (use-package modus-themes
@@ -1054,13 +1004,11 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    window-combination-resize t
    display-time-load-average t
    savehist-file (expand-file-name "savehist" my-tmp-dir)
-   ;; history-length set in main emacs config block
-   history-delete-duplicates t
-   savehist-save-minibuffer-history t
    undo-limit 800000
    ;; History settings - consolidated here for consistency
    history-length 10000
    history-delete-duplicates t
+   savehist-save-minibuffer-history t
    isearch-lazy-count t
    lazy-count-prefix-format "(%s/%s) "
    lazy-count-suffix-format nil
@@ -1091,19 +1039,19 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :ensure t
   :after exwm
   :config
-  (global-set-key (kbd "<s-tab>") 'windower-switch-to-last-buffer)
-  (global-set-key (kbd "<s-o>") 'windower-toggle-single)
-  (global-set-key (kbd "s-\\") 'windower-toggle-split)
+  (keymap-global-set "s-<tab>" #'windower-switch-to-last-buffer)
+  (keymap-global-set "s-o" #'windower-toggle-single)
+  (keymap-global-set "s-\\" #'windower-toggle-split)
 
-  (global-set-key (kbd "<s-M-left>") 'windower-move-border-left)
-  (global-set-key (kbd "<s-M-down>") 'windower-move-border-below)
-  (global-set-key (kbd "<s-M-up>") 'windower-move-border-above)
-  (global-set-key (kbd "<s-M-right>") 'windower-move-border-right)
+  (keymap-global-set "s-M-<left>" #'windower-move-border-left)
+  (keymap-global-set "s-M-<down>" #'windower-move-border-below)
+  (keymap-global-set "s-M-<up>" #'windower-move-border-above)
+  (keymap-global-set "s-M-<right>" #'windower-move-border-right)
 
-  (global-set-key (kbd "<s-S-left>") 'windower-swap-left)
-  (global-set-key (kbd "<s-S-down>") 'windower-swap-below)
-  (global-set-key (kbd "<s-S-up>") 'windower-swap-above)
-  (global-set-key (kbd "<s-S-right>") 'windower-swap-right)) ; Close windower use-package and when block
+  (keymap-global-set "s-S-<left>" #'windower-swap-left)
+  (keymap-global-set "s-S-<down>" #'windower-swap-below)
+  (keymap-global-set "s-S-<up>" #'windower-swap-above)
+  (keymap-global-set "s-S-<right>" #'windower-swap-right)) ; Close windower use-package and when block
 
 ;;; shell environment (path, etc)
 
@@ -2618,19 +2566,51 @@ This function integrates with exwm-firefox-core to open the current page."
     (with-eval-after-load 'yaml-ts-mode
       (derived-mode-add-parents 'yaml-ts-mode '(yaml-mode))))
 
-  ;; Optimized tree-sitter settings for Emacs 30.1
+  ;; Enhanced tree-sitter settings optimized for Emacs 30.1
   (setq treesit-font-lock-level 4              ; Maximum highlighting
-        treesit-max-buffer-size (* 8 1024 1024) ; 8MB for better performance
-        treesit-defun-prefer-top-level t))     ; Better function detection
+        treesit-max-buffer-size (* 16 1024 1024) ; 16MB for modern systems
+        treesit-defun-prefer-top-level t        ; Better function detection
+        treesit-defun-name-function #'treesit-defun-name ; Use built-in function naming
+        treesit-simple-indent-presets           ; Enhanced indentation support
+        '((offset . treesit-simple-indent-offset)
+          (line-start . (column 0))
+          (line-end . (column (length (thing-at-point 'line))))
+          (first-sibling . (treesit-simple-indent-sibling 1))
+          (prev-sibling . (treesit-simple-indent-sibling 0)))
+        ;; Performance optimizations for Emacs 30.1
+        treesit-node-outdated-p #'treesit--node-outdated-p ; Use built-in optimization
+        treesit-query-validate t))               ; Validate queries for safety
 
-;; Use treesit-auto for automatic mode selection and fallback
+;; Enhanced treesit-auto for intelligent mode selection
 (use-package treesit-auto
   :ensure t
   :custom
   (treesit-auto-install 'prompt)   ; Prompt before installing grammars
+  (treesit-auto-fallback-alist     ; Intelligent fallback mapping
+   '((c-ts-mode . c-mode)
+     (c++-ts-mode . c++-mode)
+     (python-ts-mode . python-mode)
+     (js-ts-mode . js-mode)
+     (typescript-ts-mode . typescript-mode)
+     (rust-ts-mode . rust-mode)
+     (yaml-ts-mode . yaml-mode)))
   :config
+  ;; Enhanced auto-mode configuration
   (treesit-auto-add-to-auto-mode-alist 'all)
-  (global-treesit-auto-mode))
+
+  ;; Error handling for missing grammars
+  (setq treesit-auto-recipe-list
+        (seq-filter (lambda (recipe)
+                      (treesit-language-available-p
+                       (treesit-auto-recipe-lang recipe)))
+                    treesit-auto-recipe-list))
+
+  ;; Enable with better error handling
+  (condition-case err
+      (global-treesit-auto-mode)
+    (error
+     (message "treesit-auto failed to initialize: %s" err)
+     (message "Falling back to standard modes"))))
 
 ;;; tree-sitter languages
 
@@ -3258,32 +3238,45 @@ parameters set in early-init.el to ensure robust UI element disabling."
                                 :max_tokens 4096))
   (setq gptel-api-key-from-auth-source t))
 
-;;; EditorConfig support (built-in since Emacs 30.1)
+;;; EditorConfig support optimized for Emacs 30.1
 
 (use-package editorconfig
   :ensure nil  ; Built-in since Emacs 30.1
-  :demand t    ; Load immediately
+  :demand t    ; Load immediately for consistent behavior
   :config
   ;; Enable EditorConfig support globally
   (editorconfig-mode 1)
 
-  ;; Customize which properties to respect
-  (setq editorconfig-trim-whitespaces-mode 'ws-butler-mode) ; Use ws-butler if available
+  ;; Enhanced EditorConfig properties for Emacs 30.1
+  (setq editorconfig-trim-whitespaces-mode 'ws-butler-mode ; Use ws-butler if available
+        editorconfig-get-properties-function
+        #'editorconfig-get-properties-from-exec) ; Use external EditorConfig for better compatibility
 
-  ;; Handle additional EditorConfig properties
-  (add-to-list 'editorconfig-indentation-alist
-               '(typescript-ts-mode typescript-indent-level))
-  (add-to-list 'editorconfig-indentation-alist
-               '(js-ts-mode js-indent-level))
+  ;; Comprehensive tree-sitter mode support
+  (setq editorconfig-indentation-alist
+        (append editorconfig-indentation-alist
+                '((typescript-ts-mode typescript-indent-level)
+                  (js-ts-mode js-indent-level)
+                  (tsx-ts-mode tsx-indent-level)
+                  (python-ts-mode python-indent-offset)
+                  (c-ts-mode c-basic-offset)
+                  (c++-ts-mode c-basic-offset)
+                  (rust-ts-mode rust-indent-offset)
+                  (yaml-ts-mode yaml-indent-offset))))
 
-  ;; Exclude certain modes from EditorConfig
+  ;; Exclude modes where EditorConfig shouldn't apply
   (setq editorconfig-exclude-modes
-        '(lisp-interaction-mode
-          help-mode
+        '(help-mode
           magit-mode
-          magit-diff-mode))
+          magit-diff-mode
+          dired-mode
+          ibuffer-mode
+          minibuffer-mode))
 
-  (message "EditorConfig support enabled (built-in Emacs 30.1)"))
+  ;; Optimize for large projects
+  (setq editorconfig-exec-path (executable-find "editorconfig"))
+
+  (message "EditorConfig optimized for Emacs 30.1 with tree-sitter support"))
 
 ;;; aggressive indent
 
@@ -3407,7 +3400,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :ensure nil
   :demand t
   :config
-  ;; Consolidated completion behavior settings
+  ;; Optimized completion behavior for Emacs 30.1
   (setq tab-always-indent 'complete              ; TAB completes when at end of word
         completion-cycle-threshold 3             ; TAB cycles through completions
         completion-pcm-leading-wildcard t
@@ -3425,7 +3418,17 @@ parameters set in early-init.el to ensure robust UI element disabling."
         completions-sort 'historical            ; Emacs 30.1 feature
         completion-eager-display 'auto
         minibuffer-completion-auto-choose t
-        minibuffer-visible-completions nil))
+        minibuffer-visible-completions nil
+        ;; Emacs 30.1 specific optimizations
+        completion-lazy-hilit t                 ; Lazy highlighting for performance
+        completion-lazy-hilit-fn #'completion-lazy-hilit-highlight ; 30.1 feature
+        minibuffer-depth-indicate-mode t        ; Show minibuffer depth
+        minibuffer-prompt-properties            ; Enhanced prompt properties
+        '(read-only t cursor-intangible t face minibuffer-prompt))
+
+  ;; Enable advanced minibuffer features in Emacs 30.1
+  (when (fboundp 'minibuffer-depth-indicate-mode)
+    (minibuffer-depth-indicate-mode 1)))
 
 ;;; Shell (M-x shell)
 
