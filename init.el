@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-05 21:15:32 by grim>
+;; Time-stamp: <Last changed 2025-07-05 21:15:41 by grim>
 
 ;; Enable these
 (mapc
@@ -708,7 +708,8 @@ The DWIM behaviour of this command is as follows:
     ;;                   (when (fboundp 'exwm-layout--refresh)
     ;;                     (exwm-layout--refresh))
     ;;                   (when (fboundp 'exwm-workspace--update-switch-history)
-    ;;                     (exwm-workspace--update-switch-history)))))
+    ;;                     (exwm-workspace--update-switch-history))))
+    )
 
   (use-package
     exwm-edit
