@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-04 23:45:50 by grim>
+;; Time-stamp: <Last changed 2025-07-05 20:46:46 by grim>
 
 ;; Enable these
 (mapc
@@ -3627,16 +3627,16 @@ parameters set in early-init.el to ensure robust UI element disabling."
 ;;   ;; Enable global mode for automatic buffer assignment
 ;;   (buffer-background-global-mode 1))
 
-;; (use-package buffer-background
-;;   :ensure t
-;;   :defer 1
-;;   :vc (:url "https://github.com/theesfeld/buffer-background" :branch "opacity")
-;;   :hook (after-init . (lambda ()
-;;                         (setq buffer-background-color-alist
-;;                               '(("*scratch*" . "#2d2d2d")
-;;                                 ("*Messages*" . "#7fdb22")
-;;                                 (org-mode . (:color "#1e1e2e" :opacity 0.9))))
-;;                         (buffer-background-global-mode 1))))
+(use-package buffer-background
+  :ensure t
+  :defer 1
+  :vc (:url "https://github.com/theesfeld/buffer-background" :branch "master")
+  :hook (after-init . (lambda ()
+                        (setq buffer-background-color-alist
+                              '(("*scratch*" . "#2d2d2d")
+                                ("*Messages*" . "#7fdb22")
+                                (org-mode . (:color "#1e1e2e" :opacity 0.9))))
+                        (buffer-background-global-mode 1))))
 
 ;;; STARTUP INFORMATION
 
