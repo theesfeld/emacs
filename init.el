@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-05 21:15:41 by grim>
+;; Time-stamp: <Last changed 2025-07-05 21:25:33 by grim>
 
 ;; Enable these
 (mapc
@@ -242,6 +242,19 @@ The DWIM behaviour of this command is as follows:
                   "completion-preview")
 (declare-function completion-preview--hide "completion-preview")
 
+
+;;; FONT CONFIGURATION
+
+;; Primary font setup with fallback
+(when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
+  ;; Main editing font
+  (set-face-attribute 'default nil
+                      :font "BerkeleyMonoVariable Nerd Font Mono"
+                      :height 140)
+  ;; Variable-pitch font for prose/org-mode
+  (set-face-attribute 'variable-pitch nil
+                      :font "BerkeleyMonoVariable Nerd Font Mono"
+                      :height 160))
 
 ;;; EDNC NOTIFICATIONS (DBUS)
 
@@ -496,7 +509,12 @@ The DWIM behaviour of this command is as follows:
                 (error-message-string err)))))
 
   (defun grim/exwm-init-hook ()
+    ;; Ensure modeline is visible on all workspaces
+    (setq-default mode-line-format
+                  (default-value 'mode-line-format))
     (exwm-workspace-switch-create 1)
+    ;; Force redisplay to ensure modeline appears
+    (redisplay t)
     (display-battery-mode 1)
     (setq
      display-time-24hr-format t
@@ -552,6 +570,13 @@ The DWIM behaviour of this command is as follows:
     (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
     (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
     (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
+    ;; Ensure modeline is visible when switching workspaces
+    (add-hook 'exwm-workspace-switch-hook
+              (lambda ()
+                (dolist (buffer (buffer-list))
+                  (with-current-buffer buffer
+                    (when (not (eq major-mode 'exwm-mode))
+                      (setq mode-line-format (default-value 'mode-line-format)))))))
 
 
     (setq exwm-workspace-show-all-buffers t)
@@ -672,8 +697,8 @@ The DWIM behaviour of this command is as follows:
             ([?\M-w] . [?\C-c])
             ([?\C-y] . [?\C-v])))
 
-    (exwm-wm-mode 1)
-    ;;(exwm-enable)
+    ;; Enable EXWM - this is required for EXWM to function!
+    (exwm-enable)
 
     ;; (run-with-timer 1.0 nil
     ;;                 (lambda ()
@@ -976,26 +1001,26 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   ;; Enable time-stamp updates on save
   (add-hook 'before-save-hook 'time-stamp)
 
-  :config
-  (setq modus-themes-italic-constructs t
-        modus-themes-bold-constructs t)
-  ;; Font configuration moved to consolidated section below
-  (custom-set-faces
-   '(cursor ((t (:background "#FFC107")))))
-  ;; Theme is now loaded early in early-init.el to prevent white flash
-  ;; (load-theme 'modus-vivendi t)
+;;; THEME CONFIGURATION
 
-  ;; === CONSOLIDATED FONT CONFIGURATION ===
-  ;; Primary font setup with fallback
-  (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
-    ;; Main editing font
-    (set-face-attribute 'default nil
-                        :font "BerkeleyMonoVariable Nerd Font Mono"
-                        :height 140)
-    ;; Variable-pitch font for prose/org-mode
-    (set-face-attribute 'variable-pitch nil
-                        :font "BerkeleyMonoVariable Nerd Font Mono"
-                        :height 160))
+;; Ensure scratch buffer starts in lisp-interaction-mode
+(setq initial-major-mode 'lisp-interaction-mode)
+
+;; Load modus-themes package and configure
+(use-package modus-themes
+  :ensure nil
+  :demand t  ; Load immediately, don't defer
+  :config
+  ;; These were already set in early-init.el but ensure they're set
+  (setq modus-themes-italic-constructs t
+        modus-themes-bold-constructs t
+        modus-themes-mixed-fonts t
+        modus-themes-disable-other-themes t)
+  ;; Load the theme
+  (load-theme 'modus-vivendi t)
+  ;; Set cursor color after theme loads
+  (custom-set-faces
+   '(cursor ((t (:background "#FFC107"))))))
 
   ;; Fallback font sizing if custom font not available
   (unless (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
