@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-05 21:52:55 by grim>
+;; Time-stamp: <Last changed 2025-07-06 15:09:27 by grim>
 
 ;; Enable these
 (mapc
@@ -1038,20 +1038,18 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (use-package windower
   :ensure t
   :after exwm
-  :config
-  (keymap-global-set "s-<tab>" #'windower-switch-to-last-buffer)
-  (keymap-global-set "s-o" #'windower-toggle-single)
-  (keymap-global-set "s-\\" #'windower-toggle-split)
-
-  (keymap-global-set "s-M-<left>" #'windower-move-border-left)
-  (keymap-global-set "s-M-<down>" #'windower-move-border-below)
-  (keymap-global-set "s-M-<up>" #'windower-move-border-above)
-  (keymap-global-set "s-M-<right>" #'windower-move-border-right)
-
-  (keymap-global-set "s-S-<left>" #'windower-swap-left)
-  (keymap-global-set "s-S-<down>" #'windower-swap-below)
-  (keymap-global-set "s-S-<up>" #'windower-swap-above)
-  (keymap-global-set "s-S-<right>" #'windower-swap-right)) ; Close windower use-package and when block
+  :bind
+  (("s-<tab>" . windower-switch-to-last-buffer)
+   ("s-o" . windower-toggle-single)
+   ("s-\\" . windower-toggle-split)
+   ("s-M-<left>" . windower-move-border-left)
+   ("s-M-<down>" . windower-move-border-below)
+   ("s-M-<up>" . windower-move-border-above)
+   ("s-M-<right>" . windower-move-border-right)
+   ("s-S-<left>" . windower-swap-left)
+   ("s-S-<down>" . windower-swap-below)
+   ("s-S-<up>" . windower-swap-above)
+   ("s-S-<right>" . windower-swap-right))) ; Close windower use-package and when block
 
 ;;; shell environment (path, etc)
 
@@ -2284,22 +2282,6 @@ This function integrates with exwm-firefox-core to open the current page."
    (eww-mode . (lambda ()
                  (setq-local scroll-conservatively 100) ; Smooth scrolling
                  (setq-local mouse-wheel-scroll-amount '(1 ((shift) . 1)))))))
-
-;; Optional: Configure eww-lnum for link selection with numbers
-(use-package eww-lnum
-  :after eww
-  :bind
-  (:map eww-mode-map
-        ("f" . eww-lnum-follow)        ; Follow link by number
-        ("F" . eww-lnum-universal)))   ; Universal argument link selection
-
-;; Optional: ace-link integration for quick link selection
-(use-package ace-link
-  :after eww
-  :bind
-  (:map eww-mode-map
-        ("o" . ace-link-eww)))         ; Jump to any link with ace
-
 
 ;;; pdf-tools
 
@@ -3628,13 +3610,12 @@ parameters set in early-init.el to ensure robust UI element disabling."
 (use-package buffer-background
   :ensure t
   :vc (:url "https://github.com/theesfeld/buffer-background")
-  :init
-  (buffer-background-global-mode 1)
-  :hook (after-init . (lambda ()
-                        (setq buffer-background-color-alist
-                              '(("*scratch*" . "#2d2d2d")
-                                ("*Messages*" . "#7fdb22")
-                                (org-mode . (:color "#1e1e2e" :opacity 0.9)))))))
+  :config
+  (setq buffer-background-color-alist
+        '(("*scratch*" . "#2d2d2d")
+          ("*Messages*" . "#7fdb22")
+          (org-mode . (:color "#1e1e2e" :opacity 0.9))))
+  (buffer-background-global-mode 1))
 
 ;;; STARTUP INFORMATION
 
