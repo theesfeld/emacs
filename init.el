@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-05 20:52:17 by grim>
+;; Time-stamp: <Last changed 2025-07-05 20:54:51 by grim>
 
 ;; Enable these
 (mapc
@@ -675,7 +675,6 @@ The DWIM behaviour of this command is as follows:
     (exwm-wm-mode 1)
     ;;(exwm-enable)
 
-    AGGRESSIVE FIX: Force modeline to appear after EXWM loads
     (run-with-timer 1.0 nil
                     (lambda ()
                       ;; Force modeline on for all buffers
