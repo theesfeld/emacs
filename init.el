@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 12:59:52 by grim>
+;; Time-stamp: <Last changed 2025-07-07 13:02:45 by grim>
 
 ;; Enable these
 (mapc
@@ -1767,39 +1767,41 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 (use-package eglot
   :ensure nil
-  :hook
-  ((prog-mode
-    .
-    (lambda ()
-      (unless (or (string-match-p "^\\*.*\\*$" (buffer-name))
-                  (string= (buffer-file-name)
-                           (expand-file-name "init.el" user-emacs-directory)))
-        (eglot-ensure))))
-   (eglot-managed-mode
-    .
-    (lambda ()
-      (add-hook 'before-save-hook #'eglot-format-buffer -10 t)
-      (setq eldoc-documentation-strategy #'eldoc-documentation-default)
-      (eglot-inlay-hints-mode))))
+  :defer t
+  :commands (eglot eglot-ensure)
+  :custom
+  (eglot-sync-connect nil)                   ; Async connection
+  (eglot-events-buffer-size 0)              ; Disable events buffer for performance
+  (eglot-autoshutdown t)                     ; Auto-shutdown unused servers
+  (eglot-extend-to-xref t)                   ; Better xref integration
+  (eglot-workspace-configuration
+   '((:pylsp . (:plugins (:pycodestyle (:enabled :json-false)
+                                       :mccabe (:enabled :json-false)
+                                       :pyflakes (:enabled :json-false)
+                                       :flake8 (:enabled t)
+                                       :autopep8 (:enabled :json-false)
+                                       :yapf (:enabled :json-false)
+                                       :black (:enabled t))))))
   :config
+  ;; Server configurations with performance focus
+  (add-to-list 'eglot-server-programs
+               '((python-mode python-ts-mode) . ("pylsp")))
+  (add-to-list 'eglot-server-programs
+               '((rust-mode rust-ts-mode) . ("rust-analyzer")))
+  (add-to-list 'eglot-server-programs
+               '((js-mode js-ts-mode typescript-mode typescript-ts-mode) . ("typescript-language-server" "--stdio")))
 
-  (setq eglot-events-buffer-size 0) ; Disable event logging for performance
-  (setq eglot-sync-connect 1) ; Reduce connection timeout
-  (setq eglot-autoshutdown t) ; Shutdown unused servers
-  (setq eglot-send-changes-idle-time 0.5) ; Optimize idle time
+  ;; Optimize for large projects
+  (setq eglot-ignored-server-capabilities
+        '(:documentHighlightProvider           ; Reduce visual noise
+          :documentFormattingProvider         ; Use dedicated formatters
+          :documentRangeFormattingProvider))
 
-  ;; Disable python-flymake when eglot is active
-  (add-hook
-   'eglot-managed-mode-hook
-   (lambda ()
-     (when (derived-mode-p 'python-mode 'python-ts-mode)
-       (remove-hook 'flymake-diagnostic-functions 'python-flymake t))))
-
-  ;; Process cleanup on exit
-  (add-hook 'kill-emacs-hook
-            (lambda ()
-              (when (fboundp 'eglot-shutdown-all)
-                (eglot-shutdown-all)))))
+  :hook
+  ;; Selective activation for better performance
+  ((python-mode python-ts-mode) . eglot-ensure)
+  ((rust-mode rust-ts-mode) . eglot-ensure)
+  ((js-mode js-ts-mode typescript-mode typescript-ts-mode) . eglot-ensure))
 
 (use-package consult-lsp
   :ensure t
