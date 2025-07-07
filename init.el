@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 07:21:44 by grim>
+;; Time-stamp: <Last changed 2025-07-07 07:21:56 by grim>
 
 ;; Enable these
 (mapc
@@ -3845,7 +3845,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
        :port (string-to-number port)
        :nick username
        :password password
-       :full-name "blackdream")))
+       :full-name "tjmacs")))
 
   :hook
   ((erc-mode . my-erc-set-fill-column)
