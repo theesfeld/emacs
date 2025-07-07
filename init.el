@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 13:45:39 by grim>
+;; Time-stamp: <Last changed 2025-07-07 13:47:09 by grim>
 
 ;; Enable these
 (mapc
@@ -1759,8 +1759,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   ;; Server configurations with performance focus
   (add-to-list 'eglot-server-programs
                '((python-mode python-ts-mode) . ("pylsp")))
-  (add-to-list 'eglot-server-programs
-               '((rust-mode rust-ts-mode) . ("rust-analyzer")))
   (add-to-list 'eglot-server-programs
                '((js-mode js-ts-mode typescript-mode typescript-ts-mode) . ("typescript-language-server" "--stdio")))
 
