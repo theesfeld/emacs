@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 07:26:56 by grim>
+;; Time-stamp: <Last changed 2025-07-07 07:28:09 by grim>
 
 ;; Enable these
 (mapc
@@ -3818,7 +3818,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
        :server host
        :port (string-to-number port)
        :nick username
-       :full-name "blackdream")))
+       :full-name "tjmacs")))
 
   ;; Original connection function (for samhain.su)
   (defun my-erc-connect ()
