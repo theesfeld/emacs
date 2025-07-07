@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 08:41:10 by grim>
+;; Time-stamp: <Last changed 2025-07-07 08:50:50 by grim>
 
 ;; Enable these
 (mapc
@@ -792,7 +792,6 @@ Uses built-in window management for better integration."
     (use-package
       desktop-environment
       :ensure t
-      :after exwm
       :init
       ;; Pre-configure settings before mode activation
       (setq desktop-environment-notifications t) ; Enable notifications
@@ -956,21 +955,21 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 ;;; THEME CONFIGURATION
 
 
-;; Load modus-themes package and configure
-(use-package modus-themes
-  :ensure nil
-  :demand t  ; Load immediately, don't defer
-  :config
-  ;; These were already set in early-init.el but ensure they're set
-  (setq modus-themes-italic-constructs t
-        modus-themes-bold-constructs t
-        modus-themes-mixed-fonts t
-        modus-themes-disable-other-themes t)
-  ;; Load the theme
-  (load-theme 'modus-vivendi t)
-  ;; Set cursor color after theme loads
-  (custom-set-faces
-   '(cursor ((t (:background "#FFC107"))))))
+  ;; Load modus-themes package and configure
+  (use-package modus-themes
+    :ensure nil
+    :demand t  ; Load immediately, don't defer
+    :config
+    ;; These were already set in early-init.el but ensure they're set
+    (setq modus-themes-italic-constructs t
+          modus-themes-bold-constructs t
+          modus-themes-mixed-fonts t
+          modus-themes-disable-other-themes t)
+    ;; Load the theme
+    (load-theme 'modus-vivendi t)
+    ;; Set cursor color after theme loads
+    (custom-set-faces
+     '(cursor ((t (:background "#FFC107"))))))
 
   ;; Fallback font sizing if custom font not available
   (unless (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
