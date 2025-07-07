@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 08:52:06 by grim>
+;; Time-stamp: <Last changed 2025-07-07 09:06:42 by grim>
 
 ;; Enable these
 (mapc
@@ -3763,7 +3763,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
   :hook
   ((erc-mode . my-erc-completion-setup)
-   (erc-mode . (lambda () (display-line-numbers-mode -1)))
+   (erc-mode . (lambda () (display-line-numbers-mode -1) (hl-line-mode 1)))
    (erc-insert-post . erc-save-buffer-in-logs))
 
   :bind
