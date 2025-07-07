@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 07:09:33 by grim>
+;; Time-stamp: <Last changed 2025-07-07 07:18:11 by grim>
 
 ;; Enable these
 (mapc
@@ -3661,6 +3661,8 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :ensure nil
   :defer t
   :config
+  (setq erc-modules '(networks notifications match sasl))
+  (erc-update-modules)
   (setq
    erc-track-remove-disconnected-buffers t
    erc-hide-list '("PART" "QUIT" "JOIN")
@@ -3798,18 +3800,21 @@ parameters set in early-init.el to ensure robust UI element disabling."
               (plist-get auth-entry :secret))))
       (unless (and username password)
         (error "Could not retrieve IRC credentials from authinfo.gpg"))
+      ;; Set SASL credentials
+      (setq erc-sasl-user username
+            erc-sasl-password password)
+      ;; Connect without password (SASL will handle auth)
       (erc-tls
        :server host
        :port (string-to-number port)
        :nick username
-       :password password
-       :full-name "blackdream")))
+       :full-name "tjmacs")))
 
   :hook
   ((erc-mode . my-erc-set-fill-column)
    (erc-nick-changed . my-erc-update-notifications-keywords)
    (erc-insert-post . erc-save-buffer-in-logs)
-   (erc-mode . my-erc-setup-completion)) ; Replace old completion hook
+   (erc-mode . my-erc-setup-completion-preview)) ; Replace old completion hook
   :bind
   (:map
    erc-mode-map
