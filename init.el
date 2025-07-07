@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 10:00:54 by grim>
+;; Time-stamp: <Last changed 2025-07-07 12:50:49 by grim>
 
 ;; Enable these
 (mapc
@@ -1338,18 +1338,21 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :init (vertico-mode 1)
   :custom
   (vertico-cycle t)
-  (vertico-count 10)
+  (vertico-count 15)
   (vertico-sort-function 'vertico-sort-history-length-alpha)
+  (vertico-resize t)
+  (vertico-preselect 'prompt)
   :config
   (with-eval-after-load 'nerd-icons
-    (defun my-consult-buffer-format (buffer)
-      "Add nerd-icons to BUFFER name for consult-buffer."
-      (let ((icon (nerd-icons-icon-for-buffer buffer)))
-        (concat icon " " (buffer-name buffer))))
-    (advice-add
-     'consult-buffer
-     :filter-return
-     (lambda (buffers) (mapcar #'my-consult-buffer-format buffers))))
+    (defvar my-buffer-icon-cache (make-hash-table :test 'equal))
+    (defun my-consult-buffer-format-cached (buffer)
+      "Add cached nerd-icons to BUFFER name."
+      (let* ((name (buffer-name buffer))
+             (cached-icon (gethash name my-buffer-icon-cache)))
+        (unless cached-icon
+          (setq cached-icon (nerd-icons-icon-for-buffer buffer))
+          (puthash name cached-icon my-buffer-icon-cache))
+        (concat cached-icon " " name))))
   :bind
   (:map
    vertico-map
@@ -1368,13 +1371,15 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (completion-styles '(orderless basic partial-completion flex))
   (completion-category-overrides
    '((file (styles basic partial-completion))
-     (eglot (styles orderless basic))
-     (eglot-capf (styles orderless basic))
+     (eglot (styles orderless flex))
+     (eglot-capf (styles orderless flex))
      (buffer (styles orderless basic))
      (info-menu (styles orderless basic))
      (consult-multi (styles orderless basic))
      (org-heading (styles orderless basic))
-     (unicode-name (styles orderless basic)))))
+     (unicode-name (styles orderless basic))))
+  (orderless-matching-styles '(orderless-literal orderless-regexp))
+  (orderless-smart-case t))
 
 ;;; savehist
 (use-package savehist
@@ -1397,7 +1402,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 (use-package consult
   :ensure t
-  :defer 2   ; Defer loading to improve startup
+  :defer 1   ; Defer loading to improve startup
   :commands (consult-line consult-buffer consult-grep consult-ripgrep)
   :custom
   (consult-narrow-key "<")
@@ -1405,7 +1410,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (consult-async-min-input 2)
   (consult-async-refresh-delay 0.15)
   (consult-async-input-throttle 0.2)
-  (consult-async-input-debounce 0.1)
+  (consult-async-input-debounce 0.2)
+  (consult-preview-key '(:debounce 0.3 any))
   :config
   ;; history-length set in main emacs config block
   (consult-customize
@@ -1413,7 +1419,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    consult-bookmark consult-recent-file consult-xref
    consult--source-bookmark consult--source-file-register
    consult--source-recent-file consult--source-project-recent-file
-   :preview-key '(:debounce 0.4 any))
+   :preview-key '(:debounce 0.4 any)
+   :initial (thing-at-point 'symbol))
   (global-set-key [remap isearch-forward] #'consult-line)
   (global-set-key [remap switch-to-buffer] #'consult-buffer)
   (global-set-key [remap list-buffers] #'consult-buffer)
@@ -1957,22 +1964,25 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 (use-package magit
   :ensure t
-  :bind
-  ( :map global-map
-    ("C-c g" . magit-status)
-    :map magit-mode-map
-    ("C-w" . nil)
-    ("M-w" . nil))
   :init
   (setq magit-define-global-key-bindings nil)
   (setq magit-section-visibility-indicator '(magit-fringe-bitmap> . magit-fringe-bitmapv))
   :config
+  (when (>= (string-to-number (magit-git-string "rev-list" "--count" "HEAD")) 1000)
+    (setq magit-log-margin '(t "%Y-%m-%d %H:%M " magit-log-margin-width t 18)))
   (setq git-commit-summary-max-length 50)
   (setq git-commit-style-convention-checks '(non-empty-second-line))
   (setq magit-diff-refine-hunk t)
-  ;;  (with-eval-after-load 'magit
-  ;;    (setq magit-format-file-function #'magit-format-file-nerd-icons))
-  )
+  (with-eval-after-load 'magit
+    (setq magit-format-file-function #'magit-format-file-nerd-icons))
+  :bind-keymap ("C-c g" . magit-mode-map)
+  :bind
+  (:map magit-mode-map
+        ("s" . magit-status)        ; C-c g s for magit-status
+        ("d" . magit-dispatch)      ; C-c g d for magit-dispatch
+        ("c" . magit-clone)         ; C-c g c for magit-clone
+        ("f" . magit-file-dispatch) ; C-c g f for magit-file-dispatch
+        ("l" . magit-log-buffer-file)))  ; C-c g l for magit-log-buffer-file
 
 (use-package magit-repos
   :ensure nil ; part of `magit'
