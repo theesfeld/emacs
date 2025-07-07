@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 07:28:09 by grim>
+;; Time-stamp: <Last changed 2025-07-07 07:31:08 by grim>
 
 ;; Enable these
 (mapc
@@ -3701,7 +3701,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
    erc-log-write-after-insert t)
 
   ;; Add SASL to ERC modules
-  (setq erc-modules '(networks notifications match sasl))
+  ;;(setq erc-modules '(networks notifications match sasl))
   (erc-update-modules)
   (erc-timestamp-mode 1)
   (erc-track-mode 1)
