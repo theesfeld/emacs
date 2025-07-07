@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 07:54:32 by grim>
+;; Time-stamp: <Last changed 2025-07-07 08:04:59 by grim>
 
 ;; Enable these
 (mapc
@@ -3743,8 +3743,41 @@ parameters set in early-init.el to ensure robust UI element disabling."
         erc-query-display 'bury ; Bury new private message buffers
         erc-auto-query 'bury) ; Auto-bury query buffers
   (setq erc-track-switch-direction 'newest
-        erc-track-visibility 'visible
+        erc-track-visibility t  ; Always show tracking, not just 'visible
         erc-track-position-in-mode-line t)
+
+  ;; Custom function to cycle through ERC buffers with activity
+  (defun my-erc-track-switch-buffer-cycle (arg)
+    "Cycle through ERC buffers with activity.
+With prefix ARG, cycle backwards."
+    (interactive "P")
+    (if erc-modified-channels-alist
+        (let* ((channels (mapcar #'car erc-modified-channels-alist))
+               (current-buffer (current-buffer))
+               (current-pos (cl-position current-buffer channels))
+               (next-pos (if current-pos
+                             (if arg
+                                 (mod (1- current-pos) (length channels))
+                               (mod (1+ current-pos) (length channels)))
+                           0)))
+          (switch-to-buffer (nth next-pos channels)))
+      (message "No ERC buffers with activity")))
+
+  ;; Function to cycle through all ERC buffers (not just with activity)
+  (defun my-erc-cycle-buffers (arg)
+    "Cycle through all ERC buffers.
+With prefix ARG, cycle backwards."
+    (interactive "P")
+    (let* ((erc-buffers (erc-buffer-list))
+           (current-pos (cl-position (current-buffer) erc-buffers))
+           (next-pos (if current-pos
+                         (if arg
+                             (mod (1- current-pos) (length erc-buffers))
+                           (mod (1+ current-pos) (length erc-buffers)))
+                       0)))
+      (if erc-buffers
+          (switch-to-buffer (nth next-pos erc-buffers))
+        (message "No ERC buffers"))))
 
   (erc-timestamp-mode 1)
   (erc-track-mode 1)
@@ -3831,7 +3864,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
         (buffer-substring (point-min) (point-max))))))
 
   ;; Disable line numbers in ERC
-  (add-hook 'erc-mode-hook (lambda () (display-line-numbers-mode -1)))
+  (add-hook 'erc-mode-hook (lambda () (display-line-numbers-mode -1) (hl-line-mode 1)))
 
   ;; SASL connection function for Libera Chat
   (defun my-erc-connect-libera ()
@@ -3873,6 +3906,10 @@ parameters set in early-init.el to ensure robust UI element disabling."
         ("C-c e" . erc-button-browse-url)
         ("C-c l" . erc-view-log-mode)
         ("TAB" . completion-at-point)
+        ("C-c C-n" . my-erc-track-switch-buffer-cycle)     ; Next buffer with activity
+        ("C-c C-p" . (lambda () (interactive) (my-erc-track-switch-buffer-cycle t))) ; Previous with activity
+        ("M-n" . my-erc-cycle-buffers)                     ; Next ERC buffer
+        ("M-p" . (lambda () (interactive) (my-erc-cycle-buffers t))) ; Previous ERC buffer
         :map global-map
         ("C-c L" . my-erc-connect-libera)))
 
