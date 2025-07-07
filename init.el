@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 13:02:45 by grim>
+;; Time-stamp: <Last changed 2025-07-07 13:21:48 by grim>
 
 ;; Enable these
 (mapc
@@ -26,16 +26,17 @@
         `(,(expand-file-name user-emacs-directory)     ; Trust .emacs.d
           ,(expand-file-name "~/Code/")                ; Trust ~/Code directory
           ,(expand-file-name "~/Documents/notes/")     ; Trust notes directory
-          ,(expand-file-name "~/.config/emacs/")))     ; Trust config directory
+          ,(expand-file-name "~/.config/emacs/")
+          "/usr/share/emacs/"))     ; Trust config directory
 
   ;; Allow certain risky operations in trusted directories
-  (setq trusted-content-allow-dangerous-local-variables t
-        trusted-content-allow-risky-eval t)
+  (setq trusted-content-allow-dangerous-local-variables 'safe
+        trusted-content-allow-risky-eval 'prompt)
 
-  (message "Trusted content directories configured for enhanced security"))
+  (setq trusted-content-log-file
+        (expand-file-name "trusted-content.log" user-emacs-directory)))
 
 (add-hook 'package-menu-mode-hook #'hl-line-mode)
-
 
 ;;; pinentry
 
@@ -513,314 +514,279 @@ Uses built-in window management for better integration."
   (defun grim/exwm-log (message &rest args)
     "Log MESSAGE with ARGS if debugging is enabled."
     (when grim/exwm-debug-monitors
-      (message "[EXWM Monitor] %s" (apply #'format message args))))
+      (message "[EXWM Monitor] %s" (apply #'format message args)))))
 
-  (use-package
-    exwm
-    :ensure t
-    :config (setq exwm-workspace-number 10) ; Increased for multi-monitor support
-    (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
-    (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
-    (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
-    ;; Ensure modeline is visible when switching workspaces
-    (add-hook 'exwm-workspace-switch-hook
-              (lambda ()
-                (dolist (buffer (buffer-list))
-                  (with-current-buffer buffer
-                    (when (not (eq major-mode 'exwm-mode))
-                      (setq mode-line-format (default-value 'mode-line-format)))))))
+(use-package
+  exwm
+  :ensure t
+  :when (eq window-system 'x)
+  :config (setq exwm-workspace-number 10) ; Increased for multi-monitor support
+  (add-hook 'exwm-update-class-hook #'grim/exwm-update-class)
+  (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
+  (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
+  ;; Ensure modeline is visible when switching workspaces
+  (add-hook 'exwm-workspace-switch-hook
+            (lambda ()
+              (dolist (buffer (buffer-list))
+                (with-current-buffer buffer
+                  (when (not (eq major-mode 'exwm-mode))
+                    (setq mode-line-format (default-value 'mode-line-format)))))))
 
 
-    (setq exwm-workspace-show-all-buffers t)
-    (setq exwm-layout-show-all-buffers t)
-    (setq exwm-manage-force-tiling nil)
-    (setq mouse-autoselect-window t)
-    (setq focus-follows-mouse t)
-    (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
-    (setq mouse-wheel-progressive-speed t)
-    (setq
-     x-select-enable-clipboard t
-     x-select-enable-primary t
-     select-enable-clipboard t)
+  (setq exwm-workspace-show-all-buffers t)
+  (setq exwm-layout-show-all-buffers t)
+  (setq exwm-manage-force-tiling nil)
+  (setq mouse-autoselect-window t)
+  (setq focus-follows-mouse t)
+  (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
+  (setq mouse-wheel-progressive-speed t)
+  (setq
+   x-select-enable-clipboard t
+   x-select-enable-primary t
+   select-enable-clipboard t)
 
-    ;; Modern EXWM RandR Configuration
-    (require 'exwm-randr)
+  ;; Modern EXWM RandR Configuration
+  (require 'exwm-randr)
 
-    ;; Enable randr mode first
-    (exwm-randr-mode 1)
+  ;; Enable randr mode first
+  (exwm-randr-mode 1)
 
-    ;; Initialize empty - will be set by simple monitor handler
-    (setq exwm-randr-workspace-monitor-plist nil)
+  ;; Initialize empty - will be set by simple monitor handler
+  (setq exwm-randr-workspace-monitor-plist nil)
 
-    ;; Simple monitor change handler
-    (add-hook 'exwm-randr-screen-change-hook
-              (lambda ()
-                (let ((monitors (split-string (shell-command-to-string
-                                               "xrandr --listmonitors | grep -v '^Monitors:' | awk '{print $4}'") "\n" t)))
-                  (when (>= (length monitors) 2)
-                    ;; Assign workspace 0 to first monitor, workspace 1 to second monitor
-                    (setq exwm-randr-workspace-monitor-plist
-                          (list 0 (nth 0 monitors) 1 (nth 1 monitors)))
-                    ;; Configure monitors: left monitor first, right monitor second
-                    (start-process-shell-command
-                     "xrandr" nil
-                     (format "xrandr --output %s --auto --pos 0x0 --output %s --primary --auto --right-of %s --output eDP-1 --off"
-                             (nth 0 monitors) (nth 1 monitors) (nth 0 monitors))))
-                  (when (fboundp 'exwm-randr-refresh)
-                    (exwm-randr-refresh))
-                  ;; Refresh display after screen change
-                  (redisplay t))))
-
-    ;; To enable monitor debugging: (setq grim/exwm-debug-monitors t)
-    ;; Load the system tray before exwm-init
-    (require 'exwm-systemtray)
-    (setq exwm-systemtray-height 20)
-    (setq exwm-systemtray-icon-gap 5)
-    (exwm-systemtray-mode 1)
-
-    ;; Input Prefix Keys
-    (setq exwm-input-prefix-keys
-          '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
-
-    ;; Global keybindings
-    (setq exwm-input-global-keys
-          (nconc
-           `(([?\s-r] . exwm-reset)
-             ([s-left] . windmove-left)
-             ([s-right] . windmove-right)
-             ([s-up] . windmove-up)
-             ([s-down] . windmove-down)
-             ([?\s-w] . exwm-workspace-switch)
-             ([?\s-&] . my/exwm-run-program)
-             ([?\s-x]
-              .
-              (lambda ()
-                (interactive)
-                (save-buffers-kill-emacs)))
-             ([?\s-\ ]
-              .
-              (lambda ()
-                (interactive)
-                (async-shell-command)))
-             ([?\s-v] . consult-yank-pop)
-             ([?\s-q]
-              .
-              (lambda ()
-                (interactive)
-                (kill-buffer-and-window)))
-             ([XF86PowerOff]
-              .
-              (lambda ()
-                (interactive)
-                (when (executable-find "systemctl")
+  ;; Simple monitor change handler
+  (add-hook 'exwm-randr-screen-change-hook
+            (lambda ()
+              (let ((monitors (split-string (shell-command-to-string
+                                             "xrandr --listmonitors | grep -v '^Monitors:' | awk '{print $4}'") "\n" t)))
+                (when (>= (length monitors) 2)
+                  ;; Assign workspace 0 to first monitor, workspace 1 to second monitor
+                  (setq exwm-randr-workspace-monitor-plist
+                        (list 0 (nth 0 monitors) 1 (nth 1 monitors)))
+                  ;; Configure monitors: left monitor first, right monitor second
                   (start-process-shell-command
-                   "poweroff" nil "systemctl poweroff")))))
-           (mapcar
-            (lambda (i)
-              (cons
-               (kbd (format "s-%d" i))
-               (lambda ()
-                 (interactive)
-                 (message "Switching to workspace %d" i)
-                 (exwm-workspace-switch-create i))))
-            (number-sequence 0 9))
-           (mapcar
-            (lambda (i)
-              (cons
-               (kbd (format "M-s-%d" i))
-               (lambda ()
-                 (interactive)
-                 (message "Moving window to workspace %d" i)
-                 (exwm-workspace-move-window i))))
-            (number-sequence 0 9))))
+                   "xrandr" nil
+                   (format "xrandr --output %s --auto --pos 0x0 --output %s --primary --auto --right-of %s --output eDP-1 --off"
+                           (nth 0 monitors) (nth 1 monitors) (nth 0 monitors))))
+                (when (fboundp 'exwm-randr-refresh)
+                  (exwm-randr-refresh))
+                ;; Refresh display after screen change
+                (redisplay t))))
 
-    ;; Simulation Keys
-    (setq exwm-input-simulation-keys
-          '(([?\C-b] . [left])
-            ([?\C-f] . [right])
-            ([?\C-p] . [up])
-            ([?\C-n] . [down])
-            ([?\C-a] . [home])
-            ([?\C-e] . [end])
-            ([?\M-v] . [prior])
-            ([?\C-v] . [next])
-            ([?\C-d] . [delete])
-            ([?\C-k] . [S-end delete])
-            ([?\M-w] . [?\C-c])
-            ([?\C-y] . [?\C-v])))
+  ;; To enable monitor debugging: (setq grim/exwm-debug-monitors t)
+  ;; Load the system tray before exwm-init
+  (require 'exwm-systemtray)
+  (setq exwm-systemtray-height 20)
+  (setq exwm-systemtray-icon-gap 5)
+  (exwm-systemtray-mode 1)
 
-    ;; Enable EXWM - this is required for EXWM to function!
-    (exwm-wm-mode 1)
-    ;; (exwm-enable)
+  ;; Input Prefix Keys
+  (setq exwm-input-prefix-keys
+        '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
 
-    ;; (run-with-timer 1.0 nil
-    ;;                 (lambda ()
-    ;;                   ;; Force modeline on for all buffers
-    ;;                   (setq-default mode-line-format
-    ;;                                 (or mode-line-format
-    ;;                                     '("%e" mode-line-front-space
-    ;;                                       mode-line-mule-info
-    ;;                                       mode-line-client
-    ;;                                       mode-line-modified
-    ;;                                       mode-line-remote
-    ;;                                       mode-line-frame-identification
-    ;;                                       mode-line-buffer-identification
-    ;;                                       "   "
-    ;;                                       mode-line-position
-    ;;                                       (vc-mode vc-mode)
-    ;;                                       "  "
-    ;;                                       mode-line-modes
-    ;;                                       mode-line-misc-info
-    ;;                                       mode-line-end-spaces)))
-    ;;                   ;; Force refresh of all windows
-    ;;                   (dolist (frame (frame-list))
-    ;;                     (select-frame frame)
-    ;;                     (dolist (window (window-list frame))
-    ;;                       (set-window-buffer window (window-buffer window))))
-    ;;                   (force-mode-line-update t)
-    ;;                   (redisplay t)
-    ;;                   ;; Force theme to apply to modeline
-    ;;                   (when (car custom-enabled-themes)
-    ;;                     (enable-theme (car custom-enabled-themes)))
-    ;;                   ;; Mimic what workspace switching does
-    ;;                   (when (fboundp 'exwm-layout--refresh)
-    ;;                     (exwm-layout--refresh))
-    ;;                   (when (fboundp 'exwm-workspace--update-switch-history)
-    ;;                     (exwm-workspace--update-switch-history))))
+  ;; Global keybindings
+  (setq exwm-input-global-keys
+        (nconc
+         `(([?\s-r] . exwm-reset)
+           ([s-left] . windmove-left)
+           ([s-right] . windmove-right)
+           ([s-up] . windmove-up)
+           ([s-down] . windmove-down)
+           ([?\s-w] . exwm-workspace-switch)
+           ([?\s-&] . my/exwm-run-program)
+           ([?\s-x]
+            .
+            (lambda ()
+              (interactive)
+              (save-buffers-kill-emacs)))
+           ([?\s-\ ]
+            .
+            (lambda ()
+              (interactive)
+              (async-shell-command)))
+           ([?\s-v] . consult-yank-pop)
+           ([?\s-q]
+            .
+            (lambda ()
+              (interactive)
+              (kill-buffer-and-window)))
+           ([XF86PowerOff]
+            .
+            (lambda ()
+              (interactive)
+              (when (executable-find "systemctl")
+                (start-process-shell-command
+                 "poweroff" nil "systemctl poweroff")))))
+         (mapcar
+          (lambda (i)
+            (cons
+             (kbd (format "s-%d" i))
+             (lambda ()
+               (interactive)
+               (message "Switching to workspace %d" i)
+               (exwm-workspace-switch-create i))))
+          (number-sequence 0 9))
+         (mapcar
+          (lambda (i)
+            (cons
+             (kbd (format "M-s-%d" i))
+             (lambda ()
+               (interactive)
+               (message "Moving window to workspace %d" i)
+               (exwm-workspace-move-window i))))
+          (number-sequence 0 9))))
+
+  ;; Simulation Keys
+  (setq exwm-input-simulation-keys
+        '(([?\C-b] . [left])
+          ([?\C-f] . [right])
+          ([?\C-p] . [up])
+          ([?\C-n] . [down])
+          ([?\C-a] . [home])
+          ([?\C-e] . [end])
+          ([?\M-v] . [prior])
+          ([?\C-v] . [next])
+          ([?\C-d] . [delete])
+          ([?\C-k] . [S-end delete])
+          ([?\M-w] . [?\C-c])
+          ([?\C-y] . [?\C-v])))
+
+  ;; Enable EXWM - this is required for EXWM to function!
+  (exwm-wm-mode 1))
+
+(use-package
+  exwm-edit
+  :ensure t
+  :when (eq window-system 'x)
+  :init
+  ;; Pre-load settings
+  (setq exwm-edit-default-major-mode 'text-mode) ; Default mode for editing
+  :config
+  ;; Explicitly load exwm-edit
+  (require 'exwm-edit nil t)
+  (when (featurep 'exwm-edit)
+    (message "exwm-edit loaded successfully"))
+  ;; Optional: Customize split behavior
+  (setq exwm-edit-split 'below) ; Open edit buffer below current window
+  :bind (:map exwm-mode-map ("C-c e" . exwm-edit--compose))
+  :hook
+  ;; Log initialization
+  (exwm-init
+   .
+   (lambda ()
+     (when (featurep 'exwm-edit)
+       (message "exwm-edit initialized")))))
+
+(use-package exwm-firefox-core
+  :ensure t
+  :when (eq window-system 'x)
+  :init
+  ;; Pre-load settings
+  (setq exwm-firefox-core-classes
+        '("firefox" "firefoxdeveloperedition"))
+
+  ;; Define Firefox-specific minor mode before package loads
+  (define-minor-mode exwm-firefox-mode
+    "Minor mode for Firefox-specific keybindings in EXWM."
+    :init-value nil
+    :lighter " Firefox"
+    :keymap (let ((map (make-sparse-keymap)))
+              (define-key map (kbd "C-c F n") 'exwm-firefox-core-tab-new)
+              (define-key map (kbd "C-c F t") 'exwm-firefox-core-tab-close)
+              (define-key map (kbd "C-c F <right>") 'exwm-firefox-core-tab-right)
+              (define-key map (kbd "C-c F <left>") 'exwm-firefox-core-tab-left)
+              (define-key map (kbd "C-c F h") 'exwm-firefox-core-back)
+              (define-key map (kbd "C-c F l") 'exwm-firefox-core-forward)
+              (define-key map (kbd "C-c F f") 'exwm-firefox-core-find)
+              (define-key map (kbd "C-c F r") 'exwm-firefox-core-reload)
+              (define-key map (kbd "C-c F b") 'exwm-firefox-core-bookmark)
+              map))
+
+  :config
+  ;; Load package safely
+  (require 'exwm-firefox-core nil t)
+
+  ;; Function to manage Firefox buffer setup
+  (defun exwm-firefox-setup ()
+    "Set up Firefox-specific configuration for current buffer."
+    (when (and (derived-mode-p 'exwm-mode)
+               (member (downcase (or exwm-class-name ""))
+                       '("firefox" "firefoxdeveloperedition")))
+      ;; Enable Firefox mode
+      (exwm-firefox-mode 1)
+      ;; Rename buffer to page title
+      (when exwm-title
+        (exwm-workspace-rename-buffer exwm-title))))
+
+  ;; Function to handle buffer switches
+  (defun exwm-firefox-maybe-enable ()
+    "Enable or disable Firefox mode based on current buffer."
+    (when (derived-mode-p 'exwm-mode)
+      (if (member (downcase (or exwm-class-name ""))
+                  '("firefox" "firefoxdeveloperedition"))
+          (exwm-firefox-mode 1)
+        (exwm-firefox-mode -1))))
+
+  :hook
+  ;; Set up Firefox buffers when they're created
+  ((exwm-manage-finish . exwm-firefox-setup)
+   ;; Update buffer name when title changes
+   (exwm-update-title . exwm-firefox-setup)
+   ;; Handle buffer switches to enable/disable mode
+   (window-configuration-change . exwm-firefox-maybe-enable))
+
+  :custom
+  ;; Optional: Customize Firefox-specific EXWM settings
+  (exwm-firefox-core-enable-auto-move-focus t)
+
+  :init
+  ;; Optional: Additional EXWM configuration for Firefox
+  (with-eval-after-load 'exwm
+    ;; Make Firefox windows floating by default (optional)
+    ;; (add-to-list 'exwm-manage-configurations
+    ;;              '((string-match "Firefox" exwm-class-name)
+    ;;                floating t
+    ;;                floating-mode-line nil))
+
+    ;; Set Firefox-specific workspace (optional)
+    ;; (add-to-list 'exwm-manage-configurations
+    ;;              '((string-match "Firefox" exwm-class-name)
+    ;;                workspace 2))
     )
 
+
   (use-package
-    exwm-edit
+    desktop-environment
     :ensure t
-    :after exwm
+    :when (eq window-system 'x)
     :init
-    ;; Pre-load settings
-    (setq exwm-edit-default-major-mode 'text-mode) ; Default mode for editing
-    :config
-    ;; Explicitly load exwm-edit
-    (require 'exwm-edit nil t)
-    (when (featurep 'exwm-edit)
-      (message "exwm-edit loaded successfully"))
-    ;; Optional: Customize split behavior
-    (setq exwm-edit-split 'below) ; Open edit buffer below current window
-    :bind (:map exwm-mode-map ("C-c e" . exwm-edit--compose))
-    :hook
-    ;; Log initialization
-    (exwm-init
-     .
-     (lambda ()
-       (when (featurep 'exwm-edit)
-         (message "exwm-edit initialized")))))
-
-  (use-package exwm-firefox-core
-    :ensure t
-    :after exwm
-    :init
-    ;; Pre-load settings
-    (setq exwm-firefox-core-classes
-          '("firefox" "firefoxdeveloperedition"))
-
-    ;; Define Firefox-specific minor mode before package loads
-    (define-minor-mode exwm-firefox-mode
-      "Minor mode for Firefox-specific keybindings in EXWM."
-      :init-value nil
-      :lighter " Firefox"
-      :keymap (let ((map (make-sparse-keymap)))
-                (define-key map (kbd "C-c F n") 'exwm-firefox-core-tab-new)
-                (define-key map (kbd "C-c F t") 'exwm-firefox-core-tab-close)
-                (define-key map (kbd "C-c F <right>") 'exwm-firefox-core-tab-right)
-                (define-key map (kbd "C-c F <left>") 'exwm-firefox-core-tab-left)
-                (define-key map (kbd "C-c F h") 'exwm-firefox-core-back)
-                (define-key map (kbd "C-c F l") 'exwm-firefox-core-forward)
-                (define-key map (kbd "C-c F f") 'exwm-firefox-core-find)
-                (define-key map (kbd "C-c F r") 'exwm-firefox-core-reload)
-                (define-key map (kbd "C-c F b") 'exwm-firefox-core-bookmark)
-                map))
+    ;; Pre-configure settings before mode activation
+    (setq desktop-environment-notifications t) ; Enable notifications
+    (setq desktop-environment-screenshot-directory
+          "~/Pictures/Screenshots")     ; Screenshot path
+    (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
+    (setq
+     desktop-environment-volume-get-command
+     "pactl get-sink-volume @DEFAULT_SINK@ | awk '/Volume:/ {print $5}'")
+    (setq desktop-environment-volume-get-regexp "\\([0-9]+%\\)")
+    (setq desktop-environment-volume-set-command
+          "pactl set-sink-volume @DEFAULT_SINK@ %s%%") ; Set volume
+    (setq
+     desktop-environment-mute-get-command
+     "pactl get-sink-mute @DEFAULT_SINK@ | awk '{print ($2 == \"yes\") ? \"true\" : \"false\"}'")
+    (setq desktop-environment-volume-toggle-command
+          "pactl set-sink-mute @DEFAULT_SINK@ toggle") ; Toggle mute
+    (setq desktop-environment-volume-normal-increment "+1") ; Volume step up
+    (setq desktop-environment-volume-normal-decrement "-1") ; Volume step down
 
     :config
-    ;; Load package safely
-    (require 'exwm-firefox-core nil t)
-
-    ;; Function to manage Firefox buffer setup
-    (defun exwm-firefox-setup ()
-      "Set up Firefox-specific configuration for current buffer."
-      (when (and (derived-mode-p 'exwm-mode)
-                 (member (downcase (or exwm-class-name ""))
-                         '("firefox" "firefoxdeveloperedition")))
-        ;; Enable Firefox mode
-        (exwm-firefox-mode 1)
-        ;; Rename buffer to page title
-        (when exwm-title
-          (exwm-workspace-rename-buffer exwm-title))))
-
-    ;; Function to handle buffer switches
-    (defun exwm-firefox-maybe-enable ()
-      "Enable or disable Firefox mode based on current buffer."
-      (when (derived-mode-p 'exwm-mode)
-        (if (member (downcase (or exwm-class-name ""))
-                    '("firefox" "firefoxdeveloperedition"))
-            (exwm-firefox-mode 1)
-          (exwm-firefox-mode -1))))
-
-    :hook
-    ;; Set up Firefox buffers when they're created
-    ((exwm-manage-finish . exwm-firefox-setup)
-     ;; Update buffer name when title changes
-     (exwm-update-title . exwm-firefox-setup)
-     ;; Handle buffer switches to enable/disable mode
-     (window-configuration-change . exwm-firefox-maybe-enable))
-
-    :custom
-    ;; Optional: Customize Firefox-specific EXWM settings
-    (exwm-firefox-core-enable-auto-move-focus t)
-
-    :init
-    ;; Optional: Additional EXWM configuration for Firefox
-    (with-eval-after-load 'exwm
-      ;; Make Firefox windows floating by default (optional)
-      ;; (add-to-list 'exwm-manage-configurations
-      ;;              '((string-match "Firefox" exwm-class-name)
-      ;;                floating t
-      ;;                floating-mode-line nil))
-
-      ;; Set Firefox-specific workspace (optional)
-      ;; (add-to-list 'exwm-manage-configurations
-      ;;              '((string-match "Firefox" exwm-class-name)
-      ;;                workspace 2))
-      )
-
-
-    (use-package
-      desktop-environment
-      :ensure t
-      :init
-      ;; Pre-configure settings before mode activation
-      (setq desktop-environment-notifications t) ; Enable notifications
-      (setq desktop-environment-screenshot-directory
-            "~/Pictures/Screenshots")     ; Screenshot path
-      (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
-      (setq
-       desktop-environment-volume-get-command
-       "pactl get-sink-volume @DEFAULT_SINK@ | awk '/Volume:/ {print $5}'")
-      (setq desktop-environment-volume-get-regexp "\\([0-9]+%\\)")
-      (setq desktop-environment-volume-set-command
-            "pactl set-sink-volume @DEFAULT_SINK@ %s%%") ; Set volume
-      (setq
-       desktop-environment-mute-get-command
-       "pactl get-sink-mute @DEFAULT_SINK@ | awk '{print ($2 == \"yes\") ? \"true\" : \"false\"}'")
-      (setq desktop-environment-volume-toggle-command
-            "pactl set-sink-mute @DEFAULT_SINK@ toggle") ; Toggle mute
-      (setq desktop-environment-volume-normal-increment "+1") ; Volume step up
-      (setq desktop-environment-volume-normal-decrement "-1") ; Volume step down
-
-      :config
-      ;; Ensure dependencies are installed
-      (desktop-environment-mode 1)
-      (dolist (cmd '("scrot" "slock" "pactl" "brightnessctl"))
-        (unless (executable-find cmd)
-          (message
-           "Warning: %s not found; desktop-environment may not work fully"
-           cmd))))))
+    ;; Ensure dependencies are installed
+    (desktop-environment-mode 1)
+    (dolist (cmd '("scrot" "slock" "pactl" "brightnessctl"))
+      (unless (executable-find cmd)
+        (message
+         "Warning: %s not found; desktop-environment may not work fully"
+         cmd)))))
 
 ;;; init.el version control
 
@@ -1550,19 +1516,25 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 (use-package nerd-icons
   :ensure t
-  :defer 3   ; Defer icon loading for faster startup
+  :defer t   ; Defer icon loading for faster startup
+  :custom
+  (nerd-icons-color-icons t)
+  (nerd-icons-scale-factor 1.0)
   :config
-  ;; Install fonts if not already present
-  (unless (find-font (font-spec :name "Symbols Nerd Font Mono"))
-    (nerd-icons-install-fonts t)))
+  (defvar nerd-icons-cache (make-hash-table :test 'equal))
+  (defun nerd-icons-cached (icon-name)
+    "Get cached icon or generate and cache it."
+    (or (gethash icon-name nerd-icons-cache)
+        (puthash icon-name (nerd-icons-icon-for-file icon-name) nerd-icons-cache))))
 
 (use-package
   nerd-icons-completion
   :ensure t
   :after (nerd-icons marginalia)
-  :config (nerd-icons-completion-mode)
+  :config
+  (nerd-icons-completion-mode 1)
   :hook
-  (marginalia-mode . nerd-icons-completion-marginalia-setup))
+  (marginalia-mode . #'nerd-icons-completion-marginalia-setup))
 
 (use-package expand-region :ensure t :bind ("C-=" . er/expand-region))
 
@@ -1571,6 +1543,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (use-package
   multiple-cursors
   :ensure t
+  :defer t
   :bind
   (("C-S-c C-S-c" . mc/edit-lines)
    ("C-c >" . mc/mark-next-like-this)
@@ -2468,64 +2441,34 @@ This function integrates with exwm-firefox-core to open the current page."
   :ensure nil
   :init
   ;; Tell Emacs where to look for tree-sitter libraries
-  (add-to-list 'treesit-extra-load-path
-               (expand-file-name "tree-sitter" user-emacs-directory))
+  (setq treesit-extra-load-path
+        (list (expand-file-name "tree-sitter" user-emacs-directory)
+              "/usr/local/lib/tree-sitter"    ; System-wide installation
+              "/usr/lib/tree-sitter"))        ; Alternative system path
 
   (setq treesit-language-source-alist
         '((awk . ("https://github.com/Beaglefoot/tree-sitter-awk"))
           (bash . ("https://github.com/tree-sitter/tree-sitter-bash"))
-          (bibtex . ("https://github.com/latex-lsp/tree-sitter-bibtex"))
-          ;;          (blueprint . ("https://github.com/huanie/tree-sitter-blueprint"))
           (c . ("https://github.com/tree-sitter/tree-sitter-c"))
           (clojure . ("https://github.com/sogaiu/tree-sitter-clojure"))
           (cmake . ("https://github.com/uyha/tree-sitter-cmake"))
           (commonlisp . ("https://github.com/theHamsta/tree-sitter-commonlisp"))
           (cpp . ("https://github.com/tree-sitter/tree-sitter-cpp"))
-          ;;          (csharp . ("https://github.com/tree-sitter/tree-sitter-c-sharp"))
           (css . ("https://github.com/tree-sitter/tree-sitter-css"))
-          ;;          (dart . ("https://github.com/ast-grep/tree-sitter-dart"))
-          (dockerfile . ("https://github.com/camdencheek/tree-sitter-dockerfile"))
           (elisp . ("https://github.com/Wilfred/tree-sitter-elisp"))
-          ;;          (elixir . ("https://github.com/elixir-lang/tree-sitter-elixir"))
-          ;;          (glsl . ("https://github.com/theHamsta/tree-sitter-glsl"))
-          ;;          (go . ("https://github.com/tree-sitter/tree-sitter-go"))
-          ;;          (heex . ("https://github.com/phoenixframework/tree-sitter-heex"))
           (html . ("https://github.com/tree-sitter/tree-sitter-html"))
-          ;;          (janet . ("https://github.com/GrayJack/tree-sitter-janet"))
-          ;;          (java . ("https://github.com/tree-sitter/tree-sitter-java"))
           (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "master" "src"))
           (json . ("https://github.com/tree-sitter/tree-sitter-json"))
-          ;;          (julia . ("https://github.com/tree-sitter/tree-sitter-julia"))
-          ;;          (kotlin . ("https://github.com/fwcd/tree-sitter-kotlin"))
           (latex . ("https://github.com/latex-lsp/tree-sitter-latex"))
-          (lua . ("https://github.com/MunifTanjim/tree-sitter-lua"))
-          ;;          (magik . ("https://github.com/GIT-USERS/RobertCrosas/tree-sitter-magik"))
           (make . ("https://github.com/alemuller/tree-sitter-make"))
           (markdown . ("https://github.com/ikatyang/tree-sitter-markdown"))
-          ;;          (nix . ("https://github.com/nix-community/tree-sitter-nix"))
-          ;;          (nu . ("https://github.com/nushell/tree-sitter-nu"))
           (org . ("https://github.com/milisims/tree-sitter-org"))
-          ;;          (perl . ("https://github.com/tree-sitter-perl/tree-sitter-perl"))
-          ;;          (php . ("https://github.com/tree-sitter/tree-sitter-php"))
-          ;;          (proto . ("https://github.com/mitchellh/tree-sitter-proto"))
           (python . ("https://github.com/tree-sitter/tree-sitter-python"))
-          ;;          (r . ("https://github.com/r-lib/tree-sitter-r"))
-          (ruby . ("https://github.com/tree-sitter/tree-sitter-ruby"))
-          (rust . ("https://github.com/tree-sitter/tree-sitter-rust"))
-          (scala . ("https://github.com/tree-sitter/tree-sitter-scala"))
           (scheme . ("https://github.com/6cdh/tree-sitter-scheme"))
           (sql . ("https://github.com/DerekStride/tree-sitter-sql"))
-          ;;          (surface . ("https://github.com/connorlay/tree-sitter-surface"))
           (toml . ("https://github.com/tree-sitter/tree-sitter-toml"))
-          (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src"))
           (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src"))
           (typst . ("https://github.com/uben0/tree-sitter-typst"))
-          ;;          (verilog . ("https://github.com/tree-sitter/tree-sitter-verilog"))
-          ;;          (vhdl . ("https://github.com/gdkrmr/tree-sitter-vhdl"))
-          ;;          (vue . ("https://github.com/merico-dev/tree-sitter-vue"))
-          ;;          (wast . ("https://github.com/bytecodealliance/tree-sitter-wast"))
-          ;;          (wat . ("https://github.com/bytecodealliance/tree-sitter-wat"))
-          ;;          (wgsl . ("https://github.com/mehmetoguzderin/tree-sitter-wgsl"))
           (yaml . ("https://github.com/ikatyang/tree-sitter-yaml"))))
 
   ;; Major mode remapping
@@ -2533,39 +2476,25 @@ This function integrates with exwm-firefox-core to open the current page."
         '((awk-mode . awk-ts-mode)
           (bash-mode . bash-ts-mode)
           (sh-mode . bash-ts-mode)
-          (bibtex-mode . bibtex-ts-mode)
           (c-mode . c-ts-mode)
           (c++-mode . c++-ts-mode)
           (cmake-mode . cmake-ts-mode)
-          ;;          (csharp-mode . csharp-ts-mode)
           (css-mode . css-ts-mode)
-          (dockerfile-mode . dockerfile-ts-mode)
-          ;;          (elixir-mode . elixir-ts-mode)
-          ;;          (go-mode . go-ts-mode)
           (html-mode . html-ts-mode)
           (mhtml-mode . html-ts-mode)
-          ;;          (java-mode . java-ts-mode)
           (javascript-mode . js-ts-mode)
           (js-mode . js-ts-mode)
           (js2-mode . js-ts-mode)
           (js-json-mode . json-ts-mode)
           (json-mode . json-ts-mode)
-          (lua-mode . lua-ts-mode)
           (makefile-mode . make-ts-mode)
           (makefile-gmake-mode . make-ts-mode)
           (markdown-mode . markdown-ts-mode)
-          ;;          (php-mode . php-ts-mode)
           (python-mode . python-ts-mode)
-          ;;          (r-mode . r-ts-mode)
-          ;;          (ruby-mode . ruby-ts-mode)
-          (rust-mode . rust-ts-mode)
-          (scala-mode . scala-ts-mode)
           (sql-mode . sql-ts-mode)
           (toml-mode . toml-ts-mode)
           (conf-toml-mode . toml-ts-mode)
-          (tsx-mode . tsx-ts-mode)
           (typescript-mode . typescript-ts-mode)
-          ;;          (verilog-mode . verilog-ts-mode)
           (yaml-mode . yaml-ts-mode)))
 
   ;; Emacs 30.1+: Ensure parent mode relationships for proper integration
@@ -2580,12 +2509,6 @@ This function integrates with exwm-firefox-core to open the current page."
       (derived-mode-add-parents 'js-ts-mode '(js-mode)))
     (with-eval-after-load 'typescript-ts-mode
       (derived-mode-add-parents 'typescript-ts-mode '(typescript-mode)))
-    (with-eval-after-load 'rust-ts-mode
-      (derived-mode-add-parents 'rust-ts-mode '(rust-mode)))
-    (with-eval-after-load 'go-ts-mode
-      (derived-mode-add-parents 'go-ts-mode '(go-mode)))
-    (with-eval-after-load 'ruby-ts-mode
-      (derived-mode-add-parents 'ruby-ts-mode '(ruby-mode)))
     (with-eval-after-load 'yaml-ts-mode
       (derived-mode-add-parents 'yaml-ts-mode '(yaml-mode))))
 
@@ -3516,10 +3439,11 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 (use-package pulsar
   :ensure t
+  :defer t
   :custom
   (pulsar-pulse t)
-  (pulsar-delay 0.1)
-  (pulsar-iterations 15)
+  (pulsar-delay 0.055)
+  (pulsar-iterations 10)
   (pulsar-face 'isearch)
   (pulsar-highlight-face 'pulsar-yellow)
   :hook
@@ -3665,6 +3589,15 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :demand t
   :hook (after-init . benchmark-init/deactivate)
   :config
+  (when (fboundp 'profiler-cpu-start)
+    (defun my/profile-init ()
+      "Profile Emacs initialization."
+      (interactive)
+      (profiler-cpu-start)
+      (add-hook 'after-init-hook
+                (lambda ()
+                  (profiler-cpu-stop)
+                  (profiler-report)))))
   (add-hook 'emacs-startup-hook
             (lambda ()
               (message "Emacs started in %.2f seconds with %d garbage collections"
