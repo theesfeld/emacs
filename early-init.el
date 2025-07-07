@@ -1,18 +1,80 @@
 ;;; early-init.el -*- lexical-binding: t -*-
 
-;; Native compilation settings (Emacs 28+)
+;; Native compilation settings optimized for Emacs 30.1
 (when (native-comp-available-p)
+  ;; Enhanced error handling and performance for Emacs 30.1
   (setq native-comp-async-report-warnings-errors 'silent
-        native-compile-prune-cache t)
-  ;; Emacs 30.1: Redirect ELN cache during startup for better performance
+        native-compile-prune-cache t
+        native-comp-speed 3                    ; Balance speed vs compile time
+        native-comp-debug 0                    ; Disable debug for performance
+        native-comp-verbose 0                  ; Reduce compilation noise
+        native-comp-jit-compilation t          ; Enable JIT compilation (30.1)
+        native-comp-deferred-compilation t    ; Compile in background
+        native-comp-compiler-options '("-O3" "-march=native"))
+
+  ;; Emacs 30.1: Optimized cache and job management
   (when (boundp 'startup-redirect-eln-cache)
-    (setq startup-redirect-eln-cache t)))
+    (setq startup-redirect-eln-cache t))
+
+  ;; Increase native compilation job limit for modern systems
+  (when (> (num-processors) 4)
+    (setq native-comp-async-jobs-number (/ (num-processors) 2)))
+
+  ;; Prioritize frequently used packages for native compilation
+  (setq native-comp-bootstrap-allow-list
+        '("vertico" "orderless" "consult" "marginalia" "magit"))
+
+  (setq native-comp-bootstrap-deny-list
+        '("tramp" "tramp-.*" "docker-tramp")) ; Avoid compiling tramp for stability
+
+  (when (> (num-processors) 8)
+    (setq native-comp-async-jobs-number (- (num-processors) 2))))
 
 ;; Disable custom.el by making it disposable
 (setq custom-file (make-temp-file "emacs-custom-"))
 
 ;; Enable use-package imenu support early
 (setq use-package-enable-imenu-support t)
+
+;; Prevent white flash during startup
+;; Set dark background immediately - this is the proper way in Emacs 30.1
+(setq-default default-frame-alist
+              (append default-frame-alist
+                      '((background-color . "#000000")
+                        (foreground-color . "#ffffff"))))
+
+;; Ensure packages will be initialized after early-init
+(setq package-enable-at-startup t)
+
+;; Package archives optimized for Emacs 30.1
+(setq package-archives
+      '(("gnu-elpa" . "https://elpa.gnu.org/packages/")          ; Official GNU packages
+        ("gnu-elpa-devel" . "https://elpa.gnu.org/devel/")       ; GNU development packages
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/")            ; NonGNU ELPA
+        ("melpa" . "https://melpa.org/packages/")))              ; Community packages
+
+;; Enable package signature verification for security
+(setq package-check-signature 'allow-unsigned) ; Allow unsigned for MELPA compatibility
+
+;; Package priorities optimized for GNU compliance and Emacs 30.1
+;; Highest number gets priority (what is not mentioned has priority 0)
+(setq package-archive-priorities
+      '(("gnu-elpa" . 10)        ; Highest priority for official GNU packages
+        ("gnu-elpa-devel" . 8)   ; Development GNU packages
+        ("nongnu" . 5)           ; NonGNU ELPA packages
+        ("melpa" . 3)))          ; MELPA packages (lower priority)
+
+;; Prefer GNU ELPA packages when available
+(setq package-archive-selection-policy 'prefer-gnu)
+
+(when (boundp 'package-install-parallel)
+  (setq package-install-parallel t))
+
+;; Pre-configure modus-themes settings for when it loads
+(setq modus-themes-bold-constructs t
+      modus-themes-italic-constructs t
+      modus-themes-mixed-fonts t
+      modus-themes-disable-other-themes t)
 
 (setq frame-resize-pixelwise t
       frame-inhibit-implied-resize 'force
@@ -46,6 +108,15 @@
 (set-face-attribute 'font-lock-keyword-face nil
                     :weight 'black)
 
+;; Scratch buffer configuration - must be set early for proper initialization
+(setq initial-major-mode 'lisp-interaction-mode)
+(setq initial-scratch-message
+      ";; This buffer is for notes you don't want to save, and for Lisp evaluation.
+;; If you want to create a file, visit that file with C-x C-f,
+;; then enter the text in that file's own buffer.
+
+")
+
 (dolist (variable '(initial-frame-alist default-frame-alist))
   (set variable `((width . (text-pixels . 800))
                   (height . (text-pixels . 900))
@@ -77,36 +148,23 @@
 
 (add-hook 'emacs-startup-hook
           (lambda ()
-            (setq gc-cons-threshold #x800000        ; 8MB
+            (setq gc-cons-threshold (* 100 1024 1024)
                   gc-cons-percentage 0.1
                   file-name-handler-alist grim-emacs--file-name-handler-alist
                   vc-handled-backends grim-emacs--vc-handled-backends)))
 
-;; Auto-adjust GC during minibuffer usage
-(add-hook 'minibuffer-setup-hook (lambda () (setq gc-cons-threshold most-positive-fixnum)))
-(add-hook 'minibuffer-exit-hook (lambda () (setq gc-cons-threshold #x800000)))
+(when (boundp 'gcmh-mode)
+  (require 'gcmh nil t)
+  (gcmh-mode 1))
 
-(setq package-enable-at-startup t)
+(add-hook 'minibuffer-setup-hook (lambda () (setq gc-cons-threshold (* 50 1024 1024))))
+(add-hook 'minibuffer-exit-hook (lambda () (setq gc-cons-threshold (* 20 1024 1024))))
 
-;;;; General theme code
+(add-hook 'after-init-hook (lambda () (garbage-collect)))
 
-(defun grim-emacs-re-enable-frame-theme (_frame)
-  "Re-enable active theme, if any, upon FRAME creation.
-Add this to `after-make-frame-functions' so that new frames do
-not retain the generic background set by the function
-`grim-emacs-avoid-initial-flash-of-light'."
-  (when-let* ((theme (car custom-enabled-themes)))
-    (enable-theme theme)))
-
-(defun grim-emacs-avoid-initial-flash-of-light ()
-  "Avoid flash of light when starting Emacs, if needed."
-  (setq mode-line-format nil)
-  (set-face-attribute 'default nil :background "#000000" :foreground "#ffffff")
-  (set-face-attribute 'mode-line nil :background "#000000" :foreground "#ffffff" :box 'unspecified)
-  (add-hook 'after-make-frame-functions #'grim-emacs-re-enable-frame-theme))
-
-(grim-emacs-avoid-initial-flash-of-light)
-
-(add-hook 'after-init-hook (lambda () (set-frame-name "home")))
+;; Frame naming for after-init
+(add-hook 'after-init-hook
+          (lambda ()
+            (set-frame-name "home")))
 
 ;;; early-init.el ends here
