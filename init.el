@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 08:04:59 by grim>
+;; Time-stamp: <Last changed 2025-07-07 08:22:57 by grim>
 
 ;; Enable these
 (mapc
@@ -3725,10 +3725,12 @@ parameters set in early-init.el to ensure robust UI element disabling."
    erc-save-buffer-on-part t
    erc-log-write-after-insert t)
 
-  ;; Add modules - including autojoin and removing services (nickserv)
+  ;; Add modules - explicitly excluding services to prevent NickServ ident
   (setq erc-modules '(autojoin completion log match networks
                                notifications netsplit fill button track
                                readonly ring stamp menu list sasl))
+  ;; Remove services module if it somehow got added
+  (setq erc-modules (delq 'services erc-modules))
   (erc-update-modules)
 
   ;; Autojoin configuration - use alist format
@@ -3743,8 +3745,39 @@ parameters set in early-init.el to ensure robust UI element disabling."
         erc-query-display 'bury ; Bury new private message buffers
         erc-auto-query 'bury) ; Auto-bury query buffers
   (setq erc-track-switch-direction 'newest
-        erc-track-visibility t  ; Always show tracking, not just 'visible
-        erc-track-position-in-mode-line t)
+        erc-track-visibility t  ; Always show tracking
+        erc-track-position-in-mode-line t
+        erc-track-shorten-function nil  ; Show full channel names
+        erc-track-exclude-server-buffer t)  ; Don't track server buffer
+
+  ;; Custom modeline format to show all ERC channels
+  (defun my-erc-channel-list ()
+    "Return a formatted string of all ERC channels for modeline."
+    (when (derived-mode-p 'erc-mode)
+      (let ((channels (cl-remove-if-not
+                       (lambda (buf)
+                         (with-current-buffer buf
+                           (and (eq major-mode 'erc-mode)
+                                (erc-channel-p (buffer-name)))))
+                       (buffer-list))))
+        (when channels
+          (concat " ["
+                  (mapconcat
+                   (lambda (buf)
+                     (let* ((name (buffer-name buf))
+                            (modified-p (member buf (mapcar #'car erc-modified-channels-alist))))
+                       (if modified-p
+                           (propertize name 'face 'erc-nick-msg-face)
+                         name)))
+                   channels ", ")
+                  "]")))))
+
+  ;; Add to mode-line only for ERC buffers
+  (add-hook 'erc-mode-hook
+            (lambda ()
+              (setq-local mode-line-format
+                          (append mode-line-format
+                                  '((:eval (my-erc-channel-list)))))))
 
   ;; Custom function to cycle through ERC buffers with activity
   (defun my-erc-track-switch-buffer-cycle (arg)
@@ -3763,12 +3796,24 @@ With prefix ARG, cycle backwards."
           (switch-to-buffer (nth next-pos channels)))
       (message "No ERC buffers with activity")))
 
+  ;; Function to go to latest channel with activity
+  (defun my-erc-switch-to-latest-activity ()
+    "Switch to the ERC buffer with the most recent activity."
+    (interactive)
+    (if erc-modified-channels-alist
+        (switch-to-buffer (caar erc-modified-channels-alist))
+      (message "No ERC buffers with activity")))
+
   ;; Function to cycle through all ERC buffers (not just with activity)
   (defun my-erc-cycle-buffers (arg)
     "Cycle through all ERC buffers.
 With prefix ARG, cycle backwards."
     (interactive "P")
-    (let* ((erc-buffers (erc-buffer-list))
+    (let* ((erc-buffers (cl-remove-if-not
+                         (lambda (buf)
+                           (with-current-buffer buf
+                             (eq major-mode 'erc-mode)))
+                         (buffer-list)))
            (current-pos (cl-position (current-buffer) erc-buffers))
            (next-pos (if current-pos
                          (if arg
@@ -3864,7 +3909,13 @@ With prefix ARG, cycle backwards."
         (buffer-substring (point-min) (point-max))))))
 
   ;; Disable line numbers in ERC
-  (add-hook 'erc-mode-hook (lambda () (display-line-numbers-mode -1) (hl-line-mode 1)))
+  (add-hook 'erc-mode-hook (lambda () (display-line-numbers-mode -1)))
+
+  ;; Disable NickServ messages if using SASL
+  (defadvice erc-login (after no-nickserv-with-sasl activate)
+    "Don't send NickServ identify when using SASL."
+    (when (and (boundp 'erc-sasl-password) erc-sasl-password)
+      (setq erc-prompt-for-nickserv-password nil)))
 
   ;; SASL connection function for Libera Chat
   (defun my-erc-connect-libera ()
@@ -3906,10 +3957,9 @@ With prefix ARG, cycle backwards."
         ("C-c e" . erc-button-browse-url)
         ("C-c l" . erc-view-log-mode)
         ("TAB" . completion-at-point)
-        ("C-c C-n" . my-erc-track-switch-buffer-cycle)     ; Next buffer with activity
-        ("C-c C-p" . (lambda () (interactive) (my-erc-track-switch-buffer-cycle t))) ; Previous with activity
-        ("M-n" . my-erc-cycle-buffers)                     ; Next ERC buffer
-        ("M-p" . (lambda () (interactive) (my-erc-cycle-buffers t))) ; Previous ERC buffer
+        ("M-<right>" . my-erc-cycle-buffers)                ; Next ERC buffer
+        ("M-<left>" . (lambda () (interactive) (my-erc-cycle-buffers t))) ; Previous ERC buffer
+        ("M-SPC" . my-erc-switch-to-latest-activity)        ; Latest activity
         :map global-map
         ("C-c L" . my-erc-connect-libera)))
 
