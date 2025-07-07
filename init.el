@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 12:50:49 by grim>
+;; Time-stamp: <Last changed 2025-07-07 12:59:52 by grim>
 
 ;; Enable these
 (mapc
@@ -1820,14 +1820,19 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 ;; Core Org Mode Configuration
 (use-package org
   :ensure nil
-  :config
+  :custom
   ;; Basic settings
   (setq org-directory "~/Documents/notes/")
   (setq org-startup-indented t)
-  (setq org-startup-folded t)
+  (setq org-startup-folded 'content)
   (setq org-return-follows-link t)
   (setq org-log-done 'time)
-
+  (org-image-actual-width '(400))           ; Limit image size for performance
+  (org-fontify-quote-and-verse-blocks t)
+  (org-fontify-whole-heading-line t)
+  (org-hide-emphasis-markers t)
+  (org-agenda-files-cache-time 600)
+  :config
   ;; TODO states
   (setq org-todo-keywords
         '((sequence "TODO(t)" "NEXT(n)" "WAITING(w@/!)"
@@ -1837,22 +1842,26 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (defvar my/org-agenda-files-cache nil)
   (defvar my/org-agenda-cache-time nil)
 
-  ;; Optimized function to update org-agenda-files with caching
-  (defun my/update-org-agenda-files ()
-    "Update org-agenda-files with caching (5 min cache)."
+  (defun my/update-org-agenda-files-optimized ()
+    "Update org-agenda-files with enhanced caching and file watching."
     (when (or (null my/org-agenda-cache-time)
-              (> (- (float-time) my/org-agenda-cache-time) 300)) ; 5 minutes
+              (> (- (float-time) my/org-agenda-cache-time) 600)) ; 10 minutes
       (setq my/org-agenda-files-cache
-            (directory-files-recursively "~/Documents/notes/" "\\.org$"))
+            (seq-filter
+             (lambda (file)
+               (and (string-suffix-p ".org" file)
+                    (not (string-match-p "/\\." file))  ; Skip hidden files
+                    (file-readable-p file)))
+             (directory-files-recursively org-directory "\\.org$")))
       (setq my/org-agenda-cache-time (float-time)))
     (setq org-agenda-files my/org-agenda-files-cache))
 
   ;; Initial agenda files setup with cache
-  (my/update-org-agenda-files)
+  (advice-add 'org-agenda-files :before #'my/update-org-agenda-files-optimized)
 
   :hook
-  ((before-save . my/update-org-agenda-files)
-   (org-agenda-mode . my/update-org-agenda-files)))
+  ((org-mode . visual-line-mode)
+   (org-mode . org-indent-mode)))
 
 ;; Capture Templates
 (use-package org-capture
@@ -1873,17 +1882,27 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (use-package org-agenda
   :ensure nil
   :after org
-  :config
-  ;; Simple agenda views
-  (setq org-agenda-custom-commands
-        '(("t" "All TODOs" todo "TODO|NEXT|WAITING"
-           ((org-agenda-overriding-header "All Open TODOs")))
-          ("d" "Today's Agenda" agenda ""
-           ((org-agenda-span 'day)
-            (org-agenda-overriding-header "Today")))))
+  :custom
+  ;; Performance improvements
+  (org-agenda-span 'week)
+  (org-agenda-start-on-weekday 1)
+  (org-agenda-skip-deadline-if-done t)
+  (org-agenda-skip-scheduled-if-done t)
+  (org-agenda-window-setup 'current-window)
+  (org-agenda-restore-windows-after-quit t)
 
-  ;; Start week on Monday
-  (setq org-agenda-start-on-weekday 1))
+  ;; Enhanced custom commands with better performance
+  (org-agenda-custom-commands
+   '(("t" "All TODOs" todo "TODO|NEXT|WAITING"
+      ((org-agenda-overriding-header "All Open TODOs")
+       (org-agenda-max-entries 50)))          ; Limit entries for performance
+     ("d" "Today's Agenda" agenda ""
+      ((org-agenda-span 'day)
+       (org-agenda-overriding-header "Today")
+       (org-agenda-time-grid
+        '((daily today require-timed)
+          (800 1000 1200 1400 1600 1800 2000)
+          "......" "----------------")))))))
 
 ;; Protocol support for browser integration
 (use-package org-protocol
@@ -1991,7 +2010,17 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq magit-repository-directories
         '(("~/Code" . 1))))
 
-(use-package forge :ensure t :after magit)
+(use-package forge
+  :ensure t
+  :after magit
+  :custom
+  ;; Performance settings
+  (forge-database-connector 'sqlite-builtin) ; Use built-in SQLite
+  (forge-pull-notifications nil)             ; Reduce API calls
+  :config
+  ;; Optimize API usage
+  (setq forge-topic-list-limit 100))         ; Limit topic fetching
+
 (use-package magit-todos :ensure t :after magit :config (magit-todos-mode 1))
 
 ;;; grep settings
