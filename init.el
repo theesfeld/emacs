@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 07:31:08 by grim>
+;; Time-stamp: <Last changed 2025-07-07 07:32:44 by grim>
 
 ;; Enable these
 (mapc
@@ -3839,13 +3839,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
                 (funcall (plist-get auth-entry :secret))
               (plist-get auth-entry :secret))))
       (unless (and username password)
-        (error "Could not retrieve IRC credentials from authinfo.gpg"))
-      (erc-tls
-       :server host
-       :port (string-to-number port)
-       :nick username
-       :password password
-       :full-name "tjmacs")))
+        (error "Could not retrieve IRC credentials from authinfo.gpg"))))
 
   :hook
   ((erc-mode . my-erc-set-fill-column)
