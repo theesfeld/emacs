@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 06:55:56 by grim>
+;; Time-stamp: <Last changed 2025-07-07 07:08:20 by grim>
 
 ;; Enable these
 (mapc
@@ -3783,8 +3783,8 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (defun my-erc-connect ()
     "Retrieve IRC credentials from authinfo.gpg and connect to the IRC server"
     (interactive)
-    (let* ((host "samhain.su")
-           (port "7000")
+    (let* ((host "irc.libera.chat")
+           (port "6697")
            (auth-entry
             (car
              (auth-source-search
