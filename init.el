@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 08:50:50 by grim>
+;; Time-stamp: <Last changed 2025-07-07 08:52:06 by grim>
 
 ;; Enable these
 (mapc
@@ -650,7 +650,8 @@ Uses built-in window management for better integration."
             ([?\C-y] . [?\C-v])))
 
     ;; Enable EXWM - this is required for EXWM to function!
-    (exwm-enable)
+    (exwm-wm-mode 1)
+    ;; (exwm-enable)
 
     ;; (run-with-timer 1.0 nil
     ;;                 (lambda ()
