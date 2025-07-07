@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 09:08:39 by grim>
+;; Time-stamp: <Last changed 2025-07-07 10:00:54 by grim>
 
 ;; Enable these
 (mapc
@@ -3684,7 +3684,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
   ;; Autojoin configuration
   (setq erc-autojoin-channels-alist
-        '(("Libera.Chat" "#emacs" "#gnu" "#lisp" "commonlisp"))
+        '(("Libera.Chat" "#emacs" "#gnu" "#lisp" "#commonlisp"))
         erc-autojoin-timing 'ident
         erc-autojoin-delay 5)
 
