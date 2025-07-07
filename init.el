@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 07:21:56 by grim>
+;; Time-stamp: <Last changed 2025-07-07 07:23:21 by grim>
 
 ;; Enable these
 (mapc
@@ -3820,33 +3820,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
        :nick username
        :full-name "blackdream")))
 
-  ;; Original connection function (for samhain.su)
-  (defun my-erc-connect ()
-    "Retrieve IRC credentials from authinfo.gpg and connect to the IRC server"
-    (interactive)
-    (let* ((host "samhain.su")
-           (port "7000")
-           (auth-entry
-            (car
-             (auth-source-search
-              :host host
-              :port port
-              :require '(:user :secret)
-              :max 1)))
-           (username (plist-get auth-entry :user))
-           (password
-            (if (functionp (plist-get auth-entry :secret))
-                (funcall (plist-get auth-entry :secret))
-              (plist-get auth-entry :secret))))
-      (unless (and username password)
-        (error "Could not retrieve IRC credentials from authinfo.gpg"))
-      (erc-tls
-       :server host
-       :port (string-to-number port)
-       :nick username
-       :password password
-       :full-name "tjmacs")))
-
   :hook
   ((erc-mode . my-erc-set-fill-column)
    (erc-nick-changed . my-erc-update-notifications-keywords)
@@ -3858,8 +3831,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
         ("C-c l" . erc-view-log-mode)
         ("TAB" . completion-at-point)
         :map global-map
-        ("C-c E" . my-erc-connect)
-        ("C-c L" . my-erc-connect-libera)))
+        ("C-c E" . my-erc-connect-libera)))
 
 ;;; final cleanup
 
