@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-06 15:09:27 by grim>
+;; Time-stamp: <Last changed 2025-07-07 06:55:56 by grim>
 
 ;; Enable these
 (mapc
@@ -3637,6 +3637,189 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :config
   (nerd-icons-completion-mode)
   (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                              ERC (IRC Client)                             ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun my-erc-update-notifications-keywords (&rest _)
+  "Update notification keywords with current nick."
+  (when erc-session-user
+    (setq erc-notifications-keywords (list erc-session-user))))
+
+(defun my-erc-set-fill-column ()
+  "Set ERC fill column based on display type."
+  (setq-local erc-fill-column
+              (if (display-graphic-p)
+                  (window-width)
+                (min 80 (window-width)))))
+
+(declare-function pcomplete-erc-setup "erc-pcomplete")
+
+(use-package
+  erc
+  :ensure nil
+  :defer t
+  :config
+  (setq
+   erc-track-remove-disconnected-buffers t
+   erc-hide-list '("PART" "QUIT" "JOIN")
+   erc-interpret-mirc-color t
+   erc-kill-queries-on-quit t
+   erc-kill-server-buffer-on-quit t
+   erc-track-shorten-start 8
+   erc-kill-buffer-on-part t
+   erc-auto-query 'bury
+   erc-prompt
+   (lambda ()
+     (concat
+      (propertize "ERC> "
+                  'face
+                  '(:foreground "cyan" :weight bold))
+      (buffer-name)))
+   erc-timestamp-format "[%Y-%m-%d %H:%M] "
+   erc-insert-timestamp-function 'erc-insert-timestamp-left
+   erc-track-position-in-mode-line t
+   erc-track-exclude-types '("JOIN" "PART" "QUIT" "NICK" "MODE")
+   erc-track-switch-direction 'newest
+   erc-track-visibility 'visible
+   erc-track-showcount t
+   erc-format-query-as-channel-p t
+   erc-fill-function 'erc-fill-variable
+   erc-fill-prefix "  "
+   erc-fill-static-center 20
+   erc-log-channels-directory (expand-file-name "irc-logs" my-tmp-dir)
+   erc-save-buffer-on-part t
+   erc-log-write-after-insert t)
+  (setq erc-modules '(networks notifications match))
+  (erc-update-modules)
+  (erc-timestamp-mode 1)
+  (erc-track-mode 1)
+  (erc-autojoin-mode 1)
+  (require 'erc-button)
+  (erc-button-mode 1)
+  (setq erc-button-url-open-function 'eww-browse-url)
+  (set-face-attribute 'erc-nick-default-face nil :foreground "#bd93f9")
+  (set-face-attribute 'erc-timestamp-face nil :foreground "#6272a4")
+  (set-face-attribute 'erc-my-nick-face nil
+                      :foreground "#ff79c6"
+                      :weight 'bold)
+  ;; Custom face for nick mentions with background highlight
+  (defface erc-nick-mentioned-face
+    '((t
+       :background "#452950"
+       :foreground "#ffcc66"
+       :weight bold
+       :extend t))
+    "Face for messages where my nick is mentioned in ERC, using Modus Vivendi colors."
+    :group 'erc-faces)
+  ;; Modified function to highlight message and add fringe marker
+  (defun my-erc-highlight-nick-message (msg)
+    "Highlight the entire message and add a fringe marker when my nick is mentioned."
+    (let ((nick (erc-current-nick)))
+      (when (and nick (string-match-p (regexp-quote nick) msg))
+        ;; Highlight the full message
+        (put-text-property
+         0 (length msg) 'face 'erc-nick-mentioned-face
+         msg)
+        ;; Add fringe indicator
+        (put-text-property 0 1 'display
+                           '(left-fringe
+                             erc-nick-mentioned-fringe bitmap)
+                           msg))))
+  ;; Add the highlight function to ERC's message insertion hook
+  (add-hook
+   'erc-insert-modify-hook
+   (lambda ()
+     (when (erc-server-buffer)
+       (save-excursion
+         (goto-char (point-min))
+         (while (not (eobp))
+           (let ((msg (buffer-substring (point) (line-end-position))))
+             (my-erc-highlight-nick-message msg))
+           (forward-line 1))))))
+  ;; Define fringe bitmap for red asterisk
+  (define-fringe-bitmap 'erc-nick-mentioned-fringe
+    [#b00000000
+     #b00111000 #b01111100 #b11111110 #b01111100 #b00111000 #b00000000]
+    nil nil 'center)
+  ;; Define face for fringe marker
+  (defface erc-nick-mentioned-fringe-face
+    '((t :foreground "red" :weight bold))
+    "Face for the fringe marker when nick is mentioned."
+    :group 'erc-faces)
+  ;; Associate face with fringe bitmap
+  (put
+   'erc-nick-mentioned-fringe 'face 'erc-nick-mentioned-fringe-face)
+  ;; Configure ERC match for nick highlighting
+  (setq erc-keywords '())
+  (defun my-erc-update-keywords ()
+    "Update erc-keywords with the current nick."
+    (let ((nick (erc-current-nick)))
+      (when nick
+        (setq erc-keywords (list nick)))))
+  (add-hook
+   'erc-after-connect-hook
+   (lambda (&rest _args) (my-erc-update-keywords)))
+  (add-hook 'erc-nick-changed-hook #'my-erc-update-keywords)
+  (setq erc-match-keywords-hook nil)
+  (add-hook
+   'erc-match-keywords-hook
+   (lambda ()
+     (when (and (erc-server-buffer) (erc-current-nick))
+       (my-erc-highlight-nick-message
+        (buffer-substring (point-min) (point-max))))))
+  ;; Completion setup
+  (defun my-erc-setup-completion ()
+    "Set up ERC completion with pcomplete and corfu."
+    (require 'erc-pcomplete)
+    (pcomplete-erc-setup) ; ERC's nick completion
+    (setq-local completion-at-point-functions
+                (list #'erc-pcomplete)) ; Use pcomplete for completion
+    (corfu-mode 1)) ; Enable corfu for dropdown UI
+  ;; Disable line numbers in ERC
+  (add-hook 'erc-mode-hook (lambda () (display-line-numbers-mode -1)))
+
+  (defun my-erc-connect ()
+    "Retrieve IRC credentials from authinfo.gpg and connect to the IRC server"
+    (interactive)
+    (let* ((host "samhain.su")
+           (port "7000")
+           (auth-entry
+            (car
+             (auth-source-search
+              :host host
+              :port port
+              :require '(:user :secret)
+              :max 1)))
+           (username (plist-get auth-entry :user))
+           (password
+            (if (functionp (plist-get auth-entry :secret))
+                (funcall (plist-get auth-entry :secret))
+              (plist-get auth-entry :secret))))
+      (unless (and username password)
+        (error "Could not retrieve IRC credentials from authinfo.gpg"))
+      (erc-tls
+       :server host
+       :port (string-to-number port)
+       :nick username
+       :password password
+       :full-name "blackdream")))
+
+  :hook
+  ((erc-mode . my-erc-set-fill-column)
+   (erc-nick-changed . my-erc-update-notifications-keywords)
+   (erc-insert-post . erc-save-buffer-in-logs)
+   (erc-mode . my-erc-setup-completion)) ; Replace old completion hook
+  :bind
+  (:map
+   erc-mode-map
+   ("C-c e" . erc-button-browse-url)
+   ("C-c l" . erc-view-log-mode)
+   ("TAB" . completion-at-point) ; Explicitly bind TAB
+   :map
+   global-map
+   ("C-c E" . my-erc-connect)))
 
 ;;; final cleanup
 
