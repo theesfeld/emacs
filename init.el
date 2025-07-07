@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 13:21:48 by grim>
+;; Time-stamp: <Last changed 2025-07-07 13:23:07 by grim>
 
 ;; Enable these
 (mapc
@@ -2714,21 +2714,21 @@ This function integrates with exwm-firefox-core to open the current page."
 
 ;;; YAsnippet
 
-(use-package
-  yasnippet
-  :ensure t
-  :init (yas-global-mode 1)
-  :custom
-  (yas-snippet-dirs
-   (list
-    (expand-file-name "snippets/" user-emacs-directory)
-    (expand-file-name
-     "snippets/"
-     (file-name-directory (find-library-name "yasnippet-snippets")))))
-  (yas-prompt-functions
-   '(yas-completing-prompt yas-ido-prompt yas-no-prompt))
-  :hook (after-init . yas-reload-all)
-  :bind (:map yas-minor-mode-map ("C-c y" . yas-insert-snippet)))
+;; (use-package
+;;   yasnippet
+;;   :ensure t
+;;   :init (yas-global-mode 1)
+;;   :custom
+;;   (yas-snippet-dirs
+;;    (list
+;;     (expand-file-name "snippets/" user-emacs-directory)
+;;     (expand-file-name
+;;      "snippets/"
+;;      (file-name-directory (find-library-name "yasnippet-snippets")))))
+;;   (yas-prompt-functions
+;;    '(yas-completing-prompt yas-ido-prompt yas-no-prompt))
+;;   :hook (after-init . yas-reload-all)
+;;   :bind (:map yas-minor-mode-map ("C-c y" . yas-insert-snippet)))
 
 (use-package
   yasnippet-snippets
