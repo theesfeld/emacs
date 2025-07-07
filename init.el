@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 07:40:28 by grim>
+;; Time-stamp: <Last changed 2025-07-07 07:50:58 by grim>
 
 ;; Enable these
 (mapc
@@ -3655,15 +3655,40 @@ parameters set in early-init.el to ensure robust UI element disabling."
                   (window-width)
                 (min 80 (window-width)))))
 
-(defun my-erc-setup-completion-preview ()
-  "Set up ERC completion with pcomplete and completion-preview."
-  (require 'erc-pcomplete)
-  (pcomplete-erc-setup) ; ERC's nick completion
+(defun my-erc-setup-completion ()
+  "Set up ERC completion with completion-preview for suggestions."
+  ;; Disable pcomplete's automatic completion
+  (setq-local pcomplete-cycle-completions nil)
+  ;; Enable completion-preview-mode for suggestions
+  (completion-preview-mode 1)
+  ;; Set up completion-at-point-functions for ERC
   (setq-local completion-at-point-functions
-              (list #'erc-pcomplete)) ; Use pcomplete for completion
-  (completion-preview-mode 1)) ; Enable completion-preview instead of corfu
+              '(erc-complete-nick-at-point)))
 
-(declare-function pcomplete-erc-setup "erc-pcomplete")
+(defun erc-complete-nick-at-point ()
+  "Provide nick completion data for completion-at-point."
+  (when (and (erc-server-buffer)
+             (> (point) (erc-beg-of-input-line)))
+    (let ((word-start (save-excursion
+                        (skip-chars-backward "^ \t\n")
+                        (point))))
+      (when (and (> (point) word-start)
+                 (save-excursion
+                   (goto-char word-start)
+                   (or (bobp) (looking-back "^\\|\\s-" 1))))
+        (let* ((prefix (buffer-substring-no-properties word-start (point)))
+               (nicks (erc-get-channel-nickname-list))
+               (completions (all-completions prefix nicks)))
+          (when completions
+            (list word-start (point) completions
+                  :exclusive 'no
+                  :exit-function
+                  (lambda (_string _status)
+                    (when (and (not (eobp))
+                               (save-excursion
+                                 (goto-char word-start)
+                                 (or (bobp) (looking-back "^\\|\\s-" 1))))
+                      (insert ": "))))))))))
 
 (use-package erc
   :ensure nil
@@ -3700,12 +3725,18 @@ parameters set in early-init.el to ensure robust UI element disabling."
    erc-save-buffer-on-part t
    erc-log-write-after-insert t)
 
-  ;; Add SASL to ERC modules
-  (setq erc-modules '(networks notifications match sasl))
+  ;; Add modules - including autojoin and removing services (nickserv)
+  (setq erc-modules '(autojoin completion log match networks
+                               notifications netsplit fill button track
+                               readonly ring stamp menu list sasl))
   (erc-update-modules)
 
+  ;; Autojoin configuration - use alist format
   (setq erc-autojoin-channels-alist
-        '(("irc.libera.chat" "#emacs" "##gnu")))
+        '(("libera.chat" "#emacs" "##gnu")))
+
+  ;; Enable autojoin timing to ensure we join after auth
+  (setq erc-autojoin-timing 'ident)  ; Join after successful identification
 
   ;; one buffer
   (setq erc-join-buffer 'bury ; Bury new channel buffers immediately
@@ -3857,7 +3888,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   ((erc-mode . my-erc-set-fill-column)
    (erc-nick-changed . my-erc-update-notifications-keywords)
    (erc-insert-post . erc-save-buffer-in-logs)
-   (erc-mode . my-erc-setup-completion-preview))
+   (erc-mode . my-erc-setup-completion))
   :bind
   (:map erc-mode-map
         ("C-c e" . erc-button-browse-url)
