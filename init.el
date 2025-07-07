@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 07:32:44 by grim>
+;; Time-stamp: <Last changed 2025-07-07 07:40:28 by grim>
 
 ;; Enable these
 (mapc
@@ -3701,8 +3701,20 @@ parameters set in early-init.el to ensure robust UI element disabling."
    erc-log-write-after-insert t)
 
   ;; Add SASL to ERC modules
-  ;;(setq erc-modules '(networks notifications match sasl))
+  (setq erc-modules '(networks notifications match sasl))
   (erc-update-modules)
+
+  (setq erc-autojoin-channels-alist
+        '(("irc.libera.chat" "#emacs" "##gnu")))
+
+  ;; one buffer
+  (setq erc-join-buffer 'bury ; Bury new channel buffers immediately
+        erc-query-display 'bury ; Bury new private message buffers
+        erc-auto-query 'bury) ; Auto-bury query buffers
+  (setq erc-track-switch-direction 'newest
+        erc-track-visibility 'visible
+        erc-track-position-in-mode-line t)
+
   (erc-timestamp-mode 1)
   (erc-track-mode 1)
   (erc-autojoin-mode 1)
