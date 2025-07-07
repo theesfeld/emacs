@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 07:18:11 by grim>
+;; Time-stamp: <Last changed 2025-07-07 07:21:44 by grim>
 
 ;; Enable these
 (mapc
@@ -3642,6 +3642,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 ;;                              ERC (IRC Client)                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Define functions BEFORE use-package
 (defun my-erc-update-notifications-keywords (&rest _)
   "Update notification keywords with current nick."
   (when erc-session-user
@@ -3654,15 +3655,20 @@ parameters set in early-init.el to ensure robust UI element disabling."
                   (window-width)
                 (min 80 (window-width)))))
 
+(defun my-erc-setup-completion-preview ()
+  "Set up ERC completion with pcomplete and completion-preview."
+  (require 'erc-pcomplete)
+  (pcomplete-erc-setup) ; ERC's nick completion
+  (setq-local completion-at-point-functions
+              (list #'erc-pcomplete)) ; Use pcomplete for completion
+  (completion-preview-mode 1)) ; Enable completion-preview instead of corfu
+
 (declare-function pcomplete-erc-setup "erc-pcomplete")
 
-(use-package
-  erc
+(use-package erc
   :ensure nil
   :defer t
   :config
-  (setq erc-modules '(networks notifications match sasl))
-  (erc-update-modules)
   (setq
    erc-track-remove-disconnected-buffers t
    erc-hide-list '("PART" "QUIT" "JOIN")
@@ -3693,7 +3699,9 @@ parameters set in early-init.el to ensure robust UI element disabling."
    erc-log-channels-directory (expand-file-name "irc-logs" my-tmp-dir)
    erc-save-buffer-on-part t
    erc-log-write-after-insert t)
-  (setq erc-modules '(networks notifications match))
+
+  ;; Add SASL to ERC modules
+  (setq erc-modules '(networks notifications match sasl))
   (erc-update-modules)
   (erc-timestamp-mode 1)
   (erc-track-mode 1)
@@ -3706,6 +3714,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (set-face-attribute 'erc-my-nick-face nil
                       :foreground "#ff79c6"
                       :weight 'bold)
+
   ;; Custom face for nick mentions with background highlight
   (defface erc-nick-mentioned-face
     '((t
@@ -3715,6 +3724,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
        :extend t))
     "Face for messages where my nick is mentioned in ERC, using Modus Vivendi colors."
     :group 'erc-faces)
+
   ;; Modified function to highlight message and add fringe marker
   (defun my-erc-highlight-nick-message (msg)
     "Highlight the entire message and add a fringe marker when my nick is mentioned."
@@ -3729,6 +3739,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
                            '(left-fringe
                              erc-nick-mentioned-fringe bitmap)
                            msg))))
+
   ;; Add the highlight function to ERC's message insertion hook
   (add-hook
    'erc-insert-modify-hook
@@ -3740,19 +3751,23 @@ parameters set in early-init.el to ensure robust UI element disabling."
            (let ((msg (buffer-substring (point) (line-end-position))))
              (my-erc-highlight-nick-message msg))
            (forward-line 1))))))
+
   ;; Define fringe bitmap for red asterisk
   (define-fringe-bitmap 'erc-nick-mentioned-fringe
     [#b00000000
      #b00111000 #b01111100 #b11111110 #b01111100 #b00111000 #b00000000]
     nil nil 'center)
+
   ;; Define face for fringe marker
   (defface erc-nick-mentioned-fringe-face
     '((t :foreground "red" :weight bold))
     "Face for the fringe marker when nick is mentioned."
     :group 'erc-faces)
+
   ;; Associate face with fringe bitmap
   (put
    'erc-nick-mentioned-fringe 'face 'erc-nick-mentioned-fringe-face)
+
   ;; Configure ERC match for nick highlighting
   (setq erc-keywords '())
   (defun my-erc-update-keywords ()
@@ -3771,18 +3786,13 @@ parameters set in early-init.el to ensure robust UI element disabling."
      (when (and (erc-server-buffer) (erc-current-nick))
        (my-erc-highlight-nick-message
         (buffer-substring (point-min) (point-max))))))
-  ;; Completion setup
-  (defun my-erc-setup-completion ()
-    "Set up ERC completion with pcomplete and corfu."
-    (require 'erc-pcomplete)
-    (pcomplete-erc-setup) ; ERC's nick completion
-    (setq-local completion-at-point-functions
-                (list #'erc-pcomplete)))
+
   ;; Disable line numbers in ERC
   (add-hook 'erc-mode-hook (lambda () (display-line-numbers-mode -1)))
 
-  (defun my-erc-connect ()
-    "Retrieve IRC credentials from authinfo.gpg and connect to the IRC server"
+  ;; SASL connection function for Libera Chat
+  (defun my-erc-connect-libera ()
+    "Connect to Libera Chat using SASL authentication from authinfo.gpg"
     (interactive)
     (let* ((host "irc.libera.chat")
            (port "6697")
@@ -3808,22 +3818,48 @@ parameters set in early-init.el to ensure robust UI element disabling."
        :server host
        :port (string-to-number port)
        :nick username
-       :full-name "tjmacs")))
+       :full-name "blackdream")))
+
+  ;; Original connection function (for samhain.su)
+  (defun my-erc-connect ()
+    "Retrieve IRC credentials from authinfo.gpg and connect to the IRC server"
+    (interactive)
+    (let* ((host "samhain.su")
+           (port "7000")
+           (auth-entry
+            (car
+             (auth-source-search
+              :host host
+              :port port
+              :require '(:user :secret)
+              :max 1)))
+           (username (plist-get auth-entry :user))
+           (password
+            (if (functionp (plist-get auth-entry :secret))
+                (funcall (plist-get auth-entry :secret))
+              (plist-get auth-entry :secret))))
+      (unless (and username password)
+        (error "Could not retrieve IRC credentials from authinfo.gpg"))
+      (erc-tls
+       :server host
+       :port (string-to-number port)
+       :nick username
+       :password password
+       :full-name "blackdream")))
 
   :hook
   ((erc-mode . my-erc-set-fill-column)
    (erc-nick-changed . my-erc-update-notifications-keywords)
    (erc-insert-post . erc-save-buffer-in-logs)
-   (erc-mode . my-erc-setup-completion-preview)) ; Replace old completion hook
+   (erc-mode . my-erc-setup-completion-preview))
   :bind
-  (:map
-   erc-mode-map
-   ("C-c e" . erc-button-browse-url)
-   ("C-c l" . erc-view-log-mode)
-   ("TAB" . completion-at-point) ; Explicitly bind TAB
-   :map
-   global-map
-   ("C-c E" . my-erc-connect)))
+  (:map erc-mode-map
+        ("C-c e" . erc-button-browse-url)
+        ("C-c l" . erc-view-log-mode)
+        ("TAB" . completion-at-point)
+        :map global-map
+        ("C-c E" . my-erc-connect)
+        ("C-c L" . my-erc-connect-libera)))
 
 ;;; final cleanup
 
