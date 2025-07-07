@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 08:22:57 by grim>
+;; Time-stamp: <Last changed 2025-07-07 08:29:15 by grim>
 
 ;; Enable these
 (mapc
@@ -3642,12 +3642,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 ;;                              ERC (IRC Client)                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Define functions BEFORE use-package
-(defun my-erc-update-notifications-keywords (&rest _)
-  "Update notification keywords with current nick."
-  (when erc-session-user
-    (setq erc-notifications-keywords (list erc-session-user))))
-
+;; Define helper functions BEFORE use-package
 (defun my-erc-set-fill-column ()
   "Set ERC fill column based on display type."
   (setq-local erc-fill-column
@@ -3657,16 +3652,15 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 (defun my-erc-setup-completion ()
   "Set up ERC completion with completion-preview for suggestions."
-  ;; Disable pcomplete's automatic completion
-  (setq-local pcomplete-cycle-completions nil)
-  ;; Enable completion-preview-mode for suggestions
-  (completion-preview-mode 1)
-  ;; Set up completion-at-point-functions for ERC
+  ;; Use built-in ERC completion system
   (setq-local completion-at-point-functions
-              '(erc-complete-nick-at-point)))
+              '(erc-complete-nick-at-point))
+  ;; Enable completion-preview-mode for suggestions
+  (completion-preview-mode 1))
 
 (defun erc-complete-nick-at-point ()
-  "Provide nick completion data for completion-at-point."
+  "Provide nick completion data for completion-at-point.
+This integrates with completion-preview-mode to show suggestions."
   (when (and (erc-server-buffer)
              (> (point) (erc-beg-of-input-line)))
     (let ((word-start (save-excursion
@@ -3690,276 +3684,187 @@ parameters set in early-init.el to ensure robust UI element disabling."
                                  (or (bobp) (looking-back "^\\|\\s-" 1))))
                       (insert ": "))))))))))
 
+;; Custom tracking display for global mode-line
+(defun my-erc-mode-line-channels ()
+  "Return formatted string of all ERC channels for global mode-line."
+  (let ((channels (cl-remove-if-not
+                   (lambda (buf)
+                     (with-current-buffer buf
+                       (and (eq major-mode 'erc-mode)
+                            (erc-channel-p (buffer-name)))))
+                   (buffer-list))))
+    (when channels
+      (concat " ERC["
+              (mapconcat
+               (lambda (buf)
+                 (let* ((name (buffer-name buf))
+                        (modified-p (member buf (mapcar #'car erc-modified-channels-alist)))
+                        (count (and erc-track-showcount
+                                    modified-p
+                                    (cdr (assq buf erc-modified-channels-alist)))))
+                   (cond
+                    ((and modified-p count)
+                     (propertize (format "%s:%d" name count)
+                                 'face 'erc-nick-msg-face))
+                    (modified-p
+                     (propertize name 'face 'erc-nick-msg-face))
+                    (t name))))
+               channels ",")
+              "]"))))
+
 (use-package erc
   :ensure nil
   :defer t
   :config
+  ;; Core settings
   (setq
-   erc-track-remove-disconnected-buffers t
-   erc-hide-list '("PART" "QUIT" "JOIN")
-   erc-interpret-mirc-color t
+   erc-server-coding-system '(utf-8 . utf-8)
+   erc-kill-buffer-on-part t
    erc-kill-queries-on-quit t
    erc-kill-server-buffer-on-quit t
-   erc-track-shorten-start 8
-   erc-kill-buffer-on-part t
-   erc-auto-query 'bury
-   erc-prompt
-   (lambda ()
-     (concat
-      (propertize "ERC> "
-                  'face
-                  '(:foreground "cyan" :weight bold))
-      (buffer-name)))
-   erc-timestamp-format "[%Y-%m-%d %H:%M] "
+   erc-prompt (lambda () (concat "[" (or (erc-default-target) "ERC") "] "))
+   erc-timestamp-format "[%H:%M] "
+   erc-timestamp-format-left "[%Y-%m-%d %H:%M]\n"
    erc-insert-timestamp-function 'erc-insert-timestamp-left
-   erc-track-position-in-mode-line t
-   erc-track-exclude-types '("JOIN" "PART" "QUIT" "NICK" "MODE")
-   erc-track-switch-direction 'newest
-   erc-track-visibility 'visible
-   erc-track-showcount t
-   erc-format-query-as-channel-p t
-   erc-fill-function 'erc-fill-variable
-   erc-fill-prefix "  "
+   erc-fill-function 'erc-fill-static
    erc-fill-static-center 20
+   erc-fill-prefix "      "
    erc-log-channels-directory (expand-file-name "irc-logs" my-tmp-dir)
    erc-save-buffer-on-part t
+   erc-save-queries-on-quit t
+   erc-log-write-after-send t
    erc-log-write-after-insert t)
 
-  ;; Add modules - explicitly excluding services to prevent NickServ ident
-  (setq erc-modules '(autojoin completion log match networks
-                               notifications netsplit fill button track
-                               readonly ring stamp menu list sasl))
-  ;; Remove services module if it somehow got added
-  (setq erc-modules (delq 'services erc-modules))
+  ;; Modules: Enable only what we need, exclude services (NickServ)
+  (setq erc-modules '(autojoin button completion fill irccontrols
+                               list log match menu move-to-prompt netsplit
+                               networks noncommands readonly ring stamp track
+                               sasl))
   (erc-update-modules)
 
-  ;; Autojoin configuration - use alist format
-  (setq erc-autojoin-channels-alist
-        '(("libera.chat" "#emacs" "##gnu")))
-
-  ;; Enable autojoin timing to ensure we join after auth
-  (setq erc-autojoin-timing 'ident)  ; Join after successful identification
-
-  ;; one buffer
-  (setq erc-join-buffer 'bury ; Bury new channel buffers immediately
-        erc-query-display 'bury ; Bury new private message buffers
-        erc-auto-query 'bury) ; Auto-bury query buffers
-  (setq erc-track-switch-direction 'newest
+  ;; Channel tracking configuration
+  (setq erc-track-enable-keybindings 'ask
         erc-track-visibility t  ; Always show tracking
         erc-track-position-in-mode-line t
-        erc-track-shorten-function nil  ; Show full channel names
-        erc-track-exclude-server-buffer t)  ; Don't track server buffer
+        erc-track-exclude-types '("JOIN" "NICK" "PART" "QUIT" "MODE" "324" "329" "332" "333" "353" "477")
+        erc-track-exclude-server-buffer t
+        erc-track-shorten-start 1
+        erc-track-shorten-cutoff 4
+        erc-track-shorten-function 'erc-track-shorten-names
+        erc-track-shorten-aggressively nil
+        erc-track-switch-direction 'newest
+        erc-track-showcount t
+        erc-track-showcount-string ":"
+        erc-track-switch-from-erc t)
 
-  ;; Custom modeline format to show all ERC channels
-  (defun my-erc-channel-list ()
-    "Return a formatted string of all ERC channels for modeline."
-    (when (derived-mode-p 'erc-mode)
-      (let ((channels (cl-remove-if-not
-                       (lambda (buf)
-                         (with-current-buffer buf
-                           (and (eq major-mode 'erc-mode)
-                                (erc-channel-p (buffer-name)))))
-                       (buffer-list))))
-        (when channels
-          (concat " ["
-                  (mapconcat
-                   (lambda (buf)
-                     (let* ((name (buffer-name buf))
-                            (modified-p (member buf (mapcar #'car erc-modified-channels-alist))))
-                       (if modified-p
-                           (propertize name 'face 'erc-nick-msg-face)
-                         name)))
-                   channels ", ")
-                  "]")))))
+  ;; Autojoin configuration
+  (setq erc-autojoin-channels-alist
+        '(("Libera.Chat" "#emacs" "##gnu"))
+        erc-autojoin-timing 'ident
+        erc-autojoin-delay 5)
 
-  ;; Add to mode-line only for ERC buffers
-  (add-hook 'erc-mode-hook
-            (lambda ()
-              (setq-local mode-line-format
-                          (append mode-line-format
-                                  '((:eval (my-erc-channel-list)))))))
+  ;; Buffer behavior
+  (setq erc-join-buffer 'bury
+        erc-auto-query 'bury
+        erc-query-display 'bury
+        erc-reuse-buffers t)
 
-  ;; Custom function to cycle through ERC buffers with activity
-  (defun my-erc-track-switch-buffer-cycle (arg)
-    "Cycle through ERC buffers with activity.
-With prefix ARG, cycle backwards."
-    (interactive "P")
-    (if erc-modified-channels-alist
-        (let* ((channels (mapcar #'car erc-modified-channels-alist))
-               (current-buffer (current-buffer))
-               (current-pos (cl-position current-buffer channels))
-               (next-pos (if current-pos
-                             (if arg
-                                 (mod (1- current-pos) (length channels))
-                               (mod (1+ current-pos) (length channels)))
-                           0)))
-          (switch-to-buffer (nth next-pos channels)))
-      (message "No ERC buffers with activity")))
+  ;; SASL configuration - prevent NickServ double-auth
+  (with-eval-after-load 'erc-sasl
+    (setq erc-sasl-auth-source-function #'erc-auth-source-search))
 
-  ;; Function to go to latest channel with activity
-  (defun my-erc-switch-to-latest-activity ()
-    "Switch to the ERC buffer with the most recent activity."
-    (interactive)
-    (if erc-modified-channels-alist
-        (switch-to-buffer (caar erc-modified-channels-alist))
-      (message "No ERC buffers with activity")))
+  ;; Add our custom channel display to global-mode-string
+  (unless (member '(:eval (my-erc-mode-line-channels)) global-mode-string)
+    (setq global-mode-string
+          (append global-mode-string '((:eval (my-erc-mode-line-channels))))))
 
-  ;; Function to cycle through all ERC buffers (not just with activity)
-  (defun my-erc-cycle-buffers (arg)
-    "Cycle through all ERC buffers.
-With prefix ARG, cycle backwards."
-    (interactive "P")
-    (let* ((erc-buffers (cl-remove-if-not
-                         (lambda (buf)
-                           (with-current-buffer buf
-                             (eq major-mode 'erc-mode)))
-                         (buffer-list)))
-           (current-pos (cl-position (current-buffer) erc-buffers))
-           (next-pos (if current-pos
-                         (if arg
-                             (mod (1- current-pos) (length erc-buffers))
-                           (mod (1+ current-pos) (length erc-buffers)))
-                       0)))
-      (if erc-buffers
-          (switch-to-buffer (nth next-pos erc-buffers))
-        (message "No ERC buffers"))))
-
-  (erc-timestamp-mode 1)
-  (erc-track-mode 1)
-  (erc-autojoin-mode 1)
-  (require 'erc-button)
-  (erc-button-mode 1)
-  (setq erc-button-url-open-function 'eww-browse-url)
+  ;; Faces
   (set-face-attribute 'erc-nick-default-face nil :foreground "#bd93f9")
   (set-face-attribute 'erc-timestamp-face nil :foreground "#6272a4")
   (set-face-attribute 'erc-my-nick-face nil
                       :foreground "#ff79c6"
                       :weight 'bold)
 
-  ;; Custom face for nick mentions with background highlight
-  (defface erc-nick-mentioned-face
-    '((t
-       :background "#452950"
-       :foreground "#ffcc66"
-       :weight bold
-       :extend t))
-    "Face for messages where my nick is mentioned in ERC, using Modus Vivendi colors."
-    :group 'erc-faces)
+  ;; Custom cycling functions using built-in ERC functionality
+  (defun my-erc-cycle-buffers (&optional reverse)
+    "Cycle through ERC channel buffers.
+With REVERSE non-nil, cycle backwards."
+    (interactive "P")
+    (let* ((buffers (erc-channel-list nil))
+           (current (current-buffer))
+           (pos (cl-position current buffers))
+           (len (length buffers)))
+      (when (and buffers (> len 0))
+        (let ((next-pos (if pos
+                            (mod (if reverse (1- pos) (1+ pos)) len)
+                          0)))
+          (switch-to-buffer (nth next-pos buffers))))))
 
-  ;; Modified function to highlight message and add fringe marker
-  (defun my-erc-highlight-nick-message (msg)
-    "Highlight the entire message and add a fringe marker when my nick is mentioned."
-    (let ((nick (erc-current-nick)))
-      (when (and nick (string-match-p (regexp-quote nick) msg))
-        ;; Highlight the full message
-        (put-text-property
-         0 (length msg) 'face 'erc-nick-mentioned-face
-         msg)
-        ;; Add fringe indicator
-        (put-text-property 0 1 'display
-                           '(left-fringe
-                             erc-nick-mentioned-fringe bitmap)
-                           msg))))
-
-  ;; Add the highlight function to ERC's message insertion hook
-  (add-hook
-   'erc-insert-modify-hook
-   (lambda ()
-     (when (erc-server-buffer)
-       (save-excursion
-         (goto-char (point-min))
-         (while (not (eobp))
-           (let ((msg (buffer-substring (point) (line-end-position))))
-             (my-erc-highlight-nick-message msg))
-           (forward-line 1))))))
-
-  ;; Define fringe bitmap for red asterisk
-  (define-fringe-bitmap 'erc-nick-mentioned-fringe
-    [#b00000000
-     #b00111000 #b01111100 #b11111110 #b01111100 #b00111000 #b00000000]
-    nil nil 'center)
-
-  ;; Define face for fringe marker
-  (defface erc-nick-mentioned-fringe-face
-    '((t :foreground "red" :weight bold))
-    "Face for the fringe marker when nick is mentioned."
-    :group 'erc-faces)
-
-  ;; Associate face with fringe bitmap
-  (put
-   'erc-nick-mentioned-fringe 'face 'erc-nick-mentioned-fringe-face)
-
-  ;; Configure ERC match for nick highlighting
-  (setq erc-keywords '())
-  (defun my-erc-update-keywords ()
-    "Update erc-keywords with the current nick."
-    (let ((nick (erc-current-nick)))
-      (when nick
-        (setq erc-keywords (list nick)))))
-  (add-hook
-   'erc-after-connect-hook
-   (lambda (&rest _args) (my-erc-update-keywords)))
-  (add-hook 'erc-nick-changed-hook #'my-erc-update-keywords)
-  (setq erc-match-keywords-hook nil)
-  (add-hook
-   'erc-match-keywords-hook
-   (lambda ()
-     (when (and (erc-server-buffer) (erc-current-nick))
-       (my-erc-highlight-nick-message
-        (buffer-substring (point-min) (point-max))))))
-
-  ;; Disable line numbers in ERC
-  (add-hook 'erc-mode-hook (lambda () (display-line-numbers-mode -1)))
-
-  ;; Disable NickServ messages if using SASL
-  (defadvice erc-login (after no-nickserv-with-sasl activate)
-    "Don't send NickServ identify when using SASL."
-    (when (and (boundp 'erc-sasl-password) erc-sasl-password)
-      (setq erc-prompt-for-nickserv-password nil)))
-
-  ;; SASL connection function for Libera Chat
-  (defun my-erc-connect-libera ()
-    "Connect to Libera Chat using SASL authentication from authinfo.gpg"
+  (defun my-erc-switch-to-latest-activity ()
+    "Switch to the ERC buffer with the most recent activity."
     (interactive)
+    (if erc-modified-channels-alist
+        (switch-to-buffer (caar erc-modified-channels-alist))
+      (message "No channels with activity")))
+
+  ;; Advice to prevent NickServ auth when using SASL
+  (define-advice erc-nickserv-identify-autodetect (:before-while (&rest _args) no-sasl-check)
+    "Don't run NickServ identify when SASL is being used."
+    (not (and (boundp 'erc-sasl-user) erc-sasl-user
+              (boundp 'erc-sasl-password) erc-sasl-password)))
+
+  ;; Connection functions
+  (defun my-erc-connect-libera ()
+    "Connect to Libera Chat using SASL authentication."
+    (interactive)
+    (require 'erc-sasl)
     (let* ((host "irc.libera.chat")
-           (port "6697")
-           (auth-entry
-            (car
-             (auth-source-search
-              :host host
-              :port port
-              :require '(:user :secret)
-              :max 1)))
+           (port 6697)
+           (auth-entry (car (auth-source-search
+                             :host host
+                             :port (number-to-string port)
+                             :require '(:user :secret)
+                             :max 1)))
            (username (plist-get auth-entry :user))
-           (password
-            (if (functionp (plist-get auth-entry :secret))
-                (funcall (plist-get auth-entry :secret))
-              (plist-get auth-entry :secret))))
+           (password (if (functionp (plist-get auth-entry :secret))
+                         (funcall (plist-get auth-entry :secret))
+                       (plist-get auth-entry :secret))))
       (unless (and username password)
         (error "Could not retrieve IRC credentials from authinfo.gpg"))
       ;; Set SASL credentials
       (setq erc-sasl-user username
             erc-sasl-password password)
-      ;; Connect without password (SASL will handle auth)
-      (erc-tls
-       :server host
-       :port (string-to-number port)
-       :nick username
-       :full-name "tjmacs")))
+      ;; Connect using erc-tls (built-in secure connection)
+      (erc-tls :server host
+               :port port
+               :nick username
+               :full-name "tjmacs")))
+
+  ;; Highlight configuration
+  (with-eval-after-load 'erc-match
+    (setq erc-keywords nil
+          erc-current-nick-highlight-type 'all
+          erc-keyword-highlight-type 'all
+          erc-pal-highlight-type 'all
+          erc-dangerous-host-highlight-type 'all
+          erc-log-matches-flag t))
 
   :hook
   ((erc-mode . my-erc-set-fill-column)
-   (erc-nick-changed . my-erc-update-notifications-keywords)
+   (erc-mode . my-erc-setup-completion)
+   (erc-mode . (lambda () (display-line-numbers-mode -1)))
+   (erc-mode . (lambda () (setq show-trailing-whitespace nil)))
    (erc-insert-post . erc-save-buffer-in-logs)
-   (erc-mode . my-erc-setup-completion))
+   (erc-send-post . erc-save-buffer-in-logs))
+
   :bind
   (:map erc-mode-map
-        ("C-c e" . erc-button-browse-url)
-        ("C-c l" . erc-view-log-mode)
         ("TAB" . completion-at-point)
-        ("M-<right>" . my-erc-cycle-buffers)                ; Next ERC buffer
-        ("M-<left>" . (lambda () (interactive) (my-erc-cycle-buffers t))) ; Previous ERC buffer
-        ("M-SPC" . my-erc-switch-to-latest-activity)        ; Latest activity
+        ("M-<right>" . my-erc-cycle-buffers)
+        ("M-<left>" . (lambda () (interactive) (my-erc-cycle-buffers t)))
+        ("M-SPC" . my-erc-switch-to-latest-activity)
+        ("C-c C-@" . erc-track-switch-buffer)  ; Built-in tracking
+        ("C-c C-SPC" . erc-track-switch-buffer)
         :map global-map
         ("C-c L" . my-erc-connect-libera)))
 
