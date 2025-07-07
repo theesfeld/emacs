@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 07:08:20 by grim>
+;; Time-stamp: <Last changed 2025-07-07 07:09:33 by grim>
 
 ;; Enable these
 (mapc
@@ -3775,8 +3775,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
     (require 'erc-pcomplete)
     (pcomplete-erc-setup) ; ERC's nick completion
     (setq-local completion-at-point-functions
-                (list #'erc-pcomplete)) ; Use pcomplete for completion
-    (corfu-mode 1)) ; Enable corfu for dropdown UI
+                (list #'erc-pcomplete)))
   ;; Disable line numbers in ERC
   (add-hook 'erc-mode-hook (lambda () (display-line-numbers-mode -1)))
 
