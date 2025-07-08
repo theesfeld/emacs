@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 23:07:25 by grim>
+;; Time-stamp: <Last changed 2025-07-08 07:47:41 by grim>
 
 ;; Enable these
 (mapc
@@ -2586,24 +2586,6 @@ This function integrates with exwm-firefox-core to open the current page."
   :hook
   (ruby-ts-mode . eglot-ensure))
 
-;; ;; Elisp with tree-sitter (if available)
-;; (use-package elisp-ts-mode
-;;   :ensure nil
-;;   :if (treesit-language-available-p 'elisp)
-;;   :hook
-;;   (elisp-ts-mode . (lambda ()
-;;                      (setq-local treesit-defun-type-regexp
-;;                                  (rx (or "function_definition"
-;;                                          "macro_definition")))
-;;                      (setq-local treesit-thing-settings
-;;                                  `((elisp
-;;                                     (defun . ,(rx (or "function_definition"
-;;                                                       "macro_definition")))
-;;                                     (sexp . "sexp")
-;;                                     (sentence . "sexp"))))
-;;                      (setq-local treesit-primary-parser (treesit-parser-create 'elisp)))))
-
-
 ;;; tree-sitter folding
 
 ;; Use built-in outline-minor-mode for code folding with tree-sitter
@@ -2946,14 +2928,6 @@ This function integrates with exwm-firefox-core to open the current page."
         (expand-file-name "gnus-drafts" my-tmp-dir)))
 
 ;;; Frame setup for daemon compatibility
-;;
-;; Explanation: While early-init.el sets frame parameters (menu-bar-lines: 0, tool-bar-lines: 0, etc.)
-;; to disable UI elements at the frame level, explicit mode disabling is still needed because:
-;; 1. Some edge cases where frame parameters don't fully disable the modes
-;; 2. Daemon mode creates frames after early-init.el has run
-;; 3. Ensures consistent behavior across different Emacs startup scenarios
-;;
-;; This dual approach (frame parameters + mode disabling) provides robust UI element management.
 
 (defun my-after-make-frame-setup (&optional frame)
   "Ensure UI elements are disabled for new frames, especially daemon clients.
@@ -3380,9 +3354,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
           ("^[^ \t\n]+:.*" . font-lock-string-face)
           ("^\\[[1-9][0-9]*\\]" . font-lock-constant-face)))
 
-  ;; Support for OS-specific escape sequences such as what `ls
-  ;; --hyperlink' uses.  I normally don't use those, but I am checking
-  ;; this to see if there are any obvious advantages/disadvantages.
   (add-hook 'comint-output-filter-functions 'comint-osc-process-output))
 
 ;;; dictionary / definitions
@@ -3476,69 +3447,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (insert-uuid-uppercase nil))
 
 ;;; BACKGROUND?
-
-;; (use-package buffer-background
-;;   :vc (:url "https://github.com/theesfeld/buffer-background" :branch "opacity")
-;;   :defer 1
-;;   :ensure t
-;;   :custom
-;;   ;; Set global defaults
-;;   (buffer-background-opacity 0.3)
-;;   (buffer-background-auto-enable t)
-;;   :config
-;;   (setq buffer-background-color-alist
-;;         '(;; === EXACT BUFFER NAME MATCHING ===
-;;           ("*scratch*" . (:color "#2d2d2d" :opacity 0.8))
-;;           ("*Messages*" . "#1a1a1a")
-;;           ("*Warnings*" . (:color "#3d1a1a" :opacity 0.9))
-
-;;           ;; === REGEXP PATTERN MATCHING ===
-;;           ("\\*Help.*\\*" . (:color "#1e1e2e" :opacity 0.85))
-;;           ("\\*Compile.*\\*" . (:color "#2d2d2d" :opacity 0.9))
-;;           ("\\*.*shell.*\\*" . (:color "#1a1a2d" :opacity 0.8))
-
-;;           ;; === MAJOR MODE ASSIGNMENTS ===
-;;           (org-mode . (:color "#002b36" :opacity 0.8))        ; Solarized dark
-;;           (python-mode . (:color "#1a1a2d" :opacity 0.8))     ; Blue tint
-;;           (emacs-lisp-mode . (:color "#2d1a2d" :opacity 0.8)) ; Purple tint
-;;           (c-mode . (:color "#1a1a1a" :opacity 0.85))
-
-;;           ;; === ALTERNATIVE MODE SYNTAX ===
-;;           ((mode . js-mode) . (:color "#2d2d1a" :opacity 0.75))      ; Yellow tint
-;;           ((mode . typescript-mode) . (:color "#1a2d2d" :opacity 0.75)) ; Cyan tint
-;;           ((mode . css-mode) . (:color "#1a2b3c" :opacity 0.75))
-
-;;           ;; === FILE EXTENSION MATCHING ===
-;;           ((file . "md") . (:color "#f8f8f2" :opacity 0.05))  ; Light for readability
-;;           ((file . "txt") . (:color "#1c1c1c" :opacity 0.7))
-;;           ((file . "json") . (:color "#1a1a1a" :opacity 0.7))
-;;           ((file . "yaml") . (:color "#2a2a1a" :opacity 0.7))
-
-;;           ;; === CUSTOM PREDICATE MATCHING ===
-;;           ;; Remote files (TRAMP)
-;;           ((lambda (buf)
-;;              (file-remote-p default-directory))
-;;            . (:color "#1a1a3d" :opacity 0.8))
-
-;;           ;; All programming modes
-;;           ((lambda (buf)
-;;              (with-current-buffer buf
-;;                (derived-mode-p 'prog-mode)))
-;;            . (:color "#1a1a1a" :opacity 0.6))
-
-;;           ;; Test files
-;;           ((lambda (buf)
-;;              (string-match-p "\\(test\\|spec\\)" (buffer-name buf)))
-;;            . (:color "#0a2a0a" :opacity 0.85))   ; Dark green
-
-;;           ;; Dired buffers
-;;           ((lambda (buf)
-;;              (with-current-buffer buf
-;;                (derived-mode-p 'dired-mode)))
-;;            . (:color "#2a2a2a" :opacity 0.7))))
-
-;;   ;; Enable global mode for automatic buffer assignment
-;;   (buffer-background-global-mode 1))
 
 (use-package buffer-background
   :ensure t
