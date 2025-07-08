@@ -618,6 +618,7 @@ Uses built-in window management for better integration."
               (interactive)
               (async-shell-command)))
            ([?\s-v] . consult-yank-pop)
+           ([?\s-y] . consult-yank-pop)
            ([?\s-l] . desktop-environment-lock-screen)
            ([?\s-q]
             .
@@ -2813,7 +2814,9 @@ This function integrates with exwm-firefox-core to open the current page."
    ("C-l" . eshell/clear)
    ("C-r" . eshell-history-backward)
    ("C-s" . eshell-history-forward)
-   ("M-." . eshell-find-file-at-point))
+   ("M-." . eshell-find-file-at-point)
+   ("M-y" . consult-yank-pop)
+   ("M-x" . execute-extended-command))
   :init
   ;; Initial settings before Eshell loads
   (setq eshell-directory-name (expand-file-name "eshell" my-tmp-dir)) ;; Store history and data
@@ -3139,9 +3142,9 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (eat-enable-blinking-text t)
   (eat-enable-mouse t)
   (eat-semi-char-non-bound-keys
-   '([?\C-x] [?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-:] [?\M-&] [?\C-\M-c]))
+   '([?\C-x] [?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-y] [?\M-:] [?\M-&] [?\C-\M-c]))
   (eat-eshell-semi-char-non-bound-keys
-   '([?\C-x] [?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-:] [?\M-&] [?\C-\M-c]))
+   '([?\C-x] [?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-y] [?\M-:] [?\M-&] [?\C-\M-c]))
   (eat-enable-shell-prompt-annotation t)
   (eat-term-scrollback-size 100000)
   (eat-term-resize t)
