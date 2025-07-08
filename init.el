@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 13:47:09 by grim>
+;; Time-stamp: <Last changed 2025-07-07 22:43:51 by grim>
 
 ;; Enable these
 (mapc
@@ -582,7 +582,20 @@ Uses built-in window management for better integration."
 
   ;; Input Prefix Keys
   (setq exwm-input-prefix-keys
-        '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
+        '(?\C-x ?\C-u ?\C-h ?\M-x ?\M-y ?\M-& ?\M-: ?\C-\M-j ?\C-\ ))
+
+  ;; Add XF86 media keys to prefix keys so they work in X windows
+  (dolist (k '(XF86AudioLowerVolume
+               XF86AudioRaiseVolume
+               XF86AudioMute
+               XF86AudioPlay
+               XF86AudioStop
+               XF86AudioPrev
+               XF86AudioNext
+               XF86MonBrightnessUp
+               XF86MonBrightnessDown
+               XF86PowerOff))
+    (cl-pushnew k exwm-input-prefix-keys))
 
   ;; Global keybindings
   (setq exwm-input-global-keys
@@ -605,6 +618,7 @@ Uses built-in window management for better integration."
               (interactive)
               (async-shell-command)))
            ([?\s-v] . consult-yank-pop)
+           ([?\s-l] . desktop-environment-lock-screen)
            ([?\s-q]
             .
             (lambda ()
@@ -675,7 +689,10 @@ Uses built-in window management for better integration."
    .
    (lambda ()
      (when (featurep 'exwm-edit)
-       (message "exwm-edit initialized")))))
+       (message "exwm-edit initialized"))
+     ;; Update global prefix keys to ensure M-x and media keys work in X windows
+     (exwm-input--update-global-prefix-keys)
+     (message "EXWM global prefix keys updated"))))
 
 (use-package exwm-firefox-core
   :ensure t
