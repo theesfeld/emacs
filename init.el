@@ -516,8 +516,7 @@ Uses built-in window management for better integration."
     (when grim/exwm-debug-monitors
       (message "[EXWM Monitor] %s" (apply #'format message args)))))
 
-(use-package
-  exwm
+(use-package exwm
   :ensure t
   :when (eq window-system 'x)
   :config (setq exwm-workspace-number 10) ; Increased for multi-monitor support
@@ -669,8 +668,7 @@ Uses built-in window management for better integration."
   ;; Enable EXWM - this is required for EXWM to function!
   (exwm-wm-mode 1))
 
-(use-package
-  exwm-edit
+(use-package exwm-edit
   :ensure t
   :when (eq window-system 'x)
   :init
@@ -773,8 +771,7 @@ Uses built-in window management for better integration."
     )
 
 
-  (use-package
-    desktop-environment
+  (use-package desktop-environment
     :ensure t
     :when (eq window-system 'x)
     :init
@@ -808,8 +805,7 @@ Uses built-in window management for better integration."
 
 ;;; init.el version control
 
-(use-package
-  vc
+(use-package vc
   :ensure nil
   :demand t
   :config
@@ -852,8 +848,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     (unless (file-exists-p subdir)
       (make-directory subdir t))))
 
-(use-package
-  emacs
+(use-package emacs
   :ensure nil ; Built-in, no need to install
   :init (server-start)
 
@@ -1037,8 +1032,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; shell environment (path, etc)
 
-(use-package
-  exec-path-from-shell
+(use-package exec-path-from-shell
   :ensure t
   :config
   (setq exec-path-from-shell-shell-name "/bin/bash")
@@ -1056,8 +1050,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; ediff settings
 
-(use-package
-  ediff
+(use-package ediff
   :ensure nil
   :defer t
   :custom
@@ -1132,8 +1125,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; tramp settings
 
-(use-package
-  tramp
+(use-package tramp
   :ensure nil
   :defer t
   :config
@@ -1162,8 +1154,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
       (remove-hook 'compilation-mode-hook #'tramp-compile-disable-ssh-controlmaster-options)))
   )
 
-(use-package
-  files
+(use-package files
   :ensure nil
   :config
 
@@ -1189,8 +1180,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; vundo settings
 
-(use-package
-  vundo
+(use-package vundo
   :ensure t
   :defer t
   :bind ("C-x u" . vundo)
@@ -1200,8 +1190,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; deadgrep
 
-(use-package
-  deadgrep
+(use-package deadgrep
   :ensure t
   :defer t
   :bind
@@ -1214,8 +1203,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; Rainbow Delimiters
 
-(use-package
-  rainbow-delimiters
+(use-package rainbow-delimiters
   :ensure t
   :defer t
   :diminish rainbow-delimiters-mode
@@ -1225,8 +1213,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; Highlight Thing at Point
 
-(use-package
-  highlight-thing
+(use-package highlight-thing
   :ensure t
   :defer t
   :custom
@@ -1285,8 +1272,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :config
   (setq auto-revert-verbose t))
 
-(use-package
-  delight
+(use-package delight
   :ensure t
   :config
   (delight
@@ -1298,8 +1284,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; smartparens
 
-(use-package
-  smartparens
+(use-package smartparens
   :ensure t
   :defer t
   :hook
@@ -1545,8 +1530,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     (or (gethash icon-name nerd-icons-cache)
         (puthash icon-name (nerd-icons-icon-for-file icon-name) nerd-icons-cache))))
 
-(use-package
-  nerd-icons-completion
+(use-package nerd-icons-completion
   :ensure t
   :after (nerd-icons marginalia)
   :config
@@ -1558,8 +1542,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; multiple cursors
 
-(use-package
-  multiple-cursors
+(use-package multiple-cursors
   :ensure t
   :defer t
   :bind
@@ -1570,8 +1553,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; diff-hl
 
-(use-package
-  diff-hl
+(use-package diff-hl
   :ensure t
   :defer t
   :hook (magit-post-refresh . diff-hl-magit-post-refresh)
@@ -1712,8 +1694,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; flyspell
 
-(use-package
-  flyspell
+(use-package flyspell
   :ensure nil
   :hook
   ((text-mode . flyspell-mode)
@@ -1747,8 +1728,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    flyspell-mode-map
    ("M-$" . flyspell-correct-wrapper)))
 
-(use-package
-  flyspell-correct
+(use-package flyspell-correct
   :ensure t
   :after flyspell
   :bind
@@ -2010,8 +1990,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; grep settings
 
-(use-package
-  grep
+(use-package grep
   :config
   (setq grep-find-ignored-directories
         (append
@@ -2044,8 +2023,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; recentf
 
-(use-package
-  recentf
+(use-package recentf
   :ensure nil
   :hook (after-init . recentf-mode)
   :config
@@ -2059,8 +2037,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; dired
 
-(use-package
-  dired
+(use-package dired
   :ensure nil
   :bind
   (("C-x C-d" . dired)
@@ -2118,22 +2095,19 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         (regexp-quote (consult--read "Filter: ")) file))))
 
   (use-package diredfl :ensure t :config (diredfl-global-mode 1))
-  (use-package
-    nerd-icons-dired
+  (use-package nerd-icons-dired
     :ensure t
     :after (nerd-icons dired)
     :hook (dired-mode . nerd-icons-dired-mode))
 
-  (use-package
-    dired-git-info
+  (use-package dired-git-info
     :ensure t
     :custom
     (dgi-auto-hide-details-p nil)
     :config
     (setq dired-git-info-format " (%s)")
     (define-key dired-mode-map ")" 'dired-git-info-mode))
-  (use-package
-    dired-subtree
+  (use-package dired-subtree
     :ensure t
     :bind
     (:map
@@ -2146,8 +2120,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     ;; Using a dark, muted background from modus-vivendi palette for hierarchy
     (set-face-attribute 'dired-subtree-depth-1-face nil
                         :background "#3b4252")) ; Dark subtle background from modus-vivendi scheme
-  (use-package
-    dired-async
+  (use-package dired-async
     :ensure nil
     :after dired
     :config (dired-async-mode 1)))
@@ -2309,8 +2282,7 @@ This function integrates with exwm-firefox-core to open the current page."
 
 ;;; pdf-tools
 
-(use-package
-  pdf-tools
+(use-package pdf-tools
   :ensure t
   :defer t
   :mode ("\\.pdf\\'" . pdf-view-mode)
@@ -2348,8 +2320,7 @@ This function integrates with exwm-firefox-core to open the current page."
 
 ;;; denote
 
-(use-package
-  denote
+(use-package denote
   :ensure t
   :hook
   ( ;; If you use Markdown or plain text files, then you want to make
@@ -2415,15 +2386,13 @@ This function integrates with exwm-firefox-core to open the current page."
   ;; Automatically rename Denote buffers using the `denote-rename-buffer-format'.
   (denote-rename-buffer-mode 1))
 
-(use-package
-  consult-denote
+(use-package consult-denote
   :ensure t
   :bind
   (("C-c n f" . consult-denote-find) ("C-c n g" . consult-denote-grep))
   :config (consult-denote-mode 1))
 
-(use-package
-  denote-journal
+(use-package denote-journal
   :ensure t
   ;; Bind those to some key for your convenience.
   :commands
@@ -2715,8 +2684,7 @@ This function integrates with exwm-firefox-core to open the current page."
         ("C-c ! n" . flymake-goto-next-error)
         ("C-c ! p" . flymake-goto-prev-error)))
 
-(use-package
-  elisp-lint
+(use-package elisp-lint
   :ensure t
   :commands (elisp-lint-buffer elisp-lint-file)
  ;;;; KEYBIND_CHANGE: C-c l conflicts with consult-lsp, using standard M-x
@@ -2740,8 +2708,7 @@ This function integrates with exwm-firefox-core to open the current page."
 ;;   :hook (after-init . yas-reload-all)
 ;;   :bind (:map yas-minor-mode-map ("C-c y" . yas-insert-snippet)))
 
-(use-package
-  yasnippet-snippets
+(use-package yasnippet-snippets
   :ensure t
   :after yasnippet
   :config
@@ -2757,8 +2724,7 @@ This function integrates with exwm-firefox-core to open the current page."
 
 ;;; helpful
 
-(use-package
-  helpful
+(use-package helpful
   :ensure t
   :bind
   ([remap describe-function] . helpful-callable)
@@ -2768,8 +2734,7 @@ This function integrates with exwm-firefox-core to open the current page."
 
 ;;; elisp-demos
 
-(use-package
-  elisp-demos
+(use-package elisp-demos
   :ensure t
   :config
   (advice-add
@@ -2778,8 +2743,7 @@ This function integrates with exwm-firefox-core to open the current page."
 
 ;;; 0x0
 
-(use-package
-  0x0
+(use-package 0x0
   :ensure t
   :init
   (setq 0x0-server "https://0x0.st")
@@ -2803,8 +2767,7 @@ This function integrates with exwm-firefox-core to open the current page."
 
 ;;; eshell settings
 
-(use-package
-  eshell
+(use-package eshell
   :ensure nil ;; Built-in package
   :commands (eshell eshell-command)
   :bind
@@ -2946,15 +2909,13 @@ This function integrates with exwm-firefox-core to open the current page."
           eshell-unix))
 
   ;; Enable eshell-syntax-highlighting for better readability
-  (use-package
-    eshell-syntax-highlighting
+  (use-package eshell-syntax-highlighting
     :ensure t
     :after eshell
     :config (eshell-syntax-highlighting-global-mode +1))
 
   ;; Enable eshell-git-prompt for advanced Git-aware prompts
-  (use-package
-    eshell-git-prompt
+  (use-package eshell-git-prompt
     :ensure t
     :after eshell
     :config
@@ -2971,8 +2932,7 @@ This function integrates with exwm-firefox-core to open the current page."
 
 ;; E MA I L EMAIL
 
-(use-package
-  message
+(use-package message
   :ensure nil
   :defer t
   :config
@@ -3030,8 +2990,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 ;;; hl-line
 
-(use-package
-  hl-line
+(use-package hl-line
   :ensure nil ; Built-in, no need to install
   :commands (hl-line-mode)
   :config
@@ -3043,8 +3002,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 ;;; slime
 
-(use-package
-  slime
+(use-package slime
   :ensure t
   :defer t
   :hook
@@ -3100,8 +3058,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 ;;; xoauth2
 
-(use-package
-  auth-source-xoauth2-plugin
+(use-package auth-source-xoauth2-plugin
   :ensure t
   :custom (auth-source-xoauth2-plugin-mode t))
 
@@ -3429,8 +3386,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 ;;; dictionary / definitions
 
-(use-package
-  dictionary
+(use-package dictionary
   :ensure nil
   :custom
   (dictionary-server "dict.org")
@@ -3467,8 +3423,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 ;;; volatile highlighting
 
-(use-package
-  volatile-highlights
+(use-package volatile-highlights
   :ensure t
   :init (volatile-highlights-mode 1))
 
