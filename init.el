@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-07 22:43:51 by grim>
+;; Time-stamp: <Last changed 2025-07-07 23:07:25 by grim>
 
 ;; Enable these
 (mapc
@@ -1965,7 +1965,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq magit-diff-refine-hunk t)
   (with-eval-after-load 'magit
     (setq magit-format-file-function #'magit-format-file-nerd-icons))
-  :bind-keymap ("C-c g" . magit-mode-map))
+  :bind-keymap ("C-c g" .  magit-mode-map)
+  :bind ("C-c C-g" . #'magit-status))
 
 
 (use-package magit-repos
