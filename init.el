@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-08 07:47:41 by grim>
+;; Time-stamp: <Last changed 2025-07-08 07:50:15 by grim>
 
 ;; Enable these
 (mapc
