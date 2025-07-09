@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-09 11:17:10 by grim>
+;; Time-stamp: <Last changed 2025-07-09 11:26:55 by grim>
 
 ;; Enable these
 (mapc
@@ -3043,36 +3043,35 @@ parameters set in early-init.el to ensure robust UI element disabling."
 ;;; EAT Terminal
 
 (use-package eat
- :ensure t ;; Automatically install eat from NonGNU ELPA
-:init
-;; Preload Eat so everything is ready on first use
-(require 'eat)
-(when-let ((eat-dir (file-name-directory (locate-library "eat"))))
-  (setenv "EAT_SHELL_INTEGRATION_DIR" eat-dir))
- :custom
- (eat-shell (or (executable-find "bash")
-                "/bin/bash"
-                "/usr/bin/bash"))
- (eat-kill-buffer-on-exit t)
- (eat-enable-blinking-text t)
- (eat-enable-mouse t)
- (eat-enable-shell-prompt-annotation t)
- (eat-term-scrollback-size 100000)
- (eat-term-resize t)
+  :ensure t ;; Automatically install eat from NonGNU ELPA
+  :init
+  ;; Preload Eat so everything is ready on first use
+  (require 'eat)
+  (when-let ((eat-dir (file-name-directory (locate-library "eat"))))
+    (setenv "EAT_SHELL_INTEGRATION_DIR" eat-dir))
+  :custom
+  (eat-shell (list (or (executable-find "bash") "/bin/bash") "--login" "-i"))
+  (eat-kill-buffer-on-exit t)
+  (eat-enable-blinking-text t)
+  (eat-enable-mouse t)
+  (eat-enable-shell-prompt-annotation t)
+  (eat-term-scrollback-size 100000)
+  (eat-term-resize t)
 
- :hook
- ((eshell-load-hook . eat-eshell-mode)
-  (eshell-load-hook . eat-eshell-visual-command-mode)
-  (eat-mode-hook . (lambda ()
-                     (eat-update-semi-char-mode-map)
-                     (eat-eshell-update-semi-char-mode-map)))
-  (eat-mode-hook . eat-semi-char-mode))
- :config
- (when (boundp 'eat--terminfo-path)
-   (setq eat-term-terminfo-directory eat--terminfo-path))
- :delight
- (eat-eshell-mode nil)
- (eat-eshell-visual-command-mode nil))
+  :hook
+  ((eshell-load-hook . eat-eshell-mode)
+   (eshell-load-hook . eat-eshell-visual-command-mode)
+   (eat-mode-hook . (lambda ()
+                      (eat-update-semi-char-mode-map)
+                      (eat-eshell-update-semi-char-mode-map)))
+   (eat-mode-hook . eat-semi-char-mode))
+  :config
+  (when (boundp 'eat--terminfo-path)
+    (setq eat-term-terminfo-directory eat--terminfo-path))
+  (setenv "BASH_ENV" (expand-file-name "~/.bashrc"))
+  :delight
+  (eat-eshell-mode nil)
+  (eat-eshell-visual-command-mode nil))
 
 ;;; Claude Code
 
