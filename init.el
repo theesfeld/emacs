@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-09 10:23:27 by grim>
+;; Time-stamp: <Last changed 2025-07-09 10:49:17 by grim>
 
 ;; Enable these
 (mapc
@@ -3047,34 +3047,16 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :init
   ;; Preload Eat so everything is ready on first use
   (require 'eat)
-
-  ;; Set EAT_SHELL_INTEGRATION_DIR early
-  (let ((eat-dir (file-name-directory (locate-library "eat"))))
-    (when eat-dir
-      (setenv "EAT_SHELL_INTEGRATION_DIR" eat-dir)))
-
-  ;; Optionally ensure integration file is sourced in ~/.bashrc
-  (let* ((eat-dir (file-name-directory (locate-library "eat")))
-         (integration-file (and eat-dir (expand-file-name "integration/bash" eat-dir)))
-         (bashrc (expand-file-name "~/.bashrc")))
-    (when (and integration-file (file-exists-p integration-file) (file-exists-p bashrc))
-      (unless (with-temp-buffer
-                (insert-file-contents bashrc)
-                (re-search-forward "EAT_SHELL_INTEGRATION_DIR/bash\\>" nil t))
-        (with-temp-buffer
-          (insert "[ -n \"$EAT_SHELL_INTEGRATION_DIR\" ] && \\\n")
-          (insert "  source \"$EAT_SHELL_INTEGRATION_DIR/bash\"\n")
-          (append-to-file (point-min) (point-max) bashrc)))))
+  (when-let ((eat-dir (file-name-directory (locate-library "eat"))))
+    (setenv "EAT_SHELL_INTEGRATION_DIR" eat-dir))
 
   :custom
-  (eat-shell (or (getenv "SHELL") "/sbin/bash"))
+  (eat-shell (or (executable-find "bash")
+                 "/bin/bash"
+                 "/usr/bin/bash"))
   (eat-kill-buffer-on-exit t)
   (eat-enable-blinking-text t)
   (eat-enable-mouse t)
-  (eat-semi-char-non-bound-keys
-   '([?\C-x] [?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-y] [?\M-:] [?\M-&] [?\C-\M-c]))
-  (eat-eshell-semi-char-non-bound-keys
-   '([?\C-x] [?\C-c] [?\C-g] [?\C-h] [?\C-u] [?\M-x] [?\M-y] [?\M-:] [?\M-&] [?\C-\M-c]))
   (eat-enable-shell-prompt-annotation t)
   (eat-term-scrollback-size 100000)
   (eat-term-resize t)
@@ -3086,7 +3068,9 @@ parameters set in early-init.el to ensure robust UI element disabling."
                       (eat-update-semi-char-mode-map)
                       (eat-eshell-update-semi-char-mode-map)))
    (eat-mode-hook . eat-semi-char-mode))
-
+  ::config
+  (when (boundp 'eat--terminfo-path)
+    (setq eat-term-terminfo-directory eat--terminfo-path))
   :delight
   (eat-eshell-mode nil)
   (eat-eshell-visual-command-mode nil))
