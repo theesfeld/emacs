@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-09 11:33:03 by grim>
+;; Time-stamp: <Last changed 2025-07-09 11:43:58 by grim>
 
 ;; Enable these
 (mapc
@@ -1038,11 +1038,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq exec-path-from-shell-shell-name "/bin/bash")
   (setq exec-path-from-shell-arguments '("-l"))
   ;; Only initialize if needed and not already done
-  (when (and (memq window-system '(mac ns x))
-             (not (getenv "EMACS_SHELL_INITIALIZED")))
-    (exec-path-from-shell-initialize)
-    (setenv "EMACS_SHELL_INITIALIZED" "1"))
-  ;; Explicitly add ~/.local/bin to exec-path and PATH
+  (exec-path-from-shell-initialize)
   (let ((local-bin (expand-file-name "~/.local/bin")))
     (unless (member local-bin exec-path)
       (add-to-list 'exec-path local-bin t) ;; Add to end of exec-path
