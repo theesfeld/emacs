@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-09 11:43:58 by grim>
+;; Time-stamp: <Last changed 2025-07-09 11:57:24 by grim>
 
 ;; Enable these
 (mapc
@@ -1036,13 +1036,13 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :ensure t
   :config
   (setq exec-path-from-shell-shell-name "/bin/bash")
-  (setq exec-path-from-shell-arguments '("-l"))
-  ;; Only initialize if needed and not already done
-  (exec-path-from-shell-initialize)
+  (setq exec-path-from-shell-arguments '("-l" "-i"))
+  (setq exec-path-from-shell-variables '("PATH"))
   (let ((local-bin (expand-file-name "~/.local/bin")))
     (unless (member local-bin exec-path)
       (add-to-list 'exec-path local-bin t) ;; Add to end of exec-path
-      (setenv "PATH" (concat local-bin ":" (getenv "PATH"))))))
+      (setenv "PATH" (concat local-bin ":" (getenv "PATH")))))
+  (exec-path-from-shell-initialize))
 
 ;;; ediff settings
 
@@ -1306,7 +1306,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (vertico-count 15)
   (vertico-sort-function 'vertico-sort-history-length-alpha)
   (vertico-resize t)
-  (vertico-preselect 'prompt)
+  (vertico-preselect 'first)
   :config
   (with-eval-after-load 'nerd-icons
     (defvar my-buffer-icon-cache (make-hash-table :test 'equal))
