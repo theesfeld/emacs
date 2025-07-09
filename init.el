@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-09 11:26:55 by grim>
+;; Time-stamp: <Last changed 2025-07-09 11:33:03 by grim>
 
 ;; Enable these
 (mapc
@@ -3068,7 +3068,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :config
   (when (boundp 'eat--terminfo-path)
     (setq eat-term-terminfo-directory eat--terminfo-path))
-  (setenv "BASH_ENV" (expand-file-name "~/.bashrc"))
+  (setq eat-shell-environment (list (concat "PATH=" (getenv "PATH"))))
   :delight
   (eat-eshell-mode nil)
   (eat-eshell-visual-command-mode nil))
