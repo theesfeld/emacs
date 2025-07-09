@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-09 11:57:24 by grim>
+;; Time-stamp: <Last changed 2025-07-09 13:40:11 by grim>
 
 ;; Enable these
 (mapc
@@ -1565,7 +1565,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (which-key-mode 1)
 
   ;; Optimized settings for Emacs 30.1
-  (setq which-key-idle-delay 0.8          ; Slightly longer delay for better UX
+  (setq which-key-idle-delay 0          ; Slightly longer delay for better UX
         which-key-idle-secondary-delay 0.1
         which-key-add-column-padding 1
         which-key-max-description-length 50  ; More descriptive text
