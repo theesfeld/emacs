@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-08 07:50:15 by grim>
+;; Time-stamp: <Last changed 2025-07-09 10:23:27 by grim>
 
 ;; Enable these
 (mapc
@@ -1016,7 +1016,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 (use-package windower
   :ensure t
-  :after exwm
+  ;; :after exwm
   :bind
   (("s-<tab>" . windower-switch-to-last-buffer)
    ("s-o" . windower-toggle-single)
@@ -2904,8 +2904,6 @@ This function integrates with exwm-firefox-core to open the current page."
     :config
     (eshell-git-prompt-use-theme 'powerline)) ;; Use powerline theme
 
-  :bind (("C-c `" . 'eshell))
-
   :hook
   ((eshell-mode . my-eshell-disable-distractions) ;; Disable distractions
    (eshell-mode . my-eshell-setup-aliases) ;; Setup aliases
@@ -3093,40 +3091,14 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (eat-eshell-mode nil)
   (eat-eshell-visual-command-mode nil))
 
-;;; gptel
+;;; Claude Code
 
-(use-package gptel
+(use-package claude-code
   :ensure t
-  :bind
-  (
-   ("C-c w s" . gptel-send)
-   ("C-c w m" . gptel-menu)
-   ("C-c w a" . gptel-add)
-   ("C-c w f" . gptel-add-file)
-   ("C-c w r" . gptel-rewrite)
-   )
-  :config
-  ;; Configure Anthropic (Claude) backend
-  (gptel-make-anthropic "Claude"
-    :stream t
-    :key #'gptel-api-key-from-auth-source
-    :models '(claude-3-7-sonnet-20250219))
-
-  ;; Optional: Configure Claude with thinking mode
-  (gptel-make-anthropic "Claude-thinking"
-    :stream t
-    :key #'gptel-api-key-from-auth-source
-    :models '(claude-3-7-sonnet-20250219)
-    :header (lambda ()
-              (when-let* ((key (gptel--get-api-key)))
-                `(("x-api-key" . ,key)
-                  ("anthropic-version" . "2023-06-01")
-                  ("anthropic-beta" . "pdfs-2024-09-25")
-                  ("anthropic-beta" . "output-128k-2025-02-19")
-                  ("anthropic-beta" . "prompt-caching-2024-07-31"))))
-    :request-params '(:thinking (:type "enabled" :budget_tokens 2048)
-                                :max_tokens 4096))
-  (setq gptel-api-key-from-auth-source t))
+  :defer t
+  :vc (:url "https://github.com/stevemolitor/claude-code.el" :rev :newest)
+  :config (claude-code-mode)
+  :bind-keymap ("C-c v" . claude-code-command-map))
 
 ;;; EditorConfig support optimized for Emacs 30.1
 
