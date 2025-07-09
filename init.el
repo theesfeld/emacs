@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-09 10:49:17 by grim>
+;; Time-stamp: <Last changed 2025-07-09 10:49:57 by grim>
 
 ;; Enable these
 (mapc
@@ -3068,7 +3068,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
                       (eat-update-semi-char-mode-map)
                       (eat-eshell-update-semi-char-mode-map)))
    (eat-mode-hook . eat-semi-char-mode))
-  ::config
+  :config
   (when (boundp 'eat--terminfo-path)
     (setq eat-term-terminfo-directory eat--terminfo-path))
   :delight
