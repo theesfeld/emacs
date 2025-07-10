@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-09 13:40:11 by grim>
+;; Time-stamp: <Last changed 2025-07-10 16:25:13 by grim>
 
 ;; Enable these
 (mapc
@@ -2947,15 +2947,15 @@ parameters set in early-init.el to ensure robust UI element disabling."
 ;;                                 LaTeX templates                           ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; (use-package
-;;   emacs
-;;   :ensure nil
-;;   :config
-;;   (let ((templates-dir "~/.config/emacs/latex/templates/"))
-;;     (when (file-exists-p templates-dir)
-;;       (dolist (file
-;;                (directory-files-recursively templates-dir "\\.el$"))
-;;         (load-file file)))))
+(use-package
+  emacs
+  :ensure nil
+  :config
+  (let ((templates-dir "~/.config/emacs/latex/templates/"))
+    (when (file-exists-p templates-dir)
+      (dolist (file
+               (directory-files-recursively templates-dir "\\.el$"))
+        (load-file file)))))
 
 ;;; hl-line
 
@@ -2996,7 +2996,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
    (slime-fuzzy-completion-in-place t) ;; Complete in buffer
    (slime-autodoc-use-multiline-p t)   ;; Better autodoc display
    (slime-enable-evaluate-in-emacs t)  ;; Allow Emacs to evaluate Lisp
-   (inferior-lisp-program "sbcl")      ;; Path to SBCL
+   (inferior-lisp-program "/bin/sbcl")      ;; Path to SBCL
    (slime-lisp-implementations         ;; Support multiple Lisps
     '((sbcl ("sbcl" "--noinform") :coding-system utf-8-unix)
       (ccl ("ccl"))
