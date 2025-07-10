@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-10 18:35:14 by grim>
+;; Time-stamp: <Last changed 2025-07-10 18:36:11 by grim>
 
 ;; Enable these
 (mapc
@@ -1772,7 +1772,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :ensure t
   :after (eglot consult)
   :bind
-  (:mapBOX
+  (:map
    eglot-mode-map
    ("C-c L a" . consult-lsp-code-actions)
    ("C-c L d" . consult-lsp-diagnostics)
