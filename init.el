@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-11 09:00:22 by grim>
+;; Time-stamp: <Last changed 2025-07-11 09:03:36 by grim>
 
 ;; Enable these
 (mapc
@@ -2779,7 +2779,7 @@ This function integrates with exwm-firefox-core to open the current page."
   (define-key my-0x0-prefix-map (kbd "d") '0x0-dwim)
   (define-key my-0x0-prefix-map (kbd "p") '0x0-popup)
   ;; Optional: Integrate with which-key
-)
+  )
 
 ;;; eshell settings
 
