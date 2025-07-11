@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-10 18:36:11 by grim>
+;; Time-stamp: <Last changed 2025-07-11 06:56:09 by grim>
 
 ;; Enable these
 (mapc
@@ -1586,8 +1586,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     "C-c 0"   "[0x0] Upload Service"
     "C-c F"   "[Firefox] EXWM Browser"
     "C-c L"   "[LSP] Language Server"
-    "C-c n"   "[Notes] Denote System"
-    "C-c w"   "[AI] GPTel Assistant")
+    "C-c n"   "[Notes] Denote System")
 
   ;; Core C-c commands with descriptions
   (which-key-add-key-based-replacements
@@ -1649,18 +1648,9 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     "C-c n R" "Rename Using Front Matter"
     "C-c n f" "Find Note")
 
-  ;; GPTel AI Assistant subcommands
-  (which-key-add-key-based-replacements
-    "C-c w s" "Send to AI"
-    "C-c w m" "AI Menu"
-    "C-c w a" "Add Context"
-    "C-c w f" "Add File"
-    "C-c w r" "Rewrite")
-
   ;; Enhanced navigation and utility keys
   (which-key-add-key-based-replacements
     "C-x u"   "[Undo] Vundo Tree"
-    "C-x o"   "[Window] Ace Window"
     "C-="     "[Region] Expand"
     "C-& y"   "[Snippet] Consult YASnippet")
 
@@ -1785,7 +1775,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 ;;; org-mode
 
 ;; Core Org Mode Configuration
-(setq org-directory "~/Documents/notes/")
+(setq org-directory "~/Documents/notes/") ; had to set this prior to loading org
 (use-package org
   :ensure nil
   :custom
@@ -1945,6 +1935,14 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         ("" "amssymb" t)
         ("" "capt-of" nil)
         ("" "hyperref" nil)))
+
+;;; markdown
+(use-package markdown-mode
+  :ensure t
+  :mode ("README\\.md\\'" . gfm-mode)
+  :init (setq markdown-command "multimarkdown")
+  :bind (:map markdown-mode-map
+              ("C-c C-e" . markdown-do)))
 
 ;;; magit / forge
 
