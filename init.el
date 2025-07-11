@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-11 11:07:14 by grim>
+;; Time-stamp: <Last changed 2025-07-11 11:07:57 by grim>
 
 ;; Enable these
 (mapc
@@ -81,35 +81,7 @@ The DWIM behaviour of this command is as follows:
 
 (keymap-global-set "<remap> <keyboard-quit>" #'prot/keyboard-quit-dwim)
 
-(defun my/consult-yasnippet-with-minor-modes ()
-  "Use Vertico to select YASnippets, considering active major and minor modes."
-  (interactive)
-  (require 'yasnippet)
-  (require 'consult-yasnippet nil t)
-  (let*
-      ((major-mode-snippets (yas--table-get-create major-mode))
-       (minor-mode-snippets
-        (cl-loop
-         for mode in minor-mode-list when
-         (and (boundp mode)
-              (symbol-value mode)
-              (not (eq mode 'nerd-icons-completion-mode))) ; Exclude problematic mode
-         append
-         (let ((table (yas--table-get-create mode)))
-           (when table
-             (if (fboundp 'yas--table-all-templates)
-                 (yas--table-all-templates table)
-               (hash-table-values (yas--table-hash table)))))))
-       (all-snippets
-        (append
-         (if (fboundp 'yas--table-all-templates)
-             (yas--table-all-templates major-mode-snippets)
-           (hash-table-values (yas--table-hash major-mode-snippets)))
-         minor-mode-snippets)))
-    (if all-snippets
-        (consult-yasnippet all-snippets))))
 
-(keymap-global-set "C-& y" #'my/consult-yasnippet-with-minor-modes)
 
 (defun my/exwm-run-program ()
   "Run a program using vertico completion with command history and PATH suggestions."
