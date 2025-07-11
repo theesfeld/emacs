@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-11 09:24:40 by grim>
+;; Time-stamp: <Last changed 2025-07-11 09:26:19 by grim>
 
 ;; Enable these
 (mapc
@@ -3359,6 +3359,8 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :hook
   (log-mode . logview-mode)
   :config
+  ;; Disable logview cache to ensure our definitions are used
+  (setq logview-cache-filename nil)
   ;; Define journalctl timestamp format (ISO 8601 with timezone offset)
   (setq logview-additional-timestamp-formats
         '(("journalctl-iso"
@@ -3377,8 +3379,8 @@ parameters set in early-init.el to ensure robust UI element disabling."
     (let ((buffer (generate-new-buffer "*journalctl-follow*")))
       (with-current-buffer buffer
         (logview-mode)
-        ;; Set the log format explicitly to avoid detection prompt
-        (logview-choose-format "journalctl")
+        ;; Explicitly set the log format
+        (logview-set-format "journalctl" nil)
         (start-process "journalctl" buffer "journalctl" "--output=short-iso" "-f"))
       (switch-to-buffer buffer)))
   ;; Function to view journalctl -xeu <service> -f output in logview-mode
@@ -3389,8 +3391,8 @@ parameters set in early-init.el to ensure robust UI element disabling."
            (buffer (generate-new-buffer (format "*journalctl-%s*" service))))
       (with-current-buffer buffer
         (logview-mode)
-        ;; Set the log format explicitly to avoid detection prompt
-        (logview-choose-format "journalctl")
+        ;; Explicitly set the log format
+        (logview-set-format "journalctl" nil)
         (start-process "journalctl-service" buffer "journalctl" "--output=short-iso" "-xeu" service "-f"))
       (switch-to-buffer buffer)))
   :bind
