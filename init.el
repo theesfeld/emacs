@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-11 09:07:55 by grim>
+;; Time-stamp: <Last changed 2025-07-11 09:24:40 by grim>
 
 ;; Enable these
 (mapc
@@ -3090,9 +3090,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :hook
   ((eshell-load-hook . eat-eshell-mode)
    (eshell-load-hook . eat-eshell-visual-command-mode)
-   (eat-mode-hook . (lambda ()
-                      (eat-update-semi-char-mode-map)
-                      (eat-eshell-update-semi-char-mode-map)))
+   (eat-mode-hook . eat-semi-char-mode)
    (eat-mode-hook . eat-semi-char-mode))
   :config
   (when (boundp 'eat--terminfo-path)
@@ -3353,10 +3351,51 @@ parameters set in early-init.el to ensure robust UI element disabling."
 (use-package logview
   :ensure t
   :init
-  (add-to-list 'auto-mode-alist '("\\.log\\'" . logview-mode))
-  (add-to-list 'auto-mode-alist '("log\\'" . logview-mode))
-  :hook (
-         ('log-mode 'logview-mode)))
+  ;; Match common log file extensions and names
+  (add-to-list 'auto-mode-alist '("\\.log\\(?:\\.[0-9]+\\)?\\'" . logview-mode))
+  (add-to-list 'auto-mode-alist '("\\<\\(syslog\\|messages\\|error\\|debug\\|server\\|access\\)\\'" . logview-mode))
+  ;; Match log-like content (e.g., timestamps)
+  (add-to-list 'magic-mode-alist '("^\\(?:[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\s-+\\|[A-Za-z]\\{3\\}\\s-+[0-9]\\{1,2\\}\\s-+[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\)" . logview-mode))
+  :hook
+  (log-mode . logview-mode)
+  :config
+  ;; Define journalctl timestamp format (ISO 8601 with timezone offset)
+  (setq logview-additional-timestamp-formats
+        '(("journalctl-iso"
+           (regexp . "[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}T[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}[-+][0-9]\\{4\\}")
+           (aliases . ("ISO 8601")))))
+  ;; Define journalctl log format
+  (setq logview-additional-subdefinitions
+        '(("journalctl"
+           (format . "TIMESTAMP HOSTNAME MESSAGE")
+           (timestamp . "journalctl-iso")
+           (levels . standard))))
+  ;; Function to view journalctl -f output in logview-mode
+  (defun journalctl-follow-logview ()
+    "Run journalctl -f in a buffer with logview-mode."
+    (interactive)
+    (let ((buffer (generate-new-buffer "*journalctl-follow*")))
+      (with-current-buffer buffer
+        (logview-mode)
+        ;; Set the log format explicitly to avoid detection prompt
+        (logview-choose-format "journalctl")
+        (start-process "journalctl" buffer "journalctl" "--output=short-iso" "-f"))
+      (switch-to-buffer buffer)))
+  ;; Function to view journalctl -xeu <service> -f output in logview-mode
+  (defun journalctl-service-logview ()
+    "Prompt for a service and run journalctl -xeu <service> -f in a buffer with logview-mode."
+    (interactive)
+    (let* ((service (read-string "Enter service name: "))
+           (buffer (generate-new-buffer (format "*journalctl-%s*" service))))
+      (with-current-buffer buffer
+        (logview-mode)
+        ;; Set the log format explicitly to avoid detection prompt
+        (logview-choose-format "journalctl")
+        (start-process "journalctl-service" buffer "journalctl" "--output=short-iso" "-xeu" service "-f"))
+      (switch-to-buffer buffer)))
+  :bind
+  (("C-c j" . journalctl-follow-logview)
+   ("C-c J" . journalctl-service-logview)))
 
 ;;; pulsar
 
