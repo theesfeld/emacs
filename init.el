@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-11 09:35:03 by grim>
+;; Time-stamp: <Last changed 2025-07-11 10:58:38 by grim>
 
 ;; Enable these
 (mapc
@@ -934,7 +934,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; THEME CONFIGURATION
 
-
   ;; Load modus-themes package and configure
   (use-package modus-themes
     :ensure nil
@@ -1194,8 +1193,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    :map
    deadgrep-mode-map
    ("q" . deadgrep-kill-all-buffers)))
-
-;;; visual enhancements (rainbow/indent/highlight/...)
 
 ;;; Rainbow Delimiters
 
@@ -2692,7 +2689,6 @@ This function integrates with exwm-firefox-core to open the current page."
 (use-package elisp-lint
   :ensure t
   :commands (elisp-lint-buffer elisp-lint-file)
- ;;;; KEYBIND_CHANGE: C-c l conflicts with consult-lsp, using standard M-x
   :config (setq elisp-lint-ignored-validators '("package-lint")))
 
 ;;; YAsnippet
