@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-11 06:59:40 by grim>
+;; Time-stamp: <Last changed 2025-07-11 09:00:22 by grim>
 
 ;; Enable these
 (mapc
@@ -1755,7 +1755,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :hook
   ;; Selective activation for better performance
   ((python-mode python-ts-mode) . eglot-ensure)
-  ((rust-mode rust-ts-mode) . eglot-ensure)
   ((js-mode js-ts-mode typescript-mode typescript-ts-mode) . eglot-ensure))
 
 (use-package consult-lsp
@@ -1960,16 +1959,18 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq magit-define-global-key-bindings nil)
   (setq magit-section-visibility-indicator '(magit-fringe-bitmap> . magit-fringe-bitmapv))
   :config
-  (when (>= (string-to-number (magit-git-string "rev-list" "--count" "HEAD")) 1000)
-    (setq magit-log-margin '(t "%Y-%m-%d %H:%M " magit-log-margin-width t 18)))
+  (defun my/magit-set-log-margin ()
+    (when (magit-git-repo-p default-directory)
+      (let ((commit-count (string-to-number (magit-git-string "rev-list" "--count" "HEAD"))))
+        (when (>= commit-count 1000)
+          (setq-local magit-log-margin '(t "%Y-%m-%d %H:%M " magit-log-margin-width t 18))))))
+  (add-hook 'magit-mode-hook #'my/magit-set-log-margin)
   (setq git-commit-summary-max-length 50)
   (setq git-commit-style-convention-checks '(non-empty-second-line))
   (setq magit-diff-refine-hunk t)
-  (with-eval-after-load 'magit
+  (when (require 'nerd-icons nil t)
     (setq magit-format-file-function #'magit-format-file-nerd-icons))
-  :bind-keymap ("C-c g" .  magit-mode-map)
-  :bind ("C-c C-g" . #'magit-status))
-
+  :bind ("C-c g" . magit-status))
 
 (use-package magit-repos
   :ensure nil ; part of `magit'
@@ -2043,90 +2044,126 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (use-package dired
   :ensure nil
   :bind
-  (("C-x C-d" . dired)
-   :map
-   dired-mode-map
-   ("RET" . dired-find-alternate-file)
-   ("<backspace>" . dired-up-directory)
-   ("C-c C-e" . wdired-change-to-wdired-mode)
-   ("C-c C-g" . dired-git-info-mode) ; Changed from C-c g to avoid conflict with magit-status
-   ("C-c t" . dired-toggle-read-only)
-   ("M-!" . dired-smart-shell-command)
-   ("C-c o" . dired-open-externally)
-   ("C-c w" . dired-copy-file-path)
-   ("C-c f" . dired-consult-filter))
-  :hook
-  (;;(dired-mode . dired-hide-details-mode)
-   (dired-mode . nerd-icons-dired-mode)
-   ;;   (dired-mode . dired-preview-mode)
-   (dired-mode . hl-line-mode))
+  (("C-x C-j" . dired-jump)
+   :map dired-mode-map
+   ("M-o" . dired-omit-mode)
+  :map dired-mode-map
+  ("RET" . dired-find-alternate-file)
+  ("<backspace>" . dired-up-directory)
+  ("C-c C-e" . wdired-change-to-wdired-mode)
+  ("C-c C-g" . dired-git-info-mode) ; Changed from C-c g to avoid conflict with magit-status
+  ("C-c t" . dired-toggle-read-only)
+  ("M-!" . dired-smart-shell-command)
+  ("C-c o" . dired-open-externally)
+  ("C-c w" . dired-copy-file-path)
+  ("C-c f" . dired-consult-filter))
+:hook
+(;;(dired-mode . dired-hide-details-mode)
+ (dired-mode . nerd-icons-dired-mode)
+ ;;   (dired-mode . dired-preview-mode)
+ (dired-mode . hl-line-mode))
+:custom
+(dired-listing-switches "-lah --group-directories-first --time=access")
+(dired-dwim-target t)
+(dired-recursive-copies 'always)
+(dired-recursive-deletes 'always)
+(dired-auto-revert-buffer t)
+(dired-hide-details-hide-symlink-targets nil)
+(dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open")))
+(dired-use-ls-dired t)
+(dired-git-info-auto-enable t)
+:config
+(require 'dired-x)
+(require 'consult)
+(put 'dired-find-alternate-file 'disabled nil)
+
+(defun dired-open-eshell ()
+  "Open an eshell buffer in the directory at point in Dired."
+  (interactive)
+  (let ((dir (dired-get-file-for-visit)))
+    (if (file-directory-p dir)
+        (progn
+          (eshell)
+          (cd dir))
+      (message "Not a directory"))))
+
+(with-eval-after-load 'dired
+  (define-key dired-mode-map (kbd "C-c e") #'dired-open-eshell))
+
+(defun dired-open-eat ()
+  "Open an eat buffer in the directory at point in Dired."
+  (interactive)
+  (let ((dir (dired-get-file-for-visit)))
+    (if (file-directory-p dir)
+        (progn
+          (eat)
+          (eat-cd dir))
+      (message "Not a directory"))))
+
+(with-eval-after-load 'dired
+  (define-key dired-mode-map (kbd "C-c t") #'dired-open-eat))
+
+(defun dired-open-externally ()
+  "Open file under cursor with xdg-open."
+  (interactive)
+  (let ((file (dired-get-file-for-visit)))
+    (start-process "dired-open" nil "xdg-open" file)))
+
+(defun dired-copy-file-path ()
+  "Copy the full path of the file under cursor to kill ring."
+  (interactive)
+  (let ((path (dired-get-file-for-visit)))
+    (kill-new path)
+    (message "Copied path: %s" path)))
+
+(defun dired-consult-filter ()
+  "Filter Dired buffer using Consult narrowing."
+  (interactive)
+  (consult-focus-lines
+   (lambda (file)
+     (string-match-p
+      (regexp-quote (consult--read "Filter: ")) file))))
+
+(use-package diredfl :ensure t :config (diredfl-global-mode 1))
+(use-package nerd-icons-dired
+  :ensure t
+  :after (nerd-icons dired)
+  :hook (dired-mode . nerd-icons-dired-mode))
+
+(use-package dired-git-info
+  :ensure t
   :custom
-  (dired-listing-switches "-lah --group-directories-first --time=access")
-  (dired-dwim-target t)
-  (dired-recursive-copies 'always)
-  (dired-recursive-deletes 'always)
-  (dired-auto-revert-buffer t)
-  (dired-hide-details-hide-symlink-targets nil)
-  (dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open")))
-  (dired-use-ls-dired t)
-  (dired-git-info-auto-enable t)
+  (dgi-auto-hide-details-p nil)
   :config
-  (require 'dired-x)
-  (setq dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open")))
-  (setq dired-dwim-target t)
-  (put 'dired-find-alternate-file 'disabled nil)
+  (setq dired-git-info-format " (%s)")
+  (define-key dired-mode-map ")" 'dired-git-info-mode))
 
-  (defun dired-open-externally ()
-    "Open file under cursor with xdg-open."
-    (interactive)
-    (let ((file (dired-get-file-for-visit)))
-      (start-process "dired-open" nil "xdg-open" file)))
+(use-package dired-subtree
+  :ensure t
+  :bind
+  (:map
+   dired-mode-map
+   ("<tab>" . dired-subtree-toggle)
+   ("<C-tab>" . dired-subtree-cycle))
+  :config
+  (setq dired-subtree-use-backgrounds nil)
+  ;; Subtle background for visual subtree depth indication
+  ;; Using a dark, muted background from modus-vivendi palette for hierarchy
+  (set-face-attribute 'dired-subtree-depth-1-face nil
+                      :background "#3b4252")) ; Dark subtle background from modus-vivendi scheme
+(use-package dired-async
+  :ensure nil
+  :after dired
+  :config (dired-async-mode 1)))
 
-  (defun dired-copy-file-path ()
-    "Copy the full path of the file under cursor to kill ring."
-    (interactive)
-    (let ((path (dired-get-file-for-visit)))
-      (kill-new path)
-      (message "Copied path: %s" path)))
+(use-package dired-narrow
+  :ensure t
+  :bind (:map dired-mode-map ("C-c n" . dired-narrow-fuzzy)))
 
-  (defun dired-consult-filter ()
-    "Filter Dired buffer using Consult narrowing."
-    (interactive)
-    (consult-focus-lines
-     (lambda (file)
-       (string-match-p
-        (regexp-quote (consult--read "Filter: ")) file))))
-
-  (use-package diredfl :ensure t :config (diredfl-global-mode 1))
-  (use-package nerd-icons-dired
-    :ensure t
-    :after (nerd-icons dired)
-    :hook (dired-mode . nerd-icons-dired-mode))
-
-  (use-package dired-git-info
-    :ensure t
-    :custom
-    (dgi-auto-hide-details-p nil)
-    :config
-    (setq dired-git-info-format " (%s)")
-    (define-key dired-mode-map ")" 'dired-git-info-mode))
-  (use-package dired-subtree
-    :ensure t
-    :bind
-    (:map
-     dired-mode-map
-     ("<tab>" . dired-subtree-toggle)
-     ("<C-tab>" . dired-subtree-cycle))
-    :config
-    (setq dired-subtree-use-backgrounds nil)
-    ;; Subtle background for visual subtree depth indication
-    ;; Using a dark, muted background from modus-vivendi palette for hierarchy
-    (set-face-attribute 'dired-subtree-depth-1-face nil
-                        :background "#3b4252")) ; Dark subtle background from modus-vivendi scheme
-  (use-package dired-async
-    :ensure nil
-    :after dired
-    :config (dired-async-mode 1)))
+(use-package dired-rainbow
+  :ensure t
+  :config
+  (dired-rainbow-define-chmod executable-unix "green" ".*x.*"))
 
 ;;; eww browser
 
@@ -2159,7 +2196,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
   ;; Custom functions for enhanced functionality
   (defun eww-open-in-firefox ()
-    "Open the current EWW URL in Firefox via EXWM.
+    "Open the current EWW UR in Firefox via EXWM.
 This function integrates with exwm-firefox-core to open the current page."
     (interactive)
     (when (derived-mode-p 'eww-mode)
@@ -2608,19 +2645,6 @@ This function integrates with exwm-firefox-core to open the current page."
 ;; C-c @ C-a - show all
 ;; C-c @ C-t - hide body
 
-;; Hideshow as alternative folding method (works well with tree-sitter)
-(use-package hideshow
-  :ensure nil
-  :hook
-  (prog-mode . hs-minor-mode))
-;; Built-in hideshow keybindings:
-;; C-c @ C-h - hide block
-;; C-c @ C-s - show block
-;; C-c @ ESC C-h - hide all
-;; C-c @ ESC C-s - show all
-;; C-c @ C-l - hide level
-;; C-c @ C-c - toggle hiding
-
 ;;; so-long
 
 (use-package so-long :ensure nil :config (global-so-long-mode 1))
@@ -2677,35 +2701,42 @@ This function integrates with exwm-firefox-core to open the current page."
 
 ;;; YAsnippet
 
-;; (use-package
-;;   yasnippet
-;;   :ensure t
-;;   :init (yas-global-mode 1)
-;;   :custom
-;;   (yas-snippet-dirs
-;;    (list
-;;     (expand-file-name "snippets/" user-emacs-directory)
-;;     (expand-file-name
-;;      "snippets/"
-;;      (file-name-directory (find-library-name "yasnippet-snippets")))))
-;;   (yas-prompt-functions
-;;    '(yas-completing-prompt yas-ido-prompt yas-no-prompt))
-;;   :hook (after-init . yas-reload-all)
-;;   :bind (:map yas-minor-mode-map ("C-c y" . yas-insert-snippet)))
+(use-package yasnippet
+  :ensure t
+  :init
+  (yas-global-mode 1) ; Enable yasnippet globally
+  :custom
+  (yas-snippet-dirs
+   (list
+    (expand-file-name "snippets/" user-emacs-directory) ; Custom snippets at ~/.config/emacs/snippets/
+    (when (locate-library "yasnippet-snippets")
+      (expand-file-name "snippets" (file-name-directory (locate-library "yasnippet-snippets")))))) ; yasnippet-snippets snippets
+  (yas-prompt-functions '(yas-completing-prompt)) ; Use completing-read for vertico
+  (yas-choose-keys-first t) ; Sort snippets by key
+  (yas-choose-tables-first t) ; Prioritize current major mode snippets
+  :hook
+  (after-init . yas-reload-all) ; Reload snippets after init
+  :bind
+  (:map yas-minor-mode-map
+        ("C-c y" . yas-insert-snippet))) ; Trigger snippet insertion
 
+;; Yasnippet-snippets: Predefined snippet collection
 (use-package yasnippet-snippets
   :ensure t
   :after yasnippet
   :config
-  (let ((snippets-dir
-         (expand-file-name "snippets/"
-                           (file-name-directory
-                            (find-library-name
-                             "yasnippet-snippets")))))
-    (unless (file-directory-p snippets-dir)
-      (warn
-       "yasnippet-snippets directory %s not found; reinstall the package"
-       snippets-dir))))
+  (let ((snippets-dir (when (locate-library "yasnippet-snippets")
+                        (expand-file-name "snippets" (file-name-directory (locate-library "yasnippet-snippets"))))))
+    (when snippets-dir
+      (unless (file-directory-p snippets-dir)
+        (warn "yasnippet-snippets directory %s not found; consider reinstalling the package" snippets-dir)))))
+
+;; Consult-yasnippet: Enhanced snippet selection with consult
+(use-package consult-yasnippet
+  :ensure t
+  :after (yasnippet consult)
+  :bind
+  ("C-c Y" . consult-yasnippet)) ; Trigger consult-yasnippet
 
 ;;; helpful
 
