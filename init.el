@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-11 13:41:36 by grim>
+;; Time-stamp: <Last changed 2025-07-11 13:51:33 by grim>
 
 ;; Enable these
 (mapc
@@ -433,8 +433,6 @@ OLD is ignored but included for hook compatibility."
            ([?\s-v] . consult-yank-pop)
            ([?\s-y] . consult-yank-pop)
            ([?\s-l] . desktop-environment-lock-screen)
-           ([(kbd "S-<print>")] . desktop-environment-screenshot-part) ;; Super+Print
-           ([(kbd "<print>")] . desktop-environment-screenshot)     ;; Shift+Print
            ([?\s-q]
             .
             (lambda ()
