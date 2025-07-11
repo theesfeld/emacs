@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-11 10:58:38 by grim>
+;; Time-stamp: <Last changed 2025-07-11 11:07:14 by grim>
 
 ;; Enable these
 (mapc
@@ -109,7 +109,7 @@ The DWIM behaviour of this command is as follows:
     (if all-snippets
         (consult-yasnippet all-snippets))))
 
-  (keymap-global-set "C-& y" #'my/consult-yasnippet-with-minor-modes)
+(keymap-global-set "C-& y" #'my/consult-yasnippet-with-minor-modes)
 
 (defun my/exwm-run-program ()
   "Run a program using vertico completion with command history and PATH suggestions."
@@ -130,7 +130,7 @@ The DWIM behaviour of this command is as follows:
            (append history-commands common-commands path-commands)))
          (command
           (completing-read "Run program: " all-commands nil nil nil
-                          'shell-command-history)))
+                           'shell-command-history)))
     (when (and command (not (string-empty-p command)))
       (start-process-shell-command command nil command))))
 
