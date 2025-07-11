@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-11 09:03:36 by grim>
+;; Time-stamp: <Last changed 2025-07-11 09:07:55 by grim>
 
 ;; Enable these
 (mapc
@@ -2047,114 +2047,110 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (("C-x C-j" . dired-jump)
    :map dired-mode-map
    ("M-o" . dired-omit-mode)
-  :map dired-mode-map
-  ("RET" . dired-find-alternate-file)
-  ("<backspace>" . dired-up-directory)
-  ("C-c C-e" . wdired-change-to-wdired-mode)
-  ("C-c C-g" . dired-git-info-mode) ; Changed from C-c g to avoid conflict with magit-status
-  ("C-c t" . dired-toggle-read-only)
-  ("M-!" . dired-smart-shell-command)
-  ("C-c o" . dired-open-externally)
-  ("C-c w" . dired-copy-file-path)
-  ("C-c f" . dired-consult-filter))
-:hook
-(;;(dired-mode . dired-hide-details-mode)
- (dired-mode . nerd-icons-dired-mode)
- ;;   (dired-mode . dired-preview-mode)
- (dired-mode . hl-line-mode))
-:custom
-(dired-listing-switches "-lah --group-directories-first --time=access")
-(dired-dwim-target t)
-(dired-recursive-copies 'always)
-(dired-recursive-deletes 'always)
-(dired-auto-revert-buffer t)
-(dired-hide-details-hide-symlink-targets nil)
-(dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open")))
-(dired-use-ls-dired t)
-(dired-git-info-auto-enable t)
-:config
-(require 'dired-x)
-(require 'consult)
-(put 'dired-find-alternate-file 'disabled nil)
-
-(defun dired-open-eshell ()
-  "Open an eshell buffer in the directory at point in Dired."
-  (interactive)
-  (let ((dir (dired-get-file-for-visit)))
-    (if (file-directory-p dir)
-        (progn
-          (eshell)
-          (cd dir))
-      (message "Not a directory"))))
-
-(with-eval-after-load 'dired
-  (define-key dired-mode-map (kbd "C-c e") #'dired-open-eshell))
-
-(defun dired-open-eat ()
-  "Open an eat buffer in the directory at point in Dired."
-  (interactive)
-  (let ((dir (dired-get-file-for-visit)))
-    (if (file-directory-p dir)
-        (progn
-          (eat)
-          (eat-cd dir))
-      (message "Not a directory"))))
-
-(with-eval-after-load 'dired
-  (define-key dired-mode-map (kbd "C-c t") #'dired-open-eat))
-
-(defun dired-open-externally ()
-  "Open file under cursor with xdg-open."
-  (interactive)
-  (let ((file (dired-get-file-for-visit)))
-    (start-process "dired-open" nil "xdg-open" file)))
-
-(defun dired-copy-file-path ()
-  "Copy the full path of the file under cursor to kill ring."
-  (interactive)
-  (let ((path (dired-get-file-for-visit)))
-    (kill-new path)
-    (message "Copied path: %s" path)))
-
-(defun dired-consult-filter ()
-  "Filter Dired buffer using Consult narrowing."
-  (interactive)
-  (consult-focus-lines
-   (lambda (file)
-     (string-match-p
-      (regexp-quote (consult--read "Filter: ")) file))))
-
-(use-package diredfl :ensure t :config (diredfl-global-mode 1))
-(use-package nerd-icons-dired
-  :ensure t
-  :after (nerd-icons dired)
-  :hook (dired-mode . nerd-icons-dired-mode))
-
-(use-package dired-git-info
-  :ensure t
+   :map dired-mode-map
+   ("RET" . dired-find-alternate-file)
+   ("<backspace>" . dired-up-directory)
+   ("C-c C-e" . wdired-change-to-wdired-mode)
+   ("C-c C-g" . dired-git-info-mode) ; Changed from C-c g to avoid conflict with magit-status
+   ("C-c t" . dired-toggle-read-only)
+   ("M-!" . dired-smart-shell-command)
+   ("C-c o" . dired-open-externally)
+   ("C-c w" . dired-copy-file-path)
+   ("C-c f" . dired-consult-filter)
+   ("C-c e" . dired-open-eshell)
+   ("C-c t" . dired-open-eat))
+  :hook
+  (;;(dired-mode . dired-hide-details-mode)
+   (dired-mode . nerd-icons-dired-mode)
+   ;;   (dired-mode . dired-preview-mode)
+   (dired-mode . hl-line-mode))
   :custom
-  (dgi-auto-hide-details-p nil)
+  (dired-listing-switches "-lah --group-directories-first --time=access")
+  (dired-dwim-target t)
+  (dired-recursive-copies 'always)
+  (dired-recursive-deletes 'always)
+  (dired-auto-revert-buffer t)
+  (dired-hide-details-hide-symlink-targets nil)
+  (dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open")))
+  (dired-use-ls-dired t)
+  (dired-git-info-auto-enable t)
   :config
-  (setq dired-git-info-format " (%s)")
-  (define-key dired-mode-map ")" 'dired-git-info-mode))
+  (require 'dired-x)
+  (require 'consult)
+  (put 'dired-find-alternate-file 'disabled nil)
 
-(use-package dired-subtree
-  :ensure t
-  :bind
-  (:map
-   dired-mode-map
-   ("<tab>" . dired-subtree-toggle)
-   ("<C-tab>" . dired-subtree-cycle))
-  :config
-  (setq dired-subtree-use-backgrounds nil)
-  ;; Subtle background for visual subtree depth indication
-  ;; Using a dark, muted background from modus-vivendi palette for hierarchy
-  (set-face-attribute 'dired-subtree-depth-1-face nil
-                      :background "#3b4252")) ; Dark subtle background from modus-vivendi scheme
-(use-package dired-async
-  :ensure nil
-  :after dired
-  :config (dired-async-mode 1)))
+  (defun dired-open-eshell ()
+    "Open an eshell buffer in the directory at point in Dired."
+    (interactive)
+    (let ((dir (dired-get-file-for-visit)))
+      (if (file-directory-p dir)
+          (progn
+            (eshell)
+            (cd dir))
+        (message "Not a directory"))))
+
+  (defun dired-open-eat ()
+    "Open an eat buffer in the directory at point in Dired."
+    (interactive)
+    (let ((dir (dired-get-file-for-visit)))
+      (if (file-directory-p dir)
+          (progn
+            (eat)
+            (eat-cd dir))
+        (message "Not a directory"))))
+
+  (defun dired-open-externally ()
+    "Open file under cursor with xdg-open."
+    (interactive)
+    (let ((file (dired-get-file-for-visit)))
+      (start-process "dired-open" nil "xdg-open" file)))
+
+  (defun dired-copy-file-path ()
+    "Copy the full path of the file under cursor to kill ring."
+    (interactive)
+    (let ((path (dired-get-file-for-visit)))
+      (kill-new path)
+      (message "Copied path: %s" path)))
+
+  (defun dired-consult-filter ()
+    "Filter Dired buffer using Consult narrowing."
+    (interactive)
+    (consult-focus-lines
+     (lambda (file)
+       (string-match-p
+        (regexp-quote (consult--read "Filter: ")) file))))
+
+  (use-package diredfl :ensure t :config (diredfl-global-mode 1))
+  (use-package nerd-icons-dired
+    :ensure t
+    :after (nerd-icons dired)
+    :hook (dired-mode . nerd-icons-dired-mode))
+
+  (use-package dired-git-info
+    :ensure t
+    :custom
+    (dgi-auto-hide-details-p nil)
+    :config
+    (setq dired-git-info-format " (%s)")
+    (define-key dired-mode-map ")" 'dired-git-info-mode))
+
+  (use-package dired-subtree
+    :ensure t
+    :bind
+    (:map
+     dired-mode-map
+     ("<tab>" . dired-subtree-toggle)
+     ("<C-tab>" . dired-subtree-cycle))
+    :config
+    (setq dired-subtree-use-backgrounds nil)
+    ;; Subtle background for visual subtree depth indication
+    ;; Using a dark, muted background from modus-vivendi palette for hierarchy
+    (set-face-attribute 'dired-subtree-depth-1-face nil
+                        :background "#3b4252")) ; Dark subtle background from modus-vivendi scheme
+  (use-package dired-async
+    :ensure nil
+    :after dired
+    :config (dired-async-mode 1)))
 
 (use-package dired-narrow
   :ensure t
