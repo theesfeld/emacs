@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-11 14:40:03 by grim>
+;; Time-stamp: <Last changed 2025-07-11 14:43:15 by grim>
 
 ;; Enable these
 (mapc
@@ -125,7 +125,7 @@ The DWIM behaviour of this command is as follows:
        (round (* (window-width) (- 1 scale-factor)))))))
 
 ;; Use modern keybinding approach
-(keymap-global-set "s-+" #'increase-text-and-pane)
+(keymap-global-set "s-=" #'increase-text-and-pane)
 (keymap-global-set "s--" #'decrease-text-and-pane)
 
 (declare-function completion-preview-insert "completion-preview")
