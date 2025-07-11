@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-11 06:56:09 by grim>
+;; Time-stamp: <Last changed 2025-07-11 06:59:40 by grim>
 
 ;; Enable these
 (mapc
@@ -1937,12 +1937,20 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         ("" "hyperref" nil)))
 
 ;;; markdown
+
 (use-package markdown-mode
   :ensure t
-  :mode ("README\\.md\\'" . gfm-mode)
-  :init (setq markdown-command "multimarkdown")
+  :mode ("\\.md\\'" . gfm-mode)  ; Use gfm-mode for all .md files
+  :init
+  (setq markdown-fontify-code-blocks-natively t)  ; Syntax highlight code blocks
+  (setq markdown-command "pandoc")               ; Use pandoc for export (optional)
   :bind (:map markdown-mode-map
-              ("C-c C-e" . markdown-do)))
+              ("C-c C-c p" . markdown-preview)   ; Preview Markdown in browser
+              ("C-c C-c e" . markdown-export)    ; Export to HTML or other formats
+              ("C-c C-c o" . markdown-open)      ; Open exported file
+              ("C-c C-t" . markdown-toggle-gfm-checkbox)) ; Toggle checkboxes
+  :config
+  (add-hook 'markdown-mode-hook #'auto-fill-mode)) ; Enable word wrapping
 
 ;;; magit / forge
 
