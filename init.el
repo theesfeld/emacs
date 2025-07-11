@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-11 14:43:15 by grim>
+;; Time-stamp: <Last changed 2025-07-11 15:08:59 by grim>
 
 ;; Enable these
 (mapc
@@ -692,7 +692,10 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    help-window-select t
    auth-source-cache-expiry nil
    truncate-string-ellipsis "…" ; Visual ellipsis for truncated lines
-   scroll-margin 1
+   scroll-margin 0
+   scroll-step 1
+   auto-window-vscroll nil
+   jit-lock-defer-time 0
    garbage-collection-messages nil
    plstore-cache-directory my-tmp-dir
    epg-gpg-program "gpg2"
