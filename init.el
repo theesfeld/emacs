@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-11 13:39:43 by grim>
+;; Time-stamp: <Last changed 2025-07-11 13:41:36 by grim>
 
 ;; Enable these
 (mapc
@@ -14,12 +14,12 @@
    (put command 'disabled t))
  '(eshell project-eshell overwrite-mode iconify-frame diary))
 
-;;; MELPA
+;;; vc stuff
 
 (setq package-vc-register-as-project nil) ; Emacs 30
 
+;;; security model
 
-;; === TRUSTED CONTENT SECURITY MODEL (EMACS 30.1) ===
 ;; Configure the new security model for trusted directories
 (when (boundp 'trusted-content)
   (setq trusted-content
