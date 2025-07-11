@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-11 13:51:33 by grim>
+;; Time-stamp: <Last changed 2025-07-11 14:40:03 by grim>
 
 ;; Enable these
 (mapc
@@ -582,7 +582,7 @@ OLD is ignored but included for hook compatibility."
     ;; (add-to-list 'exwm-manage-configurations
     ;;              '((string-match "Firefox" exwm-class-name)
     ;;                workspace 2))
-    )
+    ))
 
 ;;; Desktop Environment
 
@@ -616,7 +616,7 @@ OLD is ignored but included for hook compatibility."
       (unless (executable-find cmd)
         (message
          "Warning: %s not found; desktop-environment may not work fully"
-         cmd)))))
+         cmd))))
 
 ;;; init.el version control
 
@@ -665,8 +665,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 (use-package emacs
   :ensure nil ; Built-in, no need to install
-  :init (server-start)
-
+  :init
   (setq
    user-full-name "TJ"
    user-mail-address "tj@emacs.su"
@@ -1494,6 +1493,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 (use-package flyspell
   :ensure nil
+  :defer t
   :hook
   ((text-mode . flyspell-mode)
    (org-mode . flyspell-mode)
@@ -1767,6 +1767,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 (use-package magit
   :ensure t
+  :defer t
   :init
   (setq magit-define-global-key-bindings nil)
   (setq magit-section-visibility-indicator '(magit-fringe-bitmap> . magit-fringe-bitmapv))
@@ -1787,6 +1788,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (use-package magit-repos
   :ensure nil ; part of `magit'
   :commands (magit-list-repositories)
+  :after magit
   :init
   (setq magit-repository-directories
         '(("~/Code" . 1))))
@@ -1977,6 +1979,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 (use-package eww
   :ensure nil ; built-in package
+  :defer t
   :commands (eww eww-browse-url)
   :init
   ;; Set eww as the default browser for certain contexts
@@ -2170,6 +2173,7 @@ This function integrates with exwm-firefox-core to open the current page."
 
 (use-package denote
   :ensure t
+  :defer t
   :hook
   ( ;; If you use Markdown or plain text files, then you want to make
    ;; the Denote links clickable (Org renders links as buttons right
@@ -2236,12 +2240,14 @@ This function integrates with exwm-firefox-core to open the current page."
 
 (use-package consult-denote
   :ensure t
+  :after denote
   :bind
   (("C-c n f" . consult-denote-find) ("C-c n g" . consult-denote-grep))
   :config (consult-denote-mode 1))
 
 (use-package denote-journal
   :ensure t
+  :after denote
   ;; Bind those to some key for your convenience.
   :commands
   (denote-journal-new-entry
@@ -2259,13 +2265,14 @@ This function integrates with exwm-firefox-core to open the current page."
   ;; Read the doc string of `denote-journal-title-format'.
   (setq denote-journal-title-format 'day-date-month-year))
 
-(use-package denote-org :ensure t :defer t)
+(use-package denote-org :ensure t :after denote :defer t)
 
 ;;; tree-sitter
 
 ;; Built-in tree-sitter configuration
 (use-package treesit
   :ensure nil
+  :defer t
   :init
   ;; Tell Emacs where to look for tree-sitter libraries
   (setq treesit-extra-load-path
@@ -2357,6 +2364,7 @@ This function integrates with exwm-firefox-core to open the current page."
 ;; Enhanced treesit-auto for intelligent mode selection
 (use-package treesit-auto
   :ensure t
+  :after treesit
   :custom
   (treesit-auto-install 'prompt)   ; Prompt before installing grammars
   (treesit-auto-fallback-alist     ; Intelligent fallback mapping
@@ -2390,6 +2398,7 @@ This function integrates with exwm-firefox-core to open the current page."
 ;; Python with tree-sitter
 (use-package python
   :ensure nil
+  :defer t
   :hook
   (python-ts-mode . (lambda ()
                       ;; Tree-sitter handles these automatically via treesit-major-mode-setup:
@@ -2405,6 +2414,7 @@ This function integrates with exwm-firefox-core to open the current page."
 ;; JavaScript/TypeScript with tree-sitter
 (use-package js
   :ensure nil
+  :defer t
   :custom
   (js-indent-level 2)
   :hook
@@ -2412,24 +2422,28 @@ This function integrates with exwm-firefox-core to open the current page."
 
 (use-package cc-mode
   :ensure nil
+  :defer t
   :hook
   ((c-ts-mode c++-ts-mode) . eglot-ensure))
 
 ;; Rust with tree-sitter
 (use-package rust-ts-mode
   :ensure nil
+  :defer t
   :hook
   (rust-ts-mode . eglot-ensure))
 
 ;; Go with tree-sitter
 (use-package go-ts-mode
   :ensure nil
+  :defer t
   :hook
   (go-ts-mode . eglot-ensure))
 
 ;; Ruby with tree-sitter
 (use-package ruby-ts-mode
   :ensure nil
+  :defer t
   :hook
   (ruby-ts-mode . eglot-ensure))
 
@@ -2438,6 +2452,7 @@ This function integrates with exwm-firefox-core to open the current page."
 ;; Use built-in outline-minor-mode for code folding with tree-sitter
 (use-package outline
   :ensure nil
+  :after treesit
   :hook
   ((prog-mode . outline-minor-mode))
   :custom
@@ -2461,6 +2476,7 @@ This function integrates with exwm-firefox-core to open the current page."
 
 (use-package flymake
   :ensure nil
+  :defer t
   :hook
   ((prog-mode . flymake-mode)
    (emacs-lisp-mode
@@ -2510,6 +2526,7 @@ This function integrates with exwm-firefox-core to open the current page."
 
 (use-package yasnippet
   :ensure t
+  :defer t
   :init
   (yas-global-mode 1) ; Enable yasnippet globally
   :custom
@@ -2568,6 +2585,7 @@ This function integrates with exwm-firefox-core to open the current page."
 
 (use-package 0x0
   :ensure t
+  :defer t
   :init
   (setq 0x0-server "https://0x0.st")
   (setq 0x0-use-curl t)
@@ -2739,7 +2757,7 @@ This function integrates with exwm-firefox-core to open the current page."
 
   ;; Enable eshell-git-prompt for advanced Git-aware prompts
   (use-package eshell-git-prompt
-    :ensure t
+    :ensure teva
     :after eshell
     :config
     (eshell-git-prompt-use-theme 'powerline)) ;; Use powerline theme
@@ -2791,8 +2809,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 ;;                                 LaTeX templates                           ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package
-  emacs
+(use-package emacs
   :ensure nil
   :config
   (let ((templates-dir "~/.config/emacs/latex/templates/"))
@@ -2873,6 +2890,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 (use-package auth-source-xoauth2-plugin
   :ensure t
+  :defer t
   :custom (auth-source-xoauth2-plugin-mode t))
 
 ;;; .mailcap
@@ -2986,6 +3004,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 (use-package man
   :ensure nil
+  :defer t
   :commands (man)
   :config
   (setq Man-notify-method 'pushy))
@@ -2994,6 +3013,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 (use-package proced
   :ensure nil
+  :defer t
   :commands (proced)
   :config
   (setq proced-auto-update-flag 'visible) ; Enhanced in 30.1
@@ -3029,7 +3049,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 (use-package isearch
   :ensure nil
-  :demand t
+  :defer t
   :config
   (setq search-whitespace-regexp ".*?"
         isearch-lax-whitespace t
@@ -3152,6 +3172,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 (use-package dictionary
   :ensure nil
+  :defer t
   :custom
   (dictionary-server "dict.org")
   :bind
@@ -3170,6 +3191,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 (use-package journalctl-mode
   :ensure t
+  :defer t
   :bind (("C-c j" . journalctl)))
 
 ;;; pulsar
