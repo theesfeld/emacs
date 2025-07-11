@@ -10,7 +10,7 @@
         native-comp-verbose 0                  ; Reduce compilation noise
         native-comp-jit-compilation t          ; Enable JIT compilation (30.1)
         native-comp-deferred-compilation t    ; Compile in background
-        native-comp-compiler-options '("-O3" "-march=native"))
+        native-comp-compiler-options '("-O3" "-march=alderlake"))
 
   ;; Emacs 30.1: Optimized cache and job management
   (when (boundp 'startup-redirect-eln-cache)
