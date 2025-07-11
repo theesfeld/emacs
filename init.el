@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-11 12:49:11 by grim>
+;; Time-stamp: <Last changed 2025-07-11 13:31:08 by grim>
 
 ;; Enable these
 (mapc
@@ -425,19 +425,15 @@ OLD is ignored but included for hook compatibility."
            ([s-down] . windmove-down)
            ([?\s-w] . exwm-workspace-switch)
            ([?\s-&] . my/exwm-run-program)
-           ([?\s-x]
-            .
-            (lambda ()
-              (interactive)
-              (save-buffers-kill-emacs)))
            ([?\s-\ ]
             .
             (lambda ()
               (interactive)
-              (async-shell-command)))
+              (my/exwm-run-program)))
            ([?\s-v] . consult-yank-pop)
            ([?\s-y] . consult-yank-pop)
            ([?\s-l] . desktop-environment-lock-screen)
+           ([?\s-<print>] . desktop-environment-screenshot-part)
            ([?\s-q]
             .
             (lambda ()
@@ -589,6 +585,7 @@ OLD is ignored but included for hook compatibility."
     ;;                workspace 2))
     )
 
+;;; Desktop Environment
 
   (use-package desktop-environment
     :ensure t
