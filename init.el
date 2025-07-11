@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-11 11:07:57 by grim>
+;; Time-stamp: <Last changed 2025-07-11 11:19:47 by grim>
 
 ;; Enable these
 (mapc
@@ -81,8 +81,6 @@ The DWIM behaviour of this command is as follows:
 
 (keymap-global-set "<remap> <keyboard-quit>" #'prot/keyboard-quit-dwim)
 
-
-
 (defun my/exwm-run-program ()
   "Run a program using vertico completion with command history and PATH suggestions."
   (interactive)
@@ -130,43 +128,12 @@ The DWIM behaviour of this command is as follows:
 (keymap-global-set "s-+" #'increase-text-and-pane)
 (keymap-global-set "s--" #'decrease-text-and-pane)
 
-(defun my-org-download-images-from-capture ()
-  (when (string-match-p ":website:" (buffer-string))
-    (goto-char (point-min))
-    (while (re-search-forward "\\[\\[\\(http[^][]+\\)\\]\\[.*\\]\\]" nil t)
-      (org-download-image (match-string 1))))
-  (add-hook
-   'org-capture-after-finalize-hook
-   #'my-org-download-images-from-capture))
-
-(defun my/toggle-buffer (buffer-name command)
-  "Toggle a buffer with BUFFER-NAME, running COMMAND if it doesn't exist.
-Uses built-in window management for better integration."
-  (interactive)
-  (unless (commandp command)
-    (user-error "Second argument must be an interactive command"))
-  (if-let ((buffer (get-buffer buffer-name))
-           (window (get-buffer-window buffer)))
-      ;; Buffer exists and is visible - hide it
-      (quit-window nil window)
-    ;; Buffer doesn't exist or isn't visible
-    (if buffer
-        (pop-to-buffer buffer) ; Better window management than switch-to-buffer
-      (call-interactively command))))
-
-(defun my-org-capture-delete-file-after-kill (&rest _)
-  "Delete file if capture is aborted."
-  (when (and (buffer-file-name) (file-exists-p (buffer-file-name)))
-    (delete-file (buffer-file-name))
-    (message "Deleted aborted capture file: %s" (buffer-file-name))))
-
 (declare-function completion-preview-insert "completion-preview")
 (declare-function completion-preview-next-candidate
                   "completion-preview")
 (declare-function completion-preview-prev-candidate
                   "completion-preview")
 (declare-function completion-preview--hide "completion-preview")
-
 
 ;;; FONT CONFIGURATION
 
