@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-11 16:10:44 by grim>
+;; Time-stamp: <Last changed 2025-07-12 20:04:08 by grim>
 
 ;; Enable these
 (mapc
@@ -2525,6 +2525,36 @@ This function integrates with exwm-firefox-core to open the current page."
   :ensure t
   :commands (elisp-lint-buffer elisp-lint-file)
   :config (setq elisp-lint-ignored-validators '("package-lint")))
+
+;;; flyover
+
+(use-package flyover
+  :ensure t
+  :defer t
+  :config
+  (setq flyover-levels '(error warning))
+  (setq flyover-use-theme-colors t)
+  (setq flyover-background-lightness 45)
+  (setq flyover-percent-darker 40)
+  (setq flyover-text-tint 'lighter) ;; or 'darker or nil
+  (setq flyover-text-tint-percent 50)
+  (setq flyover-checkers '(flycmake))
+  (setq flyover-debug nil)
+  (setq flyover-debounce-interval 0.2)
+  (setq flyover-line-position-offset 1)
+  (setq flyover-wrap-messages t)
+  (setq flyover-max-line-length 80)
+  (setq flyover-info-icon "🛈")
+  (setq flyover-warning-icon "⚠")
+  (setq flyover-error-icon "✘")
+  (setq flyover-icon-left-padding 0.9)
+  (setq flyover-icon-right-padding 0.9)
+  (setq flyover-virtual-line-type 'curved-line-no-arrow)
+  (setq flyover-hide-checker-name t)
+  (setq flyover-show-at-eol t)
+  (setq flyover-hide-when-cursor-is-on-same-line t)
+  (setq flyover-show-virtual-line t)
+  )
 
 ;;; YAsnippet
 
