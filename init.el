@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-12 20:04:08 by grim>
+;; Time-stamp: <Last changed 2025-07-12 20:06:51 by grim>
 
 ;; Enable these
 (mapc
@@ -3395,12 +3395,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (setq erc-join-buffer 'bury
         erc-auto-query 'bury
         erc-query-display 'bury)
-
-  ;; Prevent NickServ auth when using SASL
-  (define-advice erc-nickserv-identify-autodetect (:before-while (&rest _) check-sasl)
-    "Don't run NickServ identify when SASL is active."
-    (not (and (boundp 'erc-sasl-user) erc-sasl-user
-              (boundp 'erc-sasl-password) erc-sasl-password)))
 
   ;; Connection function
   (defun my-erc-connect-libera ()
