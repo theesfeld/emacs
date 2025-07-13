@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-13 10:33:48 by grim>
+;; Time-stamp: <Last changed 2025-07-13 10:34:21 by grim>
 
 ;; Enable these
 (mapc
@@ -403,7 +403,7 @@ OLD is ignored but included for hook compatibility."
 
   (add-hook 'exwm-randr-screen-change-hook 'exwm-change-screen-hook)
   (require 'exwm-randr)
-  (exwm-randr-enable)
+  (exwm-randr-mode 1)
 
   ;; Load the system tray before exwm-init
   (require 'exwm-systemtray)
