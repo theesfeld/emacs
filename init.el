@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-12 20:31:00 by grim>
+;; Time-stamp: <Last changed 2025-07-12 20:36:22 by grim>
 
 ;; Enable these
 (mapc
@@ -2559,7 +2559,7 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq flyover-checkers '(flycheck))
   (setq flyover-debug nil)
   (setq flyover-debounce-interval 0.2)
-  (setq flyover-line-position-offset 2)
+  (setq flyover-line-position-offset 1)
   (setq flyover-wrap-messages t)
   (setq flyover-max-line-length 80)
   (setq flyover-info-icon "🛈")
@@ -2569,7 +2569,7 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq flyover-icon-right-padding 0.9)
   (setq flyover-virtual-line-type 'curved-line-no-arrow)
   (setq flyover-hide-checker-name t)
-  (setq flyover-show-at-eol t)
+  (setq flyover-show-at-eol nil)
   (setq flyover-hide-when-cursor-is-on-same-line t)
   (setq flyover-show-virtual-line t)
   )
