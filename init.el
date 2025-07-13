@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-12 20:36:22 by grim>
+;; Time-stamp: <Last changed 2025-07-12 20:38:12 by grim>
 
 ;; Enable these
 (mapc
@@ -2547,7 +2547,7 @@ This function integrates with exwm-firefox-core to open the current page."
 
 (use-package flyover
   :ensure t
-  :defer t
+  :after flycheck
   :config
   (add-hook 'flycheck-mode-hook #'flyover-mode)
   (setq flyover-levels '(error warning))
