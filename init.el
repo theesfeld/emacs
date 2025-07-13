@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-12 20:07:57 by grim>
+;; Time-stamp: <Last changed 2025-07-12 20:31:00 by grim>
 
 ;; Enable these
 (mapc
@@ -1236,7 +1236,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    ("C-c i" . consult-info)
    ([remap Info-search] . consult-info)
    ("M-g e" . consult-compile-error)
-   ("M-g f" . consult-flymake)
    ("M-g g" . consult-goto-line)
    ("M-g M-g" . consult-goto-line)
    ("M-g o" . consult-outline)
@@ -1264,6 +1263,12 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
          ("M-r" . consult-history))))
 
 (use-package consult-yasnippet :ensure t :after (consult yasnippet))
+
+(use-package consult-flycheck
+  :ensure t
+  :after (consult flycheck)
+  :bind
+  ("M-g f" . consult-flycheck))
 
 ;;; marginalia
 
@@ -2476,55 +2481,67 @@ This function integrates with exwm-firefox-core to open the current page."
 
 (use-package so-long :ensure nil :config (global-so-long-mode 1))
 
-;;; flymake
+;;; flycheck
 
-(use-package flymake
-  :ensure nil
+(use-package flycheck
+  :ensure t
   :defer t
-  :hook
-  ((prog-mode . flymake-mode)
-   (emacs-lisp-mode
-    .
-    (lambda ()
-      ;; Only enable flymake-mode for file-backed buffers
-      (when (buffer-file-name)
-        (flymake-mode 1))))
-   ;; Add tree-sitter modes
-   (python-ts-mode . flymake-mode)
-   (c-ts-mode . flymake-mode)
-   (c++-ts-mode . flymake-mode)
-   (js-ts-mode . flymake-mode)
-   (typescript-ts-mode . flymake-mode)
-   (rust-ts-mode . flymake-mode)
-   (after-init-hook
-    .
-    (lambda ()
-      (with-current-buffer "*scratch*"
-        (flymake-mode -1)))))
+  :init
+  (global-flycheck-mode)
   :config
-  (setq flymake-fringe-indicator-position 'right-fringe)
-  (setq flymake-no-changes-timeout 1)
+  ;; Use right fringe for indicators (matching previous flymake config)
+  (setq flycheck-indication-mode 'right-fringe)
+
+  ;; Performance optimizations
+  (setq flycheck-idle-change-delay 1.0)  ; Delay before checking after changes
+  (setq flycheck-idle-buffer-switch-delay 0.5) ; Delay after switching buffers
+  (setq flycheck-display-errors-delay 0.3)  ; Delay before showing errors at point
+
+  ;; Display settings
+  (setq flycheck-highlighting-mode 'symbols)  ; Highlight entire symbols
+  (setq flycheck-check-syntax-automatically '(save mode-enabled))
+
+  ;; Disable flycheck in scratch buffer
   (add-hook 'lisp-interaction-mode-hook
             (lambda ()
               (when (string= (buffer-name) "*scratch*")
-                (flymake-mode -1))))
-  (add-hook
-   'emacs-lisp-mode-hook
-   (lambda ()
-     ;; Only add diagnostic functions for file-backed buffers
-     (when (buffer-file-name)
-       (add-hook 'flymake-diagnostic-functions #'elisp-flymake-byte-compile nil t)
-       (add-hook 'flymake-diagnostic-functions #'elisp-flymake-checkdoc nil t))))
+                (flycheck-mode -1))))
+
+  ;; For elisp, disable package-lint if not needed
+  (setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc))
+
+  ;; Enable for specific modes
+  (add-hook 'prog-mode-hook 'flycheck-mode)
+  (add-hook 'python-ts-mode-hook 'flycheck-mode)
+  (add-hook 'c-ts-mode-hook 'flycheck-mode)
+  (add-hook 'c++-ts-mode-hook 'flycheck-mode)
+  (add-hook 'js-ts-mode-hook 'flycheck-mode)
+  (add-hook 'typescript-ts-mode-hook 'flycheck-mode)
+  (add-hook 'rust-ts-mode-hook 'flycheck-mode)
+
   :bind
-  (:map flymake-mode-map
-        ("C-c ! l" . flymake-show-buffer-diagnostics)
-        ("C-c ! n" . flymake-goto-next-error)
-        ("C-c ! p" . flymake-goto-prev-error)))
+  (:map flycheck-mode-map
+        ("C-c ! l" . flycheck-list-errors)
+        ("C-c ! n" . flycheck-next-error)
+        ("C-c ! p" . flycheck-previous-error)
+        ("C-c ! v" . flycheck-verify-setup)
+        ("C-c ! c" . flycheck-clear)
+        ("C-c ! e" . flycheck-explain-error-at-point)
+        ("C-c ! s" . flycheck-select-checker)
+        ("C-c ! d" . flycheck-disable-checker)))
 
 (use-package elisp-lint
   :ensure t
   :commands (elisp-lint-buffer elisp-lint-file)
   :config (setq elisp-lint-ignored-validators '("package-lint")))
+
+;;; flycheck-eglot
+
+(use-package flycheck-eglot
+  :ensure t
+  :after (flycheck eglot)
+  :config
+  (global-flycheck-eglot-mode 1))
 
 ;;; flyover
 
@@ -2539,10 +2556,10 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq flyover-percent-darker 40)
   (setq flyover-text-tint 'lighter) ;; or 'darker or nil
   (setq flyover-text-tint-percent 50)
-  (setq flyover-checkers '(flycmake))
+  (setq flyover-checkers '(flycheck))
   (setq flyover-debug nil)
   (setq flyover-debounce-interval 0.2)
-  (setq flyover-line-position-offset 1)
+  (setq flyover-line-position-offset 2)
   (setq flyover-wrap-messages t)
   (setq flyover-max-line-length 80)
   (setq flyover-info-icon "🛈")
