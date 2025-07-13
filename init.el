@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-12 20:38:12 by grim>
+;; Time-stamp: <Last changed 2025-07-13 10:33:48 by grim>
 
 ;; Enable these
 (mapc
@@ -363,35 +363,48 @@ OLD is ignored but included for hook compatibility."
    x-select-enable-primary t
    select-enable-clipboard t)
 
-  ;; Modern EXWM RandR Configuration
-  (require 'exwm-randr)
-
-  ;; Enable randr mode first
-  (exwm-randr-mode 1)
 
   ;; Initialize empty - will be set by simple monitor handler
   (setq exwm-randr-workspace-monitor-plist nil)
 
-  ;; Simple monitor change handler
-  (add-hook 'exwm-randr-screen-change-hook
-            (lambda ()
-              (let ((monitors (split-string (shell-command-to-string
-                                             "xrandr --listmonitors | grep -v '^Monitors:' | awk '{print $4}'") "\n" t)))
-                (when (>= (length monitors) 2)
-                  ;; Assign workspace 0 to first monitor, workspace 1 to second monitor
-                  (setq exwm-randr-workspace-monitor-plist
-                        (list 0 (nth 0 monitors) 1 (nth 1 monitors)))
-                  ;; Configure monitors: left monitor first, right monitor second
-                  (start-process-shell-command
-                   "xrandr" nil
-                   (format "xrandr --output %s --auto --pos 0x0 --output %s --primary --auto --right-of %s --output eDP-1 --off"
-                           (nth 0 monitors) (nth 1 monitors) (nth 0 monitors))))
-                (when (fboundp 'exwm-randr-refresh)
-                  (exwm-randr-refresh))
-                ;; Refresh display after screen change
-                (redisplay t))))
 
-  ;; To enable monitor debugging: (setq grim/exwm-debug-monitors t)
+  (defvar my-internal-monitor "eDP-1" "Name of the internal monitor.")
+
+  (defun exwm-change-screen-hook ()
+    (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
+          (connected-monitors))
+      (with-temp-buffer
+        (call-process "xrandr" nil t nil)
+        (goto-char (point-min))
+        (while (re-search-forward xrandr-output-regexp nil t)
+          (push (match-string 1) connected-monitors))
+        (setq connected-monitors (nreverse connected-monitors)))
+      (let ((externals (remove my-internal-monitor connected-monitors)))
+        (if (null externals)
+            ;; Only internal monitor is connected
+            (progn
+              (call-process "xrandr" nil nil nil "--output" my-internal-monitor "--auto")
+              (setq exwm-randr-workspace-monitor-plist (list 0 my-internal-monitor)))
+          ;; External monitors are connected
+          (let ((xrandr-args (list "--output" my-internal-monitor "--off"))
+                (plist))
+            (let ((first-external (car externals)))
+              (setq xrandr-args (append xrandr-args (list "--output" first-external "--primary" "--auto")))
+              (setq plist (list 0 first-external))
+              (let ((previous first-external)
+                    (workspace 1))
+                (dolist (ext (cdr externals))
+                  (setq xrandr-args (append xrandr-args (list "--output" ext "--right-of" previous "--auto")))
+                  (setq previous ext)
+                  (setq plist (append plist (list workspace ext)))
+                  (setq workspace (1+ workspace)))))
+            (apply 'call-process "xrandr" nil nil nil xrandr-args)
+            (setq exwm-randr-workspace-monitor-plist plist))))))
+
+  (add-hook 'exwm-randr-screen-change-hook 'exwm-change-screen-hook)
+  (require 'exwm-randr)
+  (exwm-randr-enable)
+
   ;; Load the system tray before exwm-init
   (require 'exwm-systemtray)
   (setq exwm-systemtray-height 20)
@@ -872,6 +885,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (ediff-keep-variants
    nil "Do not keep variant buffers after quitting")
   :config
+  (setq ediff-window-setup-function 'ediff-setup-windows-plain)
   ;; Customize faces to respect themes
   (custom-theme-set-faces 'user
                           '(ediff-current-diff-A
