@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-14 10:40:20 by grim>
+;; Time-stamp: <Last changed 2025-07-14 10:54:12 by grim>
 
 ;; Enable these
 (mapc
@@ -21,6 +21,29 @@
 
 ;; Time display functions (used in EXWM setup)
 (autoload 'display-time-mode "time")
+
+;; Slack functions (used in slack configuration)
+(autoload 'slack-register-team "slack")
+
+;; EditorConfig functions (used in editorconfig setup)
+(autoload 'editorconfig-get-properties-from-exec "editorconfig")
+
+;; Paredit functions (used in SLIME configuration)
+(autoload 'enable-paredit-mode "paredit")
+
+;; Eat terminal functions (used in dired configuration)
+(autoload 'eat-cd "eat")
+
+;; Tree-sitter functions (used in tree-sitter configuration)
+(autoload 'treesit--node-outdated-p "treesit")
+
+;; Indent-bars functions (used in text scaling)
+(autoload 'indent-bars-refresh-font-lock "indent-bars")
+
+;; EXWM functions (used in EXWM configuration)
+(autoload 'exwm-firefox-mode "exwm-firefox")
+(autoload 'exwm-systemtray-mode "exwm-systemtray")
+(autoload 'exwm-randr-mode "exwm-randr")
 
 ;;; vc stuff
 
@@ -2039,7 +2062,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (use-package dired-rainbow
   :ensure t
   :config
-  (dired-rainbow-define-chmod executable-unix "green" ".*x.*"))
+  (dired-rainbow-define-chmod "executable-unix" "green" ".*x.*"))
 
 ;;; eww browser
 
@@ -3534,7 +3557,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 ;;; slack
 
-(use-package emacs-slack
+(use-package slack
   :ensure t
   :bind (("C-c S K" . slack-stop)
          ("C-c S c" . slack-select-rooms)
@@ -3568,12 +3591,14 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :config
   (slack-register-team
    :name "citywideeleva-inv1730.slack.com"
-                                        ;:token "xoxc-sssssssssss-88888888888-hhhhhhhhhhh-jjjjjjjjjj"
-                                        ;:cookie "xoxd-sssssssssss-88888888888-hhhhhhhhhhh-jjjjjjjjjj; d-s=888888888888; lc=888888888888"
+   :token "xoxc-8441908329670-8522394118963-9042060341607-d3249c642ff2cd1a6cda36d690df808e197c92f73d586a5eaaa611d1dacd9b7e"
+   :cookie "xoxd-apOCqADSa85%2BtzGXYjdX9ZbHBztaZOO%2BRXKoQnzMDj2LtWLy2nWgCMPK%2Bo53UW8%2B7MwgCVLN%2FJtojJDM2LFFNZqrf%2Bt4qmWxVpfNlVsDXh6XI9PV6P5Sk40YSUrgOAYohNsW1Bol14Dzd9%2BRfvXNS%2FoeEEsQ6%2BtQow5Rmfq5F%2FY3CTA6lKgJ%2Fm1iYFwdIAqBrFyZGjhND7ZJHEp9RRAeim8cwb3p; d-s=1752504412; lc=1750091653"
    :full-and-display-names t
    :default t
    :subscribed-channels nil ;; using slack-extra-subscribed-channels because I can change it dynamically
    ))
+
+;;; alert?
 
 (use-package alert
   :commands (alert)
