@@ -1,6 +1,6 @@
-;;; init.el -*- lexical-binding: t -*-
+a;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-14 10:54:12 by grim>
+;; Time-stamp: <Last changed 2025-07-14 11:04:11 by grim>
 
 ;; Enable these
 (mapc
@@ -3386,6 +3386,18 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (setq emojify-display-style 'unicode)
   (setq emojify-emoji-styles '(unicode))
   :hook (after-init . global-emojify-mode))
+
+;;; insert-uuid
+
+(use-package insert-uuid
+  :ensure t
+  :defer t
+  :vc (:url "https://github.com/theesfeld/insert-uuid")
+  :bind (("C-c u" . insert-uuid)
+         ("C-c U" . insert-uuid-random))
+  :custom
+  (insert-uuid-default-version 4)
+  (insert-uuid-uppercase nil))
 
 ;;; BACKGROUND?
 
