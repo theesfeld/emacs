@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-14 11:06:58 by grim>
+;; Time-stamp: <Last changed 2025-07-14 11:50:39 by grim>
 
 ;; Enable these
 (mapc
@@ -14,18 +14,9 @@
    (put command 'disabled t))
  '(eshell project-eshell overwrite-mode iconify-frame diary))
 
-;;; Autoload declarations for functions used throughout config
-
-;; Auth-source functions (used in multiple contexts)
-(autoload 'auth-source-search "auth-source")
-
-;; Time display functions (used in EXWM setup)
-(autoload 'display-time-mode "time")
-
 ;;; vc stuff
 
-(when (boundp 'package-vc-register-as-project)
-  (setq package-vc-register-as-project nil)) ; Emacs 30
+(setq package-vc-register-as-project nil) ; Emacs 30
 
 ;;; security model
 
@@ -39,28 +30,19 @@
           "/usr/share/emacs/"))     ; Trust config directory
 
   ;; Allow certain risky operations in trusted directories
-  (when (boundp 'trusted-content-allow-dangerous-local-variables)
-    (setq trusted-content-allow-dangerous-local-variables 'safe))
-  (when (boundp 'trusted-content-allow-risky-eval)
-    (setq trusted-content-allow-risky-eval 'prompt))
+  (setq trusted-content-allow-dangerous-local-variables 'safe
+        trusted-content-allow-risky-eval 'prompt)
 
-  (when (boundp 'trusted-content-log-file)
-    (setq trusted-content-log-file
-          (expand-file-name "trusted-content.log" user-emacs-directory))))
+  (setq trusted-content-log-file
+        (expand-file-name "trusted-content.log" user-emacs-directory)))
 
 (add-hook 'package-menu-mode-hook #'hl-line-mode)
 
 ;;; pinentry
 
 (setenv "GPG_AGENT_INFO" nil)  ; Use emacs pinentry
-
-;; These variables are from epa and epg packages
-(with-eval-after-load 'epa
-  (setq epa-pinentry-mode 'loopback))
-
-(with-eval-after-load 'epg-config
-  (setq epg-pinentry-mode 'loopback))
-
+(setq epa-pinentry-mode 'loopback
+      epg-pinentry-mode 'loopback)
 (when (fboundp 'pinentry-start)
   (pinentry-start))
 
@@ -100,8 +82,7 @@ The DWIM behaviour of this command is as follows:
 (keymap-global-set "<remap> <keyboard-quit>" #'prot/keyboard-quit-dwim)
 
 (defun my/exwm-run-program ()
-  "Run a program using vertico completion with command history.
-Uses PATH suggestions and maintains command history."
+  "Run a program using vertico completion with command history and PATH suggestions."
   (interactive)
   (let* ((history-commands
           (when (boundp 'shell-command-history)
@@ -126,10 +107,8 @@ Uses PATH suggestions and maintains command history."
 (defun increase-text-and-pane ()
   "Increase text size and adjust window width proportionally."
   (interactive)
-  (require 'face-remap)
-  (let ((scale-factor (if (boundp 'text-scale-mode-step)
-                          text-scale-mode-step
-                        1.2)))
+  (let* ((orig-scale (or text-scale-mode-amount 0))
+         (scale-factor text-scale-mode-step))
     (text-scale-increase 1)
     (when (> (length (window-list)) 1) ; Only resize if multiple windows
       (enlarge-window-horizontally
@@ -138,10 +117,8 @@ Uses PATH suggestions and maintains command history."
 (defun decrease-text-and-pane ()
   "Decrease text size and adjust window width proportionally."
   (interactive)
-  (require 'face-remap)
-  (let ((scale-factor (if (boundp 'text-scale-mode-step)
-                          (/ 1.0 text-scale-mode-step)
-                        (/ 1.0 1.2))))
+  (let* ((orig-scale (or text-scale-mode-amount 0))
+         (scale-factor (/ 1.0 text-scale-mode-step)))
     (text-scale-decrease 1)
     (when (> (length (window-list)) 1) ; Only resize if multiple windows
       (shrink-window-horizontally
@@ -192,26 +169,8 @@ Uses PATH suggestions and maintains command history."
   ;; === State Management ===
   (defvar ednc--notification-history nil
     "List of past notifications for consult browsing.")
-  (defvar ednc--notification-ring nil
+  (defvar ednc--notification-ring (make-ring ednc-history-limit)
     "Ring buffer for notification history.")
-
-  ;; Autoload ring functions
-  (autoload 'make-ring "ring")
-  (autoload 'ring-insert "ring")
-  (autoload 'ring-elements "ring")
-  (autoload 'ring-length "ring")
-  (autoload 'ring-remove "ring")
-
-  ;; Initialize the ring after the custom variable is available
-  (defun ednc--init-ring ()
-    "Initialize notification ring with proper size."
-    (unless ednc--notification-ring
-      (setq ednc--notification-ring
-            (make-ring (if (boundp 'ednc-history-limit)
-                           ednc-history-limit
-                         200)))))
-
-  (ednc--init-ring)
 
   ;; === Faces ===
   (defface ednc-notification-time-face
@@ -219,7 +178,7 @@ Uses PATH suggestions and maintains command history."
     "Face for timestamps in notification history.")
 
   ;; === Core Functions ===
-  (defun ednc--store-in-history (_old new)
+  (defun ednc--store-in-history (old new)
     "Store NEW notification in history for consult browsing.
 OLD is ignored but included for hook compatibility."
     (when new
@@ -400,8 +359,9 @@ OLD is ignored but included for hook compatibility."
   (setq mouse-wheel-scroll-amount '(5 ((shift) . 1)))
   (setq mouse-wheel-progressive-speed t)
   (setq
-   select-enable-clipboard t
-   select-enable-primary t)
+   x-select-enable-clipboard t
+   x-select-enable-primary t
+   select-enable-clipboard t)
 
 
   ;; Initialize empty - will be set by simple monitor handler
@@ -470,7 +430,7 @@ OLD is ignored but included for hook compatibility."
 
   ;; Global keybindings
   (setq exwm-input-global-keys
-        (append
+        (nconc
          `(([?\s-r] . exwm-reset)
            ([s-left] . windmove-left)
            ([s-right] . windmove-right)
@@ -676,7 +636,6 @@ OLD is ignored but included for hook compatibility."
 (use-package vc
   :ensure nil
   :demand t
-  :commands (vc-checkin)
   :config
   (defun my-auto-commit-init-el ()
     "Commit changes to init.el after saving."
@@ -792,7 +751,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    time-stamp-active t ; Do enable time-stamps.
    time-stamp-line-limit 10 ; Check first 10 buffer lines for Time-stamp: <>
    time-stamp-format "Last changed %Y-%02m-%02d %02H:%02M:%02S by %u")
-  (add-hook 'write-file-functions 'time-stamp) ; Update when saving.
+  (add-hook 'write-file-hooks 'time-stamp) ; Update when saving.
 
   ;; Simplified auto-insert: use inline lambdas instead of custom function
   ;; The time-stamp system already handles comment syntax automatically
@@ -920,7 +879,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (use-package ediff
   :ensure nil
   :defer t
-  :commands (ediff-quit)
   :custom
   (ediff-split-window-function
    'split-window-right "Split windows vertically")
@@ -1339,7 +1297,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 (use-package completion-preview
   :ensure nil
-  :commands (completion-lazy-hilit-highlight)
   :hook ((prog-mode . completion-preview-mode)
          ;; Add tree-sitter modes explicitly
          (python-ts-mode . completion-preview-mode)
@@ -1427,6 +1384,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 (use-package diff-hl
   :ensure t
+  :defer t
   :hook (magit-post-refresh . diff-hl-magit-post-refresh)
   :config (global-diff-hl-mode +1))
 
@@ -1845,8 +1803,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq git-commit-summary-max-length 50)
   (setq git-commit-style-convention-checks '(non-empty-second-line))
   (setq magit-diff-refine-hunk t)
-  (when (and (require 'nerd-icons nil t)
-             (fboundp 'magit-format-file-nerd-icons))
+  (when (require 'nerd-icons nil t)
     (setq magit-format-file-function #'magit-format-file-nerd-icons))
   :bind ("C-c g" . magit-status))
 
@@ -1922,7 +1879,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 (use-package dired
   :ensure nil
-  :commands (dired-get-file-for-visit)
   :bind
   (("C-x C-j" . dired-jump)
    :map dired-mode-map
@@ -2046,7 +2002,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (use-package eww
   :ensure nil ; built-in package
   :defer t
-  :commands (eww eww-browse-url eww-current-url eww-reload eww-read-bookmark eww-add-bookmark)
+  :commands (eww eww-browse-url)
   :init
   ;; Set eww as the default browser for certain contexts
   (setq browse-url-browser-function 'eww-browse-url)
@@ -2339,7 +2295,6 @@ This function integrates with exwm-firefox-core to open the current page."
 (use-package treesit
   :ensure nil
   :defer t
-  :commands (treesit-defun-name)
   :init
   ;; Tell Emacs where to look for tree-sitter libraries
   (setq treesit-extra-load-path
@@ -2543,8 +2498,10 @@ This function integrates with exwm-firefox-core to open the current page."
 
 (use-package flycheck
   :ensure t
-  :config
+  :defer t
+  :init
   (global-flycheck-mode)
+  :config
   ;; Use right fringe for indicators (matching previous flymake config)
   (setq flycheck-indication-mode 'right-fringe)
 
@@ -2634,7 +2591,8 @@ This function integrates with exwm-firefox-core to open the current page."
 
 (use-package yasnippet
   :ensure t
-  :config
+  :defer t
+  :init
   (yas-global-mode 1) ; Enable yasnippet globally
   :custom
   (yas-snippet-dirs
@@ -2729,14 +2687,6 @@ This function integrates with exwm-firefox-core to open the current page."
    ("M-y" . consult-yank-pop)
    ("M-x" . execute-extended-command))
   :init
-  ;; Autoload declarations for eshell functions
-  (autoload 'eshell/pwd "em-dirs")
-  (autoload 'eshell-send-input "esh-mode")
-  (autoload 'eshell-bol "esh-mode")
-  (autoload 'eshell-previous-input "esh-mode")
-  (autoload 'eshell-next-input "esh-mode")
-  (autoload 'eshell/alias "em-alias")
-  (autoload 'vc-git-working-dir "vc-git")
   ;; Initial settings before Eshell loads
   (setq eshell-directory-name (expand-file-name "eshell" my-tmp-dir)) ;; Store history and data
   (setq eshell-scroll-to-bottom-on-input 'all) ;; Scroll to bottom on input
@@ -2872,6 +2822,7 @@ This function integrates with exwm-firefox-core to open the current page."
 
   ;; Enable eshell-git-prompt for advanced Git-aware prompts
   (use-package eshell-git-prompt
+    :ensure teva
     :after eshell
     :config
     (eshell-git-prompt-use-theme 'powerline)) ;; Use powerline theme
@@ -2883,7 +2834,7 @@ This function integrates with exwm-firefox-core to open the current page."
    (eshell-visual-subprocess-hook . my-eshell-disable-distractions)
    (eshell-mode . eat-eshell-visual-command-mode))) ;; Subprocess distractions
 
-;; EMAIL
+;; E MA I L EMAIL
 
 (use-package message
   :ensure nil
@@ -2893,16 +2844,16 @@ This function integrates with exwm-firefox-core to open the current page."
   (setq message-citation-line-function
         'message-insert-formatted-citation-line)
   (setq message-kill-buffer-on-exit t)
-  ;; message-default-charset is obsolete as of 26.1 - charset comes from language environment
+  (setq message-default-charset 'utf-8)
   (setq message-auto-save-directory
         (expand-file-name "gnus-drafts" my-tmp-dir)))
 
 ;;; Frame setup for daemon compatibility
 
 (defun my-after-make-frame-setup (&optional frame)
-  "Ensure UI elements are disabled for new frames.
-Especially important for daemon clients.
-Explicitly disables menu-bar-mode, tool-bar-mode, and scroll-bar-mode
+  "Ensure UI elements are disabled for new frames, especially daemon clients.
+
+This function explicitly disables menu-bar-mode, tool-bar-mode, and scroll-bar-mode
 for the specified FRAME (or current frame if nil). This complements the frame
 parameters set in early-init.el to ensure robust UI element disabling."
   (when (display-graphic-p frame)
@@ -2919,7 +2870,9 @@ parameters set in early-init.el to ensure robust UI element disabling."
 ;; Apply to all new frames created later (essential for daemon mode)
 (add-hook 'after-make-frame-functions #'my-after-make-frame-setup)
 
-;;; LaTeX templates
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                 LaTeX templates                           ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package emacs
   :ensure nil
@@ -2946,7 +2899,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 (use-package slime
   :ensure t
-  :commands (slime slime-connected-p)
+  :defer t
   :hook
   ((lisp-mode . slime-mode) ;; Enable slime-mode for Lisp files
    (inferior-lisp-mode . inferior-slime-mode)) ;; Enhance inferior-lisp buffers
@@ -3138,7 +3091,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 (use-package server
   :ensure nil
-  :commands (server-start server-running-p)
   :config
   (setq server-client-instructions nil)
   (unless (server-running-p)
@@ -3311,6 +3263,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 (use-package pulsar
   :ensure t
+  :defer t
   :custom
   (pulsar-pulse t)
   (pulsar-delay 0.055)
@@ -3328,7 +3281,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 (use-package volatile-highlights
   :ensure t
-  :config (volatile-highlights-mode 1))
+  :init (volatile-highlights-mode 1))
 
 ;;; SMTP configuration for sending mail
 
@@ -3346,6 +3299,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 (use-package mastodon
   :ensure t
+  :defer t
   :config
   (setq mastodon-active-user "blackdream"
         mastodon-instance-url "https://defcon.social")
@@ -3399,23 +3353,32 @@ parameters set in early-init.el to ensure robust UI element disabling."
     (defun my/profile-init ()
       "Profile Emacs initialization."
       (interactive)
-      (profiler-cpu-start 'cpu)
+      (profiler-cpu-start)
       (add-hook 'after-init-hook
                 (lambda ()
                   (profiler-cpu-stop)
-                  (when (fboundp 'profiler-report)
-                    (profiler-report))))))
+                  (profiler-report)))))
   (add-hook 'emacs-startup-hook
             (lambda ()
               (message "Emacs started in %.2f seconds with %d garbage collections"
                        (float-time (time-subtract after-init-time before-init-time))
                        gcs-done))))
 
-;;; ERC (IRC Client)
+;;; nerd icons completion
+(use-package nerd-icons-completion
+  :ensure t
+  :after marginalia
+  :config
+  (nerd-icons-completion-mode)
+  (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                              ERC (IRC Client)                             ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package erc
   :ensure nil
-  :commands (erc erc-tls erc-default-target erc-update-modules erc-channel-list erc-buffer-list)
+  :defer t
   :config
   ;; Core settings
   (setq
@@ -3506,11 +3469,9 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (defun my-erc-latest-activity ()
     "Jump to channel with most recent activity."
     (interactive)
-    (if (boundp 'erc-modified-channels-alist)
-        (if erc-modified-channels-alist
-            (switch-to-buffer (caar erc-modified-channels-alist))
-          (message "No channel activity"))
-      (message "ERC not loaded")))
+    (if erc-modified-channels-alist
+        (switch-to-buffer (caar erc-modified-channels-alist))
+      (message "No channel activity")))
 
   ;; Completion setup
   (defun my-erc-completion-setup ()
