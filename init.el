@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-14 09:04:55 by grim>
+;; Time-stamp: <Last changed 2025-07-14 09:07:29 by grim>
 
 ;; Enable these
 (mapc
@@ -2919,9 +2919,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 ;; Apply to all new frames created later (essential for daemon mode)
 (add-hook 'after-make-frame-functions #'my-after-make-frame-setup)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                 LaTeX templates                           ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; LaTeX templates
 
 (use-package emacs
   :ensure nil
@@ -3413,10 +3411,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
                        (float-time (time-subtract after-init-time before-init-time))
                        gcs-done))))
 
-;;; nerd icons completion
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                              ERC (IRC Client)                             ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; ERC (IRC Client)
 
 (use-package erc
   :ensure nil
