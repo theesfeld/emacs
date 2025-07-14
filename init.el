@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-14 10:37:32 by grim>
+;; Time-stamp: <Last changed 2025-07-14 10:40:20 by grim>
 
 ;; Enable these
 (mapc
@@ -3535,6 +3535,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 ;;; slack
 
 (use-package emacs-slack
+  :ensure t
   :bind (("C-c S K" . slack-stop)
          ("C-c S c" . slack-select-rooms)
          ("C-c S u" . slack-select-unread-rooms)
