@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-13 10:34:21 by grim>
+;; Time-stamp: <Last changed 2025-07-13 20:07:26 by grim>
 
 ;; Enable these
 (mapc
@@ -1212,7 +1212,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    consult-ripgrep consult-git-grep consult-grep
    consult-bookmark consult-recent-file consult-xref
    consult--source-bookmark consult--source-file-register
-   consult--source-recent-file consult--source-project-recent-file
    :preview-key '(:debounce 0.4 any)
    :initial (thing-at-point 'symbol))
   (global-set-key [remap isearch-forward] #'consult-line)
