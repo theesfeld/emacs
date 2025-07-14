@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-14 09:04:14 by grim>
+;; Time-stamp: <Last changed 2025-07-14 09:04:55 by grim>
 
 ;; Enable these
 (mapc
@@ -2883,7 +2883,7 @@ This function integrates with exwm-firefox-core to open the current page."
    (eshell-visual-subprocess-hook . my-eshell-disable-distractions)
    (eshell-mode . eat-eshell-visual-command-mode))) ;; Subprocess distractions
 
-;; E MA I L EMAIL
+;; EMAIL
 
 (use-package message
   :ensure nil
