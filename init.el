@@ -1,6 +1,6 @@
-a;;; init.el -*- lexical-binding: t -*-
+;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-14 11:04:11 by grim>
+;; Time-stamp: <Last changed 2025-07-14 11:06:58 by grim>
 
 ;; Enable these
 (mapc
@@ -21,29 +21,6 @@ a;;; init.el -*- lexical-binding: t -*-
 
 ;; Time display functions (used in EXWM setup)
 (autoload 'display-time-mode "time")
-
-;; Slack functions (used in slack configuration)
-(autoload 'slack-register-team "slack")
-
-;; EditorConfig functions (used in editorconfig setup)
-(autoload 'editorconfig-get-properties-from-exec "editorconfig")
-
-;; Paredit functions (used in SLIME configuration)
-(autoload 'enable-paredit-mode "paredit")
-
-;; Eat terminal functions (used in dired configuration)
-(autoload 'eat-cd "eat")
-
-;; Tree-sitter functions (used in tree-sitter configuration)
-(autoload 'treesit--node-outdated-p "treesit")
-
-;; Indent-bars functions (used in text scaling)
-(autoload 'indent-bars-refresh-font-lock "indent-bars")
-
-;; EXWM functions (used in EXWM configuration)
-(autoload 'exwm-firefox-mode "exwm-firefox")
-(autoload 'exwm-systemtray-mode "exwm-systemtray")
-(autoload 'exwm-randr-mode "exwm-randr")
 
 ;;; vc stuff
 
@@ -662,37 +639,37 @@ OLD is ignored but included for hook compatibility."
 
 ;;; Desktop Environment
 
-  (use-package desktop-environment
-    :ensure t
-    :when (eq window-system 'x)
-    :init
-    ;; Pre-configure settings before mode activation
-    (setq desktop-environment-notifications t) ; Enable notifications
-    (setq desktop-environment-screenshot-directory
-          "~/Pictures/Screenshots")     ; Screenshot path
-    (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
-    (setq
-     desktop-environment-volume-get-command
-     "pactl get-sink-volume @DEFAULT_SINK@ | awk '/Volume:/ {print $5}'")
-    (setq desktop-environment-volume-get-regexp "\\([0-9]+%\\)")
-    (setq desktop-environment-volume-set-command
-          "pactl set-sink-volume @DEFAULT_SINK@ %s%%") ; Set volume
-    (setq
-     desktop-environment-mute-get-command
-     "pactl get-sink-mute @DEFAULT_SINK@ | awk '{print ($2 == \"yes\") ? \"true\" : \"false\"}'")
-    (setq desktop-environment-volume-toggle-command
-          "pactl set-sink-mute @DEFAULT_SINK@ toggle") ; Toggle mute
-    (setq desktop-environment-volume-normal-increment "+1") ; Volume step up
-    (setq desktop-environment-volume-normal-decrement "-1") ; Volume step down
+(use-package desktop-environment
+  :ensure t
+  :when (eq window-system 'x)
+  :init
+  ;; Pre-configure settings before mode activation
+  (setq desktop-environment-notifications t) ; Enable notifications
+  (setq desktop-environment-screenshot-directory
+        "~/Pictures/Screenshots")     ; Screenshot path
+  (setq desktop-environment-screenlock-command "slock") ; Use slock for screen locking
+  (setq
+   desktop-environment-volume-get-command
+   "pactl get-sink-volume @DEFAULT_SINK@ | awk '/Volume:/ {print $5}'")
+  (setq desktop-environment-volume-get-regexp "\\([0-9]+%\\)")
+  (setq desktop-environment-volume-set-command
+        "pactl set-sink-volume @DEFAULT_SINK@ %s%%") ; Set volume
+  (setq
+   desktop-environment-mute-get-command
+   "pactl get-sink-mute @DEFAULT_SINK@ | awk '{print ($2 == \"yes\") ? \"true\" : \"false\"}'")
+  (setq desktop-environment-volume-toggle-command
+        "pactl set-sink-mute @DEFAULT_SINK@ toggle") ; Toggle mute
+  (setq desktop-environment-volume-normal-increment "+1") ; Volume step up
+  (setq desktop-environment-volume-normal-decrement "-1") ; Volume step down
 
-    :config
-    ;; Ensure dependencies are installed
-    (desktop-environment-mode 1)
-    (dolist (cmd '("scrot" "slock" "pactl" "brightnessctl"))
-      (unless (executable-find cmd)
-        (message
-         "Warning: %s not found; desktop-environment may not work fully"
-         cmd))))
+  :config
+  ;; Ensure dependencies are installed
+  (desktop-environment-mode 1)
+  (dolist (cmd '("scrot" "slock" "pactl" "brightnessctl"))
+    (unless (executable-find cmd)
+      (message
+       "Warning: %s not found; desktop-environment may not work fully"
+       cmd))))
 
 ;;; init.el version control
 
@@ -1354,7 +1331,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :ensure t
   :defer 1   ; Defer marginalia for faster startup
   :bind (:map minibuffer-local-map
-         ("M-A" . marginalia-cycle))
+              ("M-A" . marginalia-cycle))
   :init
   (run-with-idle-timer 1 nil #'marginalia-mode))
 
@@ -2062,7 +2039,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (use-package dired-rainbow
   :ensure t
   :config
-  (dired-rainbow-define-chmod "executable-unix" "green" ".*x.*"))
+  (dired-rainbow-define-chmod executable-unix "green" ".*x.*"))
 
 ;;; eww browser
 
@@ -3566,57 +3543,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
         ("C-c C-SPC" . erc-track-switch-buffer) ; Jump to active channel
         :map global-map
         ("C-c L" . my-erc-connect-libera)))
-
-;;; slack
-
-(use-package slack
-  :ensure t
-  :bind (("C-c S K" . slack-stop)
-         ("C-c S c" . slack-select-rooms)
-         ("C-c S u" . slack-select-unread-rooms)
-         ("C-c S U" . slack-user-select)
-         ("C-c S s" . slack-search-from-messages)
-         ("C-c S J" . slack-jump-to-browser)
-         ("C-c S j" . slack-jump-to-app)
-         ("C-c S e" . slack-insert-emoji)
-         ("C-c S E" . slack-message-edit)
-         ("C-c S r" . slack-message-add-reaction)
-         ("C-c S t" . slack-thread-show-or-create)
-         ("C-c S g" . slack-message-redisplay)
-         ("C-c S G" . slack-conversations-list-update-quick)
-         ("C-c S q" . slack-quote-and-reply)
-         ("C-c S Q" . slack-quote-and-reply-with-link)
-         (:map slack-mode-map
-               (("@" . slack-message-embed-mention)
-                ("#" . slack-message-embed-channel)))
-         (:map slack-thread-message-buffer-mode-map
-               (("C-c '" . slack-message-write-another-buffer)
-                ("@" . slack-message-embed-mention)
-                ("#" . slack-message-embed-channel)))
-         (:map slack-message-buffer-mode-map
-               (("C-c '" . slack-message-write-another-buffer)))
-         (:map slack-message-compose-buffer-mode-map
-               (("C-c '" . slack-message-send-from-buffer)))
-         )
-  :custom
-  (slack-extra-subscribed-channels (mapcar 'intern (list "office" "protect" "sitrep")))
-  :config
-  (slack-register-team
-   :name "citywideeleva-inv1730.slack.com"
-   :token "xoxc-8441908329670-8522394118963-9042060341607-d3249c642ff2cd1a6cda36d690df808e197c92f73d586a5eaaa611d1dacd9b7e"
-   :cookie "xoxd-apOCqADSa85%2BtzGXYjdX9ZbHBztaZOO%2BRXKoQnzMDj2LtWLy2nWgCMPK%2Bo53UW8%2B7MwgCVLN%2FJtojJDM2LFFNZqrf%2Bt4qmWxVpfNlVsDXh6XI9PV6P5Sk40YSUrgOAYohNsW1Bol14Dzd9%2BRfvXNS%2FoeEEsQ6%2BtQow5Rmfq5F%2FY3CTA6lKgJ%2Fm1iYFwdIAqBrFyZGjhND7ZJHEp9RRAeim8cwb3p; d-s=1752504412; lc=1750091653"
-   :full-and-display-names t
-   :default t
-   :subscribed-channels nil ;; using slack-extra-subscribed-channels because I can change it dynamically
-   ))
-
-;;; alert?
-
-(use-package alert
-  :commands (alert)
-  :init
-  (setq alert-default-style 'notifier))
-
 
 ;;; final cleanup
 
