@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-15 19:54:58 by grim>
+;; Time-stamp: <Last changed 2025-07-15 19:55:15 by grim>
 
 ;; Enable these
 (mapc
@@ -3509,6 +3509,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 (use-package org-asana
   :vc (:url "https://github.com/wtheesfeld/org-asana" :rev :newest)
   :after org
+  :defer t
   :config
   (setq org-asana-token "2/1210175301082801/1210805683922026:b321aa0433c14828f017821a06f00684"
         org-asana-sync-method 'manual
