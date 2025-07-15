@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-14 11:50:39 by grim>
+;; Time-stamp: <Last changed 2025-07-15 19:00:07 by grim>
 
 ;; Enable these
 (mapc
@@ -2822,7 +2822,6 @@ This function integrates with exwm-firefox-core to open the current page."
 
   ;; Enable eshell-git-prompt for advanced Git-aware prompts
   (use-package eshell-git-prompt
-    :ensure teva
     :after eshell
     :config
     (eshell-git-prompt-use-theme 'powerline)) ;; Use powerline theme
@@ -3504,6 +3503,34 @@ parameters set in early-init.el to ensure robust UI element disabling."
         ("C-c C-SPC" . erc-track-switch-buffer) ; Jump to active channel
         :map global-map
         ("C-c L" . my-erc-connect-libera)))
+
+;;; asana shit
+
+(use-package org-asana
+  :vc(:url "https://github.com/theesfeld/org-asana")
+  :ensure t
+  :after org
+  :config
+  (setq org-asana-token "2/1210175301082801/1210805683922026:479fe8381a18a67e122a01776d077617"
+        org-asana-sync-method 'periodic
+        org-asana-sync-interval 10
+        org-asana-conflict-resolution 'newest-wins
+        org-asana-default-workspace nil
+        org-asana-default-project nil
+        org-asana-sync-tags t
+        org-asana-sync-priority t
+        org-asana-org-file "~/Documents/notes/asana.org"
+        org-asana-heading-level 2)
+  :hook ((org-mode . org-asana-mode)
+         (org-agenda-mode . org-asana-agenda-mode))
+  :bind (:map org-mode-map
+              ("C-c a s" . org-asana-sync)
+              ("C-c a c" . org-asana-create-task-from-heading)
+              ("C-c a i" . org-asana-import-my-tasks)
+              ("C-c a o" . org-asana-open-in-asana)
+              ("C-c a u" . org-asana-update-from-heading)
+              ("C-c a d" . org-asana-delete-task)
+              ("C-c a t" . org-asana-test-connection)))
 
 ;;; final cleanup
 
