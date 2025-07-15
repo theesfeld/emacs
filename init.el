@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-15 19:03:30 by grim>
+;; Time-stamp: <Last changed 2025-07-15 19:23:18 by grim>
 
 ;; Enable these
 (mapc
@@ -3507,22 +3507,47 @@ parameters set in early-init.el to ensure robust UI element disabling."
 ;;; asana shit
 
 (use-package org-asana
-  :vc(:url "https://github.com/theesfeld/org-asana")
-  :ensure t
+  :vc (:url "https://github.com/wtheesfeld/org-asana"
+            :rev :newest)
   :after org
   :config
-  (setq org-asana-token "2/1210175301082801/1210805683922026:479fe8381a18a67e122a01776d077617"
+  ;; Required: Your Asana Personal Access Token
+  (setq org-asana-token "your-personal-access-token"
+
+        ;; Sync method: 'manual or 'periodic (default: 'manual)
         org-asana-sync-method 'manual
+
+        ;; Sync interval in minutes for periodic sync (default: 15)
         org-asana-sync-interval 10
+
+        ;; Conflict resolution: 'newest-wins or 'asana-wins (default: 'newest-wins)
         org-asana-conflict-resolution 'newest-wins
+
+        ;; Default workspace GID (default: nil - auto-select first)
         org-asana-default-workspace nil
+
+        ;; Default project GID for new tasks (default: nil - My Tasks only)
         org-asana-default-project nil
+
+        ;; Whether to sync org tags with Asana tags (default: t)
         org-asana-sync-tags t
+
+        ;; Whether to sync org priority with Asana priority (default: t)
         org-asana-sync-priority t
-        org-asana-org-file "~/Documents/notes/asana.org"
+
+        ;; Specific org file for Asana tasks (default: nil - current buffer)
+        org-asana-org-file "~/org/asana.org"
+
+        ;; Org heading level for Asana tasks (default: 2)
         org-asana-heading-level 2)
+
+  ;; Optional: Enable org-asana-mode in org buffers
   :hook ((org-mode . org-asana-mode)
+
+         ;; Optional: Enable agenda integration
          (org-agenda-mode . org-asana-agenda-mode))
+
+  ;; Keybindings (automatically set when org-asana-mode is enabled)
   :bind (:map org-mode-map
               ("C-c x s" . org-asana-sync)
               ("C-c x c" . org-asana-create-task-from-heading)
@@ -3531,7 +3556,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
               ("C-c x u" . org-asana-update-from-heading)
               ("C-c x d" . org-asana-delete-task)
               ("C-c x t" . org-asana-test-connection)))
-
 ;;; final cleanup
 
 (put 'eshell 'disabled nil)
