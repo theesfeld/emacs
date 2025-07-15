@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-15 19:29:46 by grim>
+;; Time-stamp: <Last changed 2025-07-15 19:34:44 by grim>
 
 ;; Enable these
 (mapc
@@ -3536,7 +3536,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
         org-asana-sync-priority t
 
         ;; Specific org file for Asana tasks (default: nil - current buffer)
-        org-asana-org-file "~/org/asana.org"
+        org-asana-org-file "~/Documents/notes/asana.org"
 
         ;; Org heading level for Asana tasks (default: 2)
         org-asana-heading-level 2)
