@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-15 19:00:57 by grim>
+;; Time-stamp: <Last changed 2025-07-15 19:03:30 by grim>
 
 ;; Enable these
 (mapc
@@ -3524,13 +3524,13 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :hook ((org-mode . org-asana-mode)
          (org-agenda-mode . org-asana-agenda-mode))
   :bind (:map org-mode-map
-              ("C-c a s" . org-asana-sync)
-              ("C-c a c" . org-asana-create-task-from-heading)
-              ("C-c a i" . org-asana-import-my-tasks)
-              ("C-c a o" . org-asana-open-in-asana)
-              ("C-c a u" . org-asana-update-from-heading)
-              ("C-c a d" . org-asana-delete-task)
-              ("C-c a t" . org-asana-test-connection)))
+              ("C-c x s" . org-asana-sync)
+              ("C-c x c" . org-asana-create-task-from-heading)
+              ("C-c x i" . org-asana-import-my-tasks)
+              ("C-c x o" . org-asana-open-in-asana)
+              ("C-c x u" . org-asana-update-from-heading)
+              ("C-c x d" . org-asana-delete-task)
+              ("C-c x t" . org-asana-test-connection)))
 
 ;;; final cleanup
 
