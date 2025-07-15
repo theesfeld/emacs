@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-15 19:23:18 by grim>
+;; Time-stamp: <Last changed 2025-07-15 19:29:46 by grim>
 
 ;; Enable these
 (mapc
@@ -3512,7 +3512,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :after org
   :config
   ;; Required: Your Asana Personal Access Token
-  (setq org-asana-token "your-personal-access-token"
+  (setq org-asana-token "2/1210175301082801/1210805683922026:b321aa0433c14828f017821a06f00684"
 
         ;; Sync method: 'manual or 'periodic (default: 'manual)
         org-asana-sync-method 'manual
