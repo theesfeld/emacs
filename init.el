@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-15 19:34:44 by grim>
+;; Time-stamp: <Last changed 2025-07-15 19:38:29 by grim>
 
 ;; Enable these
 (mapc
@@ -3507,8 +3507,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 ;;; asana shit
 
 (use-package org-asana
-  :vc (:url "https://github.com/wtheesfeld/org-asana"
-            :rev :newest)
+  :vc (:url "https://github.com/wtheesfeld/org-asana")
   :after org
   :config
   ;; Required: Your Asana Personal Access Token
