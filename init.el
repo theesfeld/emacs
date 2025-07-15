@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-15 19:40:36 by grim>
+;; Time-stamp: <Last changed 2025-07-15 19:54:58 by grim>
 
 ;; Enable these
 (mapc
@@ -3507,19 +3507,16 @@ parameters set in early-init.el to ensure robust UI element disabling."
 ;;; asana shit
 
 (use-package org-asana
-  :vc (:url "https://github.com/wtheesfeld/org-asana")
+  :vc (:url "https://github.com/wtheesfeld/org-asana" :rev :newest)
   :after org
   :config
   (setq org-asana-token "2/1210175301082801/1210805683922026:b321aa0433c14828f017821a06f00684"
         org-asana-sync-method 'manual
-        org-asana-sync-interval 10
+        org-asana-sync-interval 15
         org-asana-conflict-resolution 'newest-wins
-        org-asana-default-workspace nil
-        org-asana-default-project nil
         org-asana-sync-tags t
         org-asana-sync-priority t
-        org-asana-org-file "~/Documents/notes/asana.org"
-        org-asana-heading-level 2)
+        org-asana-org-file "~/Documents/notes/asana.org")
   :hook ((org-mode . org-asana-mode)
          (org-agenda-mode . org-asana-agenda-mode))
   :bind (:map org-mode-map
@@ -3533,7 +3530,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 ;;; final cleanup
 
-(put 'eshell 'disabled nil)
 (provide 'init)
 
 ;;; init.el ends here
+(put 'eshell 'disabled nil)
