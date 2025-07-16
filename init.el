@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-16 19:09:16 by grim>
+;; Time-stamp: <Last changed 2025-07-16 19:12:23 by grim>
 
 ;; Enable these
 (mapc
@@ -2982,6 +2982,21 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (when (boundp 'eat--terminfo-path)
     (setq eat-term-terminfo-directory eat--terminfo-path))
   (setq eat-shell-environment (list (concat "PATH=" (getenv "PATH"))))
+
+  (defun eat-advised (orig-fun &rest args)
+    "Advice to always create new eat terminal."
+    (let ((eat-kill-buffer-on-exit t))
+      ;; Kill any existing dead eat buffers
+      (dolist (buf (buffer-list))
+        (with-current-buffer buf
+          (when (and (eq major-mode 'eat-mode)
+                     (not (process-live-p (get-buffer-process buf))))
+            (kill-buffer buf))))
+      ;; Call original with PROGRAM argument to force new buffer
+      (apply orig-fun nil t args)))
+
+  (advice-add 'eat :around #'eat-advised)
+
   :delight
   (eat-eshell-mode nil)
   (eat-eshell-visual-command-mode nil))
