@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-16 19:21:50 by grim>
+;; Time-stamp: <Last changed 2025-07-16 19:25:33 by grim>
 
 ;; Enable these
 (mapc
@@ -2969,6 +2969,8 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (eat-enable-shell-prompt-annotation t)
   (eat-term-scrollback-size 100000)
   (eat-term-resize t)
+  (eat-query-before-killing-running-terminal nil)
+  (eat-eshell-fallback-if-stty-not-available t)
   :hook
   ((eshell-load . eat-eshell-mode)
    (eshell-load . eat-eshell-visual-command-mode)
