@@ -1628,26 +1628,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         '((sequence "TODO(t)" "NEXT(n)" "WAITING(w@/!)"
                     "|" "DONE(d!)" "CANCELED(c@)")))
 
-  ;; Cache variables for org-agenda-files optimization
-  (defvar my/org-agenda-files-cache nil)
-  (defvar my/org-agenda-cache-time nil)
-
-  (defun my/update-org-agenda-files-optimized ()
-    "Update org-agenda-files with enhanced caching and file watching."
-    (when (or (null my/org-agenda-cache-time)
-              (> (- (float-time) my/org-agenda-cache-time) 600)) ; 10 minutes
-      (setq my/org-agenda-files-cache
-            (seq-filter
-             (lambda (file)
-               (and (string-suffix-p ".org" file)
-                    (not (string-match-p "/\\." file))  ; Skip hidden files
-                    (file-readable-p file)))
-             (directory-files-recursively org-directory "\\.org$")))
-      (setq my/org-agenda-cache-time (float-time)))
-    (setq org-agenda-files my/org-agenda-files-cache))
-
-  ;; Initial agenda files setup with cache
-  (advice-add 'org-agenda-files :before #'my/update-org-agenda-files-optimized)
+  ;; Simple org-agenda-files setup
+  (setq org-agenda-files (list org-directory))
 
   :hook
   ((org-mode . visual-line-mode)
