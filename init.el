@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-16 18:37:15 by grim>
+;; Time-stamp: <Last changed 2025-07-16 19:09:16 by grim>
 
 ;; Enable these
 (mapc
@@ -353,6 +353,13 @@ OLD is ignored but included for hook compatibility."
             (lambda ()
               (set-process-query-on-exit-flag
                (get-buffer-process (current-buffer)) nil)))
+  (defun my/exwm-disable-kill-query ()
+    "Disable kill-buffer query for EXWM buffers."
+    (when (derived-mode-p 'exwm-mode)
+      (setq-local kill-buffer-query-functions nil)))
+  (add-hook 'exwm-manage-finish-hook 'my/exwm-disable-kill-query)
+  (setq kill-buffer-query-functions
+        (delq 'exwm-manage--kill-buffer-query-function kill-buffer-query-functions))
   (setq exwm-workspace-show-all-buffers t)
   (setq exwm-layout-show-all-buffers t)
   (setq exwm-manage-force-tiling nil)
