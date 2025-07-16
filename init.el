@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-16 07:48:50 by grim>
+;; Time-stamp: <Last changed 2025-07-16 09:29:48 by grim>
 
 ;; Enable these
 (mapc
@@ -700,7 +700,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    scroll-error-top-bottom t
    confirm-kill-processes nil
    confirm-kill-emacs nil
-   ;; this
+   shell-kill-buffer-on-exit t
    echo-keystrokes-help nil
    delete-section-mode t
    x-stretch-cursor t
