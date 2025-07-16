@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-16 19:12:23 by grim>
+;; Time-stamp: <Last changed 2025-07-16 19:21:50 by grim>
 
 ;; Enable these
 (mapc
@@ -2958,12 +2958,9 @@ parameters set in early-init.el to ensure robust UI element disabling."
 ;;; EAT Terminal
 
 (use-package eat
-  :ensure t ;; Automatically install eat from NonGNU ELPA
-  :init
-  ;; Preload Eat so everything is ready on first use
-  (require 'eat)
-  (when-let ((eat-dir (file-name-directory (locate-library "eat"))))
-    (setenv "EAT_SHELL_INTEGRATION_DIR" eat-dir))
+  :ensure t
+  :defer t  ; Let it load when needed, not immediately
+  ;; Remove the :init section entirely - no (require 'eat)
   :custom
   (eat-shell (list (or (executable-find "bash") "/bin/bash") "--login" "-i"))
   (eat-kill-buffer-on-exit t)
@@ -2972,31 +2969,15 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (eat-enable-shell-prompt-annotation t)
   (eat-term-scrollback-size 100000)
   (eat-term-resize t)
-
   :hook
-  ((eshell-load-hook . eat-eshell-mode)
-   (eshell-load-hook . eat-eshell-visual-command-mode)
-   (eat-mode-hook . eat-semi-char-mode)
-   (eat-mode-hook . eat-semi-char-mode))
+  ((eshell-load . eat-eshell-mode)
+   (eshell-load . eat-eshell-visual-command-mode)
+   (eat-mode . eat-semi-char-mode))  ; Only once!
   :config
-  (when (boundp 'eat--terminfo-path)
-    (setq eat-term-terminfo-directory eat--terminfo-path))
-  (setq eat-shell-environment (list (concat "PATH=" (getenv "PATH"))))
-
-  (defun eat-advised (orig-fun &rest args)
-    "Advice to always create new eat terminal."
-    (let ((eat-kill-buffer-on-exit t))
-      ;; Kill any existing dead eat buffers
-      (dolist (buf (buffer-list))
-        (with-current-buffer buf
-          (when (and (eq major-mode 'eat-mode)
-                     (not (process-live-p (get-buffer-process buf))))
-            (kill-buffer buf))))
-      ;; Call original with PROGRAM argument to force new buffer
-      (apply orig-fun nil t args)))
-
-  (advice-add 'eat :around #'eat-advised)
-
+  ;; Set up shell integration directory properly
+  (with-eval-after-load 'eat
+    (when-let ((eat-dir (file-name-directory (locate-library "eat"))))
+      (setenv "EAT_SHELL_INTEGRATION_DIR" eat-dir)))
   :delight
   (eat-eshell-mode nil)
   (eat-eshell-visual-command-mode nil))
