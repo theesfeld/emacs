@@ -144,7 +144,7 @@
 (defvar grim-emacs--vc-handled-backends vc-handled-backends)
 
 (setq file-name-handler-alist nil
-      vc-handled-backends nil)
+      vc-handled-backends '(Git))
 
 (add-hook 'emacs-startup-hook
           (lambda ()
