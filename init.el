@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-16 09:29:48 by grim>
+;; Time-stamp: <Last changed 2025-07-16 09:31:34 by grim>
 
 ;; Enable these
 (mapc
@@ -349,8 +349,10 @@ OLD is ignored but included for hook compatibility."
                 (with-current-buffer buffer
                   (when (not (eq major-mode 'exwm-mode))
                     (setq mode-line-format (default-value 'mode-line-format)))))))
-
-
+  (add-hook 'exwm-manage-finish-hook
+            (lambda ()
+              (set-process-query-on-exit-flag
+               (get-buffer-process (current-buffer)) nil)))
   (setq exwm-workspace-show-all-buffers t)
   (setq exwm-layout-show-all-buffers t)
   (setq exwm-manage-force-tiling nil)
