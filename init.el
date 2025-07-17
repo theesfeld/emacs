@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-17 11:56:43 by grim>
+;; Time-stamp: <Last changed 2025-07-17 12:21:39 by grim>
 
 ;; Enable these
 (mapc
@@ -3499,15 +3499,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
         ("C-c C-SPC" . erc-track-switch-buffer) ; Jump to active channel
         :map global-map
         ("C-c L" . my-erc-connect-libera)))
-
-;;; asana shit
-
-(use-package org-asana
-  :vc (:url "https://github.com/theesfeld/org-asana" :rev :newest)
-  :after org
-  :config
-  (setq org-asana-token "2/1210175301082801/1210805683922026:b321aa0433c14828f017821a06f00684"
-        org-asana-org-file "~/Documents/notes/asana.org"))
 
 ;;; final cleanup
 
