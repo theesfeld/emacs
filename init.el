@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-16 20:03:52 by grim>
+;; Time-stamp: <Last changed 2025-07-16 20:09:13 by grim>
 
 ;; Enable these
 (mapc
@@ -2970,7 +2970,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (eat-shell (list (or (executable-find "bash") "/bin/bash") "--login" "-i"))
   (eat-kill-buffer-on-exit t)
   (eat-enable-blinking-text t)
-  (eat-enable-mouse t)
+;;  (eat-enable-mouse t)
   (eat-enable-shell-prompt-annotation t)
   (eat-term-scrollback-size 100000)
   (eat-term-resize t)
@@ -2979,7 +2979,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :hook
   ((eshell-load . eat-eshell-mode)
    (eshell-load . eat-eshell-visual-command-mode)
-   (eat-mode . eat-semi-char-mode))  ; Only once!
+;;   (eat-mode . eat-semi-char-mode))  ; Only once!
   :config
   ;; Set up shell integration directory properly
   (with-eval-after-load 'eat
