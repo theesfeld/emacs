@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-16 19:25:33 by grim>
+;; Time-stamp: <Last changed 2025-07-16 20:03:52 by grim>
 
 ;; Enable these
 (mapc
@@ -343,23 +343,28 @@ OLD is ignored but included for hook compatibility."
   (add-hook 'exwm-update-title-hook #'grim/exwm-update-title)
   (add-hook 'exwm-init-hook #'grim/exwm-init-hook)
   ;; Ensure modeline is visible when switching workspaces
+  ;; Single consolidated hook for EXWM buffer management
+  (defun my/exwm-manage-finish-setup ()
+    "Consolidated setup for newly managed EXWM windows."
+    ;; Disable process query on exit
+    (when-let ((proc (get-buffer-process (current-buffer))))
+      (set-process-query-on-exit-flag proc nil))
+    ;; Disable kill-buffer query
+    (setq-local kill-buffer-query-functions nil))
+
+  (add-hook 'exwm-manage-finish-hook #'my/exwm-manage-finish-setup)
+
+  ;; Remove the global EXWM query function (do this once, not in a hook)
+  (setq kill-buffer-query-functions
+        (delq 'exwm-manage--kill-buffer-query-function kill-buffer-query-functions))
+
+  ;; Ensure modeline is visible when switching workspaces
   (add-hook 'exwm-workspace-switch-hook
             (lambda ()
               (dolist (buffer (buffer-list))
                 (with-current-buffer buffer
                   (when (not (eq major-mode 'exwm-mode))
                     (setq mode-line-format (default-value 'mode-line-format)))))))
-  (add-hook 'exwm-manage-finish-hook
-            (lambda ()
-              (set-process-query-on-exit-flag
-               (get-buffer-process (current-buffer)) nil)))
-  (defun my/exwm-disable-kill-query ()
-    "Disable kill-buffer query for EXWM buffers."
-    (when (derived-mode-p 'exwm-mode)
-      (setq-local kill-buffer-query-functions nil)))
-  (add-hook 'exwm-manage-finish-hook 'my/exwm-disable-kill-query)
-  (setq kill-buffer-query-functions
-        (delq 'exwm-manage--kill-buffer-query-function kill-buffer-query-functions))
   (setq exwm-workspace-show-all-buffers t)
   (setq exwm-layout-show-all-buffers t)
   (setq exwm-manage-force-tiling nil)
