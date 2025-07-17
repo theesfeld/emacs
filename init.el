@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-16 20:09:13 by grim>
+;; Time-stamp: <Last changed 2025-07-16 20:10:10 by grim>
 
 ;; Enable these
 (mapc
@@ -2978,7 +2978,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (eat-eshell-fallback-if-stty-not-available t)
   :hook
   ((eshell-load . eat-eshell-mode)
-   (eshell-load . eat-eshell-visual-command-mode)
+   (eshell-load . eat-eshell-visual-command-mode))
 ;;   (eat-mode . eat-semi-char-mode))  ; Only once!
   :config
   ;; Set up shell integration directory properly
