@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-16 20:10:10 by grim>
+;; Time-stamp: <Last changed 2025-07-17 11:56:43 by grim>
 
 ;; Enable these
 (mapc
@@ -3507,20 +3507,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :after org
   :config
   (setq org-asana-token "2/1210175301082801/1210805683922026:b321aa0433c14828f017821a06f00684"
-        org-asana-org-file "~/Documents/notes/asana.org"
-        org-asana-conflict-resolution 'asana-wins
-        org-asana-sync-tags t
-        org-asana-sync-priority t
-        org-asana-show-progress-indicators t
-        org-asana-auto-apply-faces t
-        org-asana-collapse-on-open t
-        org-asana-fetch-metadata t
-        org-asana-show-activity-history t
-        org-asana-max-retries 3
-        org-asana-debug t
-        org-asana-agenda-skip-completed t)
-  (org-asana-enable-agenda-integration)
-  (org-asana-enable-capture-templates))
+        org-asana-org-file "~/Documents/notes/asana.org"))
 
 ;;; final cleanup
 
