@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-17 20:24:31 by grim>
+;; Time-stamp: <Last changed 2025-07-17 20:26:52 by grim>
 
 ;; Enable these
 (mapc
@@ -3501,25 +3501,18 @@ parameters set in early-init.el to ensure robust UI element disabling."
         ("C-c L" . my-erc-connect-libera)))
 
 ;;; org-asana
-
 (use-package org-asana
   :vc (:url "https://github.com/theesfeld/org-asana" :rev :newest)
   :after org
   :custom
-  ;; Use authinfo for token storage (default behavior when nil)
   (org-asana-token nil)
-  ;; Specify the machine name in authinfo
   (org-asana-authinfo-machine "app.asana.com")
-  ;; Path to your org file for Asana tasks
   (org-asana-org-file "~/Documents/notes/asana.org")
-  ;; Optional customizations
   (org-asana-fetch-metadata t)
   (org-asana-show-progress-indicators t)
   (org-asana-enable-agenda-integration t)
   :config
-  ;; Ensure the package is loaded
   (require 'org-asana)
-  ;; Initialize when loaded
   (org-asana--ensure-initialized))
 
 ;;; final cleanup
