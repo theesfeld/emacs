@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-17 20:17:01 by grim>
+;; Time-stamp: <Last changed 2025-07-17 20:24:05 by grim>
 
 ;; Enable these
 (mapc
@@ -3500,38 +3500,27 @@ parameters set in early-init.el to ensure robust UI element disabling."
         :map global-map
         ("C-c L" . my-erc-connect-libera)))
 
+;;; org-asana
+
 (use-package org-asana
-  :vc(:url "https://github.com/theesfeld/org-asana" :revision :newest)
-  :ensure t
+  :vc (:fetcher github :repo "theesfeld/org-asana" :rev :newest)
+  :after org
+  :custom
+  ;; Use authinfo for token storage (default behavior when nil)
+  (org-asana-token nil)
+  ;; Specify the machine name in authinfo
+  (org-asana-authinfo-machine "app.asana.com")
+  ;; Path to your org file for Asana tasks
+  (org-asana-org-file "~/Documents/notes/asana.org")
+  ;; Optional customizations
+  (org-asana-fetch-metadata t)
+  (org-asana-show-progress-indicators t)
+  (org-asana-enable-agenda-integration t)
   :config
-  (setq org-asana-token nil  ; Will read from authinfo
-        org-asana-org-file "~/Documents/notes/asana.org"
-
-        ;; Core sync settings
-        org-asana-conflict-resolution 'asana-wins  ; or 'asana-wins, 'local-wins
-        org-asana-sync-tags t                       ; sync tags between org and Asana
-        org-asana-sync-priority t                   ; sync priorities between org and Asana
-
-        ;; Visual enhancements
-        org-asana-show-progress-indicators t        ; show [x/y] progress
-        org-asana-auto-apply-faces t               ; color-code tasks by priority/due date
-        org-asana-collapse-on-open t                ; collapse drawers and headings
-
-        ;; Metadata sync (disable if sync is too slow)
-        org-asana-fetch-metadata t                  ; fetch comments, attachments, history
-        org-asana-show-activity-history t           ; show activity timeline
-
-        ;; Performance tuning
-        org-asana-max-retries 3                     ; set to 1 to disable retries
-        org-asana-debug nil                         ; enable for troubleshooting
-
-        ;; Agenda settings
-        org-asana-agenda-skip-completed t)          ; skip completed in agenda
-
-  ;; Enable optional features
-  ;;  (org-asana-enable-agenda-integration)
-  ;;  (org-asana-enable-capture-templates)
-  )
+  ;; Ensure the package is loaded
+  (require 'org-asana)
+  ;; Initialize when loaded
+  (org-asana--ensure-initialized))
 
 ;;; final cleanup
 
