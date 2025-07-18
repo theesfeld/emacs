@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-17 12:21:39 by grim>
+;; Time-stamp: <Last changed 2025-07-17 20:11:02 by grim>
 
 ;; Enable these
 (mapc
@@ -3499,6 +3499,37 @@ parameters set in early-init.el to ensure robust UI element disabling."
         ("C-c C-SPC" . erc-track-switch-buffer) ; Jump to active channel
         :map global-map
         ("C-c L" . my-erc-connect-libera)))
+
+(use-package org-asana
+  :vc(:url "https://github.com/theesfeld/org-asana")
+  :ensure t
+  (setq org-asana-token nil  ; Will read from authinfo
+        org-asana-org-file "~/Documents/notes/asana.org"
+
+        ;; Core sync settings
+        org-asana-conflict-resolution 'asana-wins  ; or 'asana-wins, 'local-wins
+        org-asana-sync-tags t                       ; sync tags between org and Asana
+        org-asana-sync-priority t                   ; sync priorities between org and Asana
+
+        ;; Visual enhancements
+        org-asana-show-progress-indicators t        ; show [x/y] progress
+        org-asana-auto-apply-faces t               ; color-code tasks by priority/due date
+        org-asana-collapse-on-open t                ; collapse drawers and headings
+
+        ;; Metadata sync (disable if sync is too slow)
+        org-asana-fetch-metadata t                  ; fetch comments, attachments, history
+        org-asana-show-activity-history t           ; show activity timeline
+
+        ;; Performance tuning
+        org-asana-max-retries 3                     ; set to 1 to disable retries
+        org-asana-debug nil                         ; enable for troubleshooting
+
+        ;; Agenda settings
+        org-asana-agenda-skip-completed t)          ; skip completed in agenda
+
+  ;; Enable optional features
+  (org-asana-enable-agenda-integration)
+  (org-asana-enable-capture-templates))
 
 ;;; final cleanup
 
