@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-17 20:13:18 by grim>
+;; Time-stamp: <Last changed 2025-07-17 20:17:01 by grim>
 
 ;; Enable these
 (mapc
@@ -3501,7 +3501,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
         ("C-c L" . my-erc-connect-libera)))
 
 (use-package org-asana
-  :vc(:url "https://github.com/theesfeld/org-asana")
+  :vc(:url "https://github.com/theesfeld/org-asana" :revision :newest)
   :ensure t
   :config
   (setq org-asana-token nil  ; Will read from authinfo
