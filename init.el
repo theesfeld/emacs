@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-18 09:58:48 by grim>
+;; Time-stamp: <Last changed 2025-07-18 10:06:02 by grim>
 
 ;; Enable these
 (mapc
@@ -1628,10 +1628,10 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :ensure nil
   :custom
   ;; Basic settings
-  (setq org-startup-indented t)
-  (setq org-startup-folded 'content)
-  (setq org-return-follows-link t)
-  (setq org-log-done 'time)
+  (org-startup-indented t)
+  (org-startup-folded 'content)
+  (org-return-follows-link t)
+  (org-log-done 'time)
   (org-image-actual-width '(400))           ; Limit image size for performance
   (org-fontify-quote-and-verse-blocks t)
   (org-fontify-whole-heading-line t)
