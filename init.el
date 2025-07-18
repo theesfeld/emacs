@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-18 09:49:21 by grim>
+;; Time-stamp: <Last changed 2025-07-18 09:58:48 by grim>
 
 ;; Enable these
 (mapc
@@ -723,7 +723,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    truncate-string-ellipsis "…" ; Visual ellipsis for truncated lines
    scroll-margin 3
    scroll-step 1
-   pixel-scroll-precision-mode 1
+                                        ;pixel-scroll-precision-mode 1
    auto-window-vscroll nil
    scroll-preserve-screen-position 1
    garbage-collection-messages nil
@@ -810,7 +810,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                       :weight 'black)
 
 
-  (setq scroll-conservatively 101) ; Scroll line-by-line without recentering
+  (setq scroll-conservatively 1) ; Scroll line-by-line without recentering
   (when (file-exists-p custom-file)
     (load custom-file))
   ;; Global Emacs Settings
@@ -823,7 +823,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    tab-always-indent 'complete
    tab-width 2
    standard-indent 2
-   scroll-conservatively 100000
    scroll-preserve-screen-position 1
    delete-by-moving-to-trash t
    window-combination-resize t
@@ -2148,7 +2147,7 @@ This function integrates with exwm-firefox-core to open the current page."
   ;; Hooks for better integration
   ((eww-mode . visual-line-mode)       ; Better line wrapping
    (eww-mode . (lambda ()
-                 (setq-local scroll-conservatively 100) ; Smooth scrolling
+                 (setq-local scroll-conservatively 101) ; Smooth scrolling
                  (setq-local mouse-wheel-scroll-amount '(1 ((shift) . 1)))))))
 
 ;;; pdf-tools
