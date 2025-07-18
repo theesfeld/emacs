@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-17 20:12:46 by grim>
+;; Time-stamp: <Last changed 2025-07-17 20:13:18 by grim>
 
 ;; Enable these
 (mapc
@@ -3530,7 +3530,8 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
   ;; Enable optional features
   ;;  (org-asana-enable-agenda-integration)
-  (org-asana-enable-capture-templates))
+  ;;  (org-asana-enable-capture-templates)
+  )
 
 ;;; final cleanup
 
