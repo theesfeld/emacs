@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-17 20:11:29 by grim>
+;; Time-stamp: <Last changed 2025-07-17 20:12:46 by grim>
 
 ;; Enable these
 (mapc
@@ -3529,7 +3529,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
         org-asana-agenda-skip-completed t)          ; skip completed in agenda
 
   ;; Enable optional features
-  (org-asana-enable-agenda-integration)
+  ;;  (org-asana-enable-agenda-integration)
   (org-asana-enable-capture-templates))
 
 ;;; final cleanup
