@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-17 20:11:02 by grim>
+;; Time-stamp: <Last changed 2025-07-17 20:11:29 by grim>
 
 ;; Enable these
 (mapc
@@ -3503,6 +3503,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 (use-package org-asana
   :vc(:url "https://github.com/theesfeld/org-asana")
   :ensure t
+  :config
   (setq org-asana-token nil  ; Will read from authinfo
         org-asana-org-file "~/Documents/notes/asana.org"
 
