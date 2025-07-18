@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-18 08:33:07 by grim>
+;; Time-stamp: <Last changed 2025-07-18 09:49:21 by grim>
 
 ;; Enable these
 (mapc
@@ -3499,31 +3499,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
         ("C-c C-SPC" . erc-track-switch-buffer) ; Jump to active channel
         :map global-map
         ("C-c L" . my-erc-connect-libera)))
-
-;;; org-asana
-
-(use-package org-asana
-  :vc (:url "https://github.com/theesfeld/org-asana" :rev :newest)
-  :ensure t
-  :custom
-  ;; Required: Your Asana Personal Access Token
-  (org-asana-token nil)
-  ;; Required: Path to your Asana org file
-  (org-asana-org-file "~/Documents/notes/asana.org")
-  ;; Optional: Enable the modules you want
-  (org-asana-modules '(org-asana-cache
-                       org-asana-custom-fields
-                       org-asana-dependencies
-                       org-asana-subtasks
-                       org-asana-attachments
-                       org-asana-users
-                       org-asana-types
-                       org-asana-browser))
-  :config
-  ;; Optional: Set up key bindings
-  (define-key org-mode-map (kbd "C-c a s") #'org-asana-sync)
-  (define-key org-mode-map (kbd "C-c a c") #'org-asana-add-comment)
-  (define-key org-mode-map (kbd "C-c a b") #'org-asana-browse))
 
 ;;; final cleanup
 
