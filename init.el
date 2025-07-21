@@ -366,10 +366,12 @@ OLD is ignored but included for hook compatibility."
     ;; Hook to run when monitors change
     (add-hook 'exwm-randr-screen-change-hook #'my/exwm-configure-monitors)
     (exwm-randr-mode 1)
+
     ;; System tray
     (require 'exwm-systemtray)
     (setq exwm-systemtray-height 22)
     (exwm-systemtray-mode 1)
+
     (exwm-wm-mode 1)
     ;; Run initial monitor configuration
     (my/exwm-configure-monitors))
@@ -1085,6 +1087,7 @@ If buffer is modified, offer to save first."
    ;; C-x bindings (ctl-x-map)
    ("C-x M-:" . consult-complex-command)
    ("C-x b" . consult-buffer)
+   ("C-x C-b" . consult-buffer)
    ("C-x 4 b" . consult-buffer-other-window)
    ("C-x 5 b" . consult-buffer-other-frame)
    ("C-x r b" . consult-bookmark)
