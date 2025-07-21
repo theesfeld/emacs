@@ -242,6 +242,8 @@ OLD is ignored but included for hook compatibility."
     :ensure nil
     :config
     ;; Set the number of workspaces
+    (require 'exwm-randr)
+    (require 'exwm-systemtray)
     (setq exwm-workspace-number 4)
 
     ;; These keys should always pass through to Emacs
@@ -305,11 +307,6 @@ OLD is ignored but included for hook compatibility."
               (lambda ()
                 (exwm-workspace-rename-buffer exwm-class-name)))
 
-
-
-    ;; Multi-monitor support with automatic detection
-    (require 'exwm-randr)
-
     ;; Function to automatically configure monitors
     (defun my/exwm-configure-monitors ()
       "Automatically detect and configure monitors."
@@ -362,13 +359,10 @@ OLD is ignored but included for hook compatibility."
               ;; Apply the workspace configuration
               (setq exwm-randr-workspace-monitor-plist workspace-plist)
               (exwm-randr-refresh))))))
-
-    ;; Hook to run when monitors change
     (add-hook 'exwm-randr-screen-change-hook #'my/exwm-configure-monitors)
     (exwm-randr-mode 1)
     (my/exwm-configure-monitors)
-    (require 'exwm-systemtray)
-    (setq exwm-systemtray-height 20)        ; Your original value
+    (setq exwm-systemtray-height 22)        ; Your original value
     (setq exwm-systemtray-icon-gap 5)       ; This was missing!
     (exwm-systemtray-mode 1)
     (exwm-wm-mode 1))
