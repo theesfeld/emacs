@@ -304,8 +304,14 @@ OLD is ignored but included for hook compatibility."
     (add-hook 'exwm-update-class-hook
               (lambda ()
                 (exwm-workspace-rename-buffer exwm-class-name)))
-
+    (require 'exwm-randr)
     (exwm-randr-mode 1)
+    (require 'exwm-systemtray)
+    (setq exwm-systemtray-height 22)        ; Your original value
+    (setq exwm-systemtray-icon-gap 5)       ; This was missing!
+    (exwm-systemtray-mode 1)
+    (exwm-wm-mode 1)
+
     ;; Function to automatically configure monitors
     (defun my/exwm-configure-monitors ()
       "Automatically detect and configure monitors."
@@ -360,10 +366,7 @@ OLD is ignored but included for hook compatibility."
               (exwm-randr-refresh))))))
     (add-hook 'exwm-randr-screen-change-hook #'my/exwm-configure-monitors)
     (my/exwm-configure-monitors)
-    (setq exwm-systemtray-height 22)        ; Your original value
-    (setq exwm-systemtray-icon-gap 5)       ; This was missing!
-    (exwm-systemtray-mode 1)
-    (exwm-wm-mode 1))
+    )
 
   ;; Optional: Simple app launcher
   (defun my/app-launcher ()
