@@ -1603,56 +1603,72 @@ If buffer is modified, offer to save first."
   :bind
   (:map flyspell-mode-map ("M-$" . flyspell-correct-wrapper)))
 
-;;; eglot / lsp
-
+;;; Eglot - Built-in LSP client for Emacs 30.1
 (use-package eglot
-  :ensure nil
+  :ensure nil  ; Built-in
   :defer t
-  :commands (eglot eglot-ensure)
   :custom
-  (eglot-sync-connect nil)                   ; Async connection
-  (eglot-events-buffer-size 0)              ; Disable events buffer for performance
-  (eglot-autoshutdown t)                     ; Auto-shutdown unused servers
-  (eglot-extend-to-xref t)                   ; Better xref integration
-  (eglot-workspace-configuration
-   '((:pylsp . (:plugins (:pycodestyle (:enabled :json-false)
-                                       :mccabe (:enabled :json-false)
-                                       :pyflakes (:enabled :json-false)
-                                       :flake8 (:enabled t)
-                                       :autopep8 (:enabled :json-false)
-                                       :yapf (:enabled :json-false)
-                                       :black (:enabled t))))))
-  :config
-  ;; Server configurations with performance focus
-  (add-to-list 'eglot-server-programs
-               '((python-mode python-ts-mode) . ("pylsp")))
-  (add-to-list 'eglot-server-programs
-               '((js-mode js-ts-mode typescript-mode typescript-ts-mode) . ("typescript-language-server" "--stdio")))
+  ;; Keep it simple - Eglot works well with defaults
+  (eglot-autoshutdown t)
+  (eglot-sync-connect nil)
+  (eglot-extend-to-xref t)
 
-  ;; Optimize for large projects
-  (setq eglot-ignored-server-capabilities
-        '(:documentHighlightProvider           ; Reduce visual noise
-          :documentFormattingProvider         ; Use dedicated formatters
-          :documentRangeFormattingProvider))
+  :config
+  ;; Python configuration (if needed)
+  (setq-default eglot-workspace-configuration
+                '((pylsp (plugins (flake8 (enabled . t))
+                                  (black (enabled . t))
+                                  (pycodestyle (enabled . :json-false))))))
 
   :hook
-  ;; Selective activation for better performance
-  ((python-mode python-ts-mode) . eglot-ensure)
-  ((js-mode js-ts-mode typescript-mode typescript-ts-mode) . eglot-ensure))
+  ;; Auto-start for these modes
+  ((python-mode python-ts-mode
+                js-mode js-ts-mode
+                typescript-mode typescript-ts-mode) . eglot-ensure)
 
-(use-package consult-lsp
+  :bind
+  ;; Eglot uses standard Emacs commands!
+  (:map eglot-mode-map
+        ;; Use built-in xref commands
+        ("C-c l r" . xref-find-references)
+        ("C-c l d" . xref-find-definitions)
+        ("C-c l i" . eglot-find-implementation)
+        ("C-c l t" . eglot-find-typeDefinition)
+        ;; Eglot-specific commands
+        ("C-c l a" . eglot-code-actions)
+        ("C-c l R" . eglot-rename)
+        ("C-c l f" . eglot-format)
+        ("C-c l F" . eglot-format-buffer)))
+
+;; Consult integration for Eglot (NOT consult-lsp!)
+(use-package consult-eglot
   :ensure t
   :after (eglot consult)
   :bind
-  (:map
-   eglot-mode-map
-   ("C-c L a" . consult-lsp-code-actions)
-   ("C-c L d" . consult-lsp-diagnostics)
-   ("C-c L s" . consult-lsp-symbols)
-   ("C-c L f" . consult-lsp-file-symbols)
-   ("C-c L i" . consult-lsp-implementation)
-   ("C-c L r" . consult-lsp-references)
-   ("C-c L D" . consult-lsp-definition)))
+  (:map eglot-mode-map
+        ("C-c l s" . consult-eglot-symbols)))
+
+;; Better diagnostics display with Flymake (built-in)
+(use-package flymake
+  :ensure nil  ; Built-in
+  :bind
+  (:map flymake-mode-map
+        ("C-c ! n" . flymake-goto-next-error)
+        ("C-c ! p" . flymake-goto-prev-error)
+        ("C-c ! l" . flymake-show-buffer-diagnostics)
+        ("C-c ! L" . flymake-show-project-diagnostics)))
+
+;; Cape for better completion (works with Eglot)
+(use-package cape
+  :ensure t
+  :init
+  ;; Add Cape completion functions to completion-at-point-functions
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  :bind
+  ("C-c p f" . cape-file)
+  ("C-c p d" . cape-dabbrev)
+  ("C-c p l" . cape-line))
 
 ;;; org-mode
 
@@ -3167,64 +3183,38 @@ parameters set in early-init.el to ensure robust UI element disabling."
     ("C-g" . isearch-cancel)
     ("M-/" . isearch-complete)))
 
-;;; General window and buffer configurations
-
+;;; Buffer naming
 (use-package uniquify
   :ensure nil
-  :config
-  (setq uniquify-buffer-name-style 'forward)
-  (setq uniquify-strip-common-suffix t)
-  (setq uniquify-after-kill-buffer-p t))
+  :custom
+  (uniquify-buffer-name-style 'forward)
+  (uniquify-strip-common-suffix t)
+  (uniquify-after-kill-buffer-p t))
 
-;;; Show the name of the current definition or heading for context (which-function-mode)
-
-(use-package which-func
-  :ensure nil
-  :hook (after-init . which-function-mode)
-  :config
-  (setq which-func-modes '(prog-mode org-mode))
-  (setq which-func-display 'mode)       ; Available in 30.1
-  (setq which-func-unknown "")
-  (setq which-func-format
-        '((:propertize which-func-current
-                       face bold
-                       mouse-face mode-line-highlight))))
-
-;;; General minibuffer settings
-
+;;; Minibuffer enhancements
 (use-package minibuffer
   :ensure nil
-  :demand t
+  :custom
+  (enable-recursive-minibuffers t)
+  (minibuffer-depth-indicate-mode t)
+  (minibuffer-prompt-properties
+   '(read-only t cursor-intangible t face minibuffer-prompt))
   :config
-  ;; Optimized completion behavior for Emacs 30.1
-  (setq tab-always-indent 'complete              ; TAB completes when at end of word
-        completion-cycle-threshold 3             ; TAB cycles through completions
-        completion-pcm-leading-wildcard t
-        completion-category-defaults nil
-        completion-auto-deselect nil
-        completion-auto-help 'always
-        completion-auto-select 'second-tab
-        completion-show-help nil
-        completion-show-inline-help nil
-        completions-detailed t
-        completions-format 'one-column
-        completions-header-format ""
-        completions-highlight-face 'completions-highlight
-        completions-max-height 10
-        completions-sort 'historical            ; Emacs 30.1 feature
-        completion-eager-display 'auto
-        minibuffer-completion-auto-choose t
-        minibuffer-visible-completions nil
-        ;; Emacs 30.1 specific optimizations
-        completion-lazy-hilit t                 ; Lazy highlighting for performance
-        completion-lazy-hilit-fn #'completion-lazy-hilit-highlight ; 30.1 feature
-        minibuffer-depth-indicate-mode t        ; Show minibuffer depth
-        minibuffer-prompt-properties            ; Enhanced prompt properties
-        '(read-only t cursor-intangible t face minibuffer-prompt))
+  (minibuffer-depth-indicate-mode 1))
 
-  ;; Enable advanced minibuffer features in Emacs 30.1
-  (when (fboundp 'minibuffer-depth-indicate-mode)
-    (minibuffer-depth-indicate-mode 1)))
+;;; Better defaults for built-in behavior
+(use-package emacs
+  :ensure nil
+  :custom
+  (tab-always-indent 'complete)
+  ;; These are for when you're NOT using Vertico
+  ;; (kept commented as reference)
+  ;; (completion-cycle-threshold 3)
+  ;; (completion-auto-help 'always)
+  ;; (completions-detailed t)
+  ;; (completions-format 'one-column)
+  ;; (completions-max-height 10)
+  )
 
 ;;; Shell (M-x shell)
 
