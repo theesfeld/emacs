@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-21 12:29:04 by grim>
+;; Time-stamp: <Last changed 2025-07-21 12:29:48 by grim>
 
 ;; Enable these
 (mapc
@@ -1065,26 +1065,6 @@ If buffer is modified, offer to save first."
   (vundo-files-directory (expand-file-name "vundo" my-tmp-dir))
   ;; Compact display for better overview
   (vundo-compact-display t))
-
-;;; Enhanced Grep Interface
-(use-package deadgrep
-  :ensure t
-  :defer t
-  :bind
-  (("C-c s g" . deadgrep)
-   :map deadgrep-mode-map
-   ("q" . quit-window)
-   ("Q" . deadgrep-kill-all-buffers))
-  :config
-  ;; Kill all deadgrep buffers
-  (defun deadgrep-kill-all-buffers ()
-    "Kill all deadgrep buffers."
-    (interactive)
-    (dolist (buffer (buffer-list))
-      (when (with-current-buffer buffer
-              (derived-mode-p 'deadgrep-mode))
-        (kill-buffer buffer)))
-    (message "Killed all deadgrep buffers")))
 
 ;;; Rainbow Delimiters
 (use-package rainbow-delimiters
