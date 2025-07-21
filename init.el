@@ -371,7 +371,7 @@ OLD is ignored but included for hook compatibility."
     (setq exwm-systemtray-height 20)        ; Your original value
     (setq exwm-systemtray-icon-gap 5)       ; This was missing!
     (exwm-systemtray-mode 1)
-    (exwm-wm-mode 1))
+    (exwm-wm-mode 1)
 
   ;; Optional: Simple app launcher
   (defun my/app-launcher ()
