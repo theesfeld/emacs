@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-18 16:43:41 by grim>
+;; Time-stamp: <Last changed 2025-07-21 07:40:43 by grim>
 
 ;; Enable these
 (mapc
@@ -3499,6 +3499,36 @@ parameters set in early-init.el to ensure robust UI element disabling."
         ("C-c C-SPC" . erc-track-switch-buffer) ; Jump to active channel
         :map global-map
         ("C-c L" . my-erc-connect-libera)))
+
+;;; csv-mode
+
+(use-package csv-mode
+  :ensure t
+  :mode (("\\.[Cc][Ss][Vv]\\'" . csv-mode)
+         ("\\.[Tt][Ss][Vv]\\'" . tsv-mode))
+  :hook ((csv-mode . csv-align-mode)
+         (csv-mode . (lambda ()
+                       (csv-header-line)
+                       (hl-line-mode))))
+  :config
+  (setq csv-separators '("," ";" "|" "\t"))
+  (setq csv-quote-char "\"")
+  (setq csv-field-quotes '("\"" "'"))
+  (setq csv-header-lines 1)
+  (setq csv-align-style 'auto)
+  (setq csv-align-padding 2)
+
+  :bind (:map csv-mode-map
+              ("C-c C-s" . csv-sort-fields)
+              ("C-c C-r" . csv-reverse-region)
+              ("C-c C-k" . csv-kill-fields)
+              ("C-c C-t" . csv-transpose)
+              ("C-c C-a" . csv-align-fields)
+              ("C-c C-u" . csv-unalign-fields)
+              ("C-c C-f" . csv-forward-field)
+              ("C-c C-b" . csv-backward-field)
+              ("C-c C-n" . csv-forward-record)
+              ("C-c C-p" . csv-backward-record)))
 
 ;;; final cleanup
 
