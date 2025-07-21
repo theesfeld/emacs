@@ -239,7 +239,7 @@ OLD is ignored but included for hook compatibility."
 ;;; EXWM - Dynamic multi-monitor configuration for Emacs 30.1
 (when (eq window-system 'x)
   (use-package exwm
-    :ensure nil
+    :ensure t
     :config
     ;; Set the number of workspaces
     (require 'exwm-randr)
