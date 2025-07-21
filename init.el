@@ -236,8 +236,6 @@ OLD is ignored but included for hook compatibility."
         ednc-popup-max-count 4)
   (add-hook 'ednc-notification-presentation-functions #'ednc-popup-presentation-function))
 
-;;; EXWM
-
 ;;; EXWM - Dynamic multi-monitor configuration for Emacs 30.1
 (when (eq window-system 'x)
   (use-package exwm
@@ -373,12 +371,9 @@ OLD is ignored but included for hook compatibility."
 
     ;; Enable randr
     (exwm-randr-mode 1)
-
+    (exwm-wm-mode 1)
     ;; Run initial monitor configuration
-    (my/exwm-configure-monitors)
-
-    ;; Enable EXWM
-    (exwm-wm-mode 1))
+    (my/exwm-configure-monitors))
 
   ;; Optional: Simple app launcher
   (defun my/app-launcher ()
