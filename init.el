@@ -356,7 +356,7 @@ OLD is ignored but included for hook compatibility."
 
               ;; Apply the workspace configuration
               (setq exwm-randr-workspace-monitor-plist workspace-plist)
-              (exwm-randr-refresh))))))
+              (exwm-randr-refresh)))))))
   (add-hook 'exwm-randr-screen-change-hook #'my/exwm-configure-monitors)
   (exwm-randr-mode 1)
   (my/exwm-configure-monitors)
