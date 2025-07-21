@@ -2130,7 +2130,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
   :bind
   ;; Global binding to launch eat
-  ("C-c t" . eat))
+  ("C-c T" . eat))
 
 ;; Hide eat modes from modeline (if using delight)
 (with-eval-after-load 'delight
@@ -2250,7 +2250,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 (use-package pass
   :ensure t
   :after (password-store password-store-otp)
-  :bind (("C-c p" . pass))
+  :bind (("C-c P" . pass))
   :commands (pass))
 
 ;;; isearch settings
