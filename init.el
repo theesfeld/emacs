@@ -2120,7 +2120,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
   ;; Display settings
   (eat-enable-blinking-text t)
-  (eat-term-scrollback-size 10000)  ; 100k might be excessive
+  (eat-term-scrollback-size 10000)
 
   ;; Shell settings - use default login shell
   (eat-shell-command (list (getenv "SHELL") "-l"))
