@@ -239,6 +239,8 @@ OLD is ignored but included for hook compatibility."
   (use-package exwm
     :ensure nil
     :config
+    (require 'exwm-randr)
+    (require 'exwm-systemtray)
     ;; Set the number of workspaces
     (setq exwm-workspace-number 4)
 
@@ -304,14 +306,11 @@ OLD is ignored but included for hook compatibility."
                 (exwm-workspace-rename-buffer exwm-class-name)))
 
     ;; System tray configuration
-    (require 'exwm-systemtray)
     (setq exwm-systemtray-height 22)
     (setq exwm-systemtray-icon-gap 5)
     (setq exwm-systemtray-workspace nil)
     (exwm-systemtray-mode 1)
 
-    (require 'exwm-randr)
-    (exwm-randr-mode 1)
     ;; Function to automatically configure monitors
     (defun my/exwm-configure-monitors ()
       "Automatically detect and configure monitors."
@@ -387,13 +386,15 @@ OLD is ignored but included for hook compatibility."
                         ;; Mullvad VPN
                         (when (executable-find "mullvad-vpn")
                           (message "Starting mullvad-vpn...")
-                          (start-process "mullvad-vpn" nil "mullvad-vpn"))))))
+                          (start-process "mullvad-vpn" nil "mullvad-vpn")))))
 
-  ;; Add hooks before enabling modes
-  (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
-  (add-hook 'exwm-randr-screen-change-hook #'my/exwm-configure-monitors)
-  (my/exwm-configure-monitors)
-  (exwm-wm-mode 1))
+    ;; Add hooks before enabling modes
+    (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
+    (add-hook 'exwm-randr-screen-change-hook #'my/exwm-configure-monitors)
+
+    (exwm-randr-mode 1)
+    (my/exwm-configure-monitors)
+    (exwm-wm-mode 1))
 
   ;; Optional: Simple app launcher
   (defun my/app-launcher ()
