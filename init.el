@@ -365,14 +365,11 @@ OLD is ignored but included for hook compatibility."
 
     ;; Hook to run when monitors change
     (add-hook 'exwm-randr-screen-change-hook #'my/exwm-configure-monitors)
-
+    (exwm-randr-mode 1)
     ;; System tray
     (require 'exwm-systemtray)
     (setq exwm-systemtray-height 22)
     (exwm-systemtray-mode 1)
-
-    ;; Enable randr
-    (exwm-randr-mode 1)
     (exwm-wm-mode 1)
     ;; Run initial monitor configuration
     (my/exwm-configure-monitors))
