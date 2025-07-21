@@ -240,6 +240,7 @@ OLD is ignored but included for hook compatibility."
     :ensure nil
     :config
     (require 'exwm-randr)
+    (exwm-randr-mode 1)
     (require 'exwm-systemtray)
     ;; Set the number of workspaces
     (setq exwm-workspace-number 4)
@@ -392,7 +393,6 @@ OLD is ignored but included for hook compatibility."
     (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
     (add-hook 'exwm-randr-screen-change-hook #'my/exwm-configure-monitors)
 
-    (exwm-randr-mode 1)
     (my/exwm-configure-monitors)
     (exwm-wm-mode 1))
 
