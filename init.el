@@ -239,7 +239,7 @@ OLD is ignored but included for hook compatibility."
 ;;; EXWM - Dynamic multi-monitor configuration for Emacs 30.1
 (when (eq window-system 'x)
   (use-package exwm
-    :ensure t
+    :ensure nil
     :config
     ;; Set the number of workspaces
     (require 'exwm-randr)
@@ -358,14 +358,14 @@ OLD is ignored but included for hook compatibility."
 
               ;; Apply the workspace configuration
               (setq exwm-randr-workspace-monitor-plist workspace-plist)
-              (exwm-randr-refresh))))))
-    (add-hook 'exwm-randr-screen-change-hook #'my/exwm-configure-monitors)
-    (exwm-randr-mode 1)
-    (my/exwm-configure-monitors)
-    (setq exwm-systemtray-height 22)        ; Your original value
-    (setq exwm-systemtray-icon-gap 5)       ; This was missing!
-    (exwm-systemtray-mode 1)
-    (exwm-wm-mode 1))
+              (exwm-randr-refresh)))))))
+  (add-hook 'exwm-randr-screen-change-hook #'my/exwm-configure-monitors)
+  (exwm-randr-mode 1)
+  (my/exwm-configure-monitors)
+  (setq exwm-systemtray-height 22)        ; Your original value
+  (setq exwm-systemtray-icon-gap 5)       ; This was missing!
+  (exwm-systemtray-mode 1)
+  (exwm-wm-mode 1)
 
   ;; Optional: Simple app launcher
   (defun my/app-launcher ()
