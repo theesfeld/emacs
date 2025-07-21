@@ -305,11 +305,12 @@ OLD is ignored but included for hook compatibility."
               (lambda ()
                 (exwm-workspace-rename-buffer exwm-class-name)))
     (require 'exwm-randr)
-    (exwm-randr-mode 1)
     (require 'exwm-systemtray)
-    (setq exwm-systemtray-height 22)        ; Your original value
-    (setq exwm-systemtray-icon-gap 5)       ; This was missing!
+    (setq exwm-systemtray-height 22)
+    (setq exwm-systemtray-icon-gap 5)
+    (setq exwm-systemtray-workspace nil)
     (exwm-systemtray-mode 1)
+    (exwm-randr-mode 1)
     (exwm-wm-mode 1)
 
     ;; Function to automatically configure monitors
