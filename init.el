@@ -1,5 +1,7 @@
-;;; init.el -*- lexical-binding: t -*-
-
+;;; init.el --- Emacs Configuration -*- lexical-binding: t -*-
+;;; Commentary:
+;; this some Emacs config
+;;; Code:
 ;; Enable these
 (mapc
  (lambda (command)
@@ -2044,8 +2046,8 @@ If buffer is modified, offer to save first."
 (defun my-after-make-frame-setup (&optional frame)
   "Ensure UI elements are disabled for new frames, especially daemon clients.
 
-This function explicitly disables menu-bar-mode, tool-bar-mode, and scroll-bar-mode
-for the specified FRAME (or current frame if nil). This complements the frame
+This function explicitly disables \='menu-bar-mode', \='tool-bar-mode', and \='scroll-bar-mode'
+for the specified FRAME (or current frame if nil).  This complements the frame
 parameters set in early-init.el to ensure robust UI element disabling."
   (when (display-graphic-p frame)
     (with-selected-frame (or frame (selected-frame))
