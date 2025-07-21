@@ -392,13 +392,9 @@ OLD is ignored but included for hook compatibility."
     (add-hook 'exwm-randr-screen-change-hook #'my/exwm-configure-monitors)
 
     ;; Enable EXWM components
-    (exwm-systemtray-mode 1)
     (exwm-randr-mode 1)
-
-    ;; Configure monitors before starting EXWM
+    (exwm-systemtray-mode 1)
     (my/exwm-configure-monitors)
-
-    ;; Enable EXWM
     (exwm-wm-mode 1))
 
   ;; Optional: Simple app launcher
