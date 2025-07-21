@@ -2718,169 +2718,46 @@ This function integrates with exwm-firefox-core to open the current page."
   ;; Optional: Integrate with which-key
   )
 
-;;; eshell settings
-
+;;; Eshell - Emacs Shell
 (use-package eshell
-  :ensure nil ;; Built-in package
-  :commands (eshell eshell-command)
-  :bind
-  (
-   :map
-   eshell-mode-map
-   ("C-l" . eshell/clear)
-   ("C-r" . eshell-history-backward)
-   ("C-s" . eshell-history-forward)
-   ("M-." . eshell-find-file-at-point)
-   ("M-y" . consult-yank-pop)
-   ("M-x" . execute-extended-command))
-  :init
-  ;; Initial settings before Eshell loads
-  (setq eshell-directory-name (expand-file-name "eshell" my-tmp-dir)) ;; Store history and data
-  (setq eshell-scroll-to-bottom-on-input 'all) ;; Scroll to bottom on input
-  (setq eshell-scroll-to-bottom-on-output 'all) ;; Scroll on output
-  (setq eshell-error-if-no-glob t) ;; Error on failed glob
-  (setq eshell-hist-ignoredups t) ;; Ignore duplicate history entries
-  (setq eshell-save-history-on-exit t) ;; Save history on exit
-  (setq eshell-prefer-lisp-functions t) ;; Prefer external commands
-  (setq eshell-destroy-buffer-when-process-dies t) ;; Kill buffer when process dies
-  (setq eshell-visual-commands ;; Commands that need a terminal
-        '("htop"
-          "btop"
-          "top"
-          "less"
-          "more"
-          "vim"
-          "nano"
-          "ssh"
-          "tail"
-          "watch"
-          "claude"
-          "source"))
-  (setq eshell-visual-subcommands ;; Subcommands needing terminal
-        '(("git" "log" "diff" "show")))
-  (setq eshell-buffer-maximum-lines 10000) ;; Buffer line limit
-  (setq eshell-history-size 10000) ;; Large history size
-  (setq eshell-prompt-regexp "^[^#$\n]*[#$] ") ;; Prompt regexp for parsing
+  :ensure nil
+  :defer t
+  :custom
+  ;; Store eshell files in temp directory
+  (eshell-directory-name (expand-file-name "eshell" my-tmp-dir))
+  (eshell-history-size 10000)
+  (eshell-hist-ignoredups t)
+  (eshell-scroll-to-bottom-on-input 'this)
+  (eshell-prompt-regexp "^[^#$\n]*[#$] ")
 
   :config
-  ;; Custom prompt with Git branch and color
-  (defun my-eshell-prompt ()
-    "Custom Eshell prompt with abbreviated path and Git branch."
-    (let* ((path (abbreviate-file-name (eshell/pwd)))
-           (git-branch
-            (when (and (fboundp 'vc-git-branch) (vc-git-working-dir))
-              (let ((branch (vc-git-branch)))
-                (if branch
-                    (concat " (" branch ")")
-                  ""))))
-           (prompt
-            (concat
-             (propertize path 'face '(:foreground "cyan"))
-             (propertize (or git-branch "")
-                         'face
-                         '(:foreground "magenta"))
-             (propertize " $ "
-                         'face
-                         '(:foreground "green" :weight bold)))))
-      prompt))
+  ;; Simple prompt with directory
+  (setq eshell-prompt-function
+        (lambda ()
+          (concat (propertize (abbreviate-file-name default-directory)
+                              'face 'font-lock-comment-face)
+                  (if (= (user-uid) 0) " # " " $ "))))
 
-  (setq eshell-prompt-function #'my-eshell-prompt)
-
-  ;; Clear Eshell buffer
-  (defun eshell/clear ()
-    "Clear the Eshell buffer."
-    (interactive)
-    (let ((inhibit-read-only t))
-      (erase-buffer)
-      (eshell-send-input)))
-
-  ;; Open file at point
-  (defun eshell-find-file-at-point ()
-    "Find file at point in Eshell."
-    (interactive)
-    (let ((file (thing-at-point 'filename t)))
-      (when file
-        (find-file file))))
-
-  ;; History navigation
-  (defun eshell-history-backward ()
-    "Cycle backward through Eshell history."
-    (interactive)
-    (eshell-bol)
-    (eshell-previous-input 1))
-
-  (defun eshell-history-forward ()
-    "Cycle forward through Eshell history."
-    (interactive)
-    (eshell-bol)
-    (eshell-next-input 1))
-
-  ;; Disable visual distractions
-  (defun my-eshell-disable-distractions ()
-    "Disable line numbers and highlighting in Eshell and subprocess buffers."
-    (display-line-numbers-mode -1)
-    (when (fboundp 'hl-line-mode)
-      (hl-line-mode -1)))
-
-  ;; Truncate buffer when too large
-  (defun my-eshell-truncate-buffer ()
-    "Truncate Eshell buffer to `eshell-buffer-maximum-lines'."
-    (when eshell-buffer-maximum-lines
-      (let ((inhibit-read-only t))
-        (save-excursion
-          (goto-char (point-min))
-          (forward-line (- eshell-buffer-maximum-lines))
-          (delete-region (point-min) (point))
-          (eshell-send-input)))))
-
-  ;; Common Eshell aliases
-  (defun my-eshell-setup-aliases ()
-    "Define common Eshell aliases."
-    (eshell/alias "ff" "find-file $1") ;; Open file in Emacs
-    (eshell/alias "ll" "ls -lh --color=yes") ;; Long listing
-    (eshell/alias "la" "ls -asl --color=yes") ;; Long listing with hidden
-    (eshell/alias "cls" "eshell/clear") ;; Clear buffer
-    (eshell/alias "emacs" "find-file $1") ;; Open in Emacs
-    (eshell/alias "g" "git") ;; Git shorthand
-    (eshell/alias "d" "dired $1") ;; Open Dired
-    (eshell/alias "fd" "find-dired $PWD $1")
-    (eshell/alias "rg" "rg --color=always"))
-
-  ;; Optimize Eshell performance
-  (setq eshell-modules-list
-        '(eshell-alias
-          eshell-basic
-          eshell-cmpl
-          eshell-dirs
-          eshell-glob
-          eshell-hist
-          eshell-ls
-          eshell-pred
-          eshell-prompt
-          eshell-script
-          eshell-term
-          eshell-unix))
-
-  ;; Enable eshell-syntax-highlighting for better readability
-  (use-package eshell-syntax-highlighting
-    :ensure t
-    :after eshell
-    :config (eshell-syntax-highlighting-global-mode +1))
-
-  ;; Enable eshell-git-prompt for advanced Git-aware prompts
-  (use-package eshell-git-prompt
-    :after eshell
-    :config
-    (eshell-git-prompt-use-theme 'powerline)) ;; Use powerline theme
+  ;; Basic aliases
+  (defalias 'eshell/ll 'eshell/ls)
+  (defalias 'eshell/la '(lambda () (eshell/ls "-a")))
+  (defalias 'eshell/clear 'eshell/clear-scrollback)
 
   :hook
-  ((eshell-mode . my-eshell-disable-distractions) ;; Disable distractions
-   (eshell-mode . my-eshell-setup-aliases) ;; Setup aliases
-   (eshell-pre-output-filter . my-eshell-truncate-buffer) ;; Truncate buffer
-   (eshell-visual-subprocess-hook . my-eshell-disable-distractions)
-   (eshell-mode . eat-eshell-visual-command-mode))) ;; Subprocess distractions
+  ;; Disable line numbers in eshell
+  (eshell-mode . (lambda () (display-line-numbers-mode -1)))
 
-;; E MA I L EMAIL
+  :bind
+  ("C-c e" . eshell))
+
+;; Syntax highlighting (optional but nice)
+(use-package eshell-syntax-highlighting
+  :ensure t
+  :after eshell
+  :config
+  (eshell-syntax-highlighting-global-mode 1))
+
+;;; E MA I L EMAIL
 
 (use-package message
   :ensure nil
@@ -3009,35 +2886,39 @@ parameters set in early-init.el to ensure robust UI element disabling."
 (require 'mailcap)
 (mailcap-parse-mailcaps)
 
-;;; EAT Terminal
-
+;;; EAT - Emulate A Terminal
 (use-package eat
   :ensure t
-  :defer t  ; Let it load when needed, not immediately
-  ;; Remove the :init section entirely - no (require 'eat)
+  :defer t
   :custom
-  (eat-shell (list (or (executable-find "bash") "/bin/bash") "--login" "-i"))
+  ;; Basic settings
   (eat-kill-buffer-on-exit t)
-  (eat-enable-blinking-text t)
-  ;;  (eat-enable-mouse t)
-  (eat-enable-shell-prompt-annotation t)
-  (eat-term-scrollback-size 100000)
-  (eat-term-resize t)
   (eat-query-before-killing-running-terminal nil)
-  (eat-eshell-fallback-if-stty-not-available t)
+
+  ;; Display settings
+  (eat-enable-blinking-text t)
+  (eat-term-scrollback-size 10000)  ; 100k might be excessive
+
+  ;; Shell settings - use default login shell
+  (eat-shell-command (list (getenv "SHELL") "-l"))
+
+  ;; Integration settings
+  (eat-eshell-visual-command-mode-map
+   '(("git" . ("log" "diff" "show"))))  ; Commands that need visual mode
+
   :hook
-  ((eshell-load . eat-eshell-mode)
-   (eshell-load . eat-eshell-visual-command-mode))
-  ;;   (eat-mode . eat-semi-char-mode))  ; Only once!
-  :config
-  ;; Set up shell integration directory properly
-  (setq eat-term-name "xterm-256color")
-  (with-eval-after-load 'eat
-    (when-let ((eat-dir (file-name-directory (locate-library "eat"))))
-      (setenv "EAT_SHELL_INTEGRATION_DIR" eat-dir)))
-  :delight
-  (eat-eshell-mode nil)
-  (eat-eshell-visual-command-mode nil))
+  ;; Eshell integration
+  (eshell-load . eat-eshell-mode)
+  (eshell-load . eat-eshell-visual-command-mode)
+
+  :bind
+  ;; Global binding to launch eat
+  ("C-c t" . eat))
+
+;; Hide eat modes from modeline (if using delight)
+(with-eval-after-load 'delight
+  (delight '((eat-eshell-mode nil "eat")
+             (eat-eshell-visual-command-mode nil "eat"))))
 
 ;;; Claude Code
 
