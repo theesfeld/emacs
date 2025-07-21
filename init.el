@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-21 12:29:48 by grim>
+;; Time-stamp: <Last changed 2025-07-21 13:13:11 by grim>
 
 ;; Enable these
 (mapc
@@ -1392,6 +1392,7 @@ If buffer is modified, offer to save first."
         ("M-p" . completion-preview-prev-candidate)))
 
 ;;; Mode-line Configuration
+
 (use-package emacs
   :ensure nil
   :config
@@ -1420,7 +1421,8 @@ If buffer is modified, offer to save first."
              (not (string-match-p "N/A"
                                   (battery-format "%B"
                                                   (funcall battery-status-function)))))
-    (setq battery-mode-line-format " [%b%p%%]")
+    (setq battery-mode-line-format " %b%p%%")
+    (setq battery-mode-line-limit 85) ; Only show when below 85%
     (display-battery-mode 1))
 
   ;; Which function mode - shows current function in mode-line
@@ -1435,30 +1437,36 @@ If buffer is modified, offer to save first."
   (setq-default mode-line-remote
                 '(:eval (when (file-remote-p default-directory)
                           (propertize " @"
-                                      'face 'mode-line-emphasis))))
+                                      'face 'font-lock-function-name-face))))
 
   ;; Project name in mode-line
   (with-eval-after-load 'project
     (setq-default mode-line-misc-info
                   (append mode-line-misc-info
                           '((:eval (when-let ((project (project-current)))
-                                     (format " [%s]"
-                                             (project-name project))))))))
+                                     (propertize (format " [%s]"
+                                                         (project-name project))
+                                                 'face 'font-lock-constant-face)))))))
 
   ;; Simpler recursive edit indication
   (setq-default mode-line-front-space
                 '(:eval (if (> (recursion-depth) 0)
-                            (format "[%d] " (recursion-depth))
+                            (propertize (format "[%d] " (recursion-depth))
+                                        'face 'font-lock-warning-face)
                           " ")))
 
   ;; Custom mode-line faces for better visibility
   :custom-face
-  (mode-line ((t (:box (:line-width 4 :color nil :style nil)))))
-  (mode-line-inactive ((t (:box (:line-width 4 :color nil :style nil)))))
-  (mode-line-buffer-id ((t (:weight bold))))
-  (mode-line-emphasis ((t (:weight bold :foreground "#FFC107")))))
+  ;; Subtle box that inherits theme colors
+  (mode-line ((t (:box (:line-width -1 :style released-button)))))
+  (mode-line-inactive ((t (:box (:line-width -1 :style released-button)))))
+  ;; Make buffer name prominent using theme's keyword face color
+  (mode-line-buffer-id ((t (:weight bold :inherit font-lock-keyword-face))))
+  ;; Use warning face color for emphasis (themes always define this)
+  (mode-line-emphasis ((t (:weight bold :inherit warning)))))
 
 ;; Minions - Better minor mode menu
+;; This package automatically respects theme colors
 (use-package minions
   :ensure t
   :config
@@ -1524,6 +1532,15 @@ If buffer is modified, offer to save first."
                   mode-line-modes
                   mode-line-misc-info
                   mode-line-end-spaces)))
+
+;; (add-hook 'enable-theme-functions
+;;           (lambda (theme)
+;;             (message "Mode-line will adapt to %s theme" theme)))
+
+;; (when (facep 'modus-themes-heading-1)
+;;   (set-face-attribute 'mode-line-buffer-id nil
+;;                       :inherit 'modus-themes-heading-1))
+
 
 ;;; nerd-icons
 
