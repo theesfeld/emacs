@@ -2336,303 +2336,91 @@ This function integrates with exwm-firefox-core to open the current page."
 
 (use-package denote-org :ensure t :after denote :defer t)
 
-;;; tree-sitter
-
-;; Built-in tree-sitter configuration
-(use-package treesit
-  :ensure nil
-  :defer t
-  :init
-  ;; Tell Emacs where to look for tree-sitter libraries
-  (setq treesit-extra-load-path
-        (list (expand-file-name "tree-sitter" user-emacs-directory)
-              "/usr/local/lib/tree-sitter"    ; System-wide installation
-              "/usr/lib/tree-sitter"))        ; Alternative system path
-
-  (setq treesit-language-source-alist
-        '((awk . ("https://github.com/Beaglefoot/tree-sitter-awk"))
-          (bash . ("https://github.com/tree-sitter/tree-sitter-bash"))
-          (c . ("https://github.com/tree-sitter/tree-sitter-c"))
-          (clojure . ("https://github.com/sogaiu/tree-sitter-clojure"))
-          (cmake . ("https://github.com/uyha/tree-sitter-cmake"))
-          (commonlisp . ("https://github.com/theHamsta/tree-sitter-commonlisp"))
-          (cpp . ("https://github.com/tree-sitter/tree-sitter-cpp"))
-          (css . ("https://github.com/tree-sitter/tree-sitter-css"))
-          (elisp . ("https://github.com/Wilfred/tree-sitter-elisp"))
-          (html . ("https://github.com/tree-sitter/tree-sitter-html"))
-          (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "master" "src"))
-          (json . ("https://github.com/tree-sitter/tree-sitter-json"))
-          (latex . ("https://github.com/latex-lsp/tree-sitter-latex"))
-          (make . ("https://github.com/alemuller/tree-sitter-make"))
-          (markdown . ("https://github.com/ikatyang/tree-sitter-markdown"))
-          (org . ("https://github.com/milisims/tree-sitter-org"))
-          (python . ("https://github.com/tree-sitter/tree-sitter-python"))
-          (scheme . ("https://github.com/6cdh/tree-sitter-scheme"))
-          (sql . ("https://github.com/DerekStride/tree-sitter-sql"))
-          (toml . ("https://github.com/tree-sitter/tree-sitter-toml"))
-          (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src"))
-          (typst . ("https://github.com/uben0/tree-sitter-typst"))
-          (yaml . ("https://github.com/ikatyang/tree-sitter-yaml"))))
-
-  ;; Major mode remapping
-  (setq major-mode-remap-alist
-        '((awk-mode . awk-ts-mode)
-          (bash-mode . bash-ts-mode)
-          (sh-mode . bash-ts-mode)
-          (c-mode . c-ts-mode)
-          (c++-mode . c++-ts-mode)
-          (cmake-mode . cmake-ts-mode)
-          (css-mode . css-ts-mode)
-          (html-mode . html-ts-mode)
-          (mhtml-mode . html-ts-mode)
-          (javascript-mode . js-ts-mode)
-          (js-mode . js-ts-mode)
-          (js2-mode . js-ts-mode)
-          (js-json-mode . json-ts-mode)
-          (json-mode . json-ts-mode)
-          (makefile-mode . make-ts-mode)
-          (makefile-gmake-mode . make-ts-mode)
-          (markdown-mode . markdown-ts-mode)
-          (python-mode . python-ts-mode)
-          (sql-mode . sql-ts-mode)
-          (toml-mode . toml-ts-mode)
-          (conf-toml-mode . toml-ts-mode)
-          (typescript-mode . typescript-ts-mode)
-          (yaml-mode . yaml-ts-mode)))
-
-  ;; Emacs 30.1+: Ensure parent mode relationships for proper integration
-  (when (fboundp 'derived-mode-add-parents)
-    (with-eval-after-load 'c-ts-mode
-      (derived-mode-add-parents 'c-ts-mode '(c-mode)))
-    (with-eval-after-load 'c++-ts-mode
-      (derived-mode-add-parents 'c++-ts-mode '(c++-mode)))
-    (with-eval-after-load 'python-ts-mode
-      (derived-mode-add-parents 'python-ts-mode '(python-mode)))
-    (with-eval-after-load 'js-ts-mode
-      (derived-mode-add-parents 'js-ts-mode '(js-mode)))
-    (with-eval-after-load 'typescript-ts-mode
-      (derived-mode-add-parents 'typescript-ts-mode '(typescript-mode)))
-    (with-eval-after-load 'yaml-ts-mode
-      (derived-mode-add-parents 'yaml-ts-mode '(yaml-mode))))
-
-  ;; Enhanced tree-sitter settings optimized for Emacs 30.1
-  (setq treesit-font-lock-level 4              ; Maximum highlighting
-        treesit-max-buffer-size (* 16 1024 1024) ; 16MB for modern systems
-        treesit-defun-prefer-top-level t        ; Better function detection
-        treesit-defun-name-function #'treesit-defun-name ; Use built-in function naming
-        treesit-simple-indent-presets           ; Enhanced indentation support
-        '((offset . treesit-simple-indent-offset)
-          (line-start . (column 0))
-          (line-end . (column (length (thing-at-point 'line))))
-          (first-sibling . (treesit-simple-indent-sibling 1))
-          (prev-sibling . (treesit-simple-indent-sibling 0)))
-        ;; Performance optimizations for Emacs 30.1
-        treesit-node-outdated-p #'treesit--node-outdated-p ; Use built-in optimization
-        treesit-query-validate t))               ; Validate queries for safety
-
-;; Enhanced treesit-auto for intelligent mode selection
+;;; Tree-sitter - Only for languages that benefit from it
 (use-package treesit-auto
   :ensure t
-  :after treesit
   :custom
-  (treesit-auto-install 'prompt)   ; Prompt before installing grammars
-  (treesit-auto-fallback-alist     ; Intelligent fallback mapping
-   '((c-ts-mode . c-mode)
-     (c++-ts-mode . c++-mode)
-     (python-ts-mode . python-mode)
-     (js-ts-mode . js-mode)
-     (typescript-ts-mode . typescript-mode)
-     (rust-ts-mode . rust-mode)
-     (yaml-ts-mode . yaml-mode)))
+  (treesit-auto-install 'prompt)
+  ;; Only use tree-sitter for languages where it's actually better
+  (treesit-auto-langs '(python typescript tsx json bash))
   :config
-  ;; Enhanced auto-mode configuration
-  (treesit-auto-add-to-auto-mode-alist 'all)
-
-  ;; Error handling for missing grammars
-  (setq treesit-auto-recipe-list
-        (seq-filter (lambda (recipe)
-                      (treesit-language-available-p
-                       (treesit-auto-recipe-lang recipe)))
-                    treesit-auto-recipe-list))
-
-  ;; Enable with better error handling
-  (condition-case err
-      (global-treesit-auto-mode)
-    (error
-     (message "treesit-auto failed to initialize: %s" err)
-     (message "Falling back to standard modes"))))
-
-;;; tree-sitter languages
-
-;; Python with tree-sitter
-(use-package python
-  :ensure nil
-  :defer t
-  :hook
-  (python-ts-mode . (lambda ()
-                      ;; Tree-sitter handles these automatically via treesit-major-mode-setup:
-                      ;; - treesit-defun-type-regexp
-                      ;; - forward-sexp-function
-                      ;; - beginning-of-defun-function
-                      ;; - imenu-create-index-function
-                      ;; - which-function-functions
-                      ;; Just ensure eglot starts
-                      (eglot-ensure))))
-
-
-;; JavaScript/TypeScript with tree-sitter
-(use-package js
-  :ensure nil
-  :defer t
-  :custom
-  (js-indent-level 2)
-  :hook
-  ((js-ts-mode typescript-ts-mode tsx-ts-mode) . eglot-ensure))
-
-(use-package cc-mode
-  :ensure nil
-  :defer t
-  :hook
-  ((c-ts-mode c++-ts-mode) . eglot-ensure))
-
-;; Rust with tree-sitter
-(use-package rust-ts-mode
-  :ensure nil
-  :defer t
-  :hook
-  (rust-ts-mode . eglot-ensure))
-
-;; Go with tree-sitter
-(use-package go-ts-mode
-  :ensure nil
-  :defer t
-  :hook
-  (go-ts-mode . eglot-ensure))
-
-;; Ruby with tree-sitter
-(use-package ruby-ts-mode
-  :ensure nil
-  :defer t
-  :hook
-  (ruby-ts-mode . eglot-ensure))
-
-;;; tree-sitter folding
-
-;; Use built-in outline-minor-mode for code folding with tree-sitter
-(use-package outline
-  :ensure nil
-  :after treesit
-  :hook
-  ((prog-mode . outline-minor-mode))
-  :custom
-  (outline-minor-mode-cycle t)      ; Enable TAB cycling
-  (outline-minor-mode-highlight 'override))
-;; Built-in outline keybindings work automatically:
-;; TAB - cycle visibility (when outline-minor-mode-cycle is t)
-;; C-c @ C-c - hide entry
-;; C-c @ C-e - show entry
-;; C-c @ C-l - hide leaves
-;; C-c @ C-k - show branches
-;; C-c @ C-q - hide sublevels
-;; C-c @ C-a - show all
-;; C-c @ C-t - hide body
+  (global-treesit-auto-mode))
 
 ;;; so-long
 
 (use-package so-long :ensure nil :config (global-so-long-mode 1))
 
-;;; flycheck
-
-(use-package flycheck
-  :ensure t
-  :defer t
-  :init
-  (global-flycheck-mode)
-  :config
-  ;; Use right fringe for indicators (matching previous flymake config)
-  (setq flycheck-indication-mode 'right-fringe)
-
-  ;; Performance optimizations
-  (setq flycheck-idle-change-delay 1.0)  ; Delay before checking after changes
-  (setq flycheck-idle-buffer-switch-delay 0.5) ; Delay after switching buffers
-  (setq flycheck-display-errors-delay 0.3)  ; Delay before showing errors at point
+;;; Flymake - Built-in syntax checking (works with Eglot!)
+(use-package flymake
+  :ensure nil  ; Built-in
+  :hook
+  ;; Enable for programming modes
+  (prog-mode . flymake-mode)
+  :custom
+  ;; Performance settings
+  (flymake-no-changes-timeout 0.5)
+  (flymake-start-on-save-buffer t)
+  (flymake-start-on-flymake-mode t)
 
   ;; Display settings
-  (setq flycheck-highlighting-mode 'symbols)  ; Highlight entire symbols
-  (setq flycheck-check-syntax-automatically '(save mode-enabled))
-
-  ;; Disable flycheck in scratch buffer
-  (add-hook 'lisp-interaction-mode-hook
-            (lambda ()
-              (when (string= (buffer-name) "*scratch*")
-                (flycheck-mode -1))))
-
-  ;; For elisp, disable package-lint if not needed
-  (setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc))
-
-  ;; Enable for specific modes
-  (add-hook 'prog-mode-hook 'flycheck-mode)
-  (add-hook 'python-ts-mode-hook 'flycheck-mode)
-  (add-hook 'c-ts-mode-hook 'flycheck-mode)
-  (add-hook 'c++-ts-mode-hook 'flycheck-mode)
-  (add-hook 'js-ts-mode-hook 'flycheck-mode)
-  (add-hook 'typescript-ts-mode-hook 'flycheck-mode)
-  (add-hook 'rust-ts-mode-hook 'flycheck-mode)
+  (flymake-fringe-indicator-position 'right-fringe)
+  (flymake-suppress-zero-counters t)
+  (flymake-show-diagnostics-at-end-of-line t)  ; Emacs 30.1 feature!
 
   :bind
-  (:map flycheck-mode-map
-        ("C-c ! l" . flycheck-list-errors)
-        ("C-c ! n" . flycheck-next-error)
-        ("C-c ! p" . flycheck-previous-error)
-        ("C-c ! v" . flycheck-verify-setup)
-        ("C-c ! c" . flycheck-clear)
-        ("C-c ! e" . flycheck-explain-error-at-point)
-        ("C-c ! s" . flycheck-select-checker)
-        ("C-c ! d" . flycheck-disable-checker)))
+  (:map flymake-mode-map
+        ("C-c ! n" . flymake-goto-next-error)
+        ("C-c ! p" . flymake-goto-prev-error)
+        ("C-c ! l" . flymake-show-buffer-diagnostics)
+        ("C-c ! L" . flymake-show-project-diagnostics)
+        ("C-c ! e" . display-local-help))  ; Shows error at point
 
-(use-package elisp-lint
-  :ensure t
-  :commands (elisp-lint-buffer elisp-lint-file)
-  :config (setq elisp-lint-ignored-validators '("package-lint")))
-
-;;; flycheck-eglot
-
-(use-package flycheck-eglot
-  :ensure t
-  :after (flycheck eglot)
   :config
-  (global-flycheck-eglot-mode 1))
+  ;; Better error display at end of line (Emacs 30.1)
+  (setq flymake-diagnostic-functions
+        (append flymake-diagnostic-functions
+                '(flymake-proc-legacy-flymake))))
 
-;;; flyover
-
-(use-package flyover
+;; Enhanced Flymake UI (optional but nice)
+(use-package flymake-popon
   :ensure t
-  :after flycheck
+  :after flymake
+  :hook (flymake-mode . flymake-popon-mode)
+  :custom
+  (flymake-popon-delay 0.5)
+  (flymake-popon-width 60)
+  (flymake-popon-method 'popon))  ; or 'posframe if you prefer
+
+;; For Elisp files specifically
+(use-package package-lint-flymake
+  :ensure t
+  :hook
+  (emacs-lisp-mode . package-lint-flymake-setup)
   :config
-  (add-hook 'flycheck-mode-hook #'flyover-mode)
-  (setq flyover-levels '(error warning))
-  (setq flyover-use-theme-colors t)
-  (setq flyover-background-lightness 45)
-  (setq flyover-percent-darker 40)
-  (setq flyover-text-tint 'lighter) ;; or 'darker or nil
-  (setq flyover-text-tint-percent 50)
-  (setq flyover-checkers '(flycheck))
-  (setq flyover-debug nil)
-  (setq flyover-debounce-interval 0.2)
-  (setq flyover-line-position-offset 1)
-  (setq flyover-wrap-messages t)
-  (setq flyover-max-line-length 80)
-  (setq flyover-info-icon "🛈")
-  (setq flyover-warning-icon "⚠")
-  (setq flyover-error-icon "✘")
-  (setq flyover-icon-left-padding 0.9)
-  (setq flyover-icon-right-padding 0.9)
-  (setq flyover-virtual-line-type 'curved-line-no-arrow)
-  (setq flyover-hide-checker-name t)
-  (setq flyover-show-at-eol nil)
-  (setq flyover-hide-when-cursor-is-on-same-line t)
-  (setq flyover-show-virtual-line t)
-  )
+  ;; Only enable for actual packages, not config files
+  (defun my/maybe-enable-package-lint ()
+    (when (and (buffer-file-name)
+               (string-match-p "\\(?:packages\\|lisp\\)/" (buffer-file-name))
+               (not (string-match-p "init\\.el\\|config\\.el" (buffer-file-name))))
+      (package-lint-flymake-setup)))
+
+  ;; Replace the hook
+  (remove-hook 'emacs-lisp-mode-hook #'package-lint-flymake-setup)
+  (add-hook 'emacs-lisp-mode-hook #'my/maybe-enable-package-lint))
+
+;; Alternative: If you REALLY want Flycheck despite Eglot using Flymake
+;; (but this is not recommended - pick one!)
+;;
+;; (use-package flycheck
+;;   :ensure t
+;;   :hook (prog-mode . flycheck-mode)
+;;   :custom
+;;   (flycheck-indication-mode 'right-fringe)
+;;   (flycheck-check-syntax-automatically '(save mode-enabled))
+;;   :config
+;;   ;; Disable Flymake when Flycheck is enabled
+;;   (add-hook 'flycheck-mode-hook
+;;             (lambda () (flymake-mode -1))))
 
 ;;; YAsnippet
 
@@ -2818,61 +2606,14 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (prog-mode . hl-line-mode)
   (occur-mode . hl-line-mode))
 
-;;; slime
+;;; sly
 
-(use-package slime
+(use-package sly
   :ensure t
   :defer t
-  :hook
-  ((lisp-mode . slime-mode) ;; Enable slime-mode for Lisp files
-   (inferior-lisp-mode . inferior-slime-mode)) ;; Enhance inferior-lisp buffers
-  :bind
-  (:map
-   slime-mode-map
-   ("C-c C-c" . slime-compile-defun)         ;; Compile defun
-   ("C-c C-k" . slime-compile-and-load-file) ;; Compile and load file
-   ("C-c C-s" . slime-complete-form)         ;; Complete form at point
-   ("C-c C-d d" . slime-describe-symbol)     ;; Describe symbol
-   ("C-c C-d h" . slime-documentation-lookup) ;;  Lookup in CLHS
-   ("M-." . slime-edit-definition)            ;; Go to definition
-   ("M-," . slime-pop-find-definition-stack)) ;; Return from definition
   :custom
-  ((slime-default-lisp 'sbcl) ;; Default to SBCL
-   (slime-contribs
-    '(slime-fancy ;; Load essential contribs
-      slime-repl slime-asdf slime-fuzzy slime-autodoc))
-   (slime-complete-symbol-function 'slime-fuzzy-complete-symbol) ;; Fuzzy completion
-   (slime-fuzzy-completion-in-place t) ;; Complete in buffer
-   (slime-autodoc-use-multiline-p t)   ;; Better autodoc display
-   (slime-enable-evaluate-in-emacs t)  ;; Allow Emacs to evaluate Lisp
-   (inferior-lisp-program "/bin/sbcl")      ;; Path to SBCL
-   (slime-lisp-implementations         ;; Support multiple Lisps
-    '((sbcl ("sbcl" "--noinform") :coding-system utf-8-unix)
-      (ccl ("ccl"))
-      (clisp ("clisp" "-q")))))
-  :config
-  ;; Ensure SLIME doesn't override user keybindings (e.g., C-c x)
-  (add-hook
-   'slime-mode-hook
-   (lambda ()
-     (when (boundp 'slime-mode-map)
-       (define-key slime-mode-map (kbd "C-c x") nil))))
-  ;; Override SLIME REPL's DEL to work with paredit
-  (add-hook
-   'slime-repl-mode-hook
-   (lambda ()
-     (define-key
-      slime-repl-mode-map
-      (read-kbd-macro paredit-backward-delete-key)
-      nil)))
-  ;; Start SLIME automatically when opening a Lisp file
-  (defun my/start-slime ()
-    (unless (slime-connected-p)
-      (save-excursion (slime))))
-  (add-hook 'slime-mode-hook #'my/start-slime)
-  ;; Enable paredit in SLIME REPL for better Lisp editing
-  (when (featurep 'paredit)
-    (add-hook 'slime-repl-mode-hook #'enable-paredit-mode)))
+  (inferior-lisp-program "sbcl")
+  :config  )
 
 ;;; xoauth2
 
