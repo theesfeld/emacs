@@ -305,10 +305,7 @@ OLD is ignored but included for hook compatibility."
               (lambda ()
                 (exwm-workspace-rename-buffer exwm-class-name)))
 
-    ;; System tray
-    (require 'exwm-systemtray)
-    (setq exwm-systemtray-height 22)
-    (exwm-systemtray-mode 1)
+
 
     ;; Multi-monitor support with automatic detection
     (require 'exwm-randr)
@@ -368,6 +365,11 @@ OLD is ignored but included for hook compatibility."
 
     ;; Hook to run when monitors change
     (add-hook 'exwm-randr-screen-change-hook #'my/exwm-configure-monitors)
+
+    ;; System tray
+    (require 'exwm-systemtray)
+    (setq exwm-systemtray-height 22)
+    (exwm-systemtray-mode 1)
 
     ;; Enable randr
     (exwm-randr-mode 1)
