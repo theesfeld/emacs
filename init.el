@@ -273,18 +273,28 @@ OLD is ignored but included for hook compatibility."
                          (start-process-shell-command command nil command)))
             ;; Switch workspace
             ([?\s-w] . exwm-workspace-switch)
+            ;; Move window to workspace
+            ([?\s-m] . exwm-workspace-move-window)
+            ;; Toggle floating
+            ([?\s-f] . exwm-floating-toggle-floating)
+            ;; Toggle fullscreen
+            ([?\s-F] . exwm-layout-toggle-fullscreen)
             ;; Focus windows by direction
             ([s-left] . windmove-left)
             ([s-right] . windmove-right)
             ([s-up] . windmove-up)
             ([s-down] . windmove-down)
             ;; Switch to specific workspace with Super+0-9
-            ,@(mapcar (lambda (i)
-                        (list (kbd (format "s-%d" i))
-                              `(lambda ()
-                                 (interactive)
-                                 (exwm-workspace-switch-create ,i))))
-                      (number-sequence 0 9))))
+            ([?\s-0] . (lambda () (interactive) (exwm-workspace-switch-create 0)))
+            ([?\s-1] . (lambda () (interactive) (exwm-workspace-switch-create 1)))
+            ([?\s-2] . (lambda () (interactive) (exwm-workspace-switch-create 2)))
+            ([?\s-3] . (lambda () (interactive) (exwm-workspace-switch-create 3)))
+            ([?\s-4] . (lambda () (interactive) (exwm-workspace-switch-create 4)))
+            ([?\s-5] . (lambda () (interactive) (exwm-workspace-switch-create 5)))
+            ([?\s-6] . (lambda () (interactive) (exwm-workspace-switch-create 6)))
+            ([?\s-7] . (lambda () (interactive) (exwm-workspace-switch-create 7)))
+            ([?\s-8] . (lambda () (interactive) (exwm-workspace-switch-create 8)))
+            ([?\s-9] . (lambda () (interactive) (exwm-workspace-switch-create 9)))))
 
     ;; Line-editing shortcuts for X windows
     (setq exwm-input-simulation-keys
