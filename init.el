@@ -313,6 +313,21 @@ OLD is ignored but included for hook compatibility."
     (exwm-randr-mode 1)
     (exwm-wm-mode 1)
 
+    (add-hook 'exwm-init-hook
+              (lambda ()
+                ;; Network manager applet
+                (when (executable-find "nm-applet")
+                  (start-process "nm-applet" nil "nm-applet"))
+                ;; Bluetooth
+                (when (executable-find "blueman-applet")
+                  (start-process "blueman-applet" nil "blueman-applet"))
+                ;; Udiskie
+                (when (executable-find "udiskie")
+                  (start-process "udiskie" nil "udiskie" "-at"))
+                ;; Mullvad VPN
+                (when (executable-find "mullvad-vpn")
+                  (start-process "mullvad-vpn" nil "mullvad-vpn"))))
+
     ;; Function to automatically configure monitors
     (defun my/exwm-configure-monitors ()
       "Automatically detect and configure monitors."
@@ -383,22 +398,6 @@ OLD is ignored but included for hook compatibility."
         (start-process-shell-command command nil command))))
 
   (global-set-key (kbd "s-SPC") #'my/app-launcher)
-
-  ;; Optional: Auto-start some applications
-  (add-hook 'exwm-init-hook
-            (lambda ()
-              ;; Network manager applet
-              (when (executable-find "nm-applet")
-                (start-process "nm-applet" nil "nm-applet"))
-              ;; Bluetooth
-              (when (executable-find "blueman-applet")
-                (start-process "blueman-applet" nil "blueman-applet"))
-              ;; Udiskie
-              (when (executable-find "udiskie")
-                (start-process "udiskie" nil "udiskie" "-at"))
-              ;; Mullvad VPN
-              (when (executable-find "mullvad-vpn")
-                (start-process "mullvad-vpn" nil "mullvad-vpn"))))
 
   ;; Optional: Desktop environment features
   (use-package desktop-environment
