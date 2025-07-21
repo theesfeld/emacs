@@ -1,6 +1,6 @@
 ;;; init.el -*- lexical-binding: t -*-
 
-;; Time-stamp: <Last changed 2025-07-21 07:40:43 by grim>
+;; Time-stamp: <Last changed 2025-07-21 12:29:04 by grim>
 
 ;; Enable these
 (mapc
@@ -691,173 +691,169 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
       (make-directory subdir t))))
 
 (use-package emacs
-  :ensure nil ; Built-in, no need to install
+  :ensure nil ; Built-in package
   :init
-  (setq
-   user-full-name "TJ"
-   user-mail-address "tj@emacs.su"
-   calendar-location-name "New York, NY"
-   calendar-time-zone-rule "EST"
-   calendar-standard-time-zone-name "EST"
-   calendar-daylight-time-zone-name "EDT"
-   auth-sources '("~/.authinfo.gpg")
-   epg-pinentry-mode 'loopback
-   create-lockfiles nil
-   password-cache-expiry nil
-   delete-pair-blink-delay 0.1
-   next-error-recenter '(4)
-   find-library-include-other-files nil
-   remote-file-name-inhibit-delete-by-moving-to-trash t
-   remote-file-name-inhibit-auto-save t
-   save-interprogram-paste-before-kill t
-   eval-expression-print-length nil
-   scroll-error-top-bottom t
-   confirm-kill-processes nil
-   confirm-kill-emacs nil
-   shell-kill-buffer-on-exit t
-   echo-keystrokes-help nil
-   delete-section-mode t
-   x-stretch-cursor t
-   help-window-select t
-   auth-source-cache-expiry nil
-   truncate-string-ellipsis "…" ; Visual ellipsis for truncated lines
-   scroll-margin 3
-   scroll-step 1
-                                        ;pixel-scroll-precision-mode 1
-   auto-window-vscroll nil
-   scroll-preserve-screen-position 1
-   garbage-collection-messages nil
-   plstore-cache-directory my-tmp-dir
-   epg-gpg-program "gpg2"
+  ;; Early settings that should be set before package loads
+  (setq auth-sources '("~/.authinfo.gpg")
+        epg-pinentry-mode 'loopback
+        epg-gpg-program "gpg2")
 
-   ;; Backup settings
-   backup-by-copying t
-   backup-directory-alist `((".*" . ,(expand-file-name "backups" my-tmp-dir)))
-   delete-old-versions t
-   kept-new-versions 6
-   kept-old-versions 2
-   version-control t
+  :config
+  ;;; Personal Information
+  (setq user-full-name "TJ"
+        user-mail-address "tj@emacs.su"
+        calendar-location-name "New York, NY"
+        calendar-latitude 40.7
+        calendar-longitude -74.0)
 
-   ;; Auto-save settings
-   auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-saves/" my-tmp-dir) t))
-   auto-save-list-file-prefix (expand-file-name "auto-save-list/.saves-" my-tmp-dir)
-   auto-save-default t)
-  (setq fast-read-process-output t)
-
+  ;; Set timezone
   (setenv "TZ" "America/New_York")
+
+  ;;; Encoding and Language
   (prefer-coding-system 'utf-8)
   (set-default-coding-systems 'utf-8)
   (set-terminal-coding-system 'utf-8)
   (set-keyboard-coding-system 'utf-8)
   (set-language-environment "UTF-8")
+
+  ;;; Files and Backups
+  (setq create-lockfiles nil
+        delete-old-versions t
+        kept-new-versions 6
+        kept-old-versions 2
+        version-control t
+        backup-by-copying t
+        backup-directory-alist `((".*" . ,(expand-file-name "backups" my-tmp-dir)))
+        auto-save-default t
+        auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-saves/" my-tmp-dir) t))
+        auto-save-list-file-prefix (expand-file-name "auto-save-list/.saves-" my-tmp-dir)
+        save-place-file (expand-file-name "saveplace/saveplace" my-tmp-dir))
+
+  ;;; History and Persistence
+  (setq history-length 10000
+        history-delete-duplicates t
+        savehist-file (expand-file-name "savehist" my-tmp-dir)
+        savehist-save-minibuffer-history t
+        password-cache-expiry nil
+        auth-source-cache-expiry nil
+        plstore-cache-directory my-tmp-dir)
+
+  ;; Enable persistent modes
   (save-place-mode 1)
-  ;; History settings consolidated - see main emacs config block
-  (setq history-delete-duplicates t)
-  (setq savehist-save-minibuffer-history t)
+  (savehist-mode 1)
 
+  ;;; Display and UI
+  (setq truncate-string-ellipsis "…"
+        x-stretch-cursor t
+        help-window-select t
+        echo-keystrokes-help nil
+        display-time-load-average t)
 
-  ;; Enable auto-insert for new files
-  (require 'autoinsert)
-  (auto-insert-mode 1)
+  ;;; Scrolling
+  (setq scroll-margin 3
+        scroll-step 1
+        scroll-conservatively 1
+        scroll-preserve-screen-position 1
+        scroll-error-top-bottom t
+        auto-window-vscroll nil)
 
-  ;; When there is a "Time-stamp: <>" string in the first 10 lines of the file,
-  ;; Emacs will write time-stamp information there when saving the file.
-  ;; (Borrowed from http://home.thep.lu.se/~karlf/emacs.html)
-  (setq
-   time-stamp-active t ; Do enable time-stamps.
-   time-stamp-line-limit 10 ; Check first 10 buffer lines for Time-stamp: <>
-   time-stamp-format "Last changed %Y-%02m-%02d %02H:%02M:%02S by %u")
-  (add-hook 'write-file-hooks 'time-stamp) ; Update when saving.
+  ;;; Editing Behavior
+  (setq-default indent-tabs-mode nil
+                tab-width 2
+                standard-indent 2
+                default-directory '~)
 
-  ;; Simplified auto-insert: use inline lambdas instead of custom function
-  ;; The time-stamp system already handles comment syntax automatically
-  (setq auto-insert-alist
-        '(;; Add time-stamps to programming and documentation files
-          (prog-mode . (lambda () (insert (or comment-start "#") " Time-stamp: <>\n")))
-          (org-mode . (lambda () (insert "#+Time-stamp: <>\n")))
-          (text-mode . (lambda () (insert "# Time-stamp: <>\n")))))
-  ;; Enable time-stamp updates on save
-  (add-hook 'before-save-hook 'time-stamp)
+  (setq tab-always-indent 'complete
+        save-interprogram-paste-before-kill t
+        delete-by-moving-to-trash t
+        kill-ring-max 5000
+        undo-limit 800000
+        delete-pair-blink-delay 0.1
+        delete-section-mode t)
 
-;;; THEME CONFIGURATION
+  ;;; Search
+  (setq isearch-lazy-count t
+        lazy-count-prefix-format "(%s/%s) "
+        lazy-count-suffix-format nil)
 
-  ;; Load modus-themes package and configure
-  (use-package modus-themes
-    :ensure nil
-    :demand t  ; Load immediately, don't defer
-    :config
-    ;; These were already set in early-init.el but ensure they're set
-    (setq modus-themes-italic-constructs t
-          modus-themes-bold-constructs t
-          modus-themes-mixed-fonts t
-          modus-themes-disable-other-themes t)
-    ;; Load the theme
-    (load-theme 'modus-vivendi t)
-    ;; Set cursor color after theme loads
-    (custom-set-faces
-     '(cursor ((t (:background "#FFC107"))))))
+  ;;; Remote Files
+  (setq remote-file-name-inhibit-delete-by-moving-to-trash t
+        remote-file-name-inhibit-auto-save t)
 
-  ;; Fallback font sizing if custom font not available
-  (unless (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
-    (set-face-attribute 'default nil :height 140)
-    (set-face-attribute 'variable-pitch nil :height 160))
+  ;;; Process and Performance
+  (setq fast-read-process-output t
+        garbage-collection-messages nil)
 
-  ;; Font-lock face customization
+  ;;; Miscellaneous
+  (setq confirm-kill-processes nil
+        confirm-kill-emacs nil
+        shell-kill-buffer-on-exit t
+        window-combination-resize t
+        eval-expression-print-length nil
+        next-error-recenter '(4)
+        find-library-include-other-files nil)
+
+  ;; Use short answers
+  (fset 'yes-or-no-p 'y-or-n-p)
+
+  ;;; Authentication and Encryption
+  (require 'auth-source)
+  (require 'epa-file)
+  (epa-file-enable)
+
+  ;;; Load Custom File
+  (when (file-exists-p custom-file)
+    (load custom-file))
+
+  :hook
+  ;; Mode-specific hooks
+  ((prog-mode . display-line-numbers-mode)
+   (text-mode . visual-wrap-prefix-mode)
+   (before-save . (lambda ()
+                    (whitespace-cleanup)))
+   ;; Startup hook for global modes
+   (emacs-startup . (lambda ()
+                      (global-visual-line-mode 1)
+                      (global-auto-revert-mode 1)
+                      (line-number-mode 1)
+                      (column-number-mode 1)
+                      (size-indication-mode 1)
+                      (display-time-mode 1))))
+
+  :bind
+  (("C-x k" . kill-current-buffer)
+   ("C-x K" . kill-buffer)))
+
+;;; Theme Configuration (separate use-package)
+(use-package modus-themes
+  :ensure nil
+  :demand t
+  :init
+  ;; Theme variables should be set before loading
+  (setq modus-themes-italic-constructs t
+        modus-themes-bold-constructs t
+        modus-themes-mixed-fonts t
+        modus-themes-disable-other-themes t)
+
+  :config
+  ;; Load the theme
+  (load-theme 'modus-vivendi t)
+
+  ;; Font customizations
+  (custom-set-faces
+   '(cursor ((t (:background "#FFC107")))))
+
+  ;; Font-lock customizations
   (set-face-attribute 'font-lock-comment-face nil
                       :slant 'italic
                       :weight 'light)
   (set-face-attribute 'font-lock-keyword-face nil
                       :weight 'black)
 
-
-  (setq scroll-conservatively 1) ; Scroll line-by-line without recentering
-  (when (file-exists-p custom-file)
-    (load custom-file))
-  ;; Global Emacs Settings
-  (global-visual-line-mode 1)
-  (setq-default
-   default-directory '~
-   kill-ring-max 5000
-   indent-tabs-mode nil) ; Use spaces instead of tabs
-  (setq
-   tab-always-indent 'complete
-   tab-width 2
-   standard-indent 2
-   scroll-preserve-screen-position 1
-   delete-by-moving-to-trash t
-   window-combination-resize t
-   display-time-load-average t
-   savehist-file (expand-file-name "savehist" my-tmp-dir)
-   undo-limit 800000
-   ;; History settings - consolidated here for consistency
-   history-length 10000
-   history-delete-duplicates t
-   savehist-save-minibuffer-history t
-   isearch-lazy-count t
-   lazy-count-prefix-format "(%s/%s) "
-   lazy-count-suffix-format nil
-   save-place-file (expand-file-name "saveplace/saveplace" my-tmp-dir))
-  (fset 'yes-or-no-p 'y-or-n-p)
-  (require 'auth-source)
-  (require 'epa-file)
-  (epa-file-enable)
-
-  :hook
-  ((text-mode . visual-wrap-prefix-mode)
-   (before-save . whitespace-cleanup)
-   (prog-mode . display-line-numbers-mode)
-   (emacs-startup
-    .
-    (lambda ()
-      (line-number-mode 1)
-      (column-number-mode 1)
-      (size-indication-mode 1)
-      (global-auto-revert-mode 1)
-      (display-time-mode 1))))
-
-  :bind
-  (("C-x k" . kill-current-buffer)
-   ("C-x K" . kill-buffer))) ; Close the use-package emacs block
+  ;; Fallback font configuration
+  (unless (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
+    (set-face-attribute 'default nil :height 140)
+    (set-face-attribute 'variable-pitch nil :height 160)))
 
 (use-package windower
   :ensure t
@@ -894,94 +890,103 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (use-package ediff
   :ensure nil
   :defer t
+
   :custom
-  (ediff-split-window-function
-   'split-window-right "Split windows vertically")
-  (ediff-keep-variants
-   nil "Do not keep variant buffers after quitting")
+  ;; Window setup
+  (ediff-window-setup-function 'ediff-setup-windows-plain)
+  (ediff-split-window-function 'split-window-right)
+
+  ;; Behavior
+  (ediff-keep-variants nil)
+
+  ;; Control frame parameters
+  (ediff-control-frame-parameters
+   (cons '(unsplittable . t) ediff-control-frame-parameters))
+
+  :custom-face
+  ;; Use inherit to respect theme colors while adding emphasis
+  (ediff-current-diff-A ((t (:inherit diff-removed :extend t))))
+  (ediff-fine-diff-A ((t (:inherit diff-removed :weight bold))))
+  (ediff-current-diff-B ((t (:inherit diff-added :extend t))))
+  (ediff-fine-diff-B ((t (:inherit diff-added :weight bold))))
+
   :config
-  (setq ediff-window-setup-function 'ediff-setup-windows-plain)
-  ;; Customize faces to respect themes
-  (custom-theme-set-faces 'user
-                          '(ediff-current-diff-A
-                            ((t
-                              (:foreground
-                               "red"
-                               :background unspecified))))
-                          '(ediff-fine-diff-A
-                            ((t
-                              (:foreground
-                               "red"
-                               :background unspecified))))
-                          '(ediff-current-diff-B
-                            ((t
-                              (:foreground
-                               "green"
-                               :background unspecified))))
-                          '(ediff-fine-diff-B
-                            ((t
-                              (:foreground
-                               "green"
-                               :background unspecified))))
-                          '(diff-added
-                            ((t
-                              (:foreground
-                               "green4"
-                               :background unspecified))))
-                          '(diff-removed
-                            ((t
-                              (:foreground
-                               "red3"
-                               :background unspecified)))))
-
-
-
-  ;; Add convenient wrapper for ediff with current buffer
-  (defun my-ediff-current-buffer-with-file ()
-    "Compare current buffer with its file on disk."
+  ;; Enhanced ediff quit that ensures clean exit
+  (defun my/ediff-quit ()
+    "Quit ediff and ensure clean window restoration."
     (interactive)
-    (if buffer-file-name
-        (ediff-current-file)
-      (user-error "Current buffer is not visiting a file")))
-
-  ;; Enhanced ediff quit that restores window configuration
-  (defun my-ediff-quit-and-restore ()
-    "Quit ediff and restore previous window configuration."
-    (interactive)
-    (when (and (boundp 'ediff-control-buffer) ediff-control-buffer)
+    (when (bound-and-true-p ediff-control-buffer)
       (ediff-quit t)))
 
-  ;; Add keybinding for enhanced quit function in ediff sessions
-  (add-hook 'ediff-keymap-setup-hook
-            (lambda ()
-              (define-key ediff-mode-map (kbd "Q") #'my-ediff-quit-and-restore)))
+  ;; Compare current buffer with its file
+  (defun my/ediff-buffer-with-file ()
+    "Compare current buffer with its file on disk.
+If buffer is modified, offer to save first."
+    (interactive)
+    (unless buffer-file-name
+      (user-error "Current buffer is not visiting a file"))
+    (when (and (buffer-modified-p)
+               (y-or-n-p "Buffer is modified. Save it first? "))
+      (save-buffer))
+    (ediff-current-file))
 
-  :bind (("C-c d f" . ediff-files)        ; Compare two files
-         ("C-c d b" . ediff-buffers)      ; Compare two buffers
-         ("C-c d c" . my-ediff-current-buffer-with-file) ; Compare buffer with file
-         ("C-c d d" . ediff-directories))) ; Compare directories
+  ;; Directory comparison with sane defaults
+  (defun my/ediff-directories ()
+    "Compare directories with better default regex."
+    (interactive)
+    (let ((ediff-default-filtering-regexp ""))
+      (call-interactively #'ediff-directories)))
 
-(with-eval-after-load 'ediff-wind
-  (setq ediff-control-frame-parameters
-        (cons '(unsplittable . t) ediff-control-frame-parameters)))
+  :hook
+  ;; Enhanced keybindings for ediff sessions
+  (ediff-keymap-setup . (lambda ()
+                          (define-key ediff-mode-map (kbd "Q") #'my/ediff-quit)
+                          (define-key ediff-mode-map (kbd "q") #'my/ediff-quit)))
+
+  :bind
+  (("C-c d f" . ediff-files)
+   ("C-c d b" . ediff-buffers)
+   ("C-c d c" . my/ediff-buffer-with-file)
+   ("C-c d d" . my/ediff-directories)
+   ("C-c d r" . ediff-regions-linewise)
+   ("C-c d R" . ediff-regions-wordwise)))
+
+;; Diff-mode configuration (separate as it's a different package)
+(use-package diff-mode
+  :ensure nil
+  :defer t
+  :custom-face
+  ;; More subtle diff colors that work with most themes
+  (diff-added ((t (:foreground "green4" :extend t))))
+  (diff-removed ((t (:foreground "red3" :extend t))))
+  (diff-hunk-header ((t (:inherit font-lock-comment-face :weight bold))))
+  (diff-file-header ((t (:inherit font-lock-keyword-face :weight bold)))))
 
 ;;; tramp settings
 
 (use-package tramp
   :ensure nil
   :defer t
+
+  :custom
+  ;; Connection settings
+  (tramp-default-method "ssh")
+  (tramp-use-scp-direct-remote-copying t)
+  (tramp-copy-size-limit (* 1024 1024)) ; 1MB threshold for using scp
+
+  ;; Performance optimizations
+  (tramp-verbose 2) ; Low verbosity for better performance (0-10 scale)
+  (remote-file-name-inhibit-locks t)
+  (remote-file-name-inhibit-auto-save-visited t)
+
+  ;; Auto-save and backup
+  (tramp-auto-save-directory (expand-file-name "tramp-auto-save" my-tmp-dir))
+
+  ;; File monitoring
+  (auto-revert-remote-files t)
+
   :config
-  ;; Essential TRAMP optimizations only
-  ;; Most defaults are sensible - only override what's necessary for performance
-  (setq tramp-auto-save-directory (expand-file-name "tramp-auto-save" my-tmp-dir)
-        tramp-verbose 1                    ; Minimal verbosity for performance
-        tramp-default-method "ssh"         ; Reliable connection method
-        auto-revert-remote-files t         ; Enable remote file auto-revert
-        remote-file-name-inhibit-locks t
-        tramp-use-scp-direct-remote-copying t
-        remote-file-name-inhibit-auto-save-visited t)
-  (setq tramp-copy-size-limit (* 1024 1024) ;; 1MB
-        tramp-verbose 2)
+  ;; Connection-local variables for better async process handling
   (connection-local-set-profile-variables
    'remote-direct-async-process
    '((tramp-direct-async-process . t)))
@@ -990,214 +995,276 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    '(:application tramp :protocol "scp")
    'remote-direct-async-process)
 
-  (setq magit-tramp-pipe-stty-settings 'pty)
-  (with-eval-after-load 'tramp
-    (with-eval-after-load 'compile
-      (remove-hook 'compilation-mode-hook #'tramp-compile-disable-ssh-controlmaster-options)))
-  )
+  ;; Remove the problematic compilation hook that can interfere with SSH
+  (with-eval-after-load 'compile
+    (remove-hook 'compilation-mode-hook
+                 #'tramp-compile-disable-ssh-controlmaster-options)))
 
-(use-package files
+;; Magit-specific TRAMP settings
+(use-package magit
+  :defer t
+  :custom
+  ;; Improve magit performance over TRAMP
+  (magit-tramp-pipe-stty-settings 'pty))
+
+;; Optional: Enhanced TRAMP functionality
+(use-package tramp
   :ensure nil
+  :defer t
   :config
+  ;; Helper function to clean TRAMP buffers
+  (defun my/tramp-cleanup-all ()
+    "Clean all TRAMP connections and buffers."
+    (interactive)
+    (tramp-cleanup-all-buffers)
+    (tramp-cleanup-all-connections)
+    (message "TRAMP connections and buffers cleaned"))
 
-  ;; Log mode configuration
-  (defvar log-mode-font-lock-keywords
-    '(("\\bDEBUG\\b" . 'font-lock-comment-face)
-      ("\\bINFO\\b" . 'font-lock-string-face)
-      ("\\bWARN\\b" . 'font-lock-warning-face)
-      ("\\bERROR\\b" . 'font-lock-function-name-face))
-    "Font-lock keywords for `log-mode' highlighting.")
+  ;; Clear TRAMP cache for a specific connection
+  (defun my/tramp-cleanup-current ()
+    "Clean TRAMP connection for current buffer's remote."
+    (interactive)
+    (when (file-remote-p default-directory)
+      (tramp-cleanup-this-connection)
+      (message "Cleaned TRAMP connection for %s" default-directory)))
 
-  (define-derived-mode
-    log-mode
-    fundamental-mode
-    "Log"
-    "A simple mode for log files."
-    (setq font-lock-defaults '((log-mode-font-lock-keywords))))
+  :bind
+  (("C-c t c" . my/tramp-cleanup-current)
+   ("C-c t C" . my/tramp-cleanup-all)))
 
-  (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
+;;; Custom Log Mode
+;; Define a simple major mode for log files
+(define-derived-mode log-mode fundamental-mode "Log"
+  "Major mode for viewing log files with syntax highlighting."
+  (setq-local font-lock-defaults
+              '((("\\<DEBUG\\>" . font-lock-comment-face)
+                 ("\\<INFO\\>" . font-lock-string-face)
+                 ("\\<WARN\\>" . font-lock-warning-face)
+                 ("\\<ERROR\\>" . font-lock-function-name-face)
+                 ;; Timestamps (common formats)
+                 ("\\b[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}[T ][0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\b"
+                  . font-lock-constant-face)
+                 ;; IP addresses
+                 ("\\b[0-9]\\{1,3\\}\\.[0-9]\\{1,3\\}\\.[0-9]\\{1,3\\}\\.[0-9]\\{1,3\\}\\b"
+                  . font-lock-variable-name-face))))
+  ;; Make buffer read-only by default
+  (setq buffer-read-only t)
+  ;; Enable auto-revert for live log viewing
+  (auto-revert-tail-mode 1))
 
-  :hook
-  (log-mode . auto-revert-tail-mode))
+;; Register log files
+(add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
 
-;;; vundo settings
-
+;;; Undo Tree Visualization
 (use-package vundo
   :ensure t
   :defer t
   :bind ("C-x u" . vundo)
-  :config
-  (setq vundo-glyph-alist vundo-unicode-symbols)
-  (setq vundo-files-directory (expand-file-name "undos" my-tmp-dir)))
+  :custom
+  (vundo-glyph-alist vundo-unicode-symbols)
+  (vundo-files-directory (expand-file-name "vundo" my-tmp-dir))
+  ;; Compact display for better overview
+  (vundo-compact-display t))
 
-;;; deadgrep
-
+;;; Enhanced Grep Interface
 (use-package deadgrep
   :ensure t
   :defer t
   :bind
-  (("C-c s" . deadgrep)
-   :map
-   deadgrep-mode-map
-   ("q" . deadgrep-kill-all-buffers)))
+  (("C-c s g" . deadgrep)
+   :map deadgrep-mode-map
+   ("q" . quit-window)
+   ("Q" . deadgrep-kill-all-buffers))
+  :config
+  ;; Kill all deadgrep buffers
+  (defun deadgrep-kill-all-buffers ()
+    "Kill all deadgrep buffers."
+    (interactive)
+    (dolist (buffer (buffer-list))
+      (when (with-current-buffer buffer
+              (derived-mode-p 'deadgrep-mode))
+        (kill-buffer buffer)))
+    (message "Killed all deadgrep buffers")))
 
 ;;; Rainbow Delimiters
-
 (use-package rainbow-delimiters
   :ensure t
   :defer t
-  :diminish rainbow-delimiters-mode
-  :hook (prog-mode . rainbow-delimiters-mode)
+  :diminish
+  :hook ((prog-mode . rainbow-delimiters-mode)
+         ;; Also useful in these modes
+         (conf-mode . rainbow-delimiters-mode)
+         (yaml-mode . rainbow-delimiters-mode))
   :custom
-  (rainbow-delimiters-max-face-count 9)) ;; Default 9 faces
+  (rainbow-delimiters-max-face-count 9)
+  :config
+  ;; Make outermost parens more prominent
+  (set-face-attribute 'rainbow-delimiters-depth-1-face nil :weight 'bold))
 
-;;; Highlight Thing at Point
-
+;;; Highlight Current Symbol
 (use-package highlight-thing
   :ensure t
   :defer t
+  :diminish
+  :hook (prog-mode . highlight-thing-mode)
   :custom
-  (highlight-thing-delay-seconds 0.5)   ; Delay before highlighting
-  (highlight-thing-what-thing 'symbol)  ; Highlight symbols
-  :config
-  (set-face-attribute 'highlight-thing nil
-                      :background "#5e81ac" ; Soft blue from modus-vivendi color scheme
-                      :weight 'normal)      ; Keep text weight normal for readability
-  :hook (prog-mode . highlight-thing-mode))
+  (highlight-thing-delay-seconds 0.5)
+  (highlight-thing-what-thing 'symbol)
+  (highlight-thing-case-sensitive-p t)
+  (highlight-thing-exclude-thing-under-point t)
+  (highlight-thing-limit-to-region-in-large-buffers-p t)
+  (highlight-thing-narrow-region-lines 300)
+  :custom-face
+  ;; Use a subtle highlight that works with most themes
+  (highlight-thing ((t (:inherit highlight :background unspecified
+                                 :underline (:color "#5e81ac" :style line))))))
 
-;;; indent-bars
-
+;;; Indentation Guides
 (use-package indent-bars
   :ensure t
-  :diminish indent-bars-mode
-  :hook
-  (prog-mode . indent-bars-mode)
+  :defer t
+  :diminish
+  :hook ((prog-mode . indent-bars-mode)
+         (yaml-mode . indent-bars-mode)
+         (python-mode . indent-bars-mode))
   :custom
-  ;; Appearance
+  ;; Visual appearance
   (indent-bars-pattern ".")
   (indent-bars-width-frac 0.2)
   (indent-bars-pad-frac 0.1)
   (indent-bars-zigzag nil)
   (indent-bars-display-on-blank-lines t)
   (indent-bars-prefer-character nil)
-  ;; Highlight current level
-  (indent-bars-highlight-current-depth '(:blend 0.6))
+
+  ;; Highlighting
+  (indent-bars-highlight-current-depth '(:blend 0.3))
+
   ;; Behavior
   (indent-bars-no-descend-strings t)
   (indent-bars-no-descend-lists t)
-  (indent-bars-depth-update-delay 0.05)
-  ;; Tree-sitter support
+  (indent-bars-depth-update-delay 0.1)
+
+  ;; Tree-sitter integration
   (indent-bars-treesit-support t)
   (indent-bars-treesit-scope
-   '((python function_definition class_definition)
-     (emacs-lisp defun let progn)
-     (c function_definition compound_statement)
-     (cpp function_definition compound_statement class_specifier)
-     (rust function_item impl_item)
-     (javascript function_declaration arrow_function class_declaration)
-     (typescript function_declaration arrow_function class_declaration)))
-  :config
-  ;; Force font-lock refresh
-  (defun indent-bars-refresh-font-lock ()
-    (when indent-bars-mode
-      (font-lock-flush)
-      (font-lock-ensure)))
-  (add-hook 'indent-bars-mode-hook #'indent-bars-refresh-font-lock))
+   '((python function_definition class_definition for_statement
+             if_statement while_statement with_statement)
+     (emacs-lisp defun defmacro defvar defcustom let let*
+                 when unless if progn save-excursion)
+     (c function_definition if_statement for_statement
+        while_statement switch_statement)
+     (cpp function_definition if_statement for_statement
+          while_statement switch_statement class_specifier namespace_definition)
+     (rust function_item impl_item match_expression if_expression)
+     (javascript function_declaration function_expression arrow_function
+                 class_declaration if_statement for_statement)
+     (typescript function_declaration function_expression arrow_function
+                 class_declaration if_statement for_statement)
+     (go function_declaration method_declaration if_statement
+         for_statement switch_statement))))
 
-;;; modeline
+;;; files package
+(use-package files
+  :ensure nil
+  :defer t
+  :custom
+  ;; Revert buffers automatically when files change on disk
+  (global-auto-revert-non-file-buffers t)
+  (auto-revert-verbose nil)
+  ;; Backup settings (if not already configured elsewhere)
+  (make-backup-files t)
+  (vc-make-backup-files t))
 
+;;; Auto-revert Configuration
 (use-package autorevert
   :ensure nil
+  :diminish auto-revert-mode
   :hook (after-init . global-auto-revert-mode)
-  :config
-  (setq auto-revert-verbose t))
+  :custom
+  (auto-revert-verbose nil) ; Less noisy
+  (global-auto-revert-non-file-buffers t))
 
+;;; Modeline Management
 (use-package delight
   :ensure t
   :config
+  ;; Hide or rename minor modes in modeline
   (delight
-   '((global-hl-line-mode nil "hl-line")
+   '((auto-revert-mode nil "autorevert")
+     (eldoc-mode nil "eldoc")
+     (global-hl-line-mode nil "hl-line")
      (save-place-mode nil "saveplace")
      (flyspell-mode " ✍" "flyspell")
      (yas-minor-mode nil "yasnippet")
      (smartparens-mode nil "smartparens"))))
 
-;;; smartparens
-
+;;; Structural Editing
 (use-package smartparens
   :ensure t
   :defer t
-  :hook
-  ((prog-mode . smartparens-mode)
-   (text-mode . smartparens-mode)
-   (markdown-mode . smartparens-mode))
-  :config (require 'smartparens-config)
+  :diminish
+  :hook ((prog-mode . smartparens-mode)
+         (text-mode . smartparens-mode))
+  :config
+  (require 'smartparens-config)
+  ;; Disable smartparens in minibuffer to avoid conflicts
+  (add-hook 'minibuffer-setup-hook #'turn-off-smartparens-mode)
   :bind
-  (:map
-   smartparens-mode-map
-   ("C-)" . sp-forward-sexp)          ; Jump to next sexp
-   ("C-(" . sp-backward-sexp)         ; Jump to prev sexp
-   ("C-{" . sp-backward-up-sexp))) ; Up a level
+  (:map smartparens-mode-map
+        ("C-M-f" . sp-forward-sexp)
+        ("C-M-b" . sp-backward-sexp)
+        ("C-M-u" . sp-backward-up-sexp)
+        ("C-M-d" . sp-down-sexp)
+        ("C-M-n" . sp-next-sexp)
+        ("C-M-p" . sp-previous-sexp)))
+
+;;; Completion Framework
 
 ;;; vertico
-
+;; Completion UI
 (use-package vertico
   :ensure t
-  :demand t  ; Core completion system - load immediately
-  :init (vertico-mode 1)
+  :demand t  ; Core completion system
   :custom
   (vertico-cycle t)
   (vertico-count 15)
-  (vertico-sort-function 'vertico-sort-history-length-alpha)
   (vertico-resize t)
   (vertico-preselect 'first)
-  :config
-  (with-eval-after-load 'nerd-icons
-    (defvar my-buffer-icon-cache (make-hash-table :test 'equal))
-    (defun my-consult-buffer-format-cached (buffer)
-      "Add cached nerd-icons to BUFFER name."
-      (let* ((name (buffer-name buffer))
-             (cached-icon (gethash name my-buffer-icon-cache)))
-        (unless cached-icon
-          (setq cached-icon (nerd-icons-icon-for-buffer buffer))
-          (puthash name cached-icon my-buffer-icon-cache))
-        (concat cached-icon " " name))))
+  (vertico-sort-function #'vertico-sort-history-length-alpha)
+  :init
+  (vertico-mode 1)
   :bind
-  (:map
-   vertico-map
-   ("DEL" . vertico-directory-delete-char)
-   ("M-DEL" . vertico-directory-delete-word)
-   ("s-<tab>" . vertico-next)
-   ("S-s-<tab>" . vertico-previous)))
+  (:map vertico-map
+        ("RET" . vertico-directory-enter)
+        ("DEL" . vertico-directory-delete-char)
+        ("M-DEL" . vertico-directory-delete-word)
+        ("C-j" . vertico-exit-input)))
 
 ;;; orderless
-
+;; Completion Style
 (use-package orderless
   :ensure t
   :demand t  ; Core completion dependency
   :custom
-  ;; Core completion styles - primary configuration
-  (completion-styles '(orderless basic partial-completion flex))
+  (completion-styles '(orderless basic))
+  (completion-category-defaults nil)
   (completion-category-overrides
-   '((file (styles basic partial-completion))
-     (eglot (styles orderless flex))
-     (eglot-capf (styles orderless flex))
-     (buffer (styles orderless basic))
-     (info-menu (styles orderless basic))
-     (consult-multi (styles orderless basic))
-     (org-heading (styles orderless basic))
-     (unicode-name (styles orderless basic))))
-  (orderless-matching-styles '(orderless-literal orderless-regexp))
+   '((file (styles basic partial-completion orderless))
+     (buffer (styles basic orderless))
+     (eglot (styles orderless))
+     (eglot-capf (styles orderless))))
+  (orderless-matching-styles '(orderless-regexp
+                               orderless-literal
+                               orderless-initialism))
   (orderless-smart-case t))
 
 ;;; savehist
+;; Persist History
 (use-package savehist
   :ensure nil
-  :init
-  (savehist-mode 1)
+  :init (savehist-mode 1)
   :custom
-  ;; history-length set in main emacs config block
-  (savehist-file "~/.tmp/savehist")
+  (savehist-file (expand-file-name "savehist" my-tmp-dir))
   (savehist-additional-variables
    '(kill-ring
      mark-ring
@@ -1207,63 +1274,77 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
      extended-command-history
      vertico-repeat-history)))
 
-;;; consult
+;;; marginalia
+;; Rich Annotations
+(use-package marginalia
+  :ensure t
+  :demand t  ; Load with vertico
+  :init (marginalia-mode 1)
+  :bind
+  (:map minibuffer-local-map
+        ("M-A" . marginalia-cycle)))
 
+;;; consult
+;; Enhanced Commands
 (use-package consult
   :ensure t
-  :defer 1   ; Defer loading to improve startup
-  :commands (consult-line consult-buffer consult-grep consult-ripgrep)
+  :defer 1
   :custom
+  ;; Preview settings
+  (consult-preview-key '(:debounce 0.3 any))
   (consult-narrow-key "<")
-  (consult-line-numbers-widen t)
+
+  ;; Performance tuning
   (consult-async-min-input 2)
   (consult-async-refresh-delay 0.15)
   (consult-async-input-throttle 0.2)
-  (consult-async-input-debounce 0.2)
-  (consult-preview-key '(:debounce 0.3 any))
+  (consult-async-input-debounce 0.1)
+
+  ;; Better grep experience
+  (consult-line-numbers-widen t)
+  (consult-line-start-from-top t)
+
   :config
-  ;; history-length set in main emacs config block
+  ;; Configure specific commands
   (consult-customize
-   consult-ripgrep consult-git-grep consult-grep
+   ;; Disable preview for these commands
+   consult-theme :preview-key nil
    consult-bookmark consult-recent-file consult-xref
-   consult--source-bookmark consult--source-file-register
-   :preview-key '(:debounce 0.4 any)
-   :initial (thing-at-point 'symbol))
-  (global-set-key [remap isearch-forward] #'consult-line)
-  (global-set-key [remap switch-to-buffer] #'consult-buffer)
-  (global-set-key [remap list-buffers] #'consult-buffer)
-  (global-set-key [remap yank-pop] #'consult-yank-pop)
-  (global-set-key [remap goto-line] #'consult-goto-line)
-  (global-set-key [remap imenu] #'consult-imenu)
-  (global-set-key [remap bookmark-jump] #'consult-bookmark)
-  (defvar my-consult-hidden-buffer-source
-    `(:name
-      "Hidden Buffers"
-      :narrow ?h
-      :category buffer
-      :face consult-buffer
-      :history buffer-name-history
-      :state ,#'consult--buffer-state
-      :items
-      ,(lambda ()
-         (mapcar
-          #'buffer-name
-          (seq-filter
-           (lambda (buf)
-             (and (string-match-p "^\\*" (buffer-name buf))
-                  (not (get-buffer-window buf 'visible))))
-           (buffer-list)))))
-    "Source for hidden buffers starting with *.")
-  (add-to-list 'consult-buffer-sources 'my-consult-hidden-buffer-source
-               t)
+   :preview-key '(:debounce 0.4 any))
+
+  ;; Custom hidden buffer source for consult-buffer
+  (defvar consult-source-hidden-buffer
+    `(:name "Hidden Buffer"
+            :narrow ?h
+            :category buffer
+            :face consult-buffer
+            :history buffer-name-history
+            :action ,#'consult--buffer-action
+            :items ,(lambda ()
+                      (consult--buffer-query
+                       :predicate (lambda (buf)
+                                    (string-prefix-p " " (buffer-name buf)))
+                       :sort 'visibility))))
+
+  (add-to-list 'consult-buffer-sources 'consult-source-hidden-buffer 'append)
+
   :bind
+  ;; C-c bindings (mode-specific-map)
   (("C-c M-x" . consult-mode-command)
    ("C-c h" . consult-history)
    ("C-c k" . consult-kmacro)
    ("C-c m" . consult-man)
    ("C-c i" . consult-info)
-   ([remap Info-search] . consult-info)
+   ;; C-x bindings (ctl-x-map)
+   ("C-x M-:" . consult-complex-command)
+   ("C-x b" . consult-buffer)
+   ("C-x 4 b" . consult-buffer-other-window)
+   ("C-x 5 b" . consult-buffer-other-frame)
+   ("C-x r b" . consult-bookmark)
+   ("C-x p b" . consult-project-buffer)
+   ;; M-g bindings (goto-map)
    ("M-g e" . consult-compile-error)
+   ("M-g f" . consult-flymake)
    ("M-g g" . consult-goto-line)
    ("M-g M-g" . consult-goto-line)
    ("M-g o" . consult-outline)
@@ -1271,6 +1352,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    ("M-g k" . consult-global-mark)
    ("M-g i" . consult-imenu)
    ("M-g I" . consult-imenu-multi)
+   ;; M-s bindings (search-map)
    ("M-s d" . consult-find)
    ("M-s D" . consult-locate)
    ("M-s g" . consult-grep)
@@ -1280,84 +1362,188 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    ("M-s L" . consult-line-multi)
    ("M-s k" . consult-keep-lines)
    ("M-s u" . consult-focus-lines)
+   ;; Isearch integration
+   :map isearch-mode-map
+   ("M-e" . consult-isearch-history)
    ("M-s e" . consult-isearch-history)
-   (:map isearch-mode-map
-         ("M-e" . consult-isearch-history)
-         ("M-s e" . consult-isearch-history)
-         ("M-s l" . consult-line)
-         ("M-s L" . consult-line-multi))
-   (:map minibuffer-local-map
-         ("M-s" . consult-history)
-         ("M-r" . consult-history))))
+   ("M-s l" . consult-line)
+   ;; Minibuffer history
+   :map minibuffer-local-map
+   ("M-s" . consult-history)
+   ("M-r" . consult-history))
 
-(use-package consult-yasnippet :ensure t :after (consult yasnippet))
+  ;; Replace bindings
+  :init
+  ;; Use Consult for some built-in commands
+  (global-set-key [remap Info-search] #'consult-info)
+  (global-set-key [remap isearch-forward] #'consult-line)
+  (global-set-key [remap recentf-open-files] #'consult-recent-file))
 
+;; Consult integration for yasnippet
+(use-package consult-yasnippet
+  :ensure t
+  :after (consult yasnippet)
+  :bind ("C-c y" . consult-yasnippet))
+
+;; Consult integration for flycheck
 (use-package consult-flycheck
   :ensure t
   :after (consult flycheck)
-  :bind
-  ("M-g f" . consult-flycheck))
+  :bind (:map flycheck-mode-map
+              ("C-c ! c" . consult-flycheck)))
 
-;;; marginalia
-
-(use-package marginalia
-  :ensure t
-  :defer 1   ; Defer marginalia for faster startup
-  :bind (:map minibuffer-local-map
-              ("M-A" . marginalia-cycle))
-  :init
-  (run-with-idle-timer 1 nil #'marginalia-mode))
-
-;;; completion-preview
-
+;;; In-buffer Completion Preview
 (use-package completion-preview
   :ensure nil
   :hook ((prog-mode . completion-preview-mode)
-         ;; Add tree-sitter modes explicitly
-         (python-ts-mode . completion-preview-mode)
-         (c-ts-mode . completion-preview-mode)
-         (c++-ts-mode . completion-preview-mode)
-         (js-ts-mode . completion-preview-mode)
-         (typescript-ts-mode . completion-preview-mode)
-         (rust-ts-mode . completion-preview-mode))
+         (conf-mode . completion-preview-mode))
   :custom
   (completion-preview-minimum-symbol-length 2)
-  (completion-preview-idle-delay nil)
-  :config
-  ;; Make completion-preview work with paredit/smartparens
-  (defun my/completion-preview-insert-word ()
-    "Insert completion preview and move past any closing delimiters."
-    (interactive)
-    (when completion-preview--overlay
-      (completion-preview-insert)
-      ;; Move past closing parens/brackets if needed
-      (when (looking-at "[])\\]]")
-        (forward-char 1))))
-
-  ;; Fix completion detection with paredit
-  (advice-add 'completion-preview--completion-at-point :around
-              (lambda (orig-fun &rest args)
-                (let ((result (apply orig-fun args)))
-                  ;; If no completion found and we're before a closing paren
-                  (when (and (not result) (looking-at-p "[})\\]\"]"))
-                    ;; Try again with a temporary marker past the paren
-                    (save-excursion
-                      (forward-char 1)
-                      (setq result (apply orig-fun args))))
-                  result)))
-
-  (set-face-attribute 'completion-preview nil
-                      :foreground "#FFC107"
-                      :background "unspecified")
-
+  (completion-preview-idle-delay 0.2)
+  (completion-preview-exact-match-only nil)
+  :custom-face
+  (completion-preview ((t (:inherit shadow :foreground "#FFC107"))))
+  (completion-preview-exact ((t (:inherit completion-preview :weight bold))))
   :bind
   (:map completion-preview-active-mode-map
-        ("TAB" . my/completion-preview-insert-word)
-        ([tab] . my/completion-preview-insert-word)
-        ("M-n" . #'completion-preview-next-candidate)
-        ("M-p" . #'completion-preview-prev-candidate)))
+        ("TAB" . completion-preview-insert)
+        ([tab] . completion-preview-insert)
+        ("M-n" . completion-preview-next-candidate)
+        ("M-p" . completion-preview-prev-candidate)))
 
-;; Core completion settings consolidated - removed duplicate block
+;;; Mode-line Configuration
+(use-package emacs
+  :ensure nil
+  :config
+  ;; Basic mode-line settings
+  (setq mode-line-compact t)  ; Emacs 28+ feature for compact mode-line
+  (setq mode-line-position-column-line-format '(" (%l,%c)")) ; Line,Column format
+
+  ;; File size indication in mode-line
+  (size-indication-mode 1)
+
+  ;; Show column numbers
+  (column-number-mode 1)
+
+  ;; Line number mode
+  (line-number-mode 1)
+
+  ;; Display time in mode-line
+  (setq display-time-24hr-format t)
+  (setq display-time-default-load-average nil) ; Don't show load average
+  (setq display-time-format "%H:%M")          ; Simple time format
+  (display-time-mode 1)
+
+  ;; Battery display (if applicable)
+  (require 'battery)
+  (when (and battery-status-function
+             (not (string-match-p "N/A"
+                                  (battery-format "%B"
+                                                  (funcall battery-status-function)))))
+    (setq battery-mode-line-format " [%b%p%%]")
+    (display-battery-mode 1))
+
+  ;; Which function mode - shows current function in mode-line
+  (which-function-mode 1)
+  (setq which-func-modes '(prog-mode))
+
+  ;; Cleaner buffer identification
+  (setq mode-line-buffer-identification
+        '(:eval (propertize "%b" 'face 'mode-line-buffer-id)))
+
+  ;; Remote host indicator
+  (setq-default mode-line-remote
+                '(:eval (when (file-remote-p default-directory)
+                          (propertize " @"
+                                      'face 'mode-line-emphasis))))
+
+  ;; Project name in mode-line
+  (with-eval-after-load 'project
+    (setq-default mode-line-misc-info
+                  (append mode-line-misc-info
+                          '((:eval (when-let ((project (project-current)))
+                                     (format " [%s]"
+                                             (project-name project))))))))
+
+  ;; Simpler recursive edit indication
+  (setq-default mode-line-front-space
+                '(:eval (if (> (recursion-depth) 0)
+                            (format "[%d] " (recursion-depth))
+                          " ")))
+
+  ;; Custom mode-line faces for better visibility
+  :custom-face
+  (mode-line ((t (:box (:line-width 4 :color nil :style nil)))))
+  (mode-line-inactive ((t (:box (:line-width 4 :color nil :style nil)))))
+  (mode-line-buffer-id ((t (:weight bold))))
+  (mode-line-emphasis ((t (:weight bold :foreground "#FFC107")))))
+
+;; Minions - Better minor mode menu
+(use-package minions
+  :ensure t
+  :config
+  (minions-mode 1)
+  :custom
+  ;; Show these minor modes directly
+  (minions-prominent-modes '(flymake-mode
+                             flycheck-mode
+                             projectile-mode
+                             lsp-mode
+                             eglot--managed-mode))
+  ;; Use a lighter symbol
+  (minions-mode-line-lighter " ◎"))
+
+;; Optional: Nyan Mode for fun (shows position in file)
+;; Uncomment if you want a visual position indicator
+;; (use-package nyan-mode
+;;   :ensure t
+;;   :config
+;;   (nyan-mode 1)
+;;   :custom
+;;   (nyan-wavy-trail t)
+;;   (nyan-bar-length 16))
+
+;; Mode-line bell (visual bell in mode-line)
+(use-package mode-line-bell
+  :ensure t
+  :config
+  (mode-line-bell-mode 1))
+
+;; Clean up mode-line clutter
+(use-package emacs
+  :ensure nil
+  :config
+  ;; Hide some default minor mode indicators
+  (setq rm-excluded-modes
+        '(" WS"    ; whitespace-mode
+          " ws"    ; whitespace-mode
+          " ElDoc" ; eldoc-mode
+          " hl-p"  ; highlight-parentheses-mode
+          " Wrap"  ; visual-line-mode
+          " Vis"   ; visible-mode
+          " VLin"  ; visual-line-mode
+          " Undo-Tree" ; undo-tree-mode
+          " MRev"  ; make-revision-mode
+          " ARev"  ; auto-revert-mode
+          ))
+
+  ;; Cleaner version control display
+  (setq-default mode-line-format
+                '("%e"
+                  mode-line-front-space
+                  mode-line-mule-info
+                  mode-line-client
+                  mode-line-modified
+                  mode-line-remote
+                  mode-line-frame-identification
+                  mode-line-buffer-identification
+                  "   "
+                  mode-line-position
+                  (vc-mode vc-mode)
+                  "  "
+                  mode-line-modes
+                  mode-line-misc-info
+                  mode-line-end-spaces)))
 
 ;;; nerd-icons
 
