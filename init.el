@@ -304,29 +304,11 @@ OLD is ignored but included for hook compatibility."
     (add-hook 'exwm-update-class-hook
               (lambda ()
                 (exwm-workspace-rename-buffer exwm-class-name)))
-    (require 'exwm-randr)
-    (require 'exwm-systemtray)
+
+    ;; System tray configuration
     (setq exwm-systemtray-height 22)
     (setq exwm-systemtray-icon-gap 5)
     (setq exwm-systemtray-workspace nil)
-    (exwm-systemtray-mode 1)
-    (exwm-randr-mode 1)
-    (exwm-wm-mode 1)
-
-    (add-hook 'exwm-init-hook
-              (lambda ()
-                ;; Network manager applet
-                (when (executable-find "nm-applet")
-                  (start-process "nm-applet" nil "nm-applet"))
-                ;; Bluetooth
-                (when (executable-find "blueman-applet")
-                  (start-process "blueman-applet" nil "blueman-applet"))
-                ;; Udiskie
-                (when (executable-find "udiskie")
-                  (start-process "udiskie" nil "udiskie" "-at"))
-                ;; Mullvad VPN
-                (when (executable-find "mullvad-vpn")
-                  (start-process "mullvad-vpn" nil "mullvad-vpn"))))
 
     ;; Function to automatically configure monitors
     (defun my/exwm-configure-monitors ()
@@ -380,13 +362,48 @@ OLD is ignored but included for hook compatibility."
               ;; Apply the workspace configuration
               (setq exwm-randr-workspace-monitor-plist workspace-plist)
               (exwm-randr-refresh))))))
+
+    ;; Function to start system tray applications
+    (defun my/exwm-start-tray-apps ()
+      "Start system tray applications."
+      (interactive)
+      ;; Add a small delay to ensure X is ready
+      (run-with-timer 2 nil
+                      (lambda ()
+                        ;; Network manager applet
+                        (when (executable-find "nm-applet")
+                          (message "Starting nm-applet...")
+                          (start-process "nm-applet" nil "nm-applet"))
+                        ;; Bluetooth
+                        (when (executable-find "blueman-applet")
+                          (message "Starting blueman-applet...")
+                          (start-process "blueman-applet" nil "blueman-applet"))
+                        ;; Udiskie
+                        (when (executable-find "udiskie")
+                          (message "Starting udiskie...")
+                          (start-process "udiskie" nil "udiskie" "-at"))
+                        ;; Mullvad VPN
+                        (when (executable-find "mullvad-vpn")
+                          (message "Starting mullvad-vpn...")
+                          (start-process "mullvad-vpn" nil "mullvad-vpn")))))
+
+    ;; Add hooks before enabling modes
+    (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
     (add-hook 'exwm-randr-screen-change-hook #'my/exwm-configure-monitors)
+
+    ;; Enable EXWM components
+    (exwm-systemtray-mode 1)
+    (exwm-randr-mode 1)
+
+    ;; Configure monitors before starting EXWM
     (my/exwm-configure-monitors)
-    )
+
+    ;; Enable EXWM
+    (exwm-wm-mode 1))
 
   ;; Optional: Simple app launcher
   (defun my/app-launcher ()
-    "Launch application using completing-read."
+    "Launch application using \='completing-read'."
     (interactive)
     (let* ((all-commands
             (split-string
