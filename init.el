@@ -1524,125 +1524,41 @@ If buffer is modified, offer to save first."
 ;;; which-key
 
 (use-package which-key
-  :ensure nil             ; Built-in since Emacs 29
-  :demand t               ; Load immediately for optimal startup
+  :ensure nil  ; Built-in since Emacs 29
+  :demand t
+  :diminish
+  :custom
+  ;; Core settings
+  (which-key-idle-delay 0)
+  (which-key-idle-secondary-delay 0)
+  (which-key-popup-type 'side-window)
+  (which-key-side-window-location 'bottom)
+  (which-key-side-window-max-height 0.30)
+  (which-key-show-early-on-C-h t)
+
+  ;; Display settings
+  (which-key-separator " → ")
+  (which-key-prefix-prefix "+")
+  (which-key-max-display-columns nil)
+  (which-key-min-display-lines 6)
+  (which-key-sort-order 'which-key-prefix-then-key-order)
+
+  ;; Let which-key automatically format things
+  (which-key-dont-use-unicode nil)
+  (which-key-special-keys '("SPC" "TAB" "RET" "ESC" "DEL"))
+
   :config
-  ;; Enable which-key mode globally
   (which-key-mode 1)
-
-  ;; Optimized settings for Emacs 30.1
-  (setq which-key-idle-delay 0          ; Slightly longer delay for better UX
-        which-key-idle-secondary-delay 0.1
-        which-key-add-column-padding 1
-        which-key-max-description-length 50  ; More descriptive text
-        which-key-show-early-on-C-h t
-        which-key-popup-type 'side-window
-        which-key-side-window-location 'bottom
-        which-key-side-window-max-height 0.25
-        which-key-separator " → "
-        which-key-prefix-prefix "+"
-        which-key-sort-order 'which-key-key-order-alpha ; Better organization
-        which-key-min-display-lines 3)      ; Minimum lines for better visibility
-
-  ;; ===== PREFIX GROUP LABELS =====
-  ;; Add bracketed labels for all major prefix groups
-
-  ;; Main C-c prefix groups
   (which-key-add-key-based-replacements
-    "C-c 0"   "[0x0] Upload Service"
-    "C-c F"   "[Firefox] EXWM Browser"
-    "C-c L"   "[LSP] Language Server"
-    "C-c n"   "[Notes] Denote System")
+    "C-c n" "notes"
+    "C-c L" "lsp"
+    "C-c 0" "0x0-upload"
+    "C-c F" "firefox"
+    "C-c d" "diff"
+    "C-c n q" "query")
 
-  ;; Core C-c commands with descriptions
-  (which-key-add-key-based-replacements
-    "C-c >"   "[MC] Next Multiple Cursor"
-    "C-c <"   "[MC] Previous Multiple Cursor"
-    "C-c '"   "[Jump] Avy Goto Char"
-    "C-c a"   "[Org] Agenda"
-    "C-c c"   "[Org] Capture"
-    "C-c d"   "[Diff] Ediff Dispatch"
-    "C-c e"   "[EXWM] Edit Compose"
-    "C-c g"   "[Git] Magit Status"
-    "C-c r"   "[Recent] Consult Recent File"
-    "C-c s"   "[Search] Deadgrep"
-    "C-c y"   "[Snippet] YASnippet Insert")
-
-  ;; 0x0 Upload Service subcommands
-  (which-key-add-key-based-replacements
-    "C-c 0 f" "Upload File"
-    "C-c 0 s" "Shorten URI"
-    "C-c 0 t" "Upload Text"
-    "C-c 0 d" "Do What I Mean"
-    "C-c 0 p" "Upload Popup")
-
-  ;; Firefox EXWM subcommands
-  (which-key-add-key-based-replacements
-    "C-c F n" "New Tab"
-    "C-c F t" "Close Tab"
-    "C-c F <right>" "Next Tab"
-    "C-c F <left>" "Previous Tab"
-    "C-c F h" "Back"
-    "C-c F l" "Forward"
-    "C-c F f" "Find"
-    "C-c F r" "Reload"
-    "C-c F b" "Bookmark")
-
-  ;; LSP subcommands
-  (which-key-add-key-based-replacements
-    "C-c L a" "Code Actions"
-    "C-c L d" "Diagnostics"
-    "C-c L s" "Symbols"
-    "C-c L f" "File Symbols"
-    "C-c L i" "Implementation"
-    "C-c L r" "References"
-    "C-c L D" "Definition")
-
-  ;; Denote Notes subcommands
-  (which-key-add-key-based-replacements
-    "C-c n n" "New Note"
-    "C-c n j" "Journal Entry"
-    "C-c n d" "Dired Notes"
-    "C-c n g" "Grep Notes"
-    "C-c n l" "Link"
-    "C-c n L" "Add Links"
-    "C-c n b" "Backlinks"
-    "C-c n q" "[Query] Links"
-    "C-c n q c" "Query Contents Link"
-    "C-c n q f" "Query Filenames Link"
-    "C-c n r" "Rename File"
-    "C-c n R" "Rename Using Front Matter"
-    "C-c n f" "Find Note")
-
-  ;; Enhanced navigation and utility keys
-  (which-key-add-key-based-replacements
-    "C-x u"   "[Undo] Vundo Tree"
-    "C-="     "[Region] Expand"
-    "C-& y"   "[Snippet] Consult YASnippet")
-
-  ;; Super key bindings with windower
-  (which-key-add-key-based-replacements
-    "s-<tab>"   "[Windower] Last Buffer"
-    "s-o"     "[Windower] Toggle Single"
-    "s-\\"    "[Windower] Toggle Split"
-    "s-+"     "[Text] Increase Size & Pane"
-    "s-_"     "[Text] Decrease Size & Pane")
-
-  ;; eww browser mode keybindings
-  (which-key-add-key-based-replacements
-    "C-c C-f" "[EWW] Open in Firefox"
-    "J"       "[EWW] Next Buffer"
-    "K"       "[EWW] Previous Buffer"
-    "+"       "[EWW] Increase Text Size"
-    "-"       "[EWW] Decrease Text Size"
-    "0"       "[EWW] Reset Text Size"
-    "V"       "[EWW] View Source"
-    "I"       "[EWW] Toggle Images"
-    "W"       "[EWW] Copy Page Title"
-    "D"       "[EWW] Download as PDF"
-    "B"       "[EWW] Bookmark with Tags"
-    "C-c /"   "[EWW] New Search"
-    "C-c C-o" "[EWW] Bookmark to Firefox"))
+  (push '((nil . "\\`\\([[:alnum:]-]+\\)\\+'") . (nil . "\\1+"))
+        which-key-replacement-alist))
 
 ;;; flyspell
 
