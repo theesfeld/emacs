@@ -1397,127 +1397,40 @@ If buffer is modified, offer to save first."
   :ensure nil
   :config
   ;; Basic mode-line settings
-  (setq mode-line-compact t)  ; Emacs 28+ feature for compact mode-line
-  (setq mode-line-position-column-line-format '(" (%l,%c)")) ; Line,Column format
+  (setq mode-line-compact t)  ; Emacs 28+ compact mode
 
-  ;; File size indication in mode-line
+  ;; Position format - line:column
+  (setq mode-line-position-column-line-format '(" %l:%c"))
+  (line-number-mode 1)
+  (column-number-mode 1)
   (size-indication-mode 1)
 
-  ;; Show column numbers
-  (column-number-mode 1)
-
-  ;; Line number mode
-  (line-number-mode 1)
-
-  ;; Display time in mode-line
-  (setq display-time-24hr-format t)
-  (setq display-time-default-load-average nil) ; Don't show load average
-  (setq display-time-format "%H:%M")          ; Simple time format
+  ;; Time with ISO date format
+  (setq display-time-format "%Y-%m-%d %H:%M"
+        display-time-default-load-average nil)
   (display-time-mode 1)
 
-  ;; Battery display (if applicable)
+  ;; Battery display
   (require 'battery)
   (when (and battery-status-function
              (not (string-match-p "N/A"
                                   (battery-format "%B"
                                                   (funcall battery-status-function)))))
-    (setq battery-mode-line-format " %b%p%%")
-    (setq battery-mode-line-limit 85) ; Only show when below 85%
+    (setq battery-mode-line-format "%b%p%%  ")  ; Extra spaces for separation
+    (setq battery-mode-line-limit 85)
     (display-battery-mode 1))
 
-  ;; Which function mode - shows current function in mode-line
+  ;; Which function mode
   (which-function-mode 1)
-  (setq which-func-modes '(prog-mode))
+  (setq which-func-modes '(prog-mode)
+        which-func-unknown "")
 
-  ;; Cleaner buffer identification
-  (setq mode-line-buffer-identification
-        '(:eval (propertize "%b" 'face 'mode-line-buffer-id)))
+  ;; Right alignment edge (Emacs 30.1 feature)
+  (setq mode-line-right-align-edge 'right-fringe)
 
-  ;; Remote host indicator
-  (setq-default mode-line-remote
-                '(:eval (when (file-remote-p default-directory)
-                          (propertize " @"
-                                      'face 'font-lock-function-name-face))))
-
-  ;; Project name in mode-line
-  (with-eval-after-load 'project
-    (setq-default mode-line-misc-info
-                  (append mode-line-misc-info
-                          '((:eval (when-let ((project (project-current)))
-                                     (propertize (format " [%s]"
-                                                         (project-name project))
-                                                 'face 'font-lock-constant-face)))))))
-
-  ;; Simpler recursive edit indication
-  (setq-default mode-line-front-space
-                '(:eval (if (> (recursion-depth) 0)
-                            (propertize (format "[%d] " (recursion-depth))
-                                        'face 'font-lock-warning-face)
-                          " ")))
-
-  ;; Custom mode-line faces for better visibility
-  :custom-face
-  ;; Subtle box that inherits theme colors
-  (mode-line ((t (:box (:line-width -1 :style released-button)))))
-  (mode-line-inactive ((t (:box (:line-width -1 :style released-button)))))
-  ;; Make buffer name prominent using theme's keyword face color
-  (mode-line-buffer-id ((t (:weight bold :inherit font-lock-keyword-face))))
-  ;; Use warning face color for emphasis (themes always define this)
-  (mode-line-emphasis ((t (:weight bold :inherit warning)))))
-
-;; Minions - Better minor mode menu
-;; This package automatically respects theme colors
-(use-package minions
-  :ensure t
-  :config
-  (minions-mode 1)
-  :custom
-  ;; Show these minor modes directly
-  (minions-prominent-modes '(flymake-mode
-                             flycheck-mode
-                             projectile-mode
-                             lsp-mode
-                             eglot--managed-mode))
-  ;; Use a lighter symbol
-  (minions-mode-line-lighter " ◎"))
-
-;; Optional: Nyan Mode for fun (shows position in file)
-;; Uncomment if you want a visual position indicator
-;; (use-package nyan-mode
-;;   :ensure t
-;;   :config
-;;   (nyan-mode 1)
-;;   :custom
-;;   (nyan-wavy-trail t)
-;;   (nyan-bar-length 16))
-
-;; Mode-line bell (visual bell in mode-line)
-(use-package mode-line-bell
-  :ensure t
-  :config
-  (mode-line-bell-mode 1))
-
-;; Clean up mode-line clutter
-(use-package emacs
-  :ensure nil
-  :config
-  ;; Hide some default minor mode indicators
-  (setq rm-excluded-modes
-        '(" WS"    ; whitespace-mode
-          " ws"    ; whitespace-mode
-          " ElDoc" ; eldoc-mode
-          " hl-p"  ; highlight-parentheses-mode
-          " Wrap"  ; visual-line-mode
-          " Vis"   ; visible-mode
-          " VLin"  ; visual-line-mode
-          " Undo-Tree" ; undo-tree-mode
-          " MRev"  ; make-revision-mode
-          " ARev"  ; auto-revert-mode
-          ))
-
-  ;; Cleaner version control display
+  ;; Standard mode-line format using built-in variables
   (setq-default mode-line-format
-                '("%e"
+                '("%e"  ; Out of memory indicator
                   mode-line-front-space
                   mode-line-mule-info
                   mode-line-client
@@ -1525,22 +1438,44 @@ If buffer is modified, offer to save first."
                   mode-line-remote
                   mode-line-frame-identification
                   mode-line-buffer-identification
-                  "   "
+                  "  "
                   mode-line-position
+                  "  "
                   (vc-mode vc-mode)
                   "  "
                   mode-line-modes
-                  mode-line-misc-info
-                  mode-line-end-spaces)))
+                  ;; Right-aligned section (Emacs 30.1)
+                  mode-line-format-right-align
+                  which-func-mode  ; Current function
+                  "  "
+                  mode-line-misc-info  ; Includes battery and time
+                  mode-line-end-spaces))
 
-;; (add-hook 'enable-theme-functions
-;;           (lambda (theme)
-;;             (message "Mode-line will adapt to %s theme" theme)))
+  ;; Customize faces to inherit from theme
+  :custom-face
+  (mode-line ((t (:box (:line-width -1 :style released-button)))))
+  (mode-line-inactive ((t (:box (:line-width -1 :style released-button)))))
+  (mode-line-buffer-id ((t (:weight bold :inherit font-lock-keyword-face))))
+  (mode-line-emphasis ((t (:weight bold :inherit warning)))))
 
-;; (when (facep 'modus-themes-heading-1)
-;;   (set-face-attribute 'mode-line-buffer-id nil
-;;                       :inherit 'modus-themes-heading-1))
+;; Minions for minor mode management
+(use-package minions
+  :ensure t
+  :config
+  (minions-mode 1)
+  :custom
+  (minions-prominent-modes '(flymake-mode
+                             flycheck-mode
+                             projectile-mode
+                             lsp-mode
+                             eglot--managed-mode))
+  (minions-mode-line-lighter " ◎"))
 
+;; Visual bell in mode-line
+(use-package mode-line-bell
+  :ensure t
+  :config
+  (mode-line-bell-mode 1))
 
 ;;; nerd-icons
 
