@@ -374,9 +374,10 @@ OLD is ignored but included for hook compatibility."
       (run-with-timer 2 nil
                       (lambda ()
                         ;; Network manager applet
-                        (when (executable-find "nm-applet")
-                          (message "Starting nm-applet...")
-                          (start-process "nm-applet" nil "nm-applet"))
+                        ;; Mullvad VPN
+                        (when (executable-find "mullvad-vpn")
+                          (message "Starting mullvad-vpn...")
+                          (start-process "mullvad-vpn" nil "mullvad-vpn"))
                         ;; Bluetooth
                         (when (executable-find "blueman-applet")
                           (message "Starting blueman-applet...")
@@ -385,10 +386,9 @@ OLD is ignored but included for hook compatibility."
                         (when (executable-find "udiskie")
                           (message "Starting udiskie...")
                           (start-process "udiskie" nil "udiskie" "-at"))
-                        ;; Mullvad VPN
-                        (when (executable-find "mullvad-vpn")
-                          (message "Starting mullvad-vpn...")
-                          (start-process "mullvad-vpn" nil "mullvad-vpn")))))
+                        (when (executable-find "nm-applet")
+                          (message "Starting nm-applet...")
+                          (start-process "nm-applet" nil "nm-applet")))))
 
     ;; Add hooks before enabling modes
     (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
