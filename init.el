@@ -1670,151 +1670,75 @@ If buffer is modified, offer to save first."
   ("C-c p d" . cape-dabbrev)
   ("C-c p l" . cape-line))
 
-;;; org-mode
-
-;; Core Org Mode Configuration
-(setq org-directory "~/Documents/notes/") ; had to set this prior to loading org
+;;; Org Mode
 (use-package org
   :ensure nil
+  :bind
+  (("C-c l" . org-store-link)
+   ("C-c a" . org-agenda)
+   ("C-c c" . org-capture))
   :custom
-  ;; Basic settings
+  ;; Core settings
+  (org-directory "~/Documents/notes/")
   (org-startup-indented t)
-  (org-startup-folded 'content)
+  (org-startup-folded 'show)  ; 'content' hides too much
   (org-return-follows-link t)
   (org-log-done 'time)
-  (org-image-actual-width '(400))           ; Limit image size for performance
-  (org-fontify-quote-and-verse-blocks t)
-  (org-fontify-whole-heading-line t)
   (org-hide-emphasis-markers t)
-  (org-agenda-files-cache-time 600)
-  :config
-  ;; TODO states
-  (setq org-todo-keywords
-        '((sequence "TODO(t)" "NEXT(n)" "WAITING(w@/!)"
-                    "|" "DONE(d!)" "CANCELED(c@)")))
 
-  ;; Simple org-agenda-files setup
-  (setq org-agenda-files (list org-directory))
+  ;; Better defaults
+  (org-agenda-files (list org-directory))
+  (org-todo-keywords
+   '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)" "CANCELED(c@)")))
 
-  :hook
-  ((org-mode . visual-line-mode)
-   (org-mode . org-indent-mode)))
+  ;; Capture templates
+  (org-capture-templates
+   '(("t" "Todo" entry (file "todo.org")
+      "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n")
+     ("n" "Note" entry (file "notes.org")
+      "* %? :NOTE:\n%U\n")))
 
-;; Capture Templates
-(use-package org-capture
-  :ensure nil
-  :after org
-  :config
-  (setq org-capture-templates
-        `(("t" "Todo" entry
-           (file ,(expand-file-name "todo.org" org-directory))
-           "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n"
-           :empty-lines 1)
-          ("r" "RSS Feed" entry
-           (file ,(expand-file-name "rss.org" org-directory))
-           "* %:description\n:PROPERTIES:\n:RSS_URL: %:link\n:END:\n"
-           :immediate-finish t))))
-
-;; Agenda Configuration
-(use-package org-agenda
-  :ensure nil
-  :after org
-  :custom
-  ;; Performance improvements
-  (org-agenda-span 'week)
-  (org-agenda-start-on-weekday 1)
-  (org-agenda-skip-deadline-if-done t)
-  (org-agenda-skip-scheduled-if-done t)
-  (org-agenda-window-setup 'current-window)
-  (org-agenda-restore-windows-after-quit t)
-
-  ;; Enhanced custom commands with better performance
-  (org-agenda-custom-commands
-   '(("t" "All TODOs" todo "TODO|NEXT|WAITING"
-      ((org-agenda-overriding-header "All Open TODOs")
-       (org-agenda-max-entries 50)))          ; Limit entries for performance
-     ("d" "Today's Agenda" agenda ""
-      ((org-agenda-span 'day)
-       (org-agenda-overriding-header "Today")
-       (org-agenda-time-grid
-        '((daily today require-timed)
-          (800 1000 1200 1400 1600 1800 2000)
-          "......" "----------------")))))))
-
-;; Protocol support for browser integration
-(use-package org-protocol
-  :ensure nil
-  :after org
-  :config
-  ;; No additional config needed, just load it
-  (require 'org-protocol))
-
-;; Export Configuration
-(use-package ox
-  :ensure nil
-  :after org
-  :config
-  ;; Load built-in export backends
-  (require 'ox-html)
-  (require 'ox-latex)
-  (require 'ox-md)
-  (require 'ox-odt)
-
-  ;; HTML export settings
-  (setq org-html-validation-link nil)
-  (setq org-html-head-include-scripts nil)
-  (setq org-html-head-include-default-style nil)
+  ;; Export settings
+  (org-export-with-broken-links t)
+  (org-html-validation-link nil)
 
   ;; LaTeX/PDF export settings
-  (setq org-latex-pdf-process
-        '("pdflatex -interaction nonstopmode -output-directory %o %f"
-          "pdflatex -interaction nonstopmode -output-directory %o %f"
-          "pdflatex -interaction nonstopmode -output-directory %o %f")))
+  (org-latex-pdf-process
+   '("pdflatex -interaction nonstopmode -output-directory %o %f"
+     "pdflatex -interaction nonstopmode -output-directory %o %f"
+     "pdflatex -interaction nonstopmode -output-directory %o %f"))
 
-;; Optional: GitHub Flavored Markdown export
-(use-package ox-gfm
-  :ensure t
-  :after ox)
+  :hook
+  (org-mode . visual-line-mode))
 
-;; Optional: Pandoc export (provides DOCX and many other formats)
-(use-package ox-pandoc
-  :ensure t
-  :after ox
-  :config
-  (setq org-pandoc-options '((standalone . t))))
-
-;; Auto-tangle for literate config
-(use-package org-auto-tangle
-  :ensure t
-  :hook (org-mode . org-auto-tangle-mode))
-
-;; Standard Org keybindings
-(global-set-key (kbd "C-c l") 'org-store-link)
-(global-set-key (kbd "C-c a") 'org-agenda)
-(global-set-key (kbd "C-c c") 'org-capture)
-
+;; LaTeX export configuration for custom document classes
 (with-eval-after-load 'ox-latex
+  ;; Add your custom document class
   (add-to-list 'org-latex-classes
                '("citywide"
                  "\\documentclass{citywide}"
                  ("\\section{%s}" . "\\section*{%s}")
                  ("\\subsection{%s}" . "\\subsection*{%s}")
-                 ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
-                 ("\\paragraph{%s}" . "\\paragraph*{%s}")
-                 ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))))
+                 ("\\subsubsection{%s}" . "\\subsubsection*{%s}")))
 
-(setq org-latex-default-packages-alist
-      '(("AUTO" "inputenc" t ("pdflatex"))
-        ("T1" "fontenc" t ("pdflatex"))
-        ("" "graphicx" t)
-        ("" "longtable" nil)
-        ("" "wrapfig" nil)
-        ("" "rotating" nil)
-        ("normalem" "ulem" t)
-        ("" "amsmath" t)
-        ("" "amssymb" t)
-        ("" "capt-of" nil)
-        ("" "hyperref" nil)))
+  ;; Use latexmk if available (better than multiple pdflatex runs)
+  (when (executable-find "latexmk")
+    (setq org-latex-pdf-process
+          '("latexmk -pdf -f -interaction=nonstopmode -output-directory=%o %f"))))
+
+;; Optional: Modern Org for better experience
+(use-package org-modern
+  :ensure t
+  :hook (org-mode . org-modern-mode)
+  :custom
+  (org-modern-label-border 1)
+  (org-modern-table-vertical 1)
+  (org-modern-table-horizontal 0.2))
+
+;; Optional: GitHub Flavored Markdown (if you use GitHub)
+(use-package ox-gfm
+  :ensure t
+  :after org)
 
 ;;; markdown
 
@@ -1832,48 +1756,32 @@ If buffer is modified, offer to save first."
   :config
   (add-hook 'markdown-mode-hook #'auto-fill-mode)) ; Enable word wrapping
 
-;;; magit / forge
-
+;;; Magit - Git interface
 (use-package magit
   :ensure t
   :defer t
-  :init
-  (setq magit-define-global-key-bindings nil)
-  (setq magit-section-visibility-indicator '(magit-fringe-bitmap> . magit-fringe-bitmapv))
-  :config
-  (defun my/magit-set-log-margin ()
-    (when (magit-git-repo-p default-directory)
-      (let ((commit-count (string-to-number (magit-git-string "rev-list" "--count" "HEAD"))))
-        (when (>= commit-count 1000)
-          (setq-local magit-log-margin '(t "%Y-%m-%d %H:%M " magit-log-margin-width t 18))))))
-  (add-hook 'magit-mode-hook #'my/magit-set-log-margin)
-  (setq git-commit-summary-max-length 50)
-  (setq git-commit-style-convention-checks '(non-empty-second-line))
-  (setq magit-diff-refine-hunk t)
-  (when (require 'nerd-icons nil t)
-    (setq magit-format-file-function #'magit-format-file-nerd-icons))
-  :bind ("C-c g" . magit-status))
+  :bind ("C-c g" . magit-status)
+  :custom
+  ;; Better performance
+  (magit-diff-refine-hunk t)
+  (magit-refresh-status-buffer nil)  ; Don't auto-refresh, use 'g' manually
 
-(use-package magit-repos
-  :ensure nil ; part of `magit'
-  :commands (magit-list-repositories)
-  :after magit
-  :init
-  (setq magit-repository-directories
-        '(("~/Code" . 1))))
+  ;; Commit message standards
+  (git-commit-summary-max-length 50)
+  (git-commit-style-convention-checks '(non-empty-second-line))
 
+  ;; Repository directories (if you have multiple projects)
+  (magit-repository-directories '(("~/Code" . 1))))
+
+;; Forge - GitHub/GitLab integration (optional)
 (use-package forge
   :ensure t
   :after magit
   :custom
-  ;; Performance settings
-  (forge-database-connector 'sqlite-builtin) ; Use built-in SQLite
-  (forge-pull-notifications nil)             ; Reduce API calls
-  :config
-  ;; Optimize API usage
-  (setq forge-topic-list-limit 100))         ; Limit topic fetching
+  ;; Use built-in SQLite (Emacs 29+)
+  (forge-database-connector 'sqlite-builtin))
 
-(use-package magit-todos :ensure t :after magit :config (magit-todos-mode 1))
+;; That's it! Magit has excellent defaults.
 
 ;;; grep settings
 
@@ -1922,283 +1830,81 @@ If buffer is modified, offer to save first."
   (run-at-time nil (* 5 60) 'recentf-save-list) ; Save every 5 minutes
   :bind (("C-c r" . consult-recent-file)))
 
-;;; dired
-
+;;; Dired - Directory Editor
 (use-package dired
   :ensure nil
   :bind
-  (("C-x C-j" . dired-jump)
-   :map dired-mode-map
-   ("M-o" . dired-omit-mode)
-   :map dired-mode-map
-   ("RET" . dired-find-alternate-file)
-   ("<backspace>" . dired-up-directory)
-   ("C-c C-e" . wdired-change-to-wdired-mode)
-   ("C-c C-g" . dired-git-info-mode) ; Changed from C-c g to avoid conflict with magit-status
-   ("C-c t" . dired-toggle-read-only)
-   ("M-!" . dired-smart-shell-command)
-   ("C-c o" . dired-open-externally)
-   ("C-c w" . dired-copy-file-path)
-   ("C-c f" . dired-consult-filter)
-   ("C-c e" . dired-open-eshell)
-   ("C-c t" . dired-open-eat))
+  ("C-x C-j" . dired-jump)
   :hook
-  (;;(dired-mode . dired-hide-details-mode)
-   (dired-mode . nerd-icons-dired-mode)
-   ;;   (dired-mode . dired-preview-mode)
-   (dired-mode . hl-line-mode))
+  (dired-mode . hl-line-mode)
   :custom
-  (dired-listing-switches "-lah --group-directories-first --time=access")
-  (dired-dwim-target t)
+  ;; Better defaults
+  (dired-listing-switches "-alh --group-directories-first")
+  (dired-dwim-target t)          ; Copy/move to other dired window
   (dired-recursive-copies 'always)
-  (dired-recursive-deletes 'always)
+  (dired-recursive-deletes 'top)  ; Ask once for top level
   (dired-auto-revert-buffer t)
-  (dired-hide-details-hide-symlink-targets nil)
-  (dired-guess-shell-alist-user '(("\\.pdf\\'" "xdg-open")))
-  (dired-use-ls-dired t)
-  (dired-git-info-auto-enable t)
+  (dired-kill-when-opening-new-dired-buffer t)  ; Emacs 28+ feature
+
   :config
+  ;; Load dired-x for extra features
   (require 'dired-x)
-  (require 'consult)
-  (put 'dired-find-alternate-file 'disabled nil)
+  (setq dired-omit-files "\\`[.]?#\\|\\`[.][.]?\\'")
 
-  (defun dired-open-eshell ()
-    "Open an eshell buffer in the directory at point in Dired."
-    (interactive)
-    (let ((dir (dired-get-file-for-visit)))
-      (if (file-directory-p dir)
-          (progn
-            (eshell)
-            (cd dir))
-        (message "Not a directory"))))
-
-  (defun dired-open-eat ()
-    "Open an eat buffer in the directory at point in Dired."
-    (interactive)
-    (let ((dir (dired-get-file-for-visit)))
-      (if (file-directory-p dir)
-          (progn
-            (eat)
-            (eat-cd dir))
-        (message "Not a directory"))))
-
+  ;; Simple open externally function
   (defun dired-open-externally ()
-    "Open file under cursor with xdg-open."
+    "Open file at point with system handler."
     (interactive)
     (let ((file (dired-get-file-for-visit)))
-      (start-process "dired-open" nil "xdg-open" file)))
+      (call-process "xdg-open" nil 0 nil file)))
 
-  (defun dired-copy-file-path ()
-    "Copy the full path of the file under cursor to kill ring."
-    (interactive)
-    (let ((path (dired-get-file-for-visit)))
-      (kill-new path)
-      (message "Copied path: %s" path)))
+  :bind
+  (:map dired-mode-map
+        ("M-o" . dired-omit-mode)
+        ("E" . dired-open-externally)
+        ("<backspace>" . dired-up-directory)))
 
-  (defun dired-consult-filter ()
-    "Filter Dired buffer using Consult narrowing."
-    (interactive)
-    (consult-focus-lines
-     (lambda (file)
-       (string-match-p
-        (regexp-quote (consult--read "Filter: ")) file))))
-
-  (use-package diredfl :ensure t :config (diredfl-global-mode 1))
-  (use-package nerd-icons-dired
-    :ensure t
-    :after (nerd-icons dired)
-    :hook (dired-mode . nerd-icons-dired-mode))
-
-  (use-package dired-git-info
-    :ensure t
-    :custom
-    (dgi-auto-hide-details-p nil)
-    :config
-    (setq dired-git-info-format " (%s)")
-    (define-key dired-mode-map ")" 'dired-git-info-mode))
-
-  (use-package dired-subtree
-    :ensure t
-    :bind
-    (:map
-     dired-mode-map
-     ("<tab>" . dired-subtree-toggle)
-     ("<C-tab>" . dired-subtree-cycle))
-    :config
-    (setq dired-subtree-use-backgrounds nil)
-    ;; Subtle background for visual subtree depth indication
-    ;; Using a dark, muted background from modus-vivendi palette for hierarchy
-    (set-face-attribute 'dired-subtree-depth-1-face nil
-                        :background "#3b4252")) ; Dark subtle background from modus-vivendi scheme
-  (use-package dired-async
-    :ensure nil
-    :after dired
-    :config (dired-async-mode 1)))
-
-(use-package dired-narrow
+;; Icons support (optional but nice)
+(use-package nerd-icons-dired
   :ensure t
-  :bind (:map dired-mode-map ("C-c n" . dired-narrow-fuzzy)))
+  :hook (dired-mode . nerd-icons-dired-mode))
 
-(use-package dired-rainbow
+;; Better colors
+(use-package diredfl
   :ensure t
-  :config
-  (dired-rainbow-define-chmod executable-unix "green" ".*x.*"))
+  :config (diredfl-global-mode 1))
 
-;;; eww browser
+;; Subtree navigation (genuinely useful)
+(use-package dired-subtree
+  :ensure t
+  :bind
+  (:map dired-mode-map
+        ("<tab>" . dired-subtree-toggle)
+        ("<C-tab>" . dired-subtree-cycle))
+  :custom
+  (dired-subtree-use-backgrounds nil))
 
+;;; EWW - Emacs Web Wowser
 (use-package eww
-  :ensure nil ; built-in package
+  :ensure nil
   :defer t
-  :commands (eww eww-browse-url)
-  :init
-  ;; Set eww as the default browser for certain contexts
-  (setq browse-url-browser-function 'eww-browse-url)
-
-  :config
-  ;; Core eww settings for better browsing experience
-  (setq eww-search-prefix "https://duckduckgo.com/html?q="  ; Privacy-focused search
-        eww-download-directory "~/Downloads/"
-        eww-bookmarks-directory "~/.config/emacs/eww-bookmarks/"
-        eww-history-limit 150
-        eww-use-external-browser-for-content-type "\\`\\(video/\\|audio\\)" ; Use external browser for media
-        eww-browse-url-new-window-is-tab nil
-        eww-form-checkbox-selected-symbol "[X]"
-        eww-form-checkbox-symbol "[ ]"
-        eww-header-line-format "%t: %u"
-        shr-use-colors t
-        shr-use-fonts t
-        shr-indentation 2
-        shr-width 80
-        shr-max-image-proportion 0.7
-        shr-image-animate nil  ; Don't animate images by default
-        shr-discard-aria-hidden t
-        shr-cookie-policy 'same-origin)
-
-  ;; Custom functions for enhanced functionality
-  (defun eww-open-in-firefox ()
-    "Open the current EWW UR in Firefox via EXWM.
-This function integrates with exwm-firefox-core to open the current page."
-    (interactive)
-    (when (derived-mode-p 'eww-mode)
-      (let ((url (eww-current-url)))
-        (if url
-            (progn
-              (message "Opening %s in Firefox..." url)
-              (start-process "firefox" nil "firefox" url))
-          (message "No URL to open")))))
-
-  (defun eww-download-pdf ()
-    "Download the current page as PDF using an external tool."
-    (interactive)
-    (let ((url (eww-current-url)))
-      (if url
-          (let ((filename (expand-file-name
-                           (concat (format-time-string "%Y%m%d-%H%M%S")
-                                   "-"
-                                   (replace-regexp-in-string "[^a-zA-Z0-9]" "-" (or (plist-get eww-data :title) "page"))
-                                   ".pdf")
-                           eww-download-directory)))
-            (message "Downloading PDF to %s..." filename)
-            (start-process "wkhtmltopdf" nil "wkhtmltopdf" url filename))
-        (message "No URL to download"))))
-
-  (defun eww-toggle-images ()
-    "Toggle whether images are loaded in EWW."
-    (interactive)
-    (setq shr-inhibit-images (not shr-inhibit-images))
-    (eww-reload)
-    (message "Images are now %s" (if shr-inhibit-images "disabled" "enabled")))
-
-  (defun eww-increase-text-size ()
-    "Increase text size in EWW buffer."
-    (interactive)
-    (text-scale-increase 1))
-
-  (defun eww-decrease-text-size ()
-    "Decrease text size in EWW buffer."
-    (interactive)
-    (text-scale-decrease 1))
-
-  (defun eww-reset-text-size ()
-    "Reset text size in EWW buffer to default."
-    (interactive)
-    (text-scale-set 0))
-
-  (defun eww-view-source ()
-    "View the HTML source of the current page."
-    (interactive)
-    (let ((source (plist-get eww-data :source)))
-      (when source
-        (with-current-buffer (get-buffer-create "*eww-source*")
-          (delete-region (point-min) (point-max))
-          (insert source)
-          (html-mode)
-          (display-buffer (current-buffer))))))
-
-  (defun eww-copy-page-title ()
-    "Copy the title of the current page to the kill ring."
-    (interactive)
-    (let ((title (plist-get eww-data :title)))
-      (if title
-          (progn
-            (kill-new title)
-            (message "Copied: %s" title))
-        (message "No title found"))))
-
-  (defun eww-open-bookmark-in-firefox ()
-    "Open the selected bookmark in Firefox."
-    (interactive)
-    (let ((bookmark (eww-read-bookmark)))
-      (when bookmark
-        (start-process "firefox" nil "firefox" (plist-get bookmark :url)))))
-
-  ;; Enhanced bookmark functionality
-  (defun eww-bookmark-with-tags ()
-    "Bookmark the current page with optional tags."
-    (interactive)
-    (let ((tags (read-string "Tags (comma-separated): ")))
-      (eww-add-bookmark)
-      (when (and tags (not (string-empty-p tags)))
-        ;; Store tags in bookmark (would need custom bookmark format)
-        (message "Bookmark saved with tags: %s" tags))))
+  :custom
+  ;; Just the essentials
+  (eww-search-prefix "https://duckduckgo.com/html?q=")
+  (shr-use-colors t)
+  (shr-use-fonts t)
+  (shr-max-image-proportion 0.7)
+  (shr-width 80)
 
   :bind
   (:map eww-mode-map
-        ;; Custom keybindings only - not re-declaring defaults
-        ;; Default keys preserved: g (reload), G (search), l/r (back/forward),
-        ;; H (history), b (bookmarks), d (download), w (copy-url), & (external browser)
-
-        ;; Open in Firefox - using C-c C-f for consistency with Emacs conventions
-        ("C-c C-f" . eww-open-in-firefox)
-
-        ;; Additional navigation helpers
-        ("J" . eww-next-buffer)      ; Quick buffer switching
-        ("K" . eww-previous-buffer)  ; Quick buffer switching
-
-        ;; Content manipulation
-        ("+" . eww-increase-text-size)  ; Zoom in
-        ("-" . eww-decrease-text-size)  ; Zoom out
-        ("0" . eww-reset-text-size)     ; Reset zoom
-
-        ;; View and inspection
-        ("V" . eww-view-source)      ; View page source
-        ("I" . eww-toggle-images)    ; Toggle image loading
-
-        ;; Enhanced functionality
-        ("W" . eww-copy-page-title)  ; Copy page title (w is URL)
-        ("D" . eww-download-pdf)     ; Download as PDF (d is save)
-        ("B" . eww-bookmark-with-tags) ; Bookmark with tags
-
-        ;; Quick search with different engines
-        ("C-c /" . eww)              ; New search
-        ("C-c C-o" . eww-open-bookmark-in-firefox)) ; Open bookmark in Firefox
+        ;; Zoom controls (genuinely useful)
+        ("+" . text-scale-increase)
+        ("-" . text-scale-decrease)
+        ("0" . text-scale-set))
 
   :hook
-  ;; Hooks for better integration
-  ((eww-mode . visual-line-mode)       ; Better line wrapping
-   (eww-mode . (lambda ()
-                 (setq-local scroll-conservatively 101) ; Smooth scrolling
-                 (setq-local mouse-wheel-scroll-amount '(1 ((shift) . 1)))))))
+  (eww-mode . visual-line-mode))  ; Better text wrapping
 
 ;;; pdf-tools
 
