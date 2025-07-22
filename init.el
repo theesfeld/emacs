@@ -692,21 +692,12 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (mode-line-bell-mode 1))
 
 ;;; Theme Configuration (separate use-package)
-(use-package modus-themes
-  :ensure nil
+
+(use-package ef-themes
+  :ensure t
   :demand t
-  :init
-  ;; Theme variables should be set before loading
-  (setq modus-themes-italic-constructs t
-        modus-themes-bold-constructs t
-        modus-themes-mixed-fonts t
-        modus-themes-disable-other-themes t)
-
   :config
-  ;; Load the theme
-  (load-theme 'modus-vivendi t)
 
-  ;; Font customizations
   (custom-set-faces
    '(cursor ((t (:background "#FFC107")))))
 
@@ -717,10 +708,76 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (set-face-attribute 'font-lock-keyword-face nil
                       :weight 'black)
 
+  ;; If you like two specific themes and want to switch between them, you
+  ;; can specify them in `ef-themes-to-toggle' and then invoke the command
+  ;; `ef-themes-toggle'.  All the themes are included in the variable
+  ;; `ef-themes-collection'.
+
+  (setq ef-themes-headings ; read the manual's entry or the doc string
+        '((0 variable-pitch light 1.9)
+          (1 variable-pitch light 1.8)
+          (2 variable-pitch regular 1.7)
+          (3 variable-pitch regular 1.6)
+          (4 variable-pitch regular 1.5)
+          (5 variable-pitch 1.4) ; absence of weight means `bold'
+          (6 variable-pitch 1.3)
+          (7 variable-pitch 1.2)
+          (t variable-pitch 1.1)))
+
+  ;; They are nil by default...
+  (setq ef-themes-mixed-fonts t
+        ef-themes-variable-pitch-ui t)
+
+  ;; Disable all other themes before loading an ef-theme
+  (mapc #'disable-theme custom-enabled-themes)
+  ;; Load the theme of choice:
+  (load-theme 'ef-summer :no-confirm)
+
+  ;; We also provide these commands, but do not assign them to any key:
+  ;;
+  ;; - `ef-themes-toggle'
+  ;; - `ef-themes-select'
+  ;; - `ef-themes-select-dark'
+  ;; - `ef-themes-select-light'
+  ;; - `ef-themes-load-random'
+  ;; - `ef-themes-preview-colors'
+  ;; - `ef-themes-preview-colors-current'
+
   ;; Fallback font configuration
   (unless (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
     (set-face-attribute 'default nil :height 140)
-    (set-face-attribute 'variable-pitch nil :height 160)))
+    (set-face-attribute 'variable-pitch nil :height 160))
+  )
+
+;; (use-package modus-themes
+;;   :ensure nil
+;;   :demand t
+;;   :init
+;;   ;; Theme variables should be set before loading
+;;   (setq modus-themes-italic-constructs t
+;;         modus-themes-bold-constructs t
+;;         modus-themes-mixed-fonts t
+;;         modus-themes-disable-other-themes t)
+
+;;   :config
+;;   ;; Load the theme
+;;   (load-theme 'modus-vivendi t)
+
+;;   ;; Font customizations
+;;   (custom-set-faces
+;;    '(cursor ((t (:background "#FFC107")))))
+
+;;   ;; Font-lock customizations
+;;   (set-face-attribute 'font-lock-comment-face nil
+;;                       :slant 'italic
+;;                       :weight 'light)
+;;   (set-face-attribute 'font-lock-keyword-face nil
+;;                       :weight 'black)
+
+;;   ;; Fallback font configuration
+;;   (unless (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
+;;     (set-face-attribute 'default nil :height 140)
+;;     (set-face-attribute 'variable-pitch nil :height 160)))
 
 (use-package windower
   :ensure t
