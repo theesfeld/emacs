@@ -1409,6 +1409,20 @@ If buffer is modified, offer to save first."
         ("C-c l f" . eglot-format)
         ("C-c l F" . eglot-format-buffer)))
 
+(use-package corfu
+  :ensure t
+  :custom
+  (corfu-cycle t)
+  (corfu-auto t)
+  (corfu-auto-delay 0.1)
+  (corfu-auto-prefix 2)
+  :init
+  (global-corfu-mode)
+  :config
+  ;; Enable Corfu in terminal
+  (when (not (display-graphic-p))
+    (corfu-terminal-mode +1)))
+
 ;;; Consult integration for Eglot (NOT consult-lsp!)
 (use-package consult-eglot
   :ensure t
@@ -1811,7 +1825,25 @@ If buffer is modified, offer to save first."
 
 (use-package denote-org :ensure t :after denote :defer t)
 
-;;; Tree-sitter - Only for languages that benefit from it
+;;; treesit
+
+(use-package treesit
+  :ensure nil
+  :custom
+  ;; New in 30.1: Better tree-sitter integration
+  (treesit-font-lock-level 4)  ; Maximum highlighting
+  :config
+  ;; Remap modes automatically
+  (setq major-mode-remap-alist
+        '((c-mode . c-ts-mode)
+          (c++-mode . c++-ts-mode)
+          (python-mode . python-ts-mode)
+          (javascript-mode . js-ts-mode)
+          (typescript-mode . typescript-ts-mode)
+          (json-mode . json-ts-mode)
+          (css-mode . css-ts-mode))))
+
+;;; Tree-sitter auto - Only for languages that benefit from it
 (use-package treesit-auto
   :ensure t
   :custom
@@ -2284,9 +2316,11 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (minibuffer-prompt-properties
    '(read-only t cursor-intangible t face minibuffer-prompt))
   :config
+  (setq minibuffer-completion-auto-choose nil)  ; New in 30.1
+  (setq completions-max-height 20)              ; New in 30.1
   (minibuffer-depth-indicate-mode 1))
 
-;;; Shell (M-x shell)
+;;; Shell (M-x shell)\
 
 (use-package shell
   :ensure nil
@@ -2398,15 +2432,9 @@ parameters set in early-init.el to ensure robust UI element disabling."
 ;;; stupid fucking emojis
 ;; im tired of the squares
 
-(use-package emojify
-  :ensure t
-  :config
-  (when (member "Noto Emoji" (font-family-list))
-    (set-fontset-font
-     t 'symbol (font-spec :family "Noto Emoji") nil 'prepend))
-  (setq emojify-display-style 'unicode)
-  (setq emojify-emoji-styles '(unicode))
-  :hook (after-init . global-emojify-mode))
+(use-package emoji
+  :ensure nil
+  :bind ("C-c e" . emoji-search))
 
 ;;; STARTUP INFORMATION
 
