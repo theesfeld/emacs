@@ -283,7 +283,7 @@ OLD is ignored but included for hook compatibility."
             ([s-left] . windmove-left)
             ([s-right] . windmove-right)
             ([s-up] . windmove-up)
-            ([?\s-e] . exwm-edit)
+            ([?\s-e] . exwm-edit--compose)
             ([s-down] . windmove-down)
             ;; Switch to specific workspace with Super+0-9
             ([?\s-0] . (lambda () (interactive) (exwm-workspace-switch-create 0)))
