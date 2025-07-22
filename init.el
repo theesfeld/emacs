@@ -1,6 +1,6 @@
 ;;; init.el --- Emacs Configuration -*- lexical-binding: t -*-
 ;;; Commentary:
-;; this some Emacs config
+;; this is my Emacs configuration <tj@emacs.su>
 ;;; Code:
 
 ;;; vc stuff
