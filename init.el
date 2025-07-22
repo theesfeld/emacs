@@ -743,36 +743,6 @@ This function is added to the \=`ef-themes-post-load-hook'."
   (add-hook 'ef-themes-post-load-hook #'my-ef-themes-custom-faces
             'ef-themes-post-load-hook #'my-ef-themes-mode-line))
 
-;; (use-package modus-themes
-;;   :ensure nil
-;;   :demand t
-;;   :init
-;;   ;; Theme variables should be set before loading
-;;   (setq modus-themes-italic-constructs t
-;;         modus-themes-bold-constructs t
-;;         modus-themes-mixed-fonts t
-;;         modus-themes-disable-other-themes t)
-
-;;   :config
-;;   ;; Load the theme
-;;   (load-theme 'modus-vivendi t)
-
-;;   ;; Font customizations
-;;   (custom-set-faces
-;;    '(cursor ((t (:background "#FFC107")))))
-
-;;   ;; Font-lock customizations
-;;   (set-face-attribute 'font-lock-comment-face nil
-;;                       :slant 'italic
-;;                       :weight 'light)
-;;   (set-face-attribute 'font-lock-keyword-face nil
-;;                       :weight 'black)
-
-;;   ;; Fallback font configuration
-;;   (unless (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
-;;     (set-face-attribute 'default nil :height 140)
-;;     (set-face-attribute 'variable-pitch nil :height 160)))
-
 (use-package windower
   :ensure t
   ;; :after exwm
