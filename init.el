@@ -293,29 +293,7 @@ OLD is ignored but included for hook compatibility."
             ([?\M-d] . [C-delete])))
 
     ;; Make buffer names more meaningful
-    (defun my/exwm-rename-buffer ()
-      "Give EXWM buffers more meaningful names."
-      (let* ((class exwm-class-name)
-             (title exwm-title)
-             (name (cond
-                    ;; Special handling for browsers - just show the title
-                    ((member class '("firefox" "Firefox" "Chromium" "Google-chrome"))
-                     (if (string-match "\\(.*\\) [-—] \\(?:Mozilla Firefox\\|Chromium\\|Google Chrome\\)" title)
-                         (match-string 1 title)
-                       title))
-                    ;; For other apps, show "Class: Title"
-                    ((and title (not (string= title "")))
-                     (format "%s: %s" class title))
-                    ;; Fallback to just class name
-                    (t class))))
-        ;; Truncate long names and sanitize
-        (exwm-workspace-rename-buffer
-         (substring name 0 (min (length name) 100)))))
 
-    ;; Update buffer names when title changes
-    (add-hook 'exwm-update-title-hook #'my/exwm-rename-buffer)
-    ;; Also update on class changes (for initial setup)
-    (add-hook 'exwm-update-class-hook #'my/exwm-rename-buffer)
 
     ;; System tray configuration
     (setq exwm-systemtray-height 22)
