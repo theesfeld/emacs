@@ -1184,7 +1184,7 @@ If buffer is modified, offer to save first."
   :ensure nil
   :config
   ;; Basic mode-line settings
-  (setq mode-line-compact t)  ; Emacs 28+ compact mode
+  (setq mode-line-compact nil)  ; Emacs 28+ compact mode
 
   ;; Position format - line:column
   (setq mode-line-position-column-line-format '(" %l:%c"))
