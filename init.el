@@ -224,7 +224,8 @@ OLD is ignored but included for hook compatibility."
     :config
     ;; Set the number of workspaces
     (setq exwm-workspace-number 4)
-
+    (setq exwm-workspace-show-all-buffers t)
+    (setq exwm-layout-show-all-buffers t)
     ;; These keys should always pass through to Emacs
     (setq exwm-input-prefix-keys
           '(?\C-x
@@ -293,7 +294,21 @@ OLD is ignored but included for hook compatibility."
             ([?\M-d] . [C-delete])))
 
     ;; Make buffer names more meaningful
+    (defun my/exwm-update-class ()
+      "Update EXWM buffer name to window class name."
+      (exwm-workspace-rename-buffer exwm-class-name))
 
+    (defun my/exwm-update-title ()
+      "Update EXWM buffer name to window title."
+      (pcase exwm-class-name
+        ("Firefox" (exwm-workspace-rename-buffer
+                    (format "Firefox: %s" exwm-title)))
+        (_ (exwm-workspace-rename-buffer
+            (format "%s: %s" exwm-class-name exwm-title)))))
+
+    ;; Hook these functions to EXWM update events
+    (add-hook 'exwm-update-class-hook #'my/exwm-update-class)
+    (add-hook 'exwm-update-title-hook #'my/exwm-update-title)
 
     ;; System tray configuration
     (setq exwm-systemtray-height 22)
