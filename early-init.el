@@ -10,7 +10,16 @@
         native-comp-verbose 0                  ; Reduce compilation noise
         native-comp-jit-compilation t          ; Enable JIT compilation (30.1)
         native-comp-deferred-compilation t    ; Compile in background
-        native-comp-compiler-options '("-O3" "-march=alderlake"))
+        native-comp-compiler-options '("-O3"))
+
+  (setq native-comp-jit-compilation-deny-list
+        '("\\(?:[/\\\\]\\.dir-locals\\.el$\\)"
+          "\\(?:[/\\\\]init\\.el$\\)"  ; Don't compile frequently changing configs
+          "\\(?:[/\\\\]early-init\\.el$\\)"))
+
+  (when (boundp 'native-comp-eln-load-path)
+    (add-to-list 'native-comp-eln-load-path
+                 (expand-file-name "eln-cache/" user-emacs-directory)))
 
   ;; Emacs 30.1: Optimized cache and job management
   (when (boundp 'startup-redirect-eln-cache)
@@ -69,6 +78,10 @@
 
 (when (boundp 'package-install-parallel)
   (setq package-install-parallel t))
+
+;;; performance optimizations
+(setq read-process-output-max (* 1024 1024 3))  ; 3MB for better LSP performance
+(setq process-adaptive-read-buffering nil)      ; More consistent subprocess I/O
 
 ;; Pre-configure modus-themes settings for when it loads
 (setq modus-themes-bold-constructs t
