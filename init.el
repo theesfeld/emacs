@@ -1213,7 +1213,7 @@ If buffer is modified, offer to save first."
         which-func-unknown "")
 
   ;; Right alignment edge (Emacs 30.1 feature)
-  (setq mode-line-right-align-edge 'window)
+  (setq mode-line-right-align-edge 'right-fringe)
 
   ;; Standard mode-line format using built-in variables
   (setq-default mode-line-format
@@ -1233,9 +1233,9 @@ If buffer is modified, offer to save first."
                   mode-line-modes
                   ;; Right-aligned section (Emacs 30.1)
                   mode-line-format-right-align
-                  which-func-mode  ; Current function
-                  "  "
-                  mode-line-misc-info  ; Includes battery and time
+                  ;; DO NOT put which-func-mode here!
+                  ;; which-function info is automatically included in mode-line-misc-info
+                  mode-line-misc-info  ; This includes which-func AND battery/time
                   mode-line-end-spaces))
 
   ;; Customize faces to inherit from theme
@@ -1245,24 +1245,24 @@ If buffer is modified, offer to save first."
   (mode-line-buffer-id ((t (:weight bold :inherit font-lock-keyword-face))))
   (mode-line-emphasis ((t (:weight bold :inherit warning)))))
 
-;; Minions for minor mode management
-(use-package minions
-  :ensure t
-  :config
-  (minions-mode 1)
-  :custom
-  (minions-prominent-modes '(flymake-mode
-                             flycheck-mode
-                             projectile-mode
-                             lsp-mode
-                             eglot--managed-mode))
-  (minions-mode-line-lighter " ◎"))
+  ;; Minions for minor mode management
+  (use-package minions
+    :ensure t
+    :config
+    (minions-mode 1)
+    :custom
+    (minions-prominent-modes '(flymake-mode
+                               flycheck-mode
+                               projectile-mode
+                               lsp-mode
+                               eglot--managed-mode))
+    (minions-mode-line-lighter " ◎"))
 
-;; Visual bell in mode-line
-(use-package mode-line-bell
-  :ensure t
-  :config
-  (mode-line-bell-mode 1))
+  ;; Visual bell in mode-line
+  (use-package mode-line-bell
+    :ensure t
+    :config
+    (mode-line-bell-mode 1))
 
 ;;; nerd-icons
 
