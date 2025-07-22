@@ -723,6 +723,13 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     (set-face-attribute 'default nil :height 140)
     (set-face-attribute 'variable-pitch nil :height 160))
 
+  (defun my-ef-themes-mode-line ()
+    "Tweak the style of the mode lines."
+    (ef-themes-with-colors
+      (custom-set-faces
+       `(mode-line ((,c :background ,bg-active :foreground ,fg-main :box (:line-width 1 :color ,fg-dim))))
+       `(mode-line-inactive ((,c :box (:line-width 1 :color ,bg-active)))))))
+
   (defun my-ef-themes-custom-faces ()
     "My customizations on top of the Ef themes.
 This function is added to the \=`ef-themes-post-load-hook'."
@@ -731,7 +738,8 @@ This function is added to the \=`ef-themes-post-load-hook'."
        ;; These are the default specifications
        `(font-lock-comment-face ((,c :inherit italic :foreground ,comment)))
        `(font-lock-variable-name-face ((,c :foreground ,variable))))))
-  (add-hook 'ef-themes-post-load-hook #'my-ef-themes-custom-faces))
+  (add-hook 'ef-themes-post-load-hook #'my-ef-themes-custom-faces
+            'ef-themes-post-load-hook #'my-ef-themes-mode-line))
 
 ;; (use-package modus-themes
 ;;   :ensure nil
