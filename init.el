@@ -588,12 +588,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                   mode-line-misc-info  ; This includes which-func AND battery/time
                   mode-line-end-spaces))
 
-  :custom-face
-  (mode-line ((t (:box (:line-width -1 :style released-button)))))
-  (mode-line-inactive ((t (:box (:line-width -1 :style released-button)))))
-  (mode-line-buffer-id ((t (:weight bold :inherit font-lock-keyword-face))))
-  (mode-line-emphasis ((t (:weight bold :inherit warning))))
-
   ;; Minions for minor mode management
   (use-package minions
     :ensure t
@@ -680,7 +674,12 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
   :bind
   (("C-x k" . kill-current-buffer)
-   ("C-x K" . kill-buffer)))
+   ("C-x K" . kill-buffer))
+  :custom-face
+  (mode-line ((t (:box (:line-width -1 :style released-button)))))
+  (mode-line-inactive ((t (:box (:line-width -1 :style released-button)))))
+  (mode-line-buffer-id ((t (:weight bold :inherit font-lock-keyword-face))))
+  (mode-line-emphasis ((t (:weight bold :inherit warning)))))
 
 ;;; Theme Configuration (separate use-package)
 (use-package modus-themes
