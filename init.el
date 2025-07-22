@@ -2,17 +2,6 @@
 ;;; Commentary:
 ;; this some Emacs config
 ;;; Code:
-;; Enable these
-(mapc
- (lambda (command)
-   (put command 'disabled nil))
- '(list-timers narrow-to-region narrow-to-page upcase-region downcase-region))
-
-;; And disable these
-(mapc
- (lambda (command)
-   (put command 'disabled t))
- '(eshell project-eshell overwrite-mode iconify-frame diary))
 
 ;;; vc stuff
 
@@ -35,19 +24,8 @@
         (funcall (plist-get (car source) prop))
       (plist-get (flatten-list source) prop))))
 
-(defun prot/keyboard-quit-dwim ()
-  "Do-What-I-Mean behaviour for a general `keyboard-quit'.
-
-The generic `keyboard-quit' does not do the expected thing when
-the minibuffer is open.  Whereas we want it to close the
-minibuffer, even without explicitly focusing it.
-
-The DWIM behaviour of this command is as follows:
-
-- When the region is active, disable it.
-- When a minibuffer is open, but not focused, close the minibuffer.
-- When the Completions buffer is selected, close it.
-- In every other case use the regular `keyboard-quit'."
+(defun my/keyboard-quit-dwim ()
+  "Do-What-I-Mean behaviour for a general \=`keyboard-quit'."
   (interactive)
   (cond
    ((region-active-p)
@@ -59,7 +37,7 @@ The DWIM behaviour of this command is as follows:
    (t
     (keyboard-quit))))
 
-(keymap-global-set "<remap> <keyboard-quit>" #'prot/keyboard-quit-dwim)
+(keymap-global-set "<remap> <keyboard-quit>" #'my/keyboard-quit-dwim)
 
 (defun my/exwm-run-program ()
   "Run a program using vertico completion with command history and PATH suggestions."
@@ -2645,9 +2623,5 @@ parameters set in early-init.el to ensure robust UI element disabling."
               ("C-c C-n" . csv-forward-record)
               ("C-c C-p" . csv-backward-record)))
 
-;;; final cleanup
-
 (provide 'init)
-
 ;;; init.el ends here
-(put 'eshell 'disabled nil)
