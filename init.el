@@ -727,7 +727,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     "Tweak the style of the mode lines."
     (ef-themes-with-colors
       (custom-set-faces
-       `(mode-line ((,c :background ,bg-active :foreground ,fg-main :box (:line-width 1 :color ,fg-dim))))
+       `(mode-line ((,c :background ,bg-mode-line :foreground ,fg-mode-line :box (:line-width 1 :color ,fg-dim))))
        `(mode-line-inactive ((,c :box (:line-width 1 :color ,bg-active)))))))
 
   (defun my-ef-themes-custom-faces ()
