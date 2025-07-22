@@ -384,7 +384,6 @@ OLD is ignored but included for hook compatibility."
       ;; Add a small delay to ensure X is ready
       (run-with-timer 2 nil
                       (lambda ()
-                        ;; Network manager applet
                         ;; Mullvad VPN
                         (when (executable-find "mullvad-vpn")
                           (message "Starting mullvad-vpn...")
@@ -397,6 +396,7 @@ OLD is ignored but included for hook compatibility."
                         (when (executable-find "udiskie")
                           (message "Starting udiskie...")
                           (start-process "udiskie" nil "udiskie" "-at"))
+                        ;; Network manager applet
                         (when (executable-find "nm-applet")
                           (message "Starting nm-applet...")
                           (start-process "nm-applet" nil "nm-applet")))))
@@ -1427,7 +1427,7 @@ If buffer is modified, offer to save first."
         ("C-c l f" . eglot-format)
         ("C-c l F" . eglot-format-buffer)))
 
-;; Consult integration for Eglot (NOT consult-lsp!)
+;;; Consult integration for Eglot (NOT consult-lsp!)
 (use-package consult-eglot
   :ensure t
   :after (eglot consult)
@@ -1445,7 +1445,7 @@ If buffer is modified, offer to save first."
         ("C-c ! l" . flymake-show-buffer-diagnostics)
         ("C-c ! L" . flymake-show-project-diagnostics)))
 
-;; Cape for better completion (works with Eglot)
+;;; Cape for better completion (works with Eglot)
 (use-package cape
   :ensure t
   :init
