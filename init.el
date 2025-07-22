@@ -516,7 +516,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
   ;; Enable persistent modes
   (save-place-mode 1)
-  (savehist-mode 1)
 
   ;; Display and UI
   (setq truncate-string-ellipsis "…"
@@ -827,33 +826,52 @@ If buffer is modified, offer to save first."
   ;; Connection settings
   (tramp-default-method "ssh")
   (tramp-use-scp-direct-remote-copying t)
-  (tramp-copy-size-limit (* 1024 1024)) ; 1MB threshold for using scp
+  (tramp-copy-size-limit (* 4 1024 1024)) ; Increased to 4MB for modern networks
 
   ;; Performance optimizations
-  (tramp-verbose 2) ; Low verbosity for better performance (0-10 scale)
+  (tramp-verbose 1) ; Lower is faster
   (remote-file-name-inhibit-locks t)
   (remote-file-name-inhibit-auto-save-visited t)
 
+  ;; Emacs 30.1: New performance settings
+  (tramp-use-connection-share t) ; SSH connection pooling
+  (tramp-connection-timeout 10)
+  (remote-file-name-inhibit-cache nil) ; Enable caching
+
   ;; Auto-save and backup
   (tramp-auto-save-directory (expand-file-name "tramp-auto-save" my-tmp-dir))
+  (tramp-persistency-file-name (expand-file-name "tramp-persistence" my-tmp-dir))
 
   ;; File monitoring
   (auto-revert-remote-files t)
+  (auto-revert-use-notify nil) ; Don't use file notifications for remote files
 
   :config
-  ;; Connection-local variables for better async process handling
+  ;; Enhanced connection-local variables for Emacs 30.1
   (connection-local-set-profile-variables
    'remote-direct-async-process
-   '((tramp-direct-async-process . t)))
+   '((tramp-direct-async-process . t)
+     (tramp-pipe-stty-settings . "")  ; Faster without stty
+     (shell-file-name . "/bin/sh")     ; sh is faster than bash
+     (shell-command-switch . "-c")))
 
+  ;; Apply to all TRAMP methods
   (connection-local-set-profiles
-   '(:application tramp :protocol "scp")
+   '(:application tramp)
    'remote-direct-async-process)
 
-  ;; Remove the problematic compilation hook that can interfere with SSH
+  ;; Remove the problematic compilation hook
   (with-eval-after-load 'compile
     (remove-hook 'compilation-mode-hook
-                 #'tramp-compile-disable-ssh-controlmaster-options)))
+                 #'tramp-compile-disable-ssh-controlmaster-options))
+
+  ;; Emacs 30.1: Optimize process output reading
+  (setq read-process-output-max (* 1024 1024)) ; 1MB chunks
+
+  :bind
+  ;; Use built-in cleanup commands
+  (("C-c t c" . tramp-cleanup-this-connection)
+   ("C-c t C" . tramp-cleanup-all-connections)))
 
 ;; Magit-specific TRAMP settings
 (use-package magit
