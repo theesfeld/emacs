@@ -1341,7 +1341,6 @@ If buffer is modified, offer to save first."
     "C-c n" "notes"
     "C-c L" "lsp"
     "C-c 0" "0x0-upload"
-    "C-c F" "firefox"
     "C-c d" "diff"
     "C-c n q" "query")
 
