@@ -1427,20 +1427,6 @@ If buffer is modified, offer to save first."
         ("C-c l f" . eglot-format)
         ("C-c l F" . eglot-format-buffer)))
 
-(use-package corfu
-  :ensure t
-  :custom
-  (corfu-cycle t)
-  (corfu-auto t)
-  (corfu-auto-delay 0.1)
-  (corfu-auto-prefix 2)
-  :init
-  (global-corfu-mode)
-  :config
-  ;; Enable Corfu in terminal
-  (when (not (display-graphic-p))
-    (corfu-terminal-mode +1)))
-
 ;;; Consult integration for Eglot (NOT consult-lsp!)
 (use-package consult-eglot
   :ensure t
