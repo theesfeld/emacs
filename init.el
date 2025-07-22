@@ -701,18 +701,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (custom-set-faces
    '(cursor ((t (:background "#FFC107")))))
 
-  ;; Font-lock customizations
-  (set-face-attribute 'font-lock-comment-face nil
-                      :slant 'italic
-                      :weight 'light)
-  (set-face-attribute 'font-lock-keyword-face nil
-                      :weight 'black)
-
-  ;; If you like two specific themes and want to switch between them, you
-  ;; can specify them in `ef-themes-to-toggle' and then invoke the command
-  ;; `ef-themes-toggle'.  All the themes are included in the variable
-  ;; `ef-themes-collection'.
-
   (setq ef-themes-headings ; read the manual's entry or the doc string
         '((0 variable-pitch light 1.9)
           (1 variable-pitch light 1.8)
@@ -724,30 +712,26 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
           (7 variable-pitch 1.2)
           (t variable-pitch 1.1)))
 
-  ;; They are nil by default...
   (setq ef-themes-mixed-fonts t
         ef-themes-variable-pitch-ui t)
 
-  ;; Disable all other themes before loading an ef-theme
   (mapc #'disable-theme custom-enabled-themes)
-  ;; Load the theme of choice:
-  (load-theme 'ef-summer :no-confirm)
-
-  ;; We also provide these commands, but do not assign them to any key:
-  ;;
-  ;; - `ef-themes-toggle'
-  ;; - `ef-themes-select'
-  ;; - `ef-themes-select-dark'
-  ;; - `ef-themes-select-light'
-  ;; - `ef-themes-load-random'
-  ;; - `ef-themes-preview-colors'
-  ;; - `ef-themes-preview-colors-current'
+  (ef-themes-select 'ef-owl)
 
   ;; Fallback font configuration
   (unless (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
     (set-face-attribute 'default nil :height 140)
     (set-face-attribute 'variable-pitch nil :height 160))
-  )
+
+  (defun my-ef-themes-custom-faces ()
+    "My customizations on top of the Ef themes.
+This function is added to the \=`ef-themes-post-load-hook'."
+    (ef-themes-with-colors
+      (custom-set-faces
+       ;; These are the default specifications
+       `(font-lock-comment-face ((,c :inherit italic :foreground ,comment)))
+       `(font-lock-variable-name-face ((,c :foreground ,variable))))))
+  (add-hook 'ef-themes-post-load-hook #'my-ef-themes-custom-faces))
 
 ;; (use-package modus-themes
 ;;   :ensure nil
