@@ -701,6 +701,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (custom-set-faces
    '(cursor ((t (:background "#FFC107")))))
 
+  (setq ef-themes-to-toggle '(ef-dark ef-light))
+
   (setq ef-themes-headings ; read the manual's entry or the doc string
         '((0 variable-pitch light 1.9)
           (1 variable-pitch light 1.8)
