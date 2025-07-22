@@ -716,7 +716,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         ef-themes-variable-pitch-ui t)
 
   (mapc #'disable-theme custom-enabled-themes)
-  (ef-themes-select 'ef-owl)
+  (ef-themes-select 'ef-dark)
 
   ;; Fallback font configuration
   (unless (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
