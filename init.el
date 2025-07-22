@@ -588,27 +588,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                   mode-line-misc-info  ; This includes which-func AND battery/time
                   mode-line-end-spaces))
 
-  ;; Minions for minor mode management
-  (use-package minions
-    :ensure t
-    :config
-    (minions-mode 1)
-    :custom
-    (minions-prominent-modes '(flymake-mode
-                               flycheck-mode
-                               projectile-mode
-                               lsp-mode
-                               eglot--managed-mode))
-    (minions-mode-line-lighter " ◎"))
-
-  ;; Visual bell in mode-line
-  (use-package mode-line-bell
-    :ensure t
-    :config
-    (mode-line-bell-mode 1))
-
-
-
   ;;; Editing Behavior
   (setq-default indent-tabs-mode nil
                 tab-width 2
@@ -680,6 +659,25 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (mode-line-inactive ((t (:box (:line-width -1 :style released-button)))))
   (mode-line-buffer-id ((t (:weight bold :inherit font-lock-keyword-face))))
   (mode-line-emphasis ((t (:weight bold :inherit warning)))))
+
+;;; Minions for minor mode management
+(use-package minions
+  :ensure t
+  :config
+  (minions-mode 1)
+  :custom
+  (minions-prominent-modes '(flymake-mode
+                             flycheck-mode
+                             projectile-mode
+                             lsp-mode
+                             eglot--managed-mode))
+  (minions-mode-line-lighter " ◎"))
+
+;;; Visual bell in mode-line
+(use-package mode-line-bell
+  :ensure t
+  :config
+  (mode-line-bell-mode 1))
 
 ;;; Theme Configuration (separate use-package)
 (use-package modus-themes
