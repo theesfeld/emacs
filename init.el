@@ -1166,7 +1166,7 @@ If buffer is modified, offer to save first."
          (conf-mode . completion-preview-mode))
   :custom
   (completion-preview-minimum-symbol-length 2)
-  (completion-preview-idle-delay 0.055)
+  (completion-preview-idle-delay 0)
   (completion-preview-exact-match-only nil)
   :custom-face
   (completion-preview ((t (:inherit shadow :foreground "#FFC107"))))
