@@ -1213,7 +1213,7 @@ If buffer is modified, offer to save first."
         which-func-unknown "")
 
   ;; Right alignment edge (Emacs 30.1 feature)
-  (setq mode-line-right-align-edge 'right-fringe)
+  (setq mode-line-right-align-edge 'window)
 
   ;; Standard mode-line format using built-in variables
   (setq-default mode-line-format
