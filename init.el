@@ -315,9 +315,9 @@ OLD is ignored but included for hook compatibility."
     (setq exwm-systemtray-icon-gap 5)
     (setq exwm-systemtray-workspace nil)
 
-    ;; Function to automatically configure monitors
+    ;; Function to automatically configure monitors with HiDPI scaling
     (defun my/exwm-configure-monitors ()
-      "Automatically detect and configure monitors."
+      "Automatically detect and configure monitors with proper scaling."
       (let* ((xrandr-output (shell-command-to-string "xrandr"))
              (connected-monitors
               (seq-filter (lambda (line)
@@ -327,46 +327,127 @@ OLD is ignored but included for hook compatibility."
               (mapcar (lambda (line)
                         (car (split-string line)))
                       connected-monitors))
-             (primary-monitor (car monitor-names))
-             (external-monitors (cdr monitor-names)))
+             ;; Detect if eDP-1 is connected (laptop monitor)
+             (laptop-monitor (seq-find (lambda (m) (string-match-p "^eDP" m)) monitor-names))
+             ;; Set primary monitor (prefer laptop if available)
+             (primary-monitor (or laptop-monitor (car monitor-names)))
+             (external-monitors (seq-remove (lambda (m) (string-equal m primary-monitor))
+                                            monitor-names)))
 
         ;; Build xrandr command
-        (when external-monitors
-          (let ((xrandr-cmd "xrandr --auto"))
-            ;; Configure each external monitor to the right of the previous
+        (let ((xrandr-cmd "xrandr --auto"))
+
+          ;; Configure laptop monitor with scaling if it exists
+          (when laptop-monitor
+            ;; Scale factor of 1.5 gives effective resolution of 1920x1200
+            ;; You can adjust this value: 1.25, 1.5, 1.75, or 2.0
+            (setq xrandr-cmd
+                  (format "%s --output %s --scale 0.75x0.75 --primary"
+                          xrandr-cmd laptop-monitor)))
+
+          ;; Configure external monitors
+          (when external-monitors
             (let ((prev-monitor primary-monitor))
               (dolist (monitor external-monitors)
                 (setq xrandr-cmd
-                      (format "%s --output %s --auto --right-of %s"
+                      (format "%s --output %s --auto --scale 1x1 --right-of %s"
                               xrandr-cmd monitor prev-monitor))
-                (setq prev-monitor monitor)))
+                (setq prev-monitor monitor))))
 
-            ;; Execute xrandr command
-            (start-process-shell-command "xrandr" nil xrandr-cmd)
+          ;; Execute xrandr command
+          (start-process-shell-command "xrandr" nil xrandr-cmd)
 
-            ;; Configure workspace assignment
-            ;; Put workspace 0 on primary, distribute others on externals
-            (let ((workspace-plist '())
-                  (workspace-num 0))
-              ;; Workspace 0 always on primary monitor
-              (setq workspace-plist (append workspace-plist
-                                            (list workspace-num primary-monitor)))
-              (setq workspace-num 1)
+          ;; Configure workspace assignment
+          (let ((workspace-plist '())
+                (workspace-num 0))
+            ;; Workspace 0 always on primary monitor
+            (setq workspace-plist (append workspace-plist
+                                          (list workspace-num primary-monitor)))
+            (setq workspace-num 1)
 
-              ;; Distribute remaining workspaces across external monitors
-              (when external-monitors
-                (dolist (monitor (if (> (length external-monitors) 1)
-                                     external-monitors
-                                   ;; If only one external, put all remaining workspaces there
-                                   (make-list 9 (car external-monitors))))
-                  (when (< workspace-num 10)
-                    (setq workspace-plist (append workspace-plist
-                                                  (list workspace-num monitor)))
-                    (setq workspace-num (1+ workspace-num)))))
+            ;; Distribute remaining workspaces across external monitors
+            (when external-monitors
+              (dolist (monitor (if (> (length external-monitors) 1)
+                                   external-monitors
+                                 ;; If only one external, put all remaining workspaces there
+                                 (make-list 9 (car external-monitors))))
+                (when (< workspace-num 10)
+                  (setq workspace-plist (append workspace-plist
+                                                (list workspace-num monitor)))
+                  (setq workspace-num (1+ workspace-num)))))
 
-              ;; Apply the workspace configuration
-              (setq exwm-randr-workspace-monitor-plist workspace-plist)
-              (exwm-randr-refresh))))))
+            ;; Apply the workspace configuration
+            (setq exwm-randr-workspace-monitor-plist workspace-plist)
+            (exwm-randr-refresh)))))
+
+    ;; Additional DPI configuration for better font rendering
+    (defun my/configure-hidpi ()
+      "Configure HiDPI settings for better text rendering."
+      ;; Set Xft DPI (adjust value as needed)
+      (start-process-shell-command
+       "xrdb" nil
+       "echo 'Xft.dpi: 144' | xrdb -merge")
+
+      ;; Set cursor size for HiDPI
+      (start-process-shell-command
+       "xrdb" nil
+       "echo 'Xcursor.size: 32' | xrdb -merge"))
+
+    ;; Hook to run HiDPI configuration
+    (add-hook 'exwm-randr-screen-change-hook #'my/configure-hidpi)
+
+    ;; ;; Function to automatically configure monitors
+    ;; (defun my/exwm-configure-monitors ()
+    ;;   "Automatically detect and configure monitors."
+    ;;   (let* ((xrandr-output (shell-command-to-string "xrandr"))
+    ;;          (connected-monitors
+    ;;           (seq-filter (lambda (line)
+    ;;                         (string-match-p " connected" line))
+    ;;                       (split-string xrandr-output "\n")))
+    ;;          (monitor-names
+    ;;           (mapcar (lambda (line)
+    ;;                     (car (split-string line)))
+    ;;                   connected-monitors))
+    ;;          (primary-monitor (car monitor-names))
+    ;;          (external-monitors (cdr monitor-names)))
+
+    ;;     ;; Build xrandr command
+    ;;     (when external-monitors
+    ;;       (let ((xrandr-cmd "xrandr --auto"))
+    ;;         ;; Configure each external monitor to the right of the previous
+    ;;         (let ((prev-monitor primary-monitor))
+    ;;           (dolist (monitor external-monitors)
+    ;;             (setq xrandr-cmd
+    ;;                   (format "%s --output %s --auto --right-of %s"
+    ;;                           xrandr-cmd monitor prev-monitor))
+    ;;             (setq prev-monitor monitor)))
+
+    ;;         ;; Execute xrandr command
+    ;;         (start-process-shell-command "xrandr" nil xrandr-cmd)
+
+    ;;         ;; Configure workspace assignment
+    ;;         ;; Put workspace 0 on primary, distribute others on externals
+    ;;         (let ((workspace-plist '())
+    ;;               (workspace-num 0))
+    ;;           ;; Workspace 0 always on primary monitor
+    ;;           (setq workspace-plist (append workspace-plist
+    ;;                                         (list workspace-num primary-monitor)))
+    ;;           (setq workspace-num 1)
+
+    ;;           ;; Distribute remaining workspaces across external monitors
+    ;;           (when external-monitors
+    ;;             (dolist (monitor (if (> (length external-monitors) 1)
+    ;;                                  external-monitors
+    ;;                                ;; If only one external, put all remaining workspaces there
+    ;;                                (make-list 9 (car external-monitors))))
+    ;;               (when (< workspace-num 10)
+    ;;                 (setq workspace-plist (append workspace-plist
+    ;;                                               (list workspace-num monitor)))
+    ;;                 (setq workspace-num (1+ workspace-num)))))
+
+    ;;           ;; Apply the workspace configuration
+    ;;           (setq exwm-randr-workspace-monitor-plist workspace-plist)
+    ;;           (exwm-randr-refresh))))))
 
     ;; Function to start system tray applications
     (defun my/exwm-start-tray-apps ()
