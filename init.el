@@ -17,7 +17,7 @@
 
 ;;; CUSTOM FUNCTIONS
 
-(defun prot-common-auth-get-field (host prop)
+(defun my-common-auth-get-field (host prop)
   "Find PROP in `auth-sources' for HOST entry."
   (when-let* ((source (auth-source-search :host host)))
     (if (eq prop :secret)
@@ -461,7 +461,12 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq auth-sources '("~/.authinfo.gpg")
         epg-pinentry-mode 'loopback
         epg-gpg-program "gpg2")
-
+  :custom
+  (tab-always-indent 'complete)
+  (completion-auto-help 'visible)
+  (completion-auto-select 'second-tab)
+  (completions-sort 'historical)  ; New in 30.1
+  (completions-header-format nil)
   :config
   ;;; Personal Information
   (setq user-full-name "TJ"
@@ -470,17 +475,24 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         calendar-latitude 40.7
         calendar-longitude -74.0)
 
+  ;; load latex templates
+  (let ((templates-dir "~/.config/emacs/latex/templates/"))
+    (when (file-exists-p templates-dir)
+      (dolist (file
+               (directory-files-recursively templates-dir "\\.el$"))
+        (load-file file))))
+
   ;; Set timezone
   (setenv "TZ" "America/New_York")
 
-  ;;; Encoding and Language
+  ;; Encoding and Language
   (prefer-coding-system 'utf-8)
   (set-default-coding-systems 'utf-8)
   (set-terminal-coding-system 'utf-8)
   (set-keyboard-coding-system 'utf-8)
   (set-language-environment "UTF-8")
 
-  ;;; Files and Backups
+  ;; Files and Backups
   (setq create-lockfiles nil
         delete-old-versions t
         kept-new-versions 6
@@ -493,7 +505,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         auto-save-list-file-prefix (expand-file-name "auto-save-list/.saves-" my-tmp-dir)
         save-place-file (expand-file-name "saveplace/saveplace" my-tmp-dir))
 
-  ;;; History and Persistence
+  ;; History and Persistence
   (setq history-length 10000
         history-delete-duplicates t
         savehist-file (expand-file-name "savehist" my-tmp-dir)
@@ -506,20 +518,102 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (save-place-mode 1)
   (savehist-mode 1)
 
-  ;;; Display and UI
+  ;; Display and UI
   (setq truncate-string-ellipsis "…"
         x-stretch-cursor t
         help-window-select t
         echo-keystrokes-help nil
         display-time-load-average t)
 
-  ;;; Scrolling
+  ;; Scrolling
   (setq scroll-margin 3
         scroll-step 1
         scroll-conservatively 1
         scroll-preserve-screen-position 1
         scroll-error-top-bottom t
         auto-window-vscroll nil)
+
+  ;; mode-line
+  (setq mode-line-compact nil)  ; Emacs 28+ compact mode
+
+  ;; Position format - line:column
+  (setq mode-line-position-column-line-format '(" %l:%c"))
+  (line-number-mode 1)
+  (column-number-mode 1)
+  (size-indication-mode 1)
+
+  ;; Time with ISO date format
+  (setq display-time-format "%Y-%m-%d %H:%M"
+        display-time-default-load-average nil)
+  (display-time-mode 1)
+
+  ;; Battery display
+  (require 'battery)
+  (when (and battery-status-function
+             (not (string-match-p "N/A"
+                                  (battery-format "%B"
+                                                  (funcall battery-status-function)))))
+    (setq battery-mode-line-format "%b%p%%  ")  ; Extra spaces for separation
+    (setq battery-mode-line-limit 85)
+    (display-battery-mode 1))
+
+  ;; Which function mode
+  (which-function-mode 1)
+  (setq which-func-modes '(prog-mode)
+        which-func-unknown "")
+
+  ;; Right alignment edge (Emacs 30.1 feature)
+  (setq mode-line-right-align-edge 'right-fringe)
+
+  ;; Standard mode-line format using built-in variables
+  (setq-default mode-line-format
+                '("%e"  ; Out of memory indicator
+                  mode-line-front-space
+                  mode-line-mule-info
+                  mode-line-client
+                  mode-line-modified
+                  mode-line-remote
+                  mode-line-frame-identification
+                  mode-line-buffer-identification
+                  "  "
+                  mode-line-position
+                  "  "
+                  (vc-mode vc-mode)
+                  "  "
+                  mode-line-modes
+                  ;; Right-aligned section (Emacs 30.1)
+                  mode-line-format-right-align
+                  ;; DO NOT put which-func-mode here!
+                  ;; which-function info is automatically included in mode-line-misc-info
+                  mode-line-misc-info  ; This includes which-func AND battery/time
+                  mode-line-end-spaces))
+
+  :custom-face
+  (mode-line ((t (:box (:line-width -1 :style released-button)))))
+  (mode-line-inactive ((t (:box (:line-width -1 :style released-button)))))
+  (mode-line-buffer-id ((t (:weight bold :inherit font-lock-keyword-face))))
+  (mode-line-emphasis ((t (:weight bold :inherit warning))))
+
+  ;; Minions for minor mode management
+  (use-package minions
+    :ensure t
+    :config
+    (minions-mode 1)
+    :custom
+    (minions-prominent-modes '(flymake-mode
+                               flycheck-mode
+                               projectile-mode
+                               lsp-mode
+                               eglot--managed-mode))
+    (minions-mode-line-lighter " ◎"))
+
+  ;; Visual bell in mode-line
+  (use-package mode-line-bell
+    :ensure t
+    :config
+    (mode-line-bell-mode 1))
+
+
 
   ;;; Editing Behavior
   (setq-default indent-tabs-mode nil
@@ -1156,92 +1250,6 @@ If buffer is modified, offer to save first."
         ("M-n" . completion-preview-next-candidate)
         ("M-p" . completion-preview-prev-candidate)))
 
-;;; Mode-line Configuration
-
-(use-package emacs
-  :ensure nil
-  :config
-  ;; Basic mode-line settings
-  (setq mode-line-compact nil)  ; Emacs 28+ compact mode
-
-  ;; Position format - line:column
-  (setq mode-line-position-column-line-format '(" %l:%c"))
-  (line-number-mode 1)
-  (column-number-mode 1)
-  (size-indication-mode 1)
-
-  ;; Time with ISO date format
-  (setq display-time-format "%Y-%m-%d %H:%M"
-        display-time-default-load-average nil)
-  (display-time-mode 1)
-
-  ;; Battery display
-  (require 'battery)
-  (when (and battery-status-function
-             (not (string-match-p "N/A"
-                                  (battery-format "%B"
-                                                  (funcall battery-status-function)))))
-    (setq battery-mode-line-format "%b%p%%  ")  ; Extra spaces for separation
-    (setq battery-mode-line-limit 85)
-    (display-battery-mode 1))
-
-  ;; Which function mode
-  (which-function-mode 1)
-  (setq which-func-modes '(prog-mode)
-        which-func-unknown "")
-
-  ;; Right alignment edge (Emacs 30.1 feature)
-  (setq mode-line-right-align-edge 'right-fringe)
-
-  ;; Standard mode-line format using built-in variables
-  (setq-default mode-line-format
-                '("%e"  ; Out of memory indicator
-                  mode-line-front-space
-                  mode-line-mule-info
-                  mode-line-client
-                  mode-line-modified
-                  mode-line-remote
-                  mode-line-frame-identification
-                  mode-line-buffer-identification
-                  "  "
-                  mode-line-position
-                  "  "
-                  (vc-mode vc-mode)
-                  "  "
-                  mode-line-modes
-                  ;; Right-aligned section (Emacs 30.1)
-                  mode-line-format-right-align
-                  ;; DO NOT put which-func-mode here!
-                  ;; which-function info is automatically included in mode-line-misc-info
-                  mode-line-misc-info  ; This includes which-func AND battery/time
-                  mode-line-end-spaces))
-
-  ;; Customize faces to inherit from theme
-  :custom-face
-  (mode-line ((t (:box (:line-width -1 :style released-button)))))
-  (mode-line-inactive ((t (:box (:line-width -1 :style released-button)))))
-  (mode-line-buffer-id ((t (:weight bold :inherit font-lock-keyword-face))))
-  (mode-line-emphasis ((t (:weight bold :inherit warning)))))
-
-  ;; Minions for minor mode management
-  (use-package minions
-    :ensure t
-    :config
-    (minions-mode 1)
-    :custom
-    (minions-prominent-modes '(flymake-mode
-                               flycheck-mode
-                               projectile-mode
-                               lsp-mode
-                               eglot--managed-mode))
-    (minions-mode-line-lighter " ◎"))
-
-  ;; Visual bell in mode-line
-  (use-package mode-line-bell
-    :ensure t
-    :config
-    (mode-line-bell-mode 1))
-
 ;;; nerd-icons
 
 (use-package nerd-icons
@@ -1339,7 +1347,6 @@ If buffer is modified, offer to save first."
   (setq ispell-dictionary "en_US")
   (setq ispell-extra-args '("--sug-mode=ultra"))
   (setq ispell-personal-dictionary "~/.aspell.en.pws")
-  ;; Prot's performance tweaks
   (setq flyspell-issue-message-flag nil)
   (setq flyspell-issue-welcome-flag nil)
 
@@ -2052,19 +2059,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
 ;; Apply to all new frames created later (essential for daemon mode)
 (add-hook 'after-make-frame-functions #'my-after-make-frame-setup)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                                 LaTeX templates                           ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package emacs
-  :ensure nil
-  :config
-  (let ((templates-dir "~/.config/emacs/latex/templates/"))
-    (when (file-exists-p templates-dir)
-      (dolist (file
-               (directory-files-recursively templates-dir "\\.el$"))
-        (load-file file)))))
-
 ;;; hl-line
 
 (use-package hl-line
@@ -2295,20 +2289,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :config
   (minibuffer-depth-indicate-mode 1))
 
-;;; Better defaults for built-in behavior
-(use-package emacs
-  :ensure nil
-  :custom
-  (tab-always-indent 'complete)
-  ;; These are for when you're NOT using Vertico
-  ;; (kept commented as reference)
-  ;; (completion-cycle-threshold 3)
-  ;; (completion-auto-help 'always)
-  ;; (completions-detailed t)
-  ;; (completions-format 'one-column)
-  ;; (completions-max-height 10)
-  )
-
 ;;; Shell (M-x shell)
 
 (use-package shell
@@ -2393,6 +2373,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 (use-package volatile-highlights
   :ensure t
+  :defer t
   :init (volatile-highlights-mode 1))
 
 ;;; SMTP configuration for sending mail
