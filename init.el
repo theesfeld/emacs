@@ -1926,14 +1926,14 @@ If buffer is modified, offer to save first."
                 '(flymake-proc-legacy-flymake))))
 
 ;; Enhanced Flymake UI (optional but nice)
-(use-package flymake-popon
-  :ensure t
-  :after flymake
-  :hook (flymake-mode . flymake-popon-mode)
-  :custom
-  (flymake-popon-delay 0.5)
-  (flymake-popon-width 60)
-  (flymake-popon-method 'popon))  ; or 'posframe if you prefer
+;; (use-package flymake-popon
+;;   :ensure t
+;;   :after flymake
+;;   :hook (flymake-mode . flymake-popon-mode)
+;;   :custom
+;;   (flymake-popon-delay 0.5)
+;;   (flymake-popon-width 60)
+;;   (flymake-popon-method 'popon))  ; or 'posframe if you prefer
 
 ;; For Elisp files specifically
 (use-package package-lint-flymake
