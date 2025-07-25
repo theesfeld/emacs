@@ -1,6 +1,6 @@
 ;;; init.el --- Emacs Configuration -*- lexical-binding: t -*-
 ;;; Commentary:
-;; this is my Emacs configuration <tj@emacs.su>
+;; tj@emacs.su
 ;;; Code:
 
 ;;; vc stuff
@@ -82,7 +82,6 @@
       (shrink-window-horizontally
        (round (* (window-width) (- 1 scale-factor)))))))
 
-;; Use modern keybinding approach
 (keymap-global-set "s-=" #'increase-text-and-pane)
 (keymap-global-set "s--" #'decrease-text-and-pane)
 
@@ -95,13 +94,10 @@
 
 ;;; FONT CONFIGURATION
 
-;; Primary font setup with fallback
 (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
-  ;; Main editing font
   (set-face-attribute 'default nil
                       :font "BerkeleyMonoVariable Nerd Font Mono"
                       :height 140)
-  ;; Variable-pitch font for prose/org-mode
   (set-face-attribute 'variable-pitch nil
                       :font "BerkeleyMonoVariable Nerd Font Mono"
                       :height 160))
@@ -114,7 +110,6 @@
   :config
   (require 'consult)
 
-  ;; === Configuration Variables ===
   (defgroup ednc-enhanced nil
     "Enhanced EDNC notifications."
     :group 'ednc)
@@ -124,18 +119,15 @@
     :type 'integer
     :group 'ednc-enhanced)
 
-  ;; === State Management ===
   (defvar ednc--notification-history nil
     "List of past notifications for consult browsing.")
   (defvar ednc--notification-ring (make-ring ednc-history-limit)
     "Ring buffer for notification history.")
 
-  ;; === Faces ===
   (defface ednc-notification-time-face
     '((t :inherit font-lock-comment-face))
     "Face for timestamps in notification history.")
 
-  ;; === Core Functions ===
   (defun ednc--store-in-history (old new)
     "Store NEW notification in history for consult browsing.
 OLD is ignored but included for hook compatibility."
@@ -155,7 +147,6 @@ OLD is ignored but included for hook compatibility."
         (ring-insert ednc--notification-ring entry)
         (push entry ednc--notification-history))))
 
-  ;; === Interactive Commands ===
   (defun ednc-browse-history ()
     "Browse notification history with consult."
     (interactive)
@@ -200,14 +191,12 @@ OLD is ignored but included for hook compatibility."
         (ring-remove ednc--notification-ring))
       (message "Notification history cleared")))
 
-  ;; === Setup ===
   (setq ednc-notification-presentation-functions nil)
   (add-hook 'ednc-notification-presentation-functions #'ednc--store-in-history))
 
 (use-package ednc-popup
   :vc (:url "https://codeberg.org/akib/emacs-ednc-popup.git" :branch "main")
   :config
-  ;; Customize ednc-popup settings
   (setq ednc-popup-timeout 5
         ednc-popup-width 50
         ednc-popup-max-height 10
@@ -222,11 +211,9 @@ OLD is ignored but included for hook compatibility."
     (require 'exwm-randr)
     (require 'exwm-systemtray)
     :config
-    ;; Set the number of workspaces
     (setq exwm-workspace-number 4)
     (setq exwm-workspace-show-all-buffers t)
     (setq exwm-layout-show-all-buffers t)
-    ;; These keys should always pass through to Emacs
     (setq exwm-input-prefix-keys
           '(?\C-x
             ?\C-u
@@ -235,36 +222,27 @@ OLD is ignored but included for hook compatibility."
             ?\M-:
             ?\C-\M-j  ; Buffer list
             ?\C-\     ; Ctrl+Space
-            ;; Function keys
             XF86AudioLowerVolume
             XF86AudioRaiseVolume
             XF86AudioMute
             XF86MonBrightnessUp
             XF86MonBrightnessDown))
 
-    ;; Global keybindings available in X windows
     (setq exwm-input-global-keys
           `(;; Reset EXWM
             ([?\s-r] . exwm-reset)
-            ;; Launch application
             ([?\s-&] . (lambda (command)
                          (interactive (list (read-shell-command "$ ")))
                          (start-process-shell-command command nil command)))
-            ;; Switch workspace
             ([?\s-w] . exwm-workspace-switch)
-            ;; Move window to workspace
             ([?\s-m] . exwm-workspace-move-window)
-            ;; Toggle floating
             ([?\s-f] . exwm-floating-toggle-floating)
-            ;; Toggle fullscreen
             ([?\s-F] . exwm-layout-toggle-fullscreen)
-            ;; Focus windows by direction
             ([s-left] . windmove-left)
             ([s-right] . windmove-right)
             ([s-up] . windmove-up)
             ([?\s-e] . exwm-edit--compose)
             ([s-down] . windmove-down)
-            ;; Switch to specific workspace with Super+0-9
             ([?\s-0] . (lambda () (interactive) (exwm-workspace-switch-create 0)))
             ([?\s-1] . (lambda () (interactive) (exwm-workspace-switch-create 1)))
             ([?\s-2] . (lambda () (interactive) (exwm-workspace-switch-create 2)))
@@ -276,7 +254,6 @@ OLD is ignored but included for hook compatibility."
             ([?\s-8] . (lambda () (interactive) (exwm-workspace-switch-create 8)))
             ([?\s-9] . (lambda () (interactive) (exwm-workspace-switch-create 9)))))
 
-    ;; Line-editing shortcuts for X windows
     (setq exwm-input-simulation-keys
           '(([?\C-b] . [left])
             ([?\C-f] . [right])
@@ -293,7 +270,6 @@ OLD is ignored but included for hook compatibility."
             ([?\C-y] . [?\C-v])
             ([?\M-d] . [C-delete])))
 
-    ;; Make buffer names more meaningful
     (defun my/exwm-update-class ()
       "Update EXWM buffer name to window class name."
       (exwm-workspace-rename-buffer exwm-class-name))
@@ -306,16 +282,13 @@ OLD is ignored but included for hook compatibility."
         (_ (exwm-workspace-rename-buffer
             (format "%s: %s" exwm-class-name exwm-title)))))
 
-    ;; Hook these functions to EXWM update events
     (add-hook 'exwm-update-class-hook #'my/exwm-update-class)
     (add-hook 'exwm-update-title-hook #'my/exwm-update-title)
 
-    ;; System tray configuration
     (setq exwm-systemtray-height 22)
     (setq exwm-systemtray-icon-gap 5)
     (setq exwm-systemtray-workspace nil)
 
-    ;; Function to automatically configure monitors
     (defun my/exwm-configure-monitors ()
       "Automatically detect and configure monitors."
       (let* ((xrandr-output (shell-command-to-string "xrandr"))
@@ -330,10 +303,8 @@ OLD is ignored but included for hook compatibility."
              (primary-monitor (car monitor-names))
              (external-monitors (cdr monitor-names)))
 
-        ;; Build xrandr command
         (when external-monitors
           (let ((xrandr-cmd "xrandr --auto"))
-            ;; Configure each external monitor to the right of the previous
             (let ((prev-monitor primary-monitor))
               (dolist (monitor external-monitors)
                 (setq xrandr-cmd
@@ -341,58 +312,44 @@ OLD is ignored but included for hook compatibility."
                               xrandr-cmd monitor prev-monitor))
                 (setq prev-monitor monitor)))
 
-            ;; Execute xrandr command
             (start-process-shell-command "xrandr" nil xrandr-cmd)
 
-            ;; Configure workspace assignment
-            ;; Put workspace 0 on primary, distribute others on externals
             (let ((workspace-plist '())
                   (workspace-num 0))
-              ;; Workspace 0 always on primary monitor
               (setq workspace-plist (append workspace-plist
                                             (list workspace-num primary-monitor)))
               (setq workspace-num 1)
 
-              ;; Distribute remaining workspaces across external monitors
               (when external-monitors
                 (dolist (monitor (if (> (length external-monitors) 1)
                                      external-monitors
-                                   ;; If only one external, put all remaining workspaces there
                                    (make-list 9 (car external-monitors))))
                   (when (< workspace-num 10)
                     (setq workspace-plist (append workspace-plist
                                                   (list workspace-num monitor)))
                     (setq workspace-num (1+ workspace-num)))))
 
-              ;; Apply the workspace configuration
               (setq exwm-randr-workspace-monitor-plist workspace-plist)
               (exwm-randr-refresh))))))
 
-    ;; Function to start system tray applications
     (defun my/exwm-start-tray-apps ()
       "Start system tray applications."
       (interactive)
-      ;; Add a small delay to ensure X is ready
       (run-with-timer 2 nil
                       (lambda ()
-                        ;; Mullvad VPN
                         (when (executable-find "mullvad-vpn")
                           (message "Starting mullvad-vpn...")
                           (start-process "mullvad-vpn" nil "mullvad-vpn"))
-                        ;; Bluetooth
                         (when (executable-find "blueman-applet")
                           (message "Starting blueman-applet...")
                           (start-process "blueman-applet" nil "blueman-applet"))
-                        ;; Udiskie
                         (when (executable-find "udiskie")
                           (message "Starting udiskie...")
                           (start-process "udiskie" nil "udiskie" "-at"))
-                        ;; Network manager applet
                         (when (executable-find "nm-applet")
                           (message "Starting nm-applet...")
                           (start-process "nm-applet" nil "nm-applet")))))
 
-    ;; Add hooks before enabling modes
     (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
     (add-hook 'exwm-randr-screen-change-hook #'my/exwm-configure-monitors)
     (exwm-systemtray-mode 1)
@@ -400,7 +357,6 @@ OLD is ignored but included for hook compatibility."
     (exwm-wm-mode 1)
     (my/exwm-configure-monitors))
 
-  ;; Optional: Simple app launcher
   (defun my/app-launcher ()
     "Launch application using \='completing-read'."
     (interactive)
@@ -415,7 +371,6 @@ OLD is ignored but included for hook compatibility."
 
   (global-set-key (kbd "s-SPC") #'my/app-launcher)
 
-  ;; Optional: Desktop environment features
   (use-package desktop-environment
     :ensure t
     :config
@@ -443,17 +398,13 @@ OLD is ignored but included for hook compatibility."
 
 ;;; emacs configuration section
 
-;; Define my-tmp-dir early so it's available for other packages
 (defvar my-tmp-dir (expand-file-name "~/.tmp/")
   "Centralized directory for temporary files, backups, and history files.
 This keeps the main .emacs.d directory clean and organizes cache files logically.")
 
-;; Create the main temporary directory
 (unless (file-exists-p my-tmp-dir)
   (make-directory my-tmp-dir t))
 
-;; Create subdirectories for different types of files
-;; This single directory creation handles all file management needs
 (dolist (dir '("backups"        ; backup-directory-alist
                "auto-saves"     ; auto-save-file-name-transforms
                "auto-save-list" ; auto-save-list-file-prefix
@@ -470,7 +421,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (use-package emacs
   :ensure nil ; Built-in package
   :init
-  ;; Early settings that should be set before package loads
   (setq auth-sources '("~/.authinfo.gpg")
         epg-pinentry-mode 'loopback
         epg-gpg-program "gpg2")
@@ -488,24 +438,20 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         calendar-latitude 40.7
         calendar-longitude -74.0)
 
-  ;; load latex templates
   (let ((templates-dir "~/.config/emacs/latex/templates/"))
     (when (file-exists-p templates-dir)
       (dolist (file
                (directory-files-recursively templates-dir "\\.el$"))
         (load-file file))))
 
-  ;; Set timezone
   (setenv "TZ" "America/New_York")
 
-  ;; Encoding and Language
   (prefer-coding-system 'utf-8)
   (set-default-coding-systems 'utf-8)
   (set-terminal-coding-system 'utf-8)
   (set-keyboard-coding-system 'utf-8)
   (set-language-environment "UTF-8")
 
-  ;; Files and Backups
   (setq create-lockfiles nil
         delete-old-versions t
         kept-new-versions 6
@@ -518,7 +464,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         auto-save-list-file-prefix (expand-file-name "auto-save-list/.saves-" my-tmp-dir)
         save-place-file (expand-file-name "saveplace/saveplace" my-tmp-dir))
 
-  ;; History and Persistence
   (setq history-length 10000
         history-delete-duplicates t
         savehist-file (expand-file-name "savehist" my-tmp-dir)
@@ -527,17 +472,14 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         auth-source-cache-expiry nil
         plstore-cache-directory my-tmp-dir)
 
-  ;; Enable persistent modes
   (save-place-mode 1)
 
-  ;; Display and UI
   (setq truncate-string-ellipsis "…"
         x-stretch-cursor t
         help-window-select t
         echo-keystrokes-help nil
         display-time-load-average t)
 
-  ;; Scrolling
   (setq scroll-margin 3
         scroll-step 1
         scroll-conservatively 1
@@ -545,21 +487,17 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         scroll-error-top-bottom t
         auto-window-vscroll nil)
 
-  ;; mode-line
   (setq mode-line-compact nil)  ; Emacs 28+ compact mode
 
-  ;; Position format - line:column
   (setq mode-line-position-column-line-format '(" %l:%c"))
   (line-number-mode 1)
   (column-number-mode 1)
   (size-indication-mode 1)
 
-  ;; Time with ISO date format
   (setq display-time-format "%Y-%m-%d %H:%M"
         display-time-default-load-average nil)
   (display-time-mode 1)
 
-  ;; Battery display
   (require 'battery)
   (when (and battery-status-function
              (not (string-match-p "N/A"
@@ -569,15 +507,12 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     (setq battery-mode-line-limit 85)
     (display-battery-mode 1))
 
-  ;; Which function mode
   (which-function-mode 1)
   (setq which-func-modes '(prog-mode)
         which-func-unknown "")
 
-  ;; Right alignment edge (Emacs 30.1 feature)
   (setq mode-line-right-align-edge 'right-fringe)
 
-  ;; Standard mode-line format using built-in variables
   (setq-default mode-line-format
                 '("%e"  ; Out of memory indicator
                   mode-line-front-space
@@ -593,10 +528,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                   (vc-mode vc-mode)
                   "  "
                   mode-line-modes
-                  ;; Right-aligned section (Emacs 30.1)
                   mode-line-format-right-align
-                  ;; DO NOT put which-func-mode here!
-                  ;; which-function info is automatically included in mode-line-misc-info
                   mode-line-misc-info  ; This includes which-func AND battery/time
                   mode-line-end-spaces))
 
@@ -636,7 +568,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         next-error-recenter '(4)
         find-library-include-other-files nil)
 
-  ;; Use short answers
   (fset 'yes-or-no-p 'y-or-n-p)
 
   ;;; Authentication and Encryption
@@ -649,12 +580,10 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
     (load custom-file))
 
   :hook
-  ;; Mode-specific hooks
   ((prog-mode . display-line-numbers-mode)
    (text-mode . visual-wrap-prefix-mode)
    (before-save . (lambda ()
                     (whitespace-cleanup)))
-   ;; Startup hook for global modes
    (emacs-startup . (lambda ()
                       (global-visual-line-mode 1)
                       (global-auto-revert-mode 1)
@@ -720,7 +649,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (mapc #'disable-theme custom-enabled-themes)
   (ef-themes-select 'ef-dark)
 
-  ;; Fallback font configuration
   (unless (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
     (set-face-attribute 'default nil :height 140)
     (set-face-attribute 'variable-pitch nil :height 160))
@@ -737,7 +665,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 This function is added to the \=`ef-themes-post-load-hook'."
     (ef-themes-with-colors
       (custom-set-faces
-       ;; These are the default specifications
        `(font-lock-comment-face ((,c :inherit italic :foreground ,comment)))
        `(font-lock-variable-name-face ((,c :foreground ,variable))))))
   (add-hook 'ef-themes-post-load-hook #'my-ef-themes-custom-faces
@@ -745,7 +672,6 @@ This function is added to the \=`ef-themes-post-load-hook'."
 
 (use-package windower
   :ensure t
-  ;; :after exwm
   :bind
   (("s-<tab>" . windower-switch-to-last-buffer)
    ("s-o" . windower-toggle-single)
@@ -780,33 +706,27 @@ This function is added to the \=`ef-themes-post-load-hook'."
   :defer t
 
   :custom
-  ;; Window setup
   (ediff-window-setup-function 'ediff-setup-windows-plain)
   (ediff-split-window-function 'split-window-right)
 
-  ;; Behavior
   (ediff-keep-variants nil)
 
-  ;; Control frame parameters
   (ediff-control-frame-parameters
    (cons '(unsplittable . t) ediff-control-frame-parameters))
 
   :custom-face
-  ;; Use inherit to respect theme colors while adding emphasis
   (ediff-current-diff-A ((t (:inherit diff-removed :extend t))))
   (ediff-fine-diff-A ((t (:inherit diff-removed :weight bold))))
   (ediff-current-diff-B ((t (:inherit diff-added :extend t))))
   (ediff-fine-diff-B ((t (:inherit diff-added :weight bold))))
 
   :config
-  ;; Enhanced ediff quit that ensures clean exit
   (defun my/ediff-quit ()
     "Quit ediff and ensure clean window restoration."
     (interactive)
     (when (bound-and-true-p ediff-control-buffer)
       (ediff-quit t)))
 
-  ;; Compare current buffer with its file
   (defun my/ediff-buffer-with-file ()
     "Compare current buffer with its file on disk.
 If buffer is modified, offer to save first."
@@ -818,7 +738,6 @@ If buffer is modified, offer to save first."
       (save-buffer))
     (ediff-current-file))
 
-  ;; Directory comparison with sane defaults
   (defun my/ediff-directories ()
     "Compare directories with better default regex."
     (interactive)
@@ -826,7 +745,6 @@ If buffer is modified, offer to save first."
       (call-interactively #'ediff-directories)))
 
   :hook
-  ;; Enhanced keybindings for ediff sessions
   (ediff-keymap-setup . (lambda ()
                           (define-key ediff-mode-map (kbd "Q") #'my/ediff-quit)
                           (define-key ediff-mode-map (kbd "q") #'my/ediff-quit)))
@@ -839,12 +757,10 @@ If buffer is modified, offer to save first."
    ("C-c d r" . ediff-regions-linewise)
    ("C-c d R" . ediff-regions-wordwise)))
 
-;; Diff-mode configuration (separate as it's a different package)
 (use-package diff-mode
   :ensure nil
   :defer t
   :custom-face
-  ;; More subtle diff colors that work with most themes
   (diff-added ((t (:foreground "green4" :extend t))))
   (diff-removed ((t (:foreground "red3" :extend t))))
   (diff-hunk-header ((t (:inherit font-lock-comment-face :weight bold))))
@@ -857,31 +773,25 @@ If buffer is modified, offer to save first."
   :defer t
 
   :custom
-  ;; Connection settings
   (tramp-default-method "ssh")
   (tramp-use-scp-direct-remote-copying t)
   (tramp-copy-size-limit (* 4 1024 1024)) ; Increased to 4MB for modern networks
 
-  ;; Performance optimizations
   (tramp-verbose 1) ; Lower is faster
   (remote-file-name-inhibit-locks t)
   (remote-file-name-inhibit-auto-save-visited t)
 
-  ;; Emacs 30.1: New performance settings
   (tramp-use-connection-share t) ; SSH connection pooling
   (tramp-connection-timeout 10)
   (remote-file-name-inhibit-cache nil) ; Enable caching
 
-  ;; Auto-save and backup
   (tramp-auto-save-directory (expand-file-name "tramp-auto-save" my-tmp-dir))
   (tramp-persistency-file-name (expand-file-name "tramp-persistence" my-tmp-dir))
 
-  ;; File monitoring
   (auto-revert-remote-files t)
   (auto-revert-use-notify nil) ; Don't use file notifications for remote files
 
   :config
-  ;; Enhanced connection-local variables for Emacs 30.1
   (connection-local-set-profile-variables
    'remote-direct-async-process
    '((tramp-direct-async-process . t)
@@ -889,37 +799,29 @@ If buffer is modified, offer to save first."
      (shell-file-name . "/bin/sh")     ; sh is faster than bash
      (shell-command-switch . "-c")))
 
-  ;; Apply to all TRAMP methods
   (connection-local-set-profiles
    '(:application tramp)
    'remote-direct-async-process)
 
-  ;; Remove the problematic compilation hook
   (with-eval-after-load 'compile
     (remove-hook 'compilation-mode-hook
                  #'tramp-compile-disable-ssh-controlmaster-options))
 
-  ;; Emacs 30.1: Optimize process output reading
   (setq read-process-output-max (* 1024 1024)) ; 1MB chunks
 
   :bind
-  ;; Use built-in cleanup commands
   (("C-c t c" . tramp-cleanup-this-connection)
    ("C-c t C" . tramp-cleanup-all-connections)))
 
-;; Magit-specific TRAMP settings
 (use-package magit
   :defer t
   :custom
-  ;; Improve magit performance over TRAMP
   (magit-tramp-pipe-stty-settings 'pty))
 
-;; Optional: Enhanced TRAMP functionality
 (use-package tramp
   :ensure nil
   :defer t
   :config
-  ;; Helper function to clean TRAMP buffers
   (defun my/tramp-cleanup-all ()
     "Clean all TRAMP connections and buffers."
     (interactive)
@@ -927,7 +829,6 @@ If buffer is modified, offer to save first."
     (tramp-cleanup-all-connections)
     (message "TRAMP connections and buffers cleaned"))
 
-  ;; Clear TRAMP cache for a specific connection
   (defun my/tramp-cleanup-current ()
     "Clean TRAMP connection for current buffer's remote."
     (interactive)
@@ -940,7 +841,6 @@ If buffer is modified, offer to save first."
    ("C-c t C" . my/tramp-cleanup-all)))
 
 ;;; Custom Log Mode
-;; Define a simple major mode for log files
 (define-derived-mode log-mode fundamental-mode "Log"
   "Major mode for viewing log files with syntax highlighting."
   (setq-local font-lock-defaults
@@ -948,18 +848,13 @@ If buffer is modified, offer to save first."
                  ("\\<INFO\\>" . font-lock-string-face)
                  ("\\<WARN\\>" . font-lock-warning-face)
                  ("\\<ERROR\\>" . font-lock-function-name-face)
-                 ;; Timestamps (common formats)
                  ("\\b[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}[T ][0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\b"
                   . font-lock-constant-face)
-                 ;; IP addresses
                  ("\\b[0-9]\\{1,3\\}\\.[0-9]\\{1,3\\}\\.[0-9]\\{1,3\\}\\.[0-9]\\{1,3\\}\\b"
                   . font-lock-variable-name-face))))
-  ;; Make buffer read-only by default
   (setq buffer-read-only t)
-  ;; Enable auto-revert for live log viewing
   (auto-revert-tail-mode 1))
 
-;; Register log files
 (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
 
 ;;; Undo Tree Visualization
@@ -970,7 +865,6 @@ If buffer is modified, offer to save first."
   :custom
   (vundo-glyph-alist vundo-unicode-symbols)
   (vundo-files-directory (expand-file-name "vundo" my-tmp-dir))
-  ;; Compact display for better overview
   (vundo-compact-display t))
 
 ;;; Rainbow Delimiters
@@ -979,13 +873,11 @@ If buffer is modified, offer to save first."
   :defer t
   :diminish
   :hook ((prog-mode . rainbow-delimiters-mode)
-         ;; Also useful in these modes
          (conf-mode . rainbow-delimiters-mode)
          (yaml-mode . rainbow-delimiters-mode))
   :custom
   (rainbow-delimiters-max-face-count 9)
   :config
-  ;; Make outermost parens more prominent
   (set-face-attribute 'rainbow-delimiters-depth-1-face nil :weight 'bold))
 
 ;;; Highlight Current Symbol
@@ -1002,7 +894,6 @@ If buffer is modified, offer to save first."
   (highlight-thing-limit-to-region-in-large-buffers-p t)
   (highlight-thing-narrow-region-lines 300)
   :custom-face
-  ;; Use a subtle highlight that works with most themes
   (highlight-thing ((t (:inherit highlight :background unspecified
                                  :underline (:color "#5e81ac" :style line))))))
 
@@ -1015,7 +906,6 @@ If buffer is modified, offer to save first."
          (yaml-mode . indent-bars-mode)
          (python-mode . indent-bars-mode))
   :custom
-  ;; Visual appearance
   (indent-bars-pattern ".")
   (indent-bars-width-frac 0.2)
   (indent-bars-pad-frac 0.1)
@@ -1023,15 +913,12 @@ If buffer is modified, offer to save first."
   (indent-bars-display-on-blank-lines t)
   (indent-bars-prefer-character nil)
 
-  ;; Highlighting
   (indent-bars-highlight-current-depth '(:blend 0.3))
 
-  ;; Behavior
   (indent-bars-no-descend-strings t)
   (indent-bars-no-descend-lists t)
   (indent-bars-depth-update-delay 0.1)
 
-  ;; Tree-sitter integration
   (indent-bars-treesit-support t)
   (indent-bars-treesit-scope
    '((python function_definition class_definition for_statement
@@ -1055,10 +942,8 @@ If buffer is modified, offer to save first."
   :ensure nil
   :defer t
   :custom
-  ;; Revert buffers automatically when files change on disk
   (global-auto-revert-non-file-buffers t)
   (auto-revert-verbose nil)
-  ;; Backup settings (if not already configured elsewhere)
   (make-backup-files t)
   (vc-make-backup-files t))
 
@@ -1075,7 +960,6 @@ If buffer is modified, offer to save first."
 (use-package delight
   :ensure t
   :config
-  ;; Hide or rename minor modes in modeline
   (delight
    '((auto-revert-mode nil "autorevert")
      (eldoc-mode nil "eldoc")
@@ -1094,7 +978,6 @@ If buffer is modified, offer to save first."
          (text-mode . smartparens-mode))
   :config
   (require 'smartparens-config)
-  ;; Disable smartparens in minibuffer to avoid conflicts
   (add-hook 'minibuffer-setup-hook #'turn-off-smartparens-mode)
   :bind
   (:map smartparens-mode-map
@@ -1108,7 +991,6 @@ If buffer is modified, offer to save first."
 ;;; Completion Framework
 
 ;;; vertico
-;; Completion UI
 (use-package vertico
   :ensure t
   :demand t  ; Core completion system
@@ -1128,7 +1010,6 @@ If buffer is modified, offer to save first."
         ("C-j" . vertico-exit-input)))
 
 ;;; orderless
-;; Completion Style
 (use-package orderless
   :ensure t
   :demand t  ; Core completion dependency
@@ -1146,7 +1027,6 @@ If buffer is modified, offer to save first."
   (orderless-smart-case t))
 
 ;;; savehist
-;; Persist History
 (use-package savehist
   :ensure nil
   :init (savehist-mode 1)
@@ -1162,7 +1042,6 @@ If buffer is modified, offer to save first."
      vertico-repeat-history)))
 
 ;;; marginalia
-;; Rich Annotations
 (use-package marginalia
   :ensure t
   :demand t  ; Load with vertico
@@ -1172,34 +1051,27 @@ If buffer is modified, offer to save first."
         ("M-A" . marginalia-cycle)))
 
 ;;; consult
-;; Enhanced Commands
 (use-package consult
   :ensure t
   :defer 1
   :custom
-  ;; Preview settings
   (consult-preview-key '(:debounce 0.3 any))
   (consult-narrow-key "<")
 
-  ;; Performance tuning
   (consult-async-min-input 2)
   (consult-async-refresh-delay 0.15)
   (consult-async-input-throttle 0.2)
   (consult-async-input-debounce 0.1)
 
-  ;; Better grep experience
   (consult-line-numbers-widen t)
   (consult-line-start-from-top t)
 
   :config
-  ;; Configure specific commands
   (consult-customize
-   ;; Disable preview for these commands
    consult-theme :preview-key nil
    consult-bookmark consult-recent-file consult-xref
    :preview-key '(:debounce 0.4 any))
 
-  ;; Custom hidden buffer source for consult-buffer
   (defvar consult-source-hidden-buffer
     `(:name "Hidden Buffer"
             :narrow ?h
@@ -1216,13 +1088,11 @@ If buffer is modified, offer to save first."
   (add-to-list 'consult-buffer-sources 'consult-source-hidden-buffer 'append)
 
   :bind
-  ;; C-c bindings (mode-specific-map)
   (("C-c M-x" . consult-mode-command)
    ("C-c h" . consult-history)
    ("C-c k" . consult-kmacro)
    ("C-c m" . consult-man)
    ("C-c i" . consult-info)
-   ;; C-x bindings (ctl-x-map)
    ("C-x M-:" . consult-complex-command)
    ("C-x b" . consult-buffer)
    ("C-x C-b" . consult-buffer)
@@ -1230,7 +1100,6 @@ If buffer is modified, offer to save first."
    ("C-x 5 b" . consult-buffer-other-frame)
    ("C-x r b" . consult-bookmark)
    ("C-x p b" . consult-project-buffer)
-   ;; M-g bindings (goto-map)
    ("M-g e" . consult-compile-error)
    ("M-g f" . consult-flymake)
    ("M-g g" . consult-goto-line)
@@ -1240,7 +1109,6 @@ If buffer is modified, offer to save first."
    ("M-g k" . consult-global-mark)
    ("M-g i" . consult-imenu)
    ("M-g I" . consult-imenu-multi)
-   ;; M-s bindings (search-map)
    ("M-s d" . consult-find)
    ("M-s D" . consult-locate)
    ("M-s g" . consult-grep)
@@ -1250,30 +1118,24 @@ If buffer is modified, offer to save first."
    ("M-s L" . consult-line-multi)
    ("M-s k" . consult-keep-lines)
    ("M-s u" . consult-focus-lines)
-   ;; Isearch integration
    :map isearch-mode-map
    ("M-e" . consult-isearch-history)
    ("M-s e" . consult-isearch-history)
    ("M-s l" . consult-line)
-   ;; Minibuffer history
    :map minibuffer-local-map
    ("M-s" . consult-history)
    ("M-r" . consult-history))
 
-  ;; Replace bindings
   :init
-  ;; Use Consult for some built-in commands
   (global-set-key [remap Info-search] #'consult-info)
   (global-set-key [remap isearch-forward] #'consult-line)
   (global-set-key [remap recentf-open-files] #'consult-recent-file))
 
-;; Consult integration for yasnippet
 (use-package consult-yasnippet
   :ensure t
   :after (consult yasnippet)
   :bind ("C-c y" . consult-yasnippet))
 
-;; Consult integration for flycheck
 (use-package consult-flycheck
   :ensure t
   :after (consult flycheck)
@@ -1350,7 +1212,6 @@ If buffer is modified, offer to save first."
   :demand t
   :diminish
   :custom
-  ;; Core settings
   (which-key-idle-delay 0)
   (which-key-idle-secondary-delay 0)
   (which-key-popup-type 'side-window)
@@ -1358,14 +1219,12 @@ If buffer is modified, offer to save first."
   (which-key-side-window-max-height 0.30)
   (which-key-show-early-on-C-h t)
 
-  ;; Display settings
   (which-key-separator " → ")
   (which-key-prefix-prefix "+")
   (which-key-max-display-columns nil)
   (which-key-min-display-lines 6)
   (which-key-sort-order 'which-key-prefix-then-key-order)
 
-  ;; Let which-key automatically format things
   (which-key-dont-use-unicode nil)
   (which-key-special-keys '("SPC" "TAB" "RET" "ESC" "DEL"))
 
@@ -1398,17 +1257,14 @@ If buffer is modified, offer to save first."
   (setq flyspell-issue-message-flag nil)
   (setq flyspell-issue-welcome-flag nil)
 
-  ;; FIX: Disable ispell word list since we're using aspell
   (setq ispell-alternate-dictionary nil)
 
-  ;; Remove ispell completions from text modes since we use aspell
   (add-hook 'text-mode-hook
             (lambda ()
               (setq-local completion-at-point-functions
                           (remove 'ispell-completion-at-point
                                   completion-at-point-functions))))
 
-  ;; Ensure aspell is installed
   (unless (executable-find "aspell")
     (message "Aspell not found; flyspell disabled")
     (flyspell-mode -1))
@@ -1428,33 +1284,27 @@ If buffer is modified, offer to save first."
   :ensure nil  ; Built-in
   :defer t
   :custom
-  ;; Keep it simple - Eglot works well with defaults
   (eglot-autoshutdown t)
   (eglot-sync-connect nil)
   (eglot-extend-to-xref t)
 
   :config
-  ;; Python configuration (if needed)
   (setq-default eglot-workspace-configuration
                 '((pylsp (plugins (flake8 (enabled . t))
                                   (black (enabled . t))
                                   (pycodestyle (enabled . :json-false))))))
 
   :hook
-  ;; Auto-start for these modes
   ((python-mode python-ts-mode
                 js-mode js-ts-mode
                 typescript-mode typescript-ts-mode) . eglot-ensure)
 
   :bind
-  ;; Eglot uses standard Emacs commands!
   (:map eglot-mode-map
-        ;; Use built-in xref commands
         ("C-c l r" . xref-find-references)
         ("C-c l d" . xref-find-definitions)
         ("C-c l i" . eglot-find-implementation)
         ("C-c l t" . eglot-find-typeDefinition)
-        ;; Eglot-specific commands
         ("C-c l a" . eglot-code-actions)
         ("C-c l R" . eglot-rename)
         ("C-c l f" . eglot-format)
@@ -1468,7 +1318,6 @@ If buffer is modified, offer to save first."
   (:map eglot-mode-map
         ("C-c l s" . consult-eglot-symbols)))
 
-;; Better diagnostics display with Flymake (built-in)
 (use-package flymake
   :ensure nil  ; Built-in
   :bind
@@ -1482,7 +1331,6 @@ If buffer is modified, offer to save first."
 (use-package cape
   :ensure t
   :init
-  ;; Add Cape completion functions to completion-at-point-functions
   (add-to-list 'completion-at-point-functions #'cape-file)
   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
   :bind
@@ -1498,7 +1346,6 @@ If buffer is modified, offer to save first."
    ("C-c a" . org-agenda)
    ("C-c c" . org-capture))
   :custom
-  ;; Core settings
   (org-directory "~/Documents/notes/")
   (org-startup-indented t)
   (org-startup-folded 'show)  ; 'content' hides too much
@@ -1506,23 +1353,19 @@ If buffer is modified, offer to save first."
   (org-log-done 'time)
   (org-hide-emphasis-markers t)
 
-  ;; Better defaults
   (org-agenda-files (list org-directory))
   (org-todo-keywords
    '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)" "CANCELED(c@)")))
 
-  ;; Capture templates
   (org-capture-templates
    '(("t" "Todo" entry (file "todo.org")
       "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n")
      ("n" "Note" entry (file "notes.org")
       "* %? :NOTE:\n%U\n")))
 
-  ;; Export settings
   (org-export-with-broken-links t)
   (org-html-validation-link nil)
 
-  ;; LaTeX/PDF export settings
   (org-latex-pdf-process
    '("pdflatex -interaction nonstopmode -output-directory %o %f"
      "pdflatex -interaction nonstopmode -output-directory %o %f"
@@ -1531,9 +1374,7 @@ If buffer is modified, offer to save first."
   :hook
   (org-mode . visual-line-mode))
 
-;; LaTeX export configuration for custom document classes
 (with-eval-after-load 'ox-latex
-  ;; Add your custom document class
   (add-to-list 'org-latex-classes
                '("citywide"
                  "\\documentclass{citywide}"
@@ -1541,12 +1382,10 @@ If buffer is modified, offer to save first."
                  ("\\subsection{%s}" . "\\subsection*{%s}")
                  ("\\subsubsection{%s}" . "\\subsubsection*{%s}")))
 
-  ;; Use latexmk if available (better than multiple pdflatex runs)
   (when (executable-find "latexmk")
     (setq org-latex-pdf-process
           '("latexmk -pdf -f -interaction=nonstopmode -output-directory=%o %f"))))
 
-;; Optional: Modern Org for better experience
 (use-package org-modern
   :ensure t
   :hook (org-mode . org-modern-mode)
@@ -1555,7 +1394,6 @@ If buffer is modified, offer to save first."
   (org-modern-table-vertical 1)
   (org-modern-table-horizontal 0.2))
 
-;; Optional: GitHub Flavored Markdown (if you use GitHub)
 (use-package ox-gfm
   :ensure t
   :after org)
@@ -1582,26 +1420,20 @@ If buffer is modified, offer to save first."
   :defer t
   :bind ("C-c g" . magit-status)
   :custom
-  ;; Better performance
   (magit-diff-refine-hunk t)
   (magit-refresh-status-buffer nil)  ; Don't auto-refresh, use 'g' manually
 
-  ;; Commit message standards
   (git-commit-summary-max-length 50)
   (git-commit-style-convention-checks '(non-empty-second-line))
 
-  ;; Repository directories (if you have multiple projects)
   (magit-repository-directories '(("~/Code" . 1))))
 
-;; Forge - GitHub/GitLab integration (optional)
 (use-package forge
   :ensure t
   :after magit
   :custom
-  ;; Use built-in SQLite (Emacs 29+)
   (forge-database-connector 'sqlite-builtin))
 
-;; That's it! Magit has excellent defaults.
 
 ;;; grep settings
 
@@ -1658,7 +1490,6 @@ If buffer is modified, offer to save first."
   :hook
   (dired-mode . hl-line-mode)
   :custom
-  ;; Better defaults
   (dired-listing-switches "-alh --group-directories-first")
   (dired-dwim-target t)          ; Copy/move to other dired window
   (dired-recursive-copies 'always)
@@ -1667,11 +1498,9 @@ If buffer is modified, offer to save first."
   (dired-kill-when-opening-new-dired-buffer t)  ; Emacs 28+ feature
 
   :config
-  ;; Load dired-x for extra features
   (require 'dired-x)
   (setq dired-omit-files "\\`[.]?#\\|\\`[.][.]?\\'")
 
-  ;; Simple open externally function
   (defun dired-open-externally ()
     "Open file at point with system handler."
     (interactive)
@@ -1684,17 +1513,14 @@ If buffer is modified, offer to save first."
         ("E" . dired-open-externally)
         ("<backspace>" . dired-up-directory)))
 
-;; Icons support (optional but nice)
 (use-package nerd-icons-dired
   :ensure t
   :hook (dired-mode . nerd-icons-dired-mode))
 
-;; Better colors
 (use-package diredfl
   :ensure t
   :config (diredfl-global-mode 1))
 
-;; Subtree navigation (genuinely useful)
 (use-package dired-subtree
   :ensure t
   :bind
@@ -1709,7 +1535,6 @@ If buffer is modified, offer to save first."
   :ensure nil
   :defer t
   :custom
-  ;; Just the essentials
   (eww-search-prefix "https://duckduckgo.com/html?q=")
   (shr-use-colors t)
   (shr-use-fonts t)
@@ -1718,7 +1543,6 @@ If buffer is modified, offer to save first."
 
   :bind
   (:map eww-mode-map
-        ;; Zoom controls (genuinely useful)
         ("+" . text-scale-increase)
         ("-" . text-scale-decrease)
         ("0" . text-scale-set))
@@ -1771,17 +1595,9 @@ If buffer is modified, offer to save first."
   :defer t
   :hook
   ( ;; If you use Markdown or plain text files, then you want to make
-   ;; the Denote links clickable (Org renders links as buttons right
-   ;; away)
    (text-mode . denote-fontify-links-mode-maybe)
-   ;; Apply colours to Denote names in Dired.  This applies to all
-   ;; directories.  Check `denote-dired-directories' for the specific
-   ;; directories you may prefer instead.  Then, instead of
-   ;; `denote-dired-mode', use `denote-dired-mode-in-directories'.
    (dired-mode . denote-dired-mode))
   :bind
-  ;; Denote DOES NOT define any key bindings.  This is for the user to
-  ;; decide.  For example:
   (:map
    global-map
    ("C-c n n" . denote)
@@ -1789,21 +1605,14 @@ If buffer is modified, offer to save first."
    ("C-c n d" . denote-dired)
    ("C-c n g" . denote-grep)
 
-   ;; If you intend to use Denote with a variety of file types, it is
-   ;; easier to bind the link-related commands to the `global-map', as
-   ;; shown here.  Otherwise follow the same pattern for `org-mode-map',
-   ;; `markdown-mode-map', and/or `text-mode-map'.
    ("C-c n l" . denote-link)
    ("C-c n L" . denote-add-links)
    ("C-c n b" . denote-backlinks)
    ("C-c n q c" . denote-query-contents-link) ; create link that triggers a grep
    ("C-c n q f" . denote-query-filenames-link) ; create link that triggers a dired
-   ;; Note that `denote-rename-file' can work from any context, not just
-   ;; Dired bufffers.  That is why we bind it here to the `global-map'.
    ("C-c n r" . denote-rename-file)
    ("C-c n R" . denote-rename-file-using-front-matter)
 
-   ;; Key bindings specifically for Dired.
    :map
    dired-mode-map
    ("C-c C-d C-i" . denote-dired-link-marked-notes)
@@ -1814,7 +1623,6 @@ If buffer is modified, offer to save first."
     denote-dired-rename-marked-files-using-front-matter))
 
   :config
-  ;; Remember to check the doc string of each of those variables.
   (setq denote-directory (expand-file-name "~/Documents/notes/"))
   (setq denote-save-buffers nil)
   (setq denote-known-keywords
@@ -1827,10 +1635,8 @@ If buffer is modified, offer to save first."
   (setq denote-rename-confirmations
         '(rewrite-front-matter modify-file-name))
 
-  ;; Pick dates, where relevant, with Org's advanced interface:
   (setq denote-date-prompt-use-org-read-date t)
 
-  ;; Automatically rename Denote buffers using the `denote-rename-buffer-format'.
   (denote-rename-buffer-mode 1))
 
 (use-package consult-denote
@@ -1843,21 +1649,15 @@ If buffer is modified, offer to save first."
 (use-package denote-journal
   :ensure t
   :after denote
-  ;; Bind those to some key for your convenience.
   :commands
   (denote-journal-new-entry
    denote-journal-new-or-existing-entry
    denote-journal-link-or-create-entry)
   :hook (calendar-mode . denote-journal-calendar-mode)
   :config
-  ;; Use the "journal" subdirectory of the `denote-directory'.  Set this
-  ;; to nil to use the `denote-directory' instead.
   (setq denote-journal-directory
         (expand-file-name "journal" denote-directory))
-  ;; Default keyword for new journal entries. It can also be a list of
-  ;; strings.
   (setq denote-journal-keyword "journal")
-  ;; Read the doc string of `denote-journal-title-format'.
   (setq denote-journal-title-format 'day-date-month-year))
 
 (use-package denote-org :ensure t :after denote :defer t)
@@ -1867,10 +1667,8 @@ If buffer is modified, offer to save first."
 (use-package treesit
   :ensure nil
   :custom
-  ;; New in 30.1: Better tree-sitter integration
   (treesit-font-lock-level 4)  ; Maximum highlighting
   :config
-  ;; Remap modes automatically
   (setq major-mode-remap-alist
         '((c-mode . c-ts-mode)
           (c++-mode . c++-ts-mode)
@@ -1885,7 +1683,6 @@ If buffer is modified, offer to save first."
   :ensure t
   :custom
   (treesit-auto-install 'prompt)
-  ;; Only use tree-sitter for languages where it's actually better
   (treesit-auto-langs '(python typescript tsx json bash))
   :config
   (global-treesit-auto-mode))
@@ -1898,15 +1695,12 @@ If buffer is modified, offer to save first."
 (use-package flymake
   :ensure nil  ; Built-in
   :hook
-  ;; Enable for programming modes
   (prog-mode . flymake-mode)
   :custom
-  ;; Performance settings
   (flymake-no-changes-timeout 0.5)
   (flymake-start-on-save-buffer t)
   (flymake-start-on-flymake-mode t)
 
-  ;; Display settings
   (flymake-fringe-indicator-position 'right-fringe)
   (flymake-suppress-zero-counters t)
   (flymake-show-diagnostics-at-end-of-line t)  ; Emacs 30.1 feature!
@@ -1920,51 +1714,25 @@ If buffer is modified, offer to save first."
         ("C-c ! e" . display-local-help))  ; Shows error at point
 
   :config
-  ;; Better error display at end of line (Emacs 30.1)
   (setq flymake-diagnostic-functions
         (append flymake-diagnostic-functions
                 '(flymake-proc-legacy-flymake))))
 
-;; Enhanced Flymake UI (optional but nice)
-;; (use-package flymake-popon
-;;   :ensure t
-;;   :after flymake
-;;   :hook (flymake-mode . flymake-popon-mode)
-;;   :custom
-;;   (flymake-popon-delay 0.5)
-;;   (flymake-popon-width 60)
-;;   (flymake-popon-method 'popon))  ; or 'posframe if you prefer
 
-;; For Elisp files specifically
 (use-package package-lint-flymake
   :ensure t
   :hook
   (emacs-lisp-mode . package-lint-flymake-setup)
   :config
-  ;; Only enable for actual packages, not config files
   (defun my/maybe-enable-package-lint ()
     (when (and (buffer-file-name)
                (string-match-p "\\(?:packages\\|lisp\\)/" (buffer-file-name))
                (not (string-match-p "init\\.el\\|config\\.el" (buffer-file-name))))
       (package-lint-flymake-setup)))
 
-  ;; Replace the hook
   (remove-hook 'emacs-lisp-mode-hook #'package-lint-flymake-setup)
   (add-hook 'emacs-lisp-mode-hook #'my/maybe-enable-package-lint))
 
-;; Alternative: If you REALLY want Flycheck despite Eglot using Flymake
-;; (but this is not recommended - pick one!)
-;;
-;; (use-package flycheck
-;;   :ensure t
-;;   :hook (prog-mode . flycheck-mode)
-;;   :custom
-;;   (flycheck-indication-mode 'right-fringe)
-;;   (flycheck-check-syntax-automatically '(save mode-enabled))
-;;   :config
-;;   ;; Disable Flymake when Flycheck is enabled
-;;   (add-hook 'flycheck-mode-hook
-;;             (lambda () (flymake-mode -1))))
 
 ;;; YAsnippet
 
@@ -1988,7 +1756,6 @@ If buffer is modified, offer to save first."
   (:map yas-minor-mode-map
         ("C-c y" . yas-insert-snippet))) ; Trigger snippet insertion
 
-;; Yasnippet-snippets: Predefined snippet collection
 (use-package yasnippet-snippets
   :ensure t
   :after yasnippet
@@ -1999,7 +1766,6 @@ If buffer is modified, offer to save first."
       (unless (file-directory-p snippets-dir)
         (warn "yasnippet-snippets directory %s not found; consider reinstalling the package" snippets-dir)))))
 
-;; Consult-yasnippet: Enhanced snippet selection with consult
 (use-package consult-yasnippet
   :ensure t
   :after (yasnippet consult)
@@ -2033,21 +1799,17 @@ If buffer is modified, offer to save first."
   :init
   (setq 0x0-server "https://0x0.st")
   (setq 0x0-use-curl t)
-  ;; Define the prefix map before using it
   :config
   (setq 0x0-kill-ring-results t)
   (defvar my-0x0-prefix-map (make-sparse-keymap)
     "Prefix keymap for 0x0 commands.")
   (define-prefix-command 'my-0x0-prefix-map)
-  ;; Bind the prefix command to "C-c 0"
   (global-set-key (kbd "C-c 0") 'my-0x0-prefix-map)
-  ;; Define the subcommands under the prefix
   (define-key my-0x0-prefix-map (kbd "f") '0x0-upload-file)
   (define-key my-0x0-prefix-map (kbd "s") '0x0-shorten-uri)
   (define-key my-0x0-prefix-map (kbd "t") '0x0-upload-text)
   (define-key my-0x0-prefix-map (kbd "d") '0x0-dwim)
   (define-key my-0x0-prefix-map (kbd "p") '0x0-popup)
-  ;; Optional: Integrate with which-key
   )
 
 ;;; Eshell - Emacs Shell
@@ -2055,7 +1817,6 @@ If buffer is modified, offer to save first."
   :ensure nil
   :defer t
   :custom
-  ;; Store eshell files in temp directory
   (eshell-directory-name (expand-file-name "eshell" my-tmp-dir))
   (eshell-history-size 10000)
   (eshell-hist-ignoredups t)
@@ -2063,26 +1824,22 @@ If buffer is modified, offer to save first."
   (eshell-prompt-regexp "^[^#$\n]*[#$] ")
 
   :config
-  ;; Simple prompt with directory
   (setq eshell-prompt-function
         (lambda ()
           (concat (propertize (abbreviate-file-name default-directory)
                               'face 'font-lock-comment-face)
                   (if (= (user-uid) 0) " # " " $ "))))
 
-  ;; Basic aliases
   (defalias 'eshell/ll 'eshell/ls)
   (defalias 'eshell/la '(lambda () (eshell/ls "-a")))
   (defalias 'eshell/clear 'eshell/clear-scrollback)
 
   :hook
-  ;; Disable line numbers in eshell
   (eshell-mode . (lambda () (display-line-numbers-mode -1)))
 
   :bind
   ("C-c e" . eshell))
 
-;; Syntax highlighting (optional but nice)
 (use-package eshell-syntax-highlighting
   :ensure t
   :after eshell
@@ -2117,12 +1874,10 @@ parameters set in early-init.el to ensure robust UI element disabling."
       (tool-bar-mode -1)
       (scroll-bar-mode -1))))
 
-;; Apply to non-daemon initial frame (for regular Emacs startup)
 (unless (daemonp)
   (when (display-graphic-p)
     (my-after-make-frame-setup)))
 
-;; Apply to all new frames created later (essential for daemon mode)
 (add-hook 'after-make-frame-functions #'my-after-make-frame-setup)
 
 ;;; hl-line
@@ -2163,31 +1918,24 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :ensure t
   :defer t
   :custom
-  ;; Basic settings
   (eat-kill-buffer-on-exit t)
   (eat-query-before-killing-running-terminal nil)
 
-  ;; Display settings
   (eat-enable-blinking-text t)
   (eat-term-scrollback-size 10000)
 
-  ;; Shell settings - use default login shell
   (eat-shell-command (list (getenv "SHELL") "-l"))
 
-  ;; Integration settings
   (eat-eshell-visual-command-mode-map
    '(("git" . ("log" "diff" "show"))))  ; Commands that need visual mode
 
   :hook
-  ;; Eshell integration
   (eshell-load . eat-eshell-mode)
   (eshell-load . eat-eshell-visual-command-mode)
 
   :bind
-  ;; Global binding to launch eat
   ("C-c T" . eat))
 
-;; Hide eat modes from modeline (if using delight)
 (with-eval-after-load 'delight
   (delight '((eat-eshell-mode nil "eat")
              (eat-eshell-visual-command-mode nil "eat"))))
@@ -2207,15 +1955,12 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :ensure nil  ; Built-in since Emacs 30.1
   :demand t    ; Load immediately for consistent behavior
   :config
-  ;; Enable EditorConfig support globally
   (editorconfig-mode 1)
 
-  ;; Enhanced EditorConfig properties for Emacs 30.1
   (setq editorconfig-trim-whitespaces-mode 'ws-butler-mode ; Use ws-butler if available
         editorconfig-get-properties-function
         #'editorconfig-get-properties-from-exec) ; Use external EditorConfig for better compatibility
 
-  ;; Comprehensive tree-sitter mode support
   (setq editorconfig-indentation-alist
         (append editorconfig-indentation-alist
                 '((typescript-ts-mode typescript-indent-level)
@@ -2227,7 +1972,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
                   (rust-ts-mode rust-indent-offset)
                   (yaml-ts-mode yaml-indent-offset))))
 
-  ;; Exclude modes where EditorConfig shouldn't apply
   (setq editorconfig-exclude-modes
         '(help-mode
           magit-mode
@@ -2236,7 +1980,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
           ibuffer-mode
           minibuffer-mode))
 
-  ;; Optimize for large projects
   (setq editorconfig-exec-path (executable-find "editorconfig"))
 
   (message "EditorConfig optimized for Emacs 30.1 with tree-sitter support"))
@@ -2410,7 +2153,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :mode (("\\.log\\(?:\\.[0-9]+\\)?\\'" . logview-mode)
          ("\\<\\(syslog\\|messages\\|error\\|debug\\|server\\|access\\|log\\)\\'" . logview-mode))
   :config
-  ;; Infer log files based on content (timestamp patterns)
   (add-to-list 'magic-mode-alist
                '("^\\(?:[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\s-+\\|[A-Za-z]\\{3\\}\\s-+[0-9]\\{1,2\\}\\s-+[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\)" . logview-mode)))
 
@@ -2467,7 +2209,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (mastodon-discover))
 
 ;;; stupid fucking emojis
-;; im tired of the squares
 
 (use-package emoji
   :ensure nil
@@ -2509,7 +2250,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :ensure nil
   :defer t
   :config
-  ;; Core settings
   (setq
    erc-server-coding-system '(utf-8 . utf-8)
    erc-kill-buffer-on-part t
@@ -2526,14 +2266,12 @@ parameters set in early-init.el to ensure robust UI element disabling."
    erc-log-write-after-send t
    erc-log-write-after-insert t)
 
-  ;; Modules: Enable only what we need, exclude services
   (setq erc-modules '(autojoin button completion fill irccontrols
                                list log match menu move-to-prompt netsplit
                                networks noncommands readonly ring stamp track
                                sasl))
   (erc-update-modules)
 
-  ;; Built-in ERC tracking - shows only channels with activity
   (setq erc-track-enable-keybindings t    ; Enable C-c C-SPC
         erc-track-visibility t             ; Always visible
         erc-track-position-in-mode-line t  ; Show in mode-line
@@ -2545,18 +2283,15 @@ parameters set in early-init.el to ensure robust UI element disabling."
         erc-track-showcount t
         erc-track-showcount-string ":")
 
-  ;; Autojoin configuration
   (setq erc-autojoin-channels-alist
         '(("Libera.Chat" "#emacs" "#gnu" "#fsf" "#lisp" "#commonlisp"))
         erc-autojoin-timing 'ident
         erc-autojoin-delay 5)
 
-  ;; Buffer behavior
   (setq erc-join-buffer 'bury
         erc-auto-query 'bury
         erc-query-display 'bury)
 
-  ;; Connection function
   (defun my-erc-connect-libera ()
     "Connect to Libera Chat using SASL authentication."
     (interactive)
@@ -2576,7 +2311,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
             erc-sasl-password pass)
       (erc-tls :server host :port port :nick user :full-name user)))
 
-  ;; Simple buffer cycling
   (defun my-erc-next-channel ()
     "Switch to next ERC channel buffer."
     (interactive)
@@ -2602,13 +2336,11 @@ parameters set in early-init.el to ensure robust UI element disabling."
         (switch-to-buffer (caar erc-modified-channels-alist))
       (message "No channel activity")))
 
-  ;; Completion setup
   (defun my-erc-completion-setup ()
     "Enable completion-preview for ERC."
     (setq-local pcomplete-cycle-completions nil)
     (completion-preview-mode 1))
 
-  ;; Use consult to switch between ALL ERC buffers
   (defun my-erc-switch-to-buffer ()
     "Switch to any ERC buffer using consult."
     (interactive)
