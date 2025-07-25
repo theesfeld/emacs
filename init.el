@@ -1,11 +1,66 @@
 ;;; init.el --- Emacs Configuration -*- lexical-binding: t -*-
+;;; version: 0.7.3
+
+;; Copyright (C) 2024 William Theesfeld <william@theesfeld.net>
+
+;; Author: William Theesfeld <william@theesfeld.net>
+;; Maintainer: William Theesfeld <william@theesfeld.net>
+;; URL: https://github.com/theesfeld/emacs-config
+;; Keywords: convenience, config
+;; Package-Requires: ((emacs "30.1"))
+
+;; This file is NOT part of GNU Emacs.
+
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 ;;; Commentary:
-;; tj@emacs.su
+
+;; This is a comprehensive Emacs configuration for version 30.1, featuring:
+;; - EXWM window manager integration
+;; - Modern completion with Vertico, Orderless, and Consult
+;; - Development tools with Eglot LSP and Tree-sitter
+;; - Note-taking with Denote
+;; - Optimized garbage collection with GCMH
+;;
+;; Email: tj@emacs.su
+
 ;;; Code:
 
 ;;; vc stuff
 
 (setq package-vc-register-as-project nil) ; Emacs 30
+
+;;; Garbage Collection Magic Hack (gcmh) - Optimized for Emacs 30.1
+(use-package gcmh
+  :ensure t
+  :demand t  ; Load immediately for optimal performance
+  :custom
+  ;; Emacs 30.1 optimized settings
+  (gcmh-idle-delay 10)  ; Run GC after 10s of idle time
+  (gcmh-auto-idle-delay-factor 10)  ; Aggressive idle collection
+  (gcmh-high-cons-threshold (* 128 1024 1024))  ; 128MB for modern systems
+  (gcmh-low-cons-threshold (* 20 1024 1024))    ; 20MB baseline
+  :config
+  (gcmh-mode 1)
+  ;; Verbose GC stats in *Messages* (comment out for production)
+  ;; (setq gcmh-verbose t)
+
+  ;; Force GC after init for clean slate
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (setq gc-cons-percentage 0.1)  ; Restore normal percentage
+              (garbage-collect))))
 
 ;;; pinentry
 
@@ -809,19 +864,6 @@ If buffer is modified, offer to save first."
 
   (setq read-process-output-max (* 1024 1024)) ; 1MB chunks
 
-  :bind
-  (("C-c t c" . tramp-cleanup-this-connection)
-   ("C-c t C" . tramp-cleanup-all-connections)))
-
-(use-package magit
-  :defer t
-  :custom
-  (magit-tramp-pipe-stty-settings 'pty))
-
-(use-package tramp
-  :ensure nil
-  :defer t
-  :config
   (defun my/tramp-cleanup-all ()
     "Clean all TRAMP connections and buffers."
     (interactive)
@@ -839,6 +881,7 @@ If buffer is modified, offer to save first."
   :bind
   (("C-c t c" . my/tramp-cleanup-current)
    ("C-c t C" . my/tramp-cleanup-all)))
+
 
 ;;; Custom Log Mode
 (define-derived-mode log-mode fundamental-mode "Log"
@@ -1134,7 +1177,7 @@ If buffer is modified, offer to save first."
 (use-package consult-yasnippet
   :ensure t
   :after (consult yasnippet)
-  :bind ("C-c y" . consult-yasnippet))
+  :bind ("C-c Y" . consult-yasnippet))
 
 (use-package consult-flycheck
   :ensure t
@@ -1318,14 +1361,6 @@ If buffer is modified, offer to save first."
   (:map eglot-mode-map
         ("C-c l s" . consult-eglot-symbols)))
 
-(use-package flymake
-  :ensure nil  ; Built-in
-  :bind
-  (:map flymake-mode-map
-        ("C-c ! n" . flymake-goto-next-error)
-        ("C-c ! p" . flymake-goto-prev-error)
-        ("C-c ! l" . flymake-show-buffer-diagnostics)
-        ("C-c ! L" . flymake-show-project-diagnostics)))
 
 ;;; Cape for better completion (works with Eglot)
 (use-package cape
@@ -1422,6 +1457,7 @@ If buffer is modified, offer to save first."
   :custom
   (magit-diff-refine-hunk t)
   (magit-refresh-status-buffer nil)  ; Don't auto-refresh, use 'g' manually
+  (magit-tramp-pipe-stty-settings 'pty)
 
   (git-commit-summary-max-length 50)
   (git-commit-style-convention-checks '(non-empty-second-line))
@@ -1766,11 +1802,6 @@ If buffer is modified, offer to save first."
       (unless (file-directory-p snippets-dir)
         (warn "yasnippet-snippets directory %s not found; consider reinstalling the package" snippets-dir)))))
 
-(use-package consult-yasnippet
-  :ensure t
-  :after (yasnippet consult)
-  :bind
-  ("C-c Y" . consult-yasnippet)) ; Trigger consult-yasnippet
 
 ;;; helpful
 
@@ -2237,12 +2268,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
                        gcs-done))))
 
 ;;; nerd icons completion
-(use-package nerd-icons-completion
-  :ensure t
-  :after marginalia
-  :config
-  (nerd-icons-completion-mode)
-  (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
 
 ;;; ERC
 
