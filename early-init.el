@@ -25,11 +25,15 @@
         native-comp-jit-compilation t
         native-comp-warning-on-missing-source t
         native-comp-compiler-options '("-O3")
-        native-comp-async-jobs-number 10)
+        ;; Reduce parallel jobs to avoid system overload
+        native-comp-async-jobs-number (min 4 (num-processors)))
 
-  ;; Deny list for JIT compilation - skip frequently changing files
+  ;; More selective JIT compilation deny list
   (setq native-comp-jit-compilation-deny-list
-        '("\\(?:[/\\\\]\\.dir-locals\\.el$\\)"
+        '("/\\.dir-locals\\.el\\'"
+          "/\\.\\(git\\|svn\\|hg\\)/.*\\'"
+          "/temp\\(?:orary\\)?/.*\\'"
+          "/tmp/.*\\'"
           "\\(?:[/\\\\]init\\.el$\\)"
           "\\(?:[/\\\\]early-init\\.el$\\)"
           "\\(?:[/\\\\]custom\\.el$\\)"
