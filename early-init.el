@@ -1,49 +1,73 @@
-;;; early-init.el -*- lexical-binding: t -*-
+;;; early-init.el --- Early initialization for Emacs 30.1 -*- lexical-binding: t; no-byte-compile: t -*-
 
-;; Native compilation settings optimized for Emacs 30.1
+;; Copyright (C) 2025 William Theesfeld <william@theesfeld.net>
+
+;; This file is NOT part of GNU Emacs.
+
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;;; Commentary:
+
+;; Early initialization for Emacs 30.1, executed before package system
+;; and GUI initialization.  Optimized for performance and modern features.
+
+;;; Code:
+
 (when (native-comp-available-p)
-  ;; Enhanced error handling and performance for Emacs 30.1
   (setq native-comp-async-report-warnings-errors 'silent
         native-compile-prune-cache t
-        native-comp-speed 3                    ; Balance speed vs compile time
-        native-comp-debug 0                    ; Disable debug for performance
-        native-comp-verbose 0                  ; Reduce compilation noise
-        native-comp-jit-compilation t          ; Enable JIT compilation (30.1)
-        native-comp-deferred-compilation t    ; Compile in background
-        native-comp-compiler-options '("-O3"))
+        native-comp-speed 3
+        native-comp-debug 0
+        native-comp-verbose 0
+        native-comp-jit-compilation t
+        native-comp-warning-on-missing-source t
+        native-comp-compiler-options '("-O3")
+        native-comp-async-jobs-number 10)
 
+  ;; Deny list for JIT compilation - skip frequently changing files
   (setq native-comp-jit-compilation-deny-list
         '("\\(?:[/\\\\]\\.dir-locals\\.el$\\)"
-          "\\(?:[/\\\\]init\\.el$\\)"  ; Don't compile frequently changing configs
-          "\\(?:[/\\\\]early-init\\.el$\\)"))
+          "\\(?:[/\\\\]init\\.el$\\)"
+          "\\(?:[/\\\\]early-init\\.el$\\)"
+          "\\(?:[/\\\\]custom\\.el$\\)"
+          "\\(?:[/\\\\]recentf$\\)"
+          "\\(?:[/\\\\]savehist$\\)"
+          "\\(?:[/\\\\]saveplace$\\)"
+          ".*-autoloads\\.el$"
+          ".*loaddefs\\.el$"))
 
+  ;; Centralized ELN cache location
   (when (boundp 'native-comp-eln-load-path)
-    (add-to-list 'native-comp-eln-load-path
-                 (expand-file-name "eln-cache/" user-emacs-directory)))
+    (startup-redirect-eln-cache
+     (expand-file-name "eln-cache/" user-emacs-directory)))
+  
+  ;; Emacs 30.1: Control synchronous compilation
+  (when (boundp 'native-comp-jit-compilation-blocklist)
+    (setq native-comp-jit-compilation-blocklist
+          '(eval-buffer eval-region eval-last-sexp)))
 
   ;; Emacs 30.1: Optimized cache and job management
   (when (boundp 'startup-redirect-eln-cache)
-    (setq startup-redirect-eln-cache t))
+    (setq startup-redirect-eln-cache
+          (expand-file-name "eln-cache/" user-emacs-directory)))
 
-  ;; Increase native compilation job limit for modern systems
-  (when (> (num-processors) 4)
-    (setq native-comp-async-jobs-number (/ (num-processors) 2)))
-
-  ;; Prioritize frequently used packages for native compilation
-  (setq native-comp-bootstrap-allow-list
-        '("vertico" "orderless" "consult" "marginalia" "magit"))
-
-  (setq native-comp-bootstrap-deny-list
-        '("tramp" "tramp-.*" "docker-tramp")) ; Avoid compiling tramp for stability
-
-  (when (> (num-processors) 8)
-    (setq native-comp-async-jobs-number (- (num-processors) 2))))
+  (setq native-comp-priority-cpus 2)
+  
+  ;; Functions that should never be optimized
+  (setq native-comp-never-optimize-functions
+        '(eval-buffer eval-region eval-last-sexp
+          load-file byte-compile-file)))
 
 ;; Disable custom.el by making it disposable
 (setq custom-file (make-temp-file "emacs-custom-"))
 
-;; Enable use-package imenu support early
-(setq use-package-enable-imenu-support t)
+;; use-package is built-in as of Emacs 29
+(setq use-package-enable-imenu-support t
+      use-package-compute-statistics t    ; Enable statistics
+      use-package-verbose nil)            ; Less verbose output
 
 ;; Prevent white flash during startup
 ;; Set dark background immediately - this is the proper way in Emacs 30.1
@@ -55,6 +79,10 @@
 ;; Ensure packages will be initialized after early-init
 (setq package-enable-at-startup t)
 
+;; Package system configuration for Emacs 30.1
+(setq package-enable-at-startup t)        ; Let package.el handle initialization
+(setq package-quickstart t)               ; Use package quickstart cache
+
 ;; Package archives optimized for Emacs 30.1
 (setq package-archives
       '(("gnu-elpa" . "https://elpa.gnu.org/packages/")          ; Official GNU packages
@@ -65,29 +93,36 @@
 ;; Enable package signature verification for security
 (setq package-check-signature 'allow-unsigned) ; Allow unsigned for MELPA compatibility
 
-;; Package priorities optimized for GNU compliance and Emacs 30.1
-;; Highest number gets priority (what is not mentioned has priority 0)
+;; Package priorities - prefer GNU packages
 (setq package-archive-priorities
-      '(("gnu-elpa" . 10)        ; Highest priority for official GNU packages
-        ("gnu-elpa-devel" . 8)   ; Development GNU packages
-        ("nongnu" . 5)           ; NonGNU ELPA packages
-        ("melpa" . 3)))          ; MELPA packages (lower priority)
+      '(("gnu-elpa" . 10)
+        ("gnu-elpa-devel" . 8)
+        ("nongnu" . 5)
+        ("melpa" . 3)))
 
-;; Prefer GNU ELPA packages when available
-(setq package-archive-selection-policy 'prefer-gnu)
+;; Emacs 30.1: Package selection and installation policies
+(setq package-archive-column-width 12
+      package-version-column-width 28
+      package-install-upgrade-built-in t
+      package-native-compile t)           ; Native compile packages
 
-(when (boundp 'package-install-parallel)
-  (setq package-install-parallel t))
+;; Package-vc settings for installing from source (new in Emacs 29+)
+(setq package-vc-register-as-project nil) ; Don't register vc packages as projects
 
-;;; performance optimizations
-(setq read-process-output-max (* 1024 1024 3))  ; 3MB for better LSP performance
+;(setq read-process-output-max (* 4 1024 1024))
+
 (setq process-adaptive-read-buffering nil)      ; More consistent subprocess I/O
+(setq bidi-display-reordering 'left-to-right)   ; Faster for LTR languages
+(setq-default bidi-paragraph-direction 'left-to-right)
+(setq auto-mode-case-fold nil)                  ; Faster file-mode detection
+(setq ffap-machine-p-known 'reject)             ; Don't ping for machine names
+(setq command-line-x-option-alist nil)          ; Skip X11 options in terminal
 
-;; Pre-configure modus-themes settings for when it loads
-(setq modus-themes-bold-constructs t
-      modus-themes-italic-constructs t
-      modus-themes-mixed-fonts t
-      modus-themes-disable-other-themes t)
+;; Theme configuration hints for later loading
+(setq custom-theme-directory (expand-file-name "themes" user-emacs-directory))
+
+;; Prevent theme loading during startup
+(setq inhibit-x-resources t)              ; Don't load X resources
 
 (setq frame-resize-pixelwise t
       frame-inhibit-implied-resize 'force
@@ -103,23 +138,10 @@
       inhibit-startup-buffer-menu nil
       initial-buffer-choice nil)
 
-(when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
-  (set-face-attribute 'default nil
-                      :font "BerkeleyMonoVariable Nerd Font Mono"
-                      :height 140))
-
-;; Set variable-pitch font (optional, for prose or Org-mode)
-(when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
-  (set-face-attribute 'variable-pitch nil
-                      :font "BerkeleyMonoVariable Nerd Font Mono"
-                      :height 160))
-
-;; Customize font-lock faces
-(set-face-attribute 'font-lock-comment-face nil
-                    :slant 'italic
-                    :weight 'light)
-(set-face-attribute 'font-lock-keyword-face nil
-                    :weight 'black)
+;; Font configuration - done early to prevent flashing
+;; But keep it minimal to speed up startup
+(push '(font . "BerkeleyMonoVariable Nerd Font Mono-14") default-frame-alist)
+(push '(font . "BerkeleyMonoVariable Nerd Font Mono-14") initial-frame-alist)
 
 ;; Scratch buffer configuration - must be set early for proper initialization
 (setq initial-major-mode 'lisp-interaction-mode)
@@ -130,19 +152,25 @@
 
 ")
 
-(dolist (variable '(initial-frame-alist default-frame-alist))
-  (set variable `((width . (text-pixels . 800))
-                  (height . (text-pixels . 900))
-                  (horizontal-scroll-bars . nil)
-                  (menu-bar-lines . 0) ; alternative to disabling `menu-bar-mode'
-                  (tool-bar-lines . 0) ; alternative to disabling `tool-bar-mode'
-                  ,@(if x-toolkit-scroll-bars
-                        (list
-                         '(vertical-scroll-bars . nil)
-                         '(scroll-bar-width . 12))
-                      (list
-                       '(vertical-scroll-bars . right)
-                       '(scroll-bar-width . 6))))))
+;; Frame parameters optimized for fast startup and reduced flicker
+(setq default-frame-alist
+      '((width . 100)
+        (height . 50)
+        (menu-bar-lines . 0)
+        (tool-bar-lines . 0)
+        (vertical-scroll-bars . nil)
+        (horizontal-scroll-bars . nil)
+        (internal-border-width . 0)
+        (left-fringe . 8)
+        (right-fringe . 8)
+        (background-color . "#000000")
+        (foreground-color . "#ffffff")
+        (alpha-background . 100)          ; Emacs 29+ transparency
+        (ns-appearance . dark)            ; macOS dark mode
+        (ns-transparent-titlebar . t)))   ; macOS transparent titlebar
+
+;; Initial frame inherits default settings
+(setq initial-frame-alist default-frame-alist)
 
 (defun grim-emacs-no-minibuffer-scroll-bar (frame)
   "Remove the minibuffer scroll bars from FRAME."
@@ -150,34 +178,41 @@
     (set-window-scroll-bars (minibuffer-window frame) nil nil nil nil :persistent)))
 (add-hook 'after-make-frame-functions #'grim-emacs-no-minibuffer-scroll-bar)
 
+;; Garbage collection and file handler optimizations
+(defvar grim--initial-gc-cons-threshold gc-cons-threshold)
+(defvar grim--initial-gc-cons-percentage gc-cons-percentage)
+(defvar grim--initial-file-name-handler-alist file-name-handler-alist)
+
+(defvar grim--system-gc-threshold (* 256 1024 1024))
+(defvar grim--system-gc-percentage 0.3)
+
+;; Temporarily disable GC and file handlers during startup
 (setq gc-cons-threshold most-positive-fixnum
-      gc-cons-percentage 0.9)
+      gc-cons-percentage 0.6
+      file-name-handler-alist nil)
 
-(defvar grim-emacs--file-name-handler-alist file-name-handler-alist)
-(defvar grim-emacs--vc-handled-backends vc-handled-backends)
+;; Restore after startup with system-specific settings
+(defun grim--startup-optimization-restore ()
+  "Restore normal GC and file handler settings after startup."
+  (setq gc-cons-threshold grim--system-gc-threshold
+        gc-cons-percentage grim--system-gc-percentage
+        file-name-handler-alist grim--initial-file-name-handler-alist)
+  (garbage-collect))
 
-(setq file-name-handler-alist nil
-      vc-handled-backends '(Git))
-
-(add-hook 'emacs-startup-hook
-          (lambda ()
-            (setq gc-cons-threshold (* 100 1024 1024)
-                  gc-cons-percentage 0.1
-                  file-name-handler-alist grim-emacs--file-name-handler-alist
-                  vc-handled-backends grim-emacs--vc-handled-backends)))
-
-(when (boundp 'gcmh-mode)
-  (require 'gcmh nil t)
-  (gcmh-mode 1))
-
-(add-hook 'minibuffer-setup-hook (lambda () (setq gc-cons-threshold (* 50 1024 1024))))
-(add-hook 'minibuffer-exit-hook (lambda () (setq gc-cons-threshold (* 20 1024 1024))))
-
-(add-hook 'after-init-hook (lambda () (garbage-collect)))
+(add-hook 'emacs-startup-hook #'grim--startup-optimization-restore)
 
 ;; Frame naming for after-init
-(add-hook 'after-init-hook
+(add-hook 'window-setup-hook
           (lambda ()
-            (set-frame-name "home")))
+            (set-frame-name "home"))
+          -90) ; Run early in window-setup
 
+;; Miscellaneous early settings
+(setq load-prefer-newer t)                ; Load newer files
+(setq native-comp-async-report-warnings-errors nil) ; Silence native-comp warnings
+
+;; Emacs 30.1: Configure before/after init hooks
+(setq before-init-time (current-time))    ; Track init time
+
+(provide 'early-init)
 ;;; early-init.el ends here
