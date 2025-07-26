@@ -44,22 +44,17 @@
 ;;; Garbage Collection Magic Hack (gcmh) - Optimized for Emacs 30.1
 (use-package gcmh
   :ensure t
-  :demand t  ; Load immediately for optimal performance
+  :demand t
   :custom
-  ;; Emacs 30.1 optimized settings
-  (gcmh-idle-delay 10)  ; Run GC after 10s of idle time
-  (gcmh-auto-idle-delay-factor 10)  ; Aggressive idle collection
-  (gcmh-high-cons-threshold (* 128 1024 1024))  ; 128MB for modern systems
-  (gcmh-low-cons-threshold (* 20 1024 1024))    ; 20MB baseline
+  (gcmh-idle-delay 10)
+  (gcmh-auto-idle-delay-factor 10)
+  (gcmh-high-cons-threshold (* 128 1024 1024))
+  (gcmh-low-cons-threshold (* 20 1024 1024))
   :config
   (gcmh-mode 1)
-  ;; Verbose GC stats in *Messages* (comment out for production)
-  ;; (setq gcmh-verbose t)
-
-  ;; Force GC after init for clean slate
   (add-hook 'emacs-startup-hook
             (lambda ()
-              (setq gc-cons-percentage 0.1)  ; Restore normal percentage
+              (setq gc-cons-percentage 0.1)
               (garbage-collect))))
 
 ;;; pinentry
@@ -284,7 +279,7 @@ OLD is ignored but included for hook compatibility."
             XF86MonBrightnessDown))
 
     (setq exwm-input-global-keys
-          `(;; Reset EXWM
+          `(
             ([?\s-r] . exwm-reset)
             ([?\s-&] . (lambda (command)
                          (interactive (list (read-shell-command "$ ")))
@@ -664,7 +659,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :custom
   (minions-prominent-modes '(flymake-mode
                              flycheck-mode
-                             projectile-mode
                              lsp-mode
                              eglot--managed-mode))
   (minions-mode-line-lighter " ◎"))
@@ -1228,6 +1222,52 @@ If buffer is modified, offer to save first."
   (marginalia-mode . #'nerd-icons-completion-marginalia-setup))
 
 (use-package expand-region :ensure t :bind ("C-=" . er/expand-region))
+
+;;; Project.el - Built-in project management
+(use-package project
+  :ensure nil  ; Built-in
+  :custom
+  ;; Define additional project root files
+  (project-vc-extra-root-markers '(".project" ".projectile" "Makefile" "package.json"
+                                   "Cargo.toml" "go.mod" "requirements.txt"))
+
+  :config
+  ;; Add function to switch between test and implementation files
+  (defun my/project-find-test-or-impl ()
+    "Switch between test and implementation files."
+    (interactive)
+    (let* ((current-file (buffer-file-name))
+           (test-patterns '("_test" ".test" "-test" "Test" ".spec"))
+           (impl-patterns '("_test" ".test" "-test" "Test" ".spec"))
+           (is-test-file (cl-some (lambda (pattern) (string-match-p pattern current-file)) test-patterns)))
+      (if is-test-file
+          ;; In test file, find implementation
+          (let ((impl-file (replace-regexp-in-string "_test\\|.test\\|-test\\|Test\\|.spec" "" current-file)))
+            (if (file-exists-p impl-file)
+                (find-file impl-file)
+              (project-find-file)))
+        ;; In implementation file, try to find test
+        (project-find-file))))
+
+  ;; Standard project.el keybindings (C-x p prefix)
+  ;; These are already defined by project.el, but listed here for reference:
+  ;; C-x p f - project-find-file
+  ;; C-x p g - project-find-regexp
+  ;; C-x p d - project-dired
+  ;; C-x p b - project-switch-to-buffer (overridden by consult)
+  ;; C-x p s - project-shell
+  ;; C-x p e - project-eshell
+  ;; C-x p c - project-compile
+  ;; C-x p k - project-kill-buffers
+  ;; C-x p p - project-switch-project
+  ;; C-x p r - project-query-replace-regexp
+  ;; C-x p x - project-execute-extended-command
+
+  :bind
+  ;; Add a few custom bindings
+  (:map project-prefix-map
+        ("t" . my/project-find-test-or-impl)  ; Toggle test/implementation
+        ("m" . magit-status)))
 
 ;;; multiple cursors
 
