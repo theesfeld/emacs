@@ -732,7 +732,7 @@ This function is added to the \=`ef-themes-post-load-hook'."
    ("s-S-<left>" . windower-swap-left)
    ("s-S-<down>" . windower-swap-below)
    ("s-S-<up>" . windower-swap-above)
-   ("s-S-<right>" . windower-swap-right))) ; Close windower use-package and when block
+   ("s-S-<right>" . windower-swap-right)))
 
 ;;; shell environment (path, etc)
 
@@ -744,7 +744,7 @@ This function is added to the \=`ef-themes-post-load-hook'."
   (setq exec-path-from-shell-variables '("PATH"))
   (let ((local-bin (expand-file-name "~/.local/bin")))
     (unless (member local-bin exec-path)
-      (add-to-list 'exec-path local-bin t) ;; Add to end of exec-path
+      (add-to-list 'exec-path local-bin t)
       (setenv "PATH" (concat local-bin ":" (getenv "PATH")))))
   (exec-path-from-shell-initialize))
 
@@ -824,28 +824,28 @@ If buffer is modified, offer to save first."
   :custom
   (tramp-default-method "ssh")
   (tramp-use-scp-direct-remote-copying t)
-  (tramp-copy-size-limit (* 4 1024 1024)) ; Increased to 4MB for modern networks
+  (tramp-copy-size-limit (* 4 1024 1024))
 
-  (tramp-verbose 1) ; Lower is faster
+  (tramp-verbose 1)
   (remote-file-name-inhibit-locks t)
   (remote-file-name-inhibit-auto-save-visited t)
 
-  (tramp-use-connection-share t) ; SSH connection pooling
+  (tramp-use-connection-share t)
   (tramp-connection-timeout 10)
-  (remote-file-name-inhibit-cache nil) ; Enable caching
+  (remote-file-name-inhibit-cache nil)
 
   (tramp-auto-save-directory (expand-file-name "tramp-auto-save" my-tmp-dir))
   (tramp-persistency-file-name (expand-file-name "tramp-persistence" my-tmp-dir))
 
   (auto-revert-remote-files t)
-  (auto-revert-use-notify nil) ; Don't use file notifications for remote files
+  (auto-revert-use-notify nil)
 
   :config
   (connection-local-set-profile-variables
    'remote-direct-async-process
    '((tramp-direct-async-process . t)
-     (tramp-pipe-stty-settings . "")  ; Faster without stty
-     (shell-file-name . "/bin/sh")     ; sh is faster than bash
+     (tramp-pipe-stty-settings . "")
+     (shell-file-name . "/bin/sh")
      (shell-command-switch . "-c")))
 
   (connection-local-set-profiles
@@ -856,7 +856,7 @@ If buffer is modified, offer to save first."
     (remove-hook 'compilation-mode-hook
                  #'tramp-compile-disable-ssh-controlmaster-options))
 
-  (setq read-process-output-max (* 1024 1024)) ; 1MB chunks
+  (setq read-process-output-max (* 1024 1024))
 
   (defun my/tramp-cleanup-all ()
     "Clean all TRAMP connections and buffers."
@@ -990,7 +990,7 @@ If buffer is modified, offer to save first."
   :diminish auto-revert-mode
   :hook (after-init . global-auto-revert-mode)
   :custom
-  (auto-revert-verbose nil) ; Less noisy
+  (auto-revert-verbose nil)
   (global-auto-revert-non-file-buffers t))
 
 ;;; Modeline Management
@@ -1030,7 +1030,7 @@ If buffer is modified, offer to save first."
 ;;; vertico
 (use-package vertico
   :ensure t
-  :demand t  ; Core completion system
+  :demand t
   :custom
   (vertico-cycle t)
   (vertico-count 15)
@@ -1049,7 +1049,7 @@ If buffer is modified, offer to save first."
 ;;; orderless
 (use-package orderless
   :ensure t
-  :demand t  ; Core completion dependency
+  :demand t
   :custom
   (completion-styles '(orderless basic))
   (completion-category-defaults nil)
@@ -1081,7 +1081,7 @@ If buffer is modified, offer to save first."
 ;;; marginalia
 (use-package marginalia
   :ensure t
-  :demand t  ; Load with vertico
+  :demand t
   :init (marginalia-mode 1)
   :bind
   (:map minibuffer-local-map
@@ -1202,7 +1202,7 @@ If buffer is modified, offer to save first."
 
 (use-package nerd-icons
   :ensure t
-  :defer t   ; Defer icon loading for faster startup
+  :defer t
   :custom
   (nerd-icons-color-icons t)
   (nerd-icons-scale-factor 1.0)
@@ -1225,14 +1225,12 @@ If buffer is modified, offer to save first."
 
 ;;; Project.el - Built-in project management
 (use-package project
-  :ensure nil  ; Built-in
+  :ensure nil
   :custom
-  ;; Define additional project root files
   (project-vc-extra-root-markers '(".project" ".projectile" "Makefile" "package.json"
                                    "Cargo.toml" "go.mod" "requirements.txt"))
 
   :config
-  ;; Add function to switch between test and implementation files
   (defun my/project-find-test-or-impl ()
     "Switch between test and implementation files."
     (interactive)
@@ -1241,32 +1239,14 @@ If buffer is modified, offer to save first."
            (impl-patterns '("_test" ".test" "-test" "Test" ".spec"))
            (is-test-file (cl-some (lambda (pattern) (string-match-p pattern current-file)) test-patterns)))
       (if is-test-file
-          ;; In test file, find implementation
           (let ((impl-file (replace-regexp-in-string "_test\\|.test\\|-test\\|Test\\|.spec" "" current-file)))
             (if (file-exists-p impl-file)
                 (find-file impl-file)
               (project-find-file)))
-        ;; In implementation file, try to find test
         (project-find-file))))
-
-  ;; Standard project.el keybindings (C-x p prefix)
-  ;; These are already defined by project.el, but listed here for reference:
-  ;; C-x p f - project-find-file
-  ;; C-x p g - project-find-regexp
-  ;; C-x p d - project-dired
-  ;; C-x p b - project-switch-to-buffer (overridden by consult)
-  ;; C-x p s - project-shell
-  ;; C-x p e - project-eshell
-  ;; C-x p c - project-compile
-  ;; C-x p k - project-kill-buffers
-  ;; C-x p p - project-switch-project
-  ;; C-x p r - project-query-replace-regexp
-  ;; C-x p x - project-execute-extended-command
-
   :bind
-  ;; Add a few custom bindings
   (:map project-prefix-map
-        ("t" . my/project-find-test-or-impl)  ; Toggle test/implementation
+        ("t" . my/project-find-test-or-impl)
         ("m" . magit-status)))
 
 ;;; multiple cursors
@@ -1291,7 +1271,7 @@ If buffer is modified, offer to save first."
 ;;; which-key
 
 (use-package which-key
-  :ensure nil  ; Built-in since Emacs 29
+  :ensure nil
   :demand t
   :diminish
   :custom
@@ -1364,7 +1344,7 @@ If buffer is modified, offer to save first."
 
 ;;; Eglot - Built-in LSP client for Emacs 30.1
 (use-package eglot
-  :ensure nil  ; Built-in
+  :ensure nil
   :defer t
   :custom
   (eglot-autoshutdown t)
@@ -1477,17 +1457,17 @@ If buffer is modified, offer to save first."
 
 (use-package markdown-mode
   :ensure t
-  :mode ("\\.md\\'" . gfm-mode)  ; Use gfm-mode for all .md files
+  :mode ("\\.md\\'" . gfm-mode)
   :init
-  (setq markdown-fontify-code-blocks-natively t)  ; Syntax highlight code blocks
-  (setq markdown-command "pandoc")               ; Use pandoc for export (optional)
+  (setq markdown-fontify-code-blocks-natively t)
+  (setq markdown-command "pandoc")
   :bind (:map markdown-mode-map
-              ("C-c C-c p" . markdown-preview)   ; Preview Markdown in browser
-              ("C-c C-c e" . markdown-export)    ; Export to HTML or other formats
-              ("C-c C-c o" . markdown-open)      ; Open exported file
-              ("C-c C-t" . markdown-toggle-gfm-checkbox)) ; Toggle checkboxes
+              ("C-c C-c p" . markdown-preview)
+              ("C-c C-c e" . markdown-export)
+              ("C-c C-c o" . markdown-open)
+              ("C-c C-t" . markdown-toggle-gfm-checkbox))
   :config
-  (add-hook 'markdown-mode-hook #'auto-fill-mode)) ; Enable word wrapping
+  (add-hook 'markdown-mode-hook #'auto-fill-mode))
 
 ;;; Magit - Git interface
 (use-package magit
@@ -1496,7 +1476,7 @@ If buffer is modified, offer to save first."
   :bind ("C-c g" . magit-status)
   :custom
   (magit-diff-refine-hunk t)
-  (magit-refresh-status-buffer nil)  ; Don't auto-refresh, use 'g' manually
+  (magit-refresh-status-buffer nil)
   (magit-tramp-pipe-stty-settings 'pty)
 
   (git-commit-summary-max-length 50)
@@ -1509,7 +1489,6 @@ If buffer is modified, offer to save first."
   :after magit
   :custom
   (forge-database-connector 'sqlite-builtin))
-
 
 ;;; grep settings
 
@@ -1555,7 +1534,7 @@ If buffer is modified, offer to save first."
    recentf-max-saved-items 200
    recentf-max-menu-items 25
    recentf-auto-cleanup nil)
-  (run-at-time nil (* 5 60) 'recentf-save-list) ; Save every 5 minutes
+  (run-at-time nil (* 5 60) 'recentf-save-list)
   :bind (("C-c r" . consult-recent-file)))
 
 ;;; Dired - Directory Editor
@@ -1567,11 +1546,11 @@ If buffer is modified, offer to save first."
   (dired-mode . hl-line-mode)
   :custom
   (dired-listing-switches "-alh --group-directories-first")
-  (dired-dwim-target t)          ; Copy/move to other dired window
+  (dired-dwim-target t)
   (dired-recursive-copies 'always)
-  (dired-recursive-deletes 'top)  ; Ask once for top level
+  (dired-recursive-deletes 'top)
   (dired-auto-revert-buffer t)
-  (dired-kill-when-opening-new-dired-buffer t)  ; Emacs 28+ feature
+  (dired-kill-when-opening-new-dired-buffer t)
 
   :config
   (require 'dired-x)
@@ -1624,7 +1603,7 @@ If buffer is modified, offer to save first."
         ("0" . text-scale-set))
 
   :hook
-  (eww-mode . visual-line-mode))  ; Better text wrapping
+  (eww-mode . visual-line-mode))
 
 ;;; pdf-tools
 
@@ -1648,7 +1627,7 @@ If buffer is modified, offer to save first."
       (when (file-exists-p temp-file)
         (delete-file temp-file))))
   :config
-  (unless (featurep 'pdf-tools)   ; Install only if not already loaded
+  (unless (featurep 'pdf-tools)
     (pdf-tools-install :no-query))
   (setq
    pdf-view-display-size 'fit-page
@@ -1670,7 +1649,7 @@ If buffer is modified, offer to save first."
   :ensure t
   :defer t
   :hook
-  ( ;; If you use Markdown or plain text files, then you want to make
+  (
    (text-mode . denote-fontify-links-mode-maybe)
    (dired-mode . denote-dired-mode))
   :bind
@@ -1684,8 +1663,8 @@ If buffer is modified, offer to save first."
    ("C-c n l" . denote-link)
    ("C-c n L" . denote-add-links)
    ("C-c n b" . denote-backlinks)
-   ("C-c n q c" . denote-query-contents-link) ; create link that triggers a grep
-   ("C-c n q f" . denote-query-filenames-link) ; create link that triggers a dired
+   ("C-c n q c" . denote-query-contents-link)
+   ("C-c n q f" . denote-query-filenames-link)
    ("C-c n r" . denote-rename-file)
    ("C-c n R" . denote-rename-file-using-front-matter)
 
@@ -1743,7 +1722,7 @@ If buffer is modified, offer to save first."
 (use-package treesit
   :ensure nil
   :custom
-  (treesit-font-lock-level 4)  ; Maximum highlighting
+  (treesit-font-lock-level 4)
   :config
   (setq major-mode-remap-alist
         '((c-mode . c-ts-mode)
@@ -1769,7 +1748,7 @@ If buffer is modified, offer to save first."
 
 ;;; Flymake - Built-in syntax checking (works with Eglot!)
 (use-package flymake
-  :ensure nil  ; Built-in
+  :ensure nil
   :hook
   (prog-mode . flymake-mode)
   :custom
@@ -1779,7 +1758,7 @@ If buffer is modified, offer to save first."
 
   (flymake-fringe-indicator-position 'right-fringe)
   (flymake-suppress-zero-counters t)
-  (flymake-show-diagnostics-at-end-of-line t)  ; Emacs 30.1 feature!
+  (flymake-show-diagnostics-at-end-of-line t)
 
   :bind
   (:map flymake-mode-map
@@ -1787,7 +1766,7 @@ If buffer is modified, offer to save first."
         ("C-c ! p" . flymake-goto-prev-error)
         ("C-c ! l" . flymake-show-buffer-diagnostics)
         ("C-c ! L" . flymake-show-project-diagnostics)
-        ("C-c ! e" . display-local-help))  ; Shows error at point
+        ("C-c ! e" . display-local-help))
 
   :config
   (setq flymake-diagnostic-functions
@@ -1816,21 +1795,21 @@ If buffer is modified, offer to save first."
   :ensure t
   :defer t
   :init
-  (yas-global-mode 1) ; Enable yasnippet globally
+  (yas-global-mode 1)
   :custom
   (yas-snippet-dirs
    (list
-    (expand-file-name "snippets/" user-emacs-directory) ; Custom snippets at ~/.config/emacs/snippets/
+    (expand-file-name "snippets/" user-emacs-directory)
     (when (locate-library "yasnippet-snippets")
-      (expand-file-name "snippets" (file-name-directory (locate-library "yasnippet-snippets")))))) ; yasnippet-snippets snippets
-  (yas-prompt-functions '(yas-completing-prompt)) ; Use completing-read for vertico
-  (yas-choose-keys-first t) ; Sort snippets by key
-  (yas-choose-tables-first t) ; Prioritize current major mode snippets
+      (expand-file-name "snippets" (file-name-directory (locate-library "yasnippet-snippets"))))))
+  (yas-prompt-functions '(yas-completing-prompt))
+  (yas-choose-keys-first t)
+  (yas-choose-tables-first t)
   :hook
-  (after-init . yas-reload-all) ; Reload snippets after init
+  (after-init . yas-reload-all)
   :bind
   (:map yas-minor-mode-map
-        ("C-c y" . yas-insert-snippet))) ; Trigger snippet insertion
+        ("C-c y" . yas-insert-snippet)))
 
 (use-package yasnippet-snippets
   :ensure t
@@ -1954,7 +1933,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 ;;; hl-line
 
 (use-package hl-line
-  :ensure nil ; Built-in, no need to install
+  :ensure nil
   :commands (hl-line-mode)
   :config
   (setq hl-line-sticky-flag nil)
@@ -1998,7 +1977,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (eat-shell-command (list (getenv "SHELL") "-l"))
 
   (eat-eshell-visual-command-mode-map
-   '(("git" . ("log" "diff" "show"))))  ; Commands that need visual mode
+   '(("git" . ("log" "diff" "show"))))
 
   :hook
   (eshell-load . eat-eshell-mode)
@@ -2023,14 +2002,14 @@ parameters set in early-init.el to ensure robust UI element disabling."
 ;;; EditorConfig support optimized for Emacs 30.1
 
 (use-package editorconfig
-  :ensure nil  ; Built-in since Emacs 30.1
-  :demand t    ; Load immediately for consistent behavior
+  :ensure nil
+  :demand t
   :config
   (editorconfig-mode 1)
 
-  (setq editorconfig-trim-whitespaces-mode 'ws-butler-mode ; Use ws-butler if available
+  (setq editorconfig-trim-whitespaces-mode 'ws-butler-mode
         editorconfig-get-properties-function
-        #'editorconfig-get-properties-from-exec) ; Use external EditorConfig for better compatibility
+        #'editorconfig-get-properties-from-exec)
 
   (setq editorconfig-indentation-alist
         (append editorconfig-indentation-alist
@@ -2093,7 +2072,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :defer t
   :commands (proced)
   :config
-  (setq proced-auto-update-flag 'visible) ; Enhanced in 30.1
+  (setq proced-auto-update-flag 'visible)
   (setq proced-enable-color-flag t)
   (setq proced-auto-update-interval 5)
   (setq proced-descend t)
@@ -2167,8 +2146,8 @@ parameters set in early-init.el to ensure robust UI element disabling."
   (minibuffer-prompt-properties
    '(read-only t cursor-intangible t face minibuffer-prompt))
   :config
-  (setq minibuffer-completion-auto-choose nil)  ; New in 30.1
-  (setq completions-max-height 20)              ; New in 30.1
+  (setq minibuffer-completion-auto-choose nil)
+  (setq completions-max-height 20)
   (minibuffer-depth-indicate-mode 1))
 
 ;;; Shell (M-x shell)\
@@ -2183,12 +2162,12 @@ parameters set in early-init.el to ensure robust UI element disabling."
    ("C-c C-k" . comint-clear-buffer)
    ("C-c C-w" . comint-write-output))
   :config
-  (setq shell-command-prompt-show-cwd t) ; Built-in since 27.1
+  (setq shell-command-prompt-show-cwd t)
   (setq ansi-color-for-comint-mode t)
   (setq shell-input-autoexpand 'input)
   (setq shell-highlight-undef-enable t)
   (setq shell-has-auto-cd nil)
-  (setq shell-get-old-input-include-continuation-lines t) ; New in 30.1
+  (setq shell-get-old-input-include-continuation-lines t)
   (setq shell-kill-buffer-on-exit t)
   (setq shell-completion-fignore '("~" "#" "%"))
   (setq-default comint-scroll-to-bottom-on-input t)
@@ -2307,8 +2286,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
                        (float-time (time-subtract after-init-time before-init-time))
                        gcs-done))))
 
-;;; nerd icons completion
-
 ;;; ERC
 
 (use-package erc
@@ -2337,13 +2314,13 @@ parameters set in early-init.el to ensure robust UI element disabling."
                                sasl))
   (erc-update-modules)
 
-  (setq erc-track-enable-keybindings t    ; Enable C-c C-SPC
-        erc-track-visibility t             ; Always visible
-        erc-track-position-in-mode-line t  ; Show in mode-line
+  (setq erc-track-enable-keybindings t
+        erc-track-visibility t
+        erc-track-position-in-mode-line t
         erc-track-exclude-types '("JOIN" "NICK" "PART" "QUIT" "MODE")
         erc-track-exclude-server-buffer t
-        erc-track-shorten-start 8          ; Don't shorten short names
-        erc-track-shorten-function nil     ; No shortening
+        erc-track-shorten-start 8
+        erc-track-shorten-function nil
         erc-track-switch-direction 'newest
         erc-track-showcount t
         erc-track-showcount-string ":")
@@ -2426,8 +2403,8 @@ parameters set in early-init.el to ensure robust UI element disabling."
         ("M-<right>" . my-erc-next-channel)
         ("M-<left>" . my-erc-prev-channel)
         ("M-SPC" . my-erc-latest-activity)
-        ("C-c C-b" . my-erc-switch-to-buffer)  ; Browse all ERC buffers
-        ("C-c C-SPC" . erc-track-switch-buffer) ; Jump to active channel
+        ("C-c C-b" . my-erc-switch-to-buffer)
+        ("C-c C-SPC" . erc-track-switch-buffer)
         :map global-map
         ("C-c L" . my-erc-connect-libera)))
 
