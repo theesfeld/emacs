@@ -345,6 +345,7 @@ OLD is ignored but included for hook compatibility."
 
     (setq exwm-systemtray-height 22)
     (setq exwm-systemtray-icon-gap 5)
+    (setq exwm-systemtray-background-color "#1a1a1a")
     (setq exwm-systemtray-workspace nil)
 
     (defun my/exwm-configure-monitors ()
@@ -410,9 +411,6 @@ OLD is ignored but included for hook compatibility."
 
     (defun my/exwm-init-hook ()
       "Custom initialization for EXWM."
-      ;; Ensure mouse cursor is visible
-      (start-process-shell-command "xsetroot" nil "xsetroot -cursor_name left_ptr")
-      ;; Set background color
       (start-process-shell-command "xsetroot-bg" nil "xsetroot -solid '#1a1a1a'"))
 
     (add-hook 'exwm-init-hook #'my/exwm-init-hook)
