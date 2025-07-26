@@ -1197,22 +1197,16 @@ If buffer is modified, offer to save first."
 (use-package nerd-icons
   :ensure t
   :custom
-  (nerd-icons-color-icons t)
-  (nerd-icons-scale-factor 1.0)
-  :config
-  (defvar nerd-icons-cache (make-hash-table :test 'equal))
-  (defun nerd-icons-cached (icon-name)
-    "Get cached icon or generate and cache it."
-    (or (gethash icon-name nerd-icons-cache)
-        (puthash icon-name (nerd-icons-icon-for-file icon-name) nerd-icons-cache))))
+  (nerd-icons-color-icons t))
 
 (use-package nerd-icons-completion
   :ensure t
+  :after (nerd-icons marginalia)
   :config
-  (nerd-icons-completion-mode 1)
-  :hook
-  (marginalia-mode . #'nerd-icons-completion-marginalia-setup))
+  (nerd-icons-completion-mode)
+  (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
 
+;;; expand-region for some reason
 (use-package expand-region :ensure t :bind ("C-=" . er/expand-region))
 
 ;;; Project.el - Built-in project management
