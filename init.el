@@ -39,7 +39,7 @@
 
 ;;; vc stuff
 
-(setq package-vc-register-as-project nil) ; Emacs 30
+(setq package-vc-register-as-project nil)
 
 ;;; Garbage Collection Magic Hack (gcmh) - Optimized for Emacs 30.1
 (use-package gcmh
@@ -60,7 +60,7 @@
 
 ;;; pinentry
 
-(setenv "GPG_AGENT_INFO" nil)  ; Use emacs pinentry
+(setenv "GPG_AGENT_INFO" nil)
 (setq epa-pinentry-mode 'loopback
       epg-pinentry-mode 'loopback)
 (when (fboundp 'pinentry-start)
@@ -119,7 +119,7 @@
   (let* ((orig-scale (or text-scale-mode-amount 0))
          (scale-factor text-scale-mode-step))
     (text-scale-increase 1)
-    (when (> (length (window-list)) 1) ; Only resize if multiple windows
+    (when (> (length (window-list)) 1)
       (enlarge-window-horizontally
        (round (* (window-width) (- scale-factor 1)))))))
 
@@ -129,7 +129,7 @@
   (let* ((orig-scale (or text-scale-mode-amount 0))
          (scale-factor (/ 1.0 text-scale-mode-step)))
     (text-scale-decrease 1)
-    (when (> (length (window-list)) 1) ; Only resize if multiple windows
+    (when (> (length (window-list)) 1)
       (shrink-window-horizontally
        (round (* (window-width) (- 1 scale-factor)))))))
 
@@ -267,19 +267,14 @@ OLD is ignored but included for hook compatibility."
     (setq exwm-workspace-number 4)
     (setq exwm-workspace-show-all-buffers t)
     (setq exwm-layout-show-all-buffers t)
-
-    ;; Enable mouse support
-    (setq mouse-autoselect-window t)
-    (setq focus-follows-mouse t)
-
     (setq exwm-input-prefix-keys
           '(?\C-x
             ?\C-u
             ?\C-h
             ?\M-x
             ?\M-:
-            ?\C-\M-j  ; Buffer list
-            ?\C-\     ; Ctrl+Space
+            ?\C-\M-j
+            ?\C-\ ;why do i need a comment here wtf
             XF86AudioLowerVolume
             XF86AudioRaiseVolume
             XF86AudioMute
@@ -469,21 +464,21 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (unless (file-exists-p my-tmp-dir)
   (make-directory my-tmp-dir t))
 
-(dolist (dir '("backups"        ; backup-directory-alist
-               "auto-saves"     ; auto-save-file-name-transforms
-               "auto-save-list" ; auto-save-list-file-prefix
-               "recentf"        ; recentf-save-file
-               "eshell"         ; eshell-directory-name
-               "tramp-auto-save" ; tramp-auto-save-directory
-               "saveplace"      ; save-place-file
-               "undos"          ; vundo-files-directory
-               "gnus-drafts"))  ; message-auto-save-directory
+(dolist (dir '("backups"
+               "auto-saves"
+               "auto-save-list"
+               "recentf"
+               "eshell"
+               "tramp-auto-save"
+               "saveplace"
+               "undos"
+               "gnus-drafts"))
   (let ((subdir (expand-file-name dir my-tmp-dir)))
     (unless (file-exists-p subdir)
       (make-directory subdir t))))
 
 (use-package emacs
-  :ensure nil ; Built-in package
+  :ensure nil
   :init
   (setq auth-sources '("~/.authinfo.gpg")
         epg-pinentry-mode 'loopback
@@ -492,7 +487,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (tab-always-indent 'complete)
   (completion-auto-help 'visible)
   (completion-auto-select 'second-tab)
-  (completions-sort 'historical)  ; New in 30.1
+  (completions-sort 'historical)
   (completions-header-format nil)
   :config
   ;;; Personal Information
@@ -551,7 +546,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         scroll-error-top-bottom t
         auto-window-vscroll nil)
 
-  (setq mode-line-compact nil)  ; Emacs 28+ compact mode
+  (setq mode-line-compact nil)
 
   (setq mode-line-position-column-line-format '(" %l:%c"))
   (line-number-mode 1)
@@ -567,7 +562,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
              (not (string-match-p "N/A"
                                   (battery-format "%B"
                                                   (funcall battery-status-function)))))
-    (setq battery-mode-line-format "%b%p%%  ")  ; Extra spaces for separation
+    (setq battery-mode-line-format "%b%p%%  ")
     (setq battery-mode-line-limit 85)
     (display-battery-mode 1))
 
@@ -578,7 +573,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq mode-line-right-align-edge 'right-fringe)
 
   (setq-default mode-line-format
-                '("%e"  ; Out of memory indicator
+                '("%e"
                   mode-line-front-space
                   mode-line-mule-info
                   mode-line-client
@@ -593,7 +588,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                   "  "
                   mode-line-modes
                   mode-line-format-right-align
-                  mode-line-misc-info  ; This includes which-func AND battery/time
+                  mode-line-misc-info
                   mode-line-end-spaces))
 
   ;;; Editing Behavior
@@ -690,7 +685,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :ensure t
   :demand t
   :init
-  ;; Disable any pre-existing themes before loading ef-themes
   (mapc #'disable-theme custom-enabled-themes)
   :config
 
@@ -699,13 +693,13 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
   (setq ef-themes-to-toggle '(ef-dark ef-light))
   (keymap-global-set "M-s-<backspace>" 'ef-themes-toggle)
-  (setq ef-themes-headings ; read the manual's entry or the doc string
+  (setq ef-themes-headings
         '((0 variable-pitch light 1.9)
           (1 variable-pitch light 1.8)
           (2 variable-pitch regular 1.7)
           (3 variable-pitch regular 1.6)
           (4 variable-pitch regular 1.5)
-          (5 variable-pitch 1.4) ; absence of weight means `bold'
+          (5 variable-pitch 1.4)
           (6 variable-pitch 1.3)
           (7 variable-pitch 1.2)
           (t variable-pitch 1.1)))
@@ -1042,8 +1036,6 @@ If buffer is modified, offer to save first."
         ("C-M-d" . sp-down-sexp)
         ("C-M-n" . sp-next-sexp)
         ("C-M-p" . sp-previous-sexp)))
-
-;;; Completion Framework
 
 ;;; vertico
 (use-package vertico
@@ -1420,7 +1412,7 @@ If buffer is modified, offer to save first."
   :custom
   (org-directory "~/Documents/notes/")
   (org-startup-indented t)
-  (org-startup-folded 'show)  ; 'content' hides too much
+  (org-startup-folded 'show)
   (org-return-follows-link t)
   (org-log-done 'time)
   (org-hide-emphasis-markers t)
