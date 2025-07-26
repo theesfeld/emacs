@@ -26,13 +26,6 @@
 
 ;;; Commentary:
 
-;; This is a comprehensive Emacs configuration for version 30.1, featuring:
-;; - EXWM window manager integration
-;; - Modern completion with Vertico, Orderless, and Consult
-;; - Development tools with Eglot LSP and Tree-sitter
-;; - Note-taking with Denote
-;; - Optimized garbage collection with GCMH
-;;
 ;; Email: tj@emacs.su
 
 ;;; Code:
@@ -348,7 +341,6 @@ OLD is ignored but included for hook compatibility."
       (start-process "xrandr-auto" nil "xrandr" "--auto")
       (run-with-timer 0.1 nil #'exwm-randr-refresh))
 
-    ;; Cache workspace configuration instead of dynamic generation
     (defvar my/exwm-workspace-monitor-cache nil)
 
     (defun my/exwm-cache-monitor-config ()
@@ -450,30 +442,28 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (use-package emacs
   :ensure nil
   :init
-  ;; More secure auth configuration
   (setq auth-sources '("~/.authinfo.gpg")
-        auth-source-save-behavior nil  ; Never save passwords
-        auth-source-do-cache nil       ; Don't cache in memory
+        auth-source-save-behavior nil
+        auth-source-do-cache nil
         epa-file-cache-passphrase-for-symmetric-encryption nil
         epg-pinentry-mode 'loopback
         epg-gpg-program "gpg2")
   :custom
   (tab-always-indent 'complete)
-  (completion-auto-help 'lazy)
+  (completion-auto-help 'visible)
   (completion-auto-select 'second-tab)
   (completions-sort 'historical)
   (completions-header-format nil)
-  ;; Enhanced built-in completion features
   (completion-styles '(basic partial-completion emacs22 initials flex))
   (completion-category-overrides
    '((file (styles . (basic partial-completion)))
      (buffer (styles . (basic flex)))
      (info-menu (styles . (basic)))))
-  ;; New in Emacs 30
   (completions-detailed t)
   (completions-format 'one-column)
   (completions-max-height 15)
   :config
+
   ;;; Personal Information
   (setq user-full-name "TJ"
         user-mail-address "tj@emacs.su"
@@ -1221,6 +1211,7 @@ If buffer is modified, offer to save first."
   :after (nerd-icons marginalia)
   :config
   (nerd-icons-completion-mode 1)
+  (nerd-icons-completion-marginalia-setup)
   :hook
   (marginalia-mode . #'nerd-icons-completion-marginalia-setup))
 
@@ -1481,7 +1472,6 @@ If buffer is modified, offer to save first."
   :defer t
   :commands (magit-status magit-dispatch magit-file-dispatch)
   :init
-  ;; Only set up the binding, don't load anything
   (global-set-key (kbd "C-c g") 'magit-status)
   :custom
   (magit-diff-refine-hunk t)
