@@ -45,6 +45,7 @@
 (use-package gcmh
   :ensure t
   :demand t
+  :if (not (bound-and-true-p byte-compile-current-file))
   :custom
   (gcmh-idle-delay 10)
   (gcmh-auto-idle-delay-factor 10)
@@ -246,6 +247,8 @@ OLD is ignored but included for hook compatibility."
 
 (use-package ednc-popup
   :vc (:url "https://codeberg.org/akib/emacs-ednc-popup.git" :branch "main")
+  :if (and (not (bound-and-true-p byte-compile-current-file))
+           (not noninteractive))
   :config
   (setq ednc-popup-timeout 5
         ednc-popup-width 50
@@ -623,10 +626,11 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   ;;; Authentication and Encryption
   (require 'auth-source)
   (require 'epa-file)
-  (epa-file-enable)
+  (unless (memq 'epa-file-handler file-name-handler-alist)
+    (epa-file-enable))
 
   ;;; Load Custom File
-  (when (file-exists-p custom-file)
+  (when (and custom-file (file-exists-p custom-file))
     (load custom-file))
 
   :hook
@@ -1202,7 +1206,6 @@ If buffer is modified, offer to save first."
 
 (use-package nerd-icons
   :ensure t
-  :defer t
   :custom
   (nerd-icons-color-icons t)
   (nerd-icons-scale-factor 1.0)
