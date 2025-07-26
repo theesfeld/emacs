@@ -1208,10 +1208,8 @@ If buffer is modified, offer to save first."
 
 (use-package nerd-icons-completion
   :ensure t
-  :after (nerd-icons marginalia)
   :config
   (nerd-icons-completion-mode 1)
-  (nerd-icons-completion-marginalia-setup)
   :hook
   (marginalia-mode . #'nerd-icons-completion-marginalia-setup))
 
