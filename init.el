@@ -267,11 +267,11 @@ OLD is ignored but included for hook compatibility."
     (setq exwm-workspace-number 4)
     (setq exwm-workspace-show-all-buffers t)
     (setq exwm-layout-show-all-buffers t)
-    
+
     ;; Enable mouse support
     (setq mouse-autoselect-window t)
     (setq focus-follows-mouse t)
-    
+
     (setq exwm-input-prefix-keys
           '(?\C-x
             ?\C-u
@@ -414,13 +414,13 @@ OLD is ignored but included for hook compatibility."
       (start-process-shell-command "xsetroot" nil "xsetroot -cursor_name left_ptr")
       ;; Set background color
       (start-process-shell-command "xsetroot-bg" nil "xsetroot -solid '#1a1a1a'"))
-    
+
     (add-hook 'exwm-init-hook #'my/exwm-init-hook)
     (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
     (add-hook 'exwm-randr-screen-change-hook #'my/exwm-configure-monitors)
     (exwm-systemtray-mode 1)
     (exwm-randr-mode 1)
-    (exwm-enable)
+    (exwm-wm-mode 1)
     (my/exwm-configure-monitors))
 
   (defun my/app-launcher ()
