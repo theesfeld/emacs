@@ -660,7 +660,9 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                 pdf-view-mode-hook
                 dired-mode-hook
                 eww-mode-hook
-                erc-mode-hook))
+                erc-mode-hook
+                eat-mode-hook
+                ))
   (add-hook mode (lambda () (display-line-numbers-mode -1))))
 
 ;;; Minions for minor mode management
