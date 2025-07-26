@@ -344,47 +344,17 @@ OLD is ignored but included for hook compatibility."
     (setq exwm-systemtray-workspace nil)
 
     (defun my/exwm-configure-monitors ()
-      "Automatically detect and configure monitors."
-      (let* ((xrandr-output (shell-command-to-string "xrandr"))
-             (connected-monitors
-              (seq-filter (lambda (line)
-                            (string-match-p " connected" line))
-                          (split-string xrandr-output "\n")))
-             (monitor-names
-              (mapcar (lambda (line)
-                        (car (split-string line)))
-                      connected-monitors))
-             (primary-monitor (car monitor-names))
-             (external-monitors (cdr monitor-names)))
+      "Simplified monitor configuration using xrandr directly."
+      (start-process "xrandr-auto" nil "xrandr" "--auto")
+      (run-with-timer 0.1 nil #'exwm-randr-refresh))
 
-        (when external-monitors
-          (let ((xrandr-cmd "xrandr --auto"))
-            (let ((prev-monitor primary-monitor))
-              (dolist (monitor external-monitors)
-                (setq xrandr-cmd
-                      (format "%s --output %s --auto --right-of %s"
-                              xrandr-cmd monitor prev-monitor))
-                (setq prev-monitor monitor)))
+    ;; Cache workspace configuration instead of dynamic generation
+    (defvar my/exwm-workspace-monitor-cache nil)
 
-            (start-process-shell-command "xrandr" nil xrandr-cmd)
-
-            (let ((workspace-plist '())
-                  (workspace-num 0))
-              (setq workspace-plist (append workspace-plist
-                                            (list workspace-num primary-monitor)))
-              (setq workspace-num 1)
-
-              (when external-monitors
-                (dolist (monitor (if (> (length external-monitors) 1)
-                                     external-monitors
-                                   (make-list 9 (car external-monitors))))
-                  (when (< workspace-num 10)
-                    (setq workspace-plist (append workspace-plist
-                                                  (list workspace-num monitor)))
-                    (setq workspace-num (1+ workspace-num)))))
-
-              (setq exwm-randr-workspace-monitor-plist workspace-plist)
-              (exwm-randr-refresh))))))
+    (defun my/exwm-cache-monitor-config ()
+      "Cache monitor configuration to avoid repeated xrandr calls."
+      (setq my/exwm-workspace-monitor-cache
+            (exwm-randr--get-monitor-alias)))
 
     (defun my/exwm-start-tray-apps ()
       "Start system tray applications."
@@ -480,15 +450,29 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (use-package emacs
   :ensure nil
   :init
+  ;; More secure auth configuration
   (setq auth-sources '("~/.authinfo.gpg")
+        auth-source-save-behavior nil  ; Never save passwords
+        auth-source-do-cache nil       ; Don't cache in memory
+        epa-file-cache-passphrase-for-symmetric-encryption nil
         epg-pinentry-mode 'loopback
         epg-gpg-program "gpg2")
   :custom
   (tab-always-indent 'complete)
-  (completion-auto-help 'visible)
+  (completion-auto-help 'lazy)
   (completion-auto-select 'second-tab)
   (completions-sort 'historical)
   (completions-header-format nil)
+  ;; Enhanced built-in completion features
+  (completion-styles '(basic partial-completion emacs22 initials flex))
+  (completion-category-overrides
+   '((file (styles . (basic partial-completion)))
+     (buffer (styles . (basic flex)))
+     (info-menu (styles . (basic)))))
+  ;; New in Emacs 30
+  (completions-detailed t)
+  (completions-format 'one-column)
+  (completions-max-height 15)
   :config
   ;;; Personal Information
   (setq user-full-name "TJ"
@@ -635,13 +619,18 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (unless (memq 'epa-file-handler file-name-handler-alist)
     (epa-file-enable))
 
+  ;;; Network Security
+  (setq gnutls-verify-error t)
+  (setq gnutls-min-prime-bits 2048)
+  (setq network-security-level 'high)
+  (setq nsm-settings-file (expand-file-name "network-security.data" my-tmp-dir))
+
   ;;; Load Custom File
   (when (and custom-file (file-exists-p custom-file))
     (load custom-file))
 
   :hook
-  ((prog-mode . display-line-numbers-mode)
-   (text-mode . visual-wrap-prefix-mode)
+  ((text-mode . visual-wrap-prefix-mode)
    (before-save . (lambda ()
                     (whitespace-cleanup)))
    (emacs-startup . (lambda ()
@@ -650,7 +639,10 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                       (line-number-mode 1)
                       (column-number-mode 1)
                       (size-indication-mode 1)
-                      (display-time-mode 1))))
+                      (display-time-mode 1)
+                      (setq-default display-line-numbers-type t)
+                      (setq-default display-line-numbers-width-start t)
+                      (global-display-line-numbers-mode 1))))
 
   :bind
   (("C-x k" . kill-current-buffer)
@@ -660,6 +652,16 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (mode-line-inactive ((t (:box (:line-width -1 :style released-button)))))
   (mode-line-buffer-id ((t (:weight bold :inherit font-lock-keyword-face))))
   (mode-line-emphasis ((t (:weight bold :inherit warning)))))
+
+;;; Disable line numbers in specific modes
+(dolist (mode '(org-mode-hook
+                term-mode-hook
+                eshell-mode-hook
+                pdf-view-mode-hook
+                dired-mode-hook
+                eww-mode-hook
+                erc-mode-hook))
+  (add-hook mode (lambda () (display-line-numbers-mode -1))))
 
 ;;; Minions for minor mode management
 (use-package minions
@@ -999,24 +1001,13 @@ If buffer is modified, offer to save first."
 ;;; Auto-revert Configuration
 (use-package autorevert
   :ensure nil
-  :diminish auto-revert-mode
+  :diminish (auto-revert-mode . "")
   :hook (after-init . global-auto-revert-mode)
   :custom
   (auto-revert-verbose nil)
   (global-auto-revert-non-file-buffers t))
 
-;;; Modeline Management
-(use-package delight
-  :ensure t
-  :config
-  (delight
-   '((auto-revert-mode nil "autorevert")
-     (eldoc-mode nil "eldoc")
-     (global-hl-line-mode nil "hl-line")
-     (save-place-mode nil "saveplace")
-     (flyspell-mode " ✍" "flyspell")
-     (yas-minor-mode nil "yasnippet")
-     (smartparens-mode nil "smartparens"))))
+;;; Modeline Management - Using :diminish instead of delight
 
 ;;; Structural Editing
 (use-package smartparens
@@ -1195,9 +1186,10 @@ If buffer is modified, offer to save first."
   :hook ((prog-mode . completion-preview-mode)
          (conf-mode . completion-preview-mode))
   :custom
-  (completion-preview-minimum-symbol-length 2)
+  (completion-preview-minimum-symbol-length 3)
   (completion-preview-idle-delay 0)
   (completion-preview-exact-match-only nil)
+  (completion-preview-insert-on-completion t)
   :custom-face
   (completion-preview ((t (:inherit shadow :foreground "#FFC107"))))
   (completion-preview-exact ((t (:inherit completion-preview :weight bold))))
@@ -1317,6 +1309,7 @@ If buffer is modified, offer to save first."
 (use-package flyspell
   :ensure nil
   :defer t
+  :diminish (flyspell-mode . " ✍")
   :hook
   ((text-mode . flyspell-mode)
    (org-mode . flyspell-mode)
@@ -1405,6 +1398,8 @@ If buffer is modified, offer to save first."
 ;;; Org Mode
 (use-package org
   :ensure nil
+  :defer t
+  :commands (org-mode org-agenda org-capture org-store-link)
   :bind
   (("C-c l" . org-store-link)
    ("C-c a" . org-agenda)
@@ -1482,7 +1477,10 @@ If buffer is modified, offer to save first."
 (use-package magit
   :ensure t
   :defer t
-  :bind ("C-c g" . magit-status)
+  :commands (magit-status magit-dispatch magit-file-dispatch)
+  :init
+  ;; Only set up the binding, don't load anything
+  (global-set-key (kbd "C-c g") 'magit-status)
   :custom
   (magit-diff-refine-hunk t)
   (magit-refresh-status-buffer nil)
@@ -1803,6 +1801,7 @@ If buffer is modified, offer to save first."
 (use-package yasnippet
   :ensure t
   :defer t
+  :diminish yas-minor-mode
   :init
   (yas-global-mode 1)
   :custom
@@ -1995,9 +1994,6 @@ parameters set in early-init.el to ensure robust UI element disabling."
   :bind
   ("C-c T" . eat))
 
-(with-eval-after-load 'delight
-  (delight '((eat-eshell-mode nil "eat")
-             (eat-eshell-visual-command-mode nil "eat"))))
 
 ;;; Claude Code
 
