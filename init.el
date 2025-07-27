@@ -95,8 +95,7 @@
              (shell-command-to-string "compgen -c | head -200")
              "\n" t)))
          (common-commands
-          '("firefox" "chromium" "code" "thunar" "alacritty" "kitty"
-            "mpv" "vlc" "gimp" "libreoffice" "pavucontrol" "qjackctl"))
+          '("firefox" "mpv"))
          (all-commands
           (delete-dups
            (append history-commands common-commands path-commands)))
@@ -701,7 +700,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq ef-themes-mixed-fonts t
         ef-themes-variable-pitch-ui t)
 
-  ;; Load the theme after configuration
   (load-theme 'ef-winter t)
 
   (unless (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
