@@ -685,7 +685,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (custom-set-faces
    '(cursor ((t (:background "#FFC107")))))
 
-  (setq ef-themes-to-toggle '(ef-dark ef-light))
+  (setq ef-themes-to-toggle '(ef-winter ef-summer))
   (keymap-global-set "M-s-<backspace>" 'ef-themes-toggle)
   (setq ef-themes-headings
         '((0 variable-pitch light 1.9)
@@ -702,7 +702,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         ef-themes-variable-pitch-ui t)
 
   ;; Load the theme after configuration
-  (load-theme 'ef-dark t)
+  (load-theme 'ef-winter t)
 
   (unless (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
     (set-face-attribute 'default nil :height 140)
