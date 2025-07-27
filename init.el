@@ -137,13 +137,22 @@
 
 ;;; FONT CONFIGURATION
 
-(when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
+(when (find-font (font-spec :name "AporeticSansMono Nerd Font"))
   (set-face-attribute 'default nil
-                      :font "BerkeleyMonoVariable Nerd Font Mono"
+                      :font "AporeticSansMono Nerd Font"
                       :height 140)
-  (set-face-attribute 'variable-pitch nil
-                      :font "BerkeleyMonoVariable Nerd Font Mono"
-                      :height 160))
+  (set-face-attribute 'default nil
+                      :font "AporeticSerifMono Nerd Font"
+                      :height 160)
+  )
+
+;; (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
+;;   (set-face-attribute 'default nil
+;;                       :font "BerkeleyMonoVariable Nerd Font Mono"
+;;                       :height 140)
+;;   (set-face-attribute 'variable-pitch nil
+;;                       :font "BerkeleyMonoVariable Nerd Font Mono"
+;;                       :height 160))
 
 ;;; EDNC NOTIFICATIONS (DBUS)
 
