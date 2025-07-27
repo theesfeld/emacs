@@ -140,10 +140,10 @@
 (when (find-font (font-spec :name "AporeticSansMono Nerd Font"))
   (set-face-attribute 'default nil
                       :font "AporeticSansMono Nerd Font"
-                      :height 140)
+                      :height 150)
   (set-face-attribute 'default nil
                       :font "AporeticSerifMono Nerd Font"
-                      :height 160)
+                      :height 170)
   )
 
 ;; (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
@@ -2129,7 +2129,7 @@ parameters set in early-init.el to ensure robust UI element disabling."
 (use-package uniquify
   :ensure nil
   :custom
-  (uniquify-buffer-name-style 'forward)
+  (uniquify-buffer-name-style 'post-forward)
   (uniquify-strip-common-suffix t)
   (uniquify-after-kill-buffer-p t))
 
