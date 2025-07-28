@@ -137,22 +137,24 @@
 
 ;;; FONT CONFIGURATION
 
-(when (find-font (font-spec :name "AporeticSansMono Nerd Font"))
-  (set-face-attribute 'default nil
-                      :font "AporeticSansMono Nerd Font"
-                      :height 150)
-  (set-face-attribute 'default nil
-                      :font "AporeticSerifMono Nerd Font"
-                      :height 170)
-  )
+(when (display-graphic-p)
+  (when (find-font (font-spec :name "AporeticSansMono Nerd Font"))
+    (set-face-attribute 'default nil
+                        :font "AporeticSansMono Nerd Font"
+                        :height 150)
+    (set-face-attribute 'default nil
+                        :font "AporeticSerifMono Nerd Font"
+                        :height 170)
+    )
 
-;; (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
-;;   (set-face-attribute 'default nil
-;;                       :font "BerkeleyMonoVariable Nerd Font Mono"
-;;                       :height 140)
-;;   (set-face-attribute 'variable-pitch nil
-;;                       :font "BerkeleyMonoVariable Nerd Font Mono"
-;;                       :height 160))
+  ;; (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
+  ;;   (set-face-attribute 'default nil
+  ;;                       :font "BerkeleyMonoVariable Nerd Font Mono"
+  ;;                       :height 140)
+  ;;   (set-face-attribute 'variable-pitch nil
+  ;;                       :font "BerkeleyMonoVariable Nerd Font Mono"
+  ;;                       :height 160))
+  )
 
 ;;; EDNC NOTIFICATIONS (DBUS)
 
@@ -374,18 +376,18 @@ OLD is ignored but included for hook compatibility."
       (interactive)
       (run-with-timer 2 nil
                       (lambda ()
-                        (when (executable-find "mullvad-vpn")
-                          (message "Starting mullvad-vpn...")
-                          (start-process "mullvad-vpn" nil "mullvad-vpn"))
-                        (when (executable-find "blueman-applet")
-                          (message "Starting blueman-applet...")
-                          (start-process "blueman-applet" nil "blueman-applet"))
+                        (when (executable-find "nm-applet")
+                          (message "Starting nm-applet...")
+                          (start-process "nm-applet" nil "nm-applet"))
                         (when (executable-find "udiskie")
                           (message "Starting udiskie...")
                           (start-process "udiskie" nil "udiskie" "-at"))
-                        (when (executable-find "nm-applet")
-                          (message "Starting nm-applet...")
-                          (start-process "nm-applet" nil "nm-applet")))))
+                        (when (executable-find "blueman-applet")
+                          (message "Starting blueman-applet...")
+                          (start-process "blueman-applet" nil "blueman-applet"))
+                        (when (executable-find "mullvad-vpn")
+                          (message "Starting mullvad-vpn...")
+                          (start-process "mullvad-vpn" nil "mullvad-vpn")))))
 
     (defun my/exwm-init-hook ()
       "Custom initialization for EXWM."
@@ -545,14 +547,15 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         mouse-wheel-follow-mouse t
         fast-but-imprecise-scrolling t)
 
-  (pixel-scroll-precision-mode 1)
+  (when (display-graphic-p)
+    (pixel-scroll-precision-mode 1)
 
-  (when (fboundp 'pixel-scroll-precision-mode)
-    (setq pixel-scroll-precision-interpolate-page t
-          pixel-scroll-precision-large-scroll-height 40.0
-          pixel-scroll-precision-interpolation-factor 30))
+    (when (fboundp 'pixel-scroll-precision-mode)
+      (setq pixel-scroll-precision-interpolate-page t
+            pixel-scroll-precision-large-scroll-height 40.0
+            pixel-scroll-precision-interpolation-factor 30)))
 
-  
+
   ;; Performance optimizations for smooth scrolling
   (setq redisplay-skip-fontification-on-input t
         jit-lock-defer-time 0
@@ -561,26 +564,26 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         jit-lock-stealth-time 0.2
         jit-lock-stealth-nice 0.5
         jit-lock-stealth-verbose nil)
-  
+
   ;; Cache line moves for better performance
   (setq line-move-visual t
         line-move-ignore-invisible t
         next-screen-context-lines 5)
-  
+
   ;; Optimize display engine
   (setq-default bidi-display-reordering nil
                 bidi-paragraph-direction 'left-to-right)
-  
+
   ;; Increase cache sizes for better performance
   (setq read-process-output-max (* 1024 1024)
         gc-cons-percentage 0.1)
-  
+
   ;; Disable line numbers in large buffers for performance
   (add-hook 'prog-mode-hook
             (lambda ()
               (when (> (buffer-size) 100000)
                 (display-line-numbers-mode -1))))
-  
+
   ;; Enable so-long-mode for very long lines
   (global-so-long-mode 1)
 
@@ -739,6 +742,11 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 ;;; Theme Configuration (separate use-package)
 
+;; Ensure modus-themes is available (built-in since Emacs 28)
+(use-package modus-themes
+  :ensure nil
+  :defer t)
+
 (use-package ef-themes
   :ensure t
   :demand t
@@ -765,11 +773,16 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq ef-themes-mixed-fonts t
         ef-themes-variable-pitch-ui t)
 
-  (load-theme 'ef-winter t)
+  ;; Load appropriate theme based on display type
+  (if (display-graphic-p)
+      (load-theme 'ef-winter t)
+    ;; Use modus-vivendi for TTY mode
+    (load-theme 'modus-vivendi t))
 
   (unless (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
-    (set-face-attribute 'default nil :height 140)
-    (set-face-attribute 'variable-pitch nil :height 160))
+    (when (display-graphic-p)
+      (set-face-attribute 'default nil :height 140)
+      (set-face-attribute 'variable-pitch nil :height 160)))
 
   (defun my-ef-themes-mode-line ()
     "Tweak the style of the mode lines."
@@ -785,8 +798,9 @@ This function is added to the \=`ef-themes-post-load-hook'."
       (custom-set-faces
        `(font-lock-comment-face ((,c :inherit italic :foreground ,comment)))
        `(font-lock-variable-name-face ((,c :foreground ,variable))))))
-  (add-hook 'ef-themes-post-load-hook #'my-ef-themes-custom-faces
-            'ef-themes-post-load-hook #'my-ef-themes-mode-line))
+  (when (display-graphic-p)
+    (add-hook 'ef-themes-post-load-hook #'my-ef-themes-custom-faces)
+    (add-hook 'ef-themes-post-load-hook #'my-ef-themes-mode-line)))
 
 (use-package windower
   :ensure t
@@ -1973,9 +1987,9 @@ If buffer is modified, offer to save first."
 This function explicitly disables \='menu-bar-mode', \='tool-bar-mode', and \='scroll-bar-mode'
 for the specified FRAME (or current frame if nil).  This complements the frame
 parameters set in early-init.el to ensure robust UI element disabling."
-  (when (display-graphic-p frame)
-    (with-selected-frame (or frame (selected-frame))
-      (menu-bar-mode -1)
+  (with-selected-frame (or frame (selected-frame))
+    (menu-bar-mode -1)
+    (when (display-graphic-p frame)
       (tool-bar-mode -1)
       (scroll-bar-mode -1))))
 
@@ -2097,16 +2111,17 @@ parameters set in early-init.el to ensure robust UI element disabling."
 
 (use-package tooltip
   :ensure nil
-  :hook (after-init . tooltip-mode)
+  :hook (after-init . (lambda () (when (display-graphic-p) (tooltip-mode 1))))
   :config
-  (setq tooltip-delay 0.5
-        tooltip-short-delay 0.5
-        x-gtk-use-system-tooltips t
-        tooltip-frame-parameters
-        '((name . "tooltip")
-          (internal-border-width . 10)
-          (border-width . 0)
-          (no-special-glyphs . t))))
+  (when (display-graphic-p)
+    (setq tooltip-delay 0.5
+          tooltip-short-delay 0.5
+          x-gtk-use-system-tooltips t
+          tooltip-frame-parameters
+          '((name . "tooltip")
+            (internal-border-width . 10)
+            (border-width . 0)
+            (no-special-glyphs . t)))))
 
 ;;; `man' (manpages)
 
