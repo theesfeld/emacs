@@ -30,11 +30,40 @@
 
 ;;; Code:
 
+;;; SYSTEM DETECTION AND DYNAMIC OPTIMIZATION
+
+(defun my/get-system-memory ()
+  "Get system memory in GB."
+  (if (eq system-type 'gnu/linux)
+      (/ (string-to-number
+          (shell-command-to-string
+           "grep MemTotal /proc/meminfo | awk '{print $2}'"))
+         1048576.0)
+    32)) ; Default fallback
+
+(defun my/get-cpu-count ()
+  "Get number of CPU cores."
+  (or (num-processors) 4)) ; Default fallback
+
+(defconst my/system-memory (my/get-system-memory)
+  "System memory in GB.")
+
+(defconst my/cpu-count (my/get-cpu-count)
+  "Number of CPU cores.")
+
+(defconst my/high-spec-system-p
+  (and (>= my/system-memory 32) (>= my/cpu-count 8))
+  "Non-nil if system has high specifications.")
+
+(defconst my/ultra-high-spec-system-p
+  (and (>= my/system-memory 64) (>= my/cpu-count 12))
+  "Non-nil if system has ultra-high specifications.")
+
 ;;; vc stuff
 
 (setq package-vc-register-as-project nil)
 
-;;; Garbage Collection Magic Hack (gcmh) - Optimized for Emacs 30.1
+;;; Garbage Collection Magic Hack (gcmh) - Dynamically Optimized
 (use-package gcmh
   :ensure t
   :demand t
@@ -42,13 +71,22 @@
   :custom
   (gcmh-idle-delay 10)
   (gcmh-auto-idle-delay-factor 10)
-  (gcmh-high-cons-threshold (* 128 1024 1024))
-  (gcmh-low-cons-threshold (* 20 1024 1024))
+  (gcmh-high-cons-threshold
+   (cond (my/ultra-high-spec-system-p (* 2048 1024 1024))
+         (my/high-spec-system-p (* 512 1024 1024))
+         (t (* 128 1024 1024))))
+  (gcmh-low-cons-threshold
+   (cond (my/ultra-high-spec-system-p (* 256 1024 1024))
+         (my/high-spec-system-p (* 64 1024 1024))
+         (t (* 20 1024 1024))))
   :config
   (gcmh-mode 1)
   (add-hook 'emacs-startup-hook
             (lambda ()
-              (setq gc-cons-percentage 0.1)
+              (setq gc-cons-percentage
+                    (cond (my/ultra-high-spec-system-p 0.15)
+                          (my/high-spec-system-p 0.2)
+                          (t 0.1)))
               (garbage-collect))))
 
 ;;; pinentry
@@ -443,7 +481,7 @@ OLD is ignored but included for hook compatibility."
     (add-hook 'exwm-update-class-hook #'my/exwm-update-class)
     (add-hook 'exwm-update-title-hook #'my/exwm-update-title)
 
-                                        ;(setq exwm-systemtray-height 22)
+    (setq exwm-systemtray-height 24)
     (setq exwm-systemtray-icon-gap 5)
     (setq exwm-systemtray-background-color "#1a1a1a")
     (setq exwm-systemtray-workspace nil)
@@ -683,8 +721,14 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                 bidi-paragraph-direction 'left-to-right)
 
   ;; Increase cache sizes for better performance
-  (setq read-process-output-max (* 1024 1024)
-        gc-cons-percentage 0.1)
+  (setq read-process-output-max
+        (cond (my/ultra-high-spec-system-p (* 32 1024 1024))
+              (my/high-spec-system-p (* 8 1024 1024))
+              (t (* 1024 1024)))
+        gc-cons-percentage
+        (cond (my/ultra-high-spec-system-p 0.15)
+              (my/high-spec-system-p 0.2)
+              (t 0.1)))
 
   ;; Disable line numbers in large buffers for performance
   (add-hook 'prog-mode-hook
@@ -1047,7 +1091,10 @@ If buffer is modified, offer to save first."
     (remove-hook 'compilation-mode-hook
                  #'tramp-compile-disable-ssh-controlmaster-options))
 
-  (setq read-process-output-max (* 1024 1024))
+  (setq read-process-output-max
+        (cond (my/ultra-high-spec-system-p (* 32 1024 1024))
+              (my/high-spec-system-p (* 8 1024 1024))
+              (t (* 1024 1024))))
 
   (defun my/tramp-cleanup-all ()
     "Clean all TRAMP connections and buffers."
@@ -2613,6 +2660,92 @@ robust UI element disabling."
               ("C-c C-b" . csv-backward-field)
               ("C-c C-n" . csv-forward-record)
               ("C-c C-p" . csv-backward-record)))
+
+;;; DYNAMIC PERFORMANCE OPTIMIZATIONS
+
+(defun my/apply-performance-optimizations ()
+  "Apply performance optimizations based on system specifications."
+  (interactive)
+
+  ;; Optimize based on available memory
+  (when my/high-spec-system-p
+    ;; Increase various limits for high-memory systems
+    (setq kill-ring-max (if my/ultra-high-spec-system-p 500 200)
+          mark-ring-max 50
+          global-mark-ring-max 50
+          message-log-max (if my/ultra-high-spec-system-p 20000 10000)
+          history-length (if my/ultra-high-spec-system-p 2000 1000)
+          savehist-save-minibuffer-history t
+          savehist-autosave-interval 60)
+
+    ;; Optimize file operations
+    (setq auto-save-interval 1000
+          auto-save-timeout 60
+          create-lockfiles nil
+          backup-by-copying t
+          vc-handled-backends '(Git)
+          find-file-visit-truename nil
+          vc-follow-symlinks t)
+
+    ;; Optimize font rendering for powerful systems
+    (setq font-lock-maximum-decoration t
+          jit-lock-stealth-time 0.2
+          jit-lock-chunk-size (if my/ultra-high-spec-system-p 8192 4096)
+          jit-lock-defer-time 0.05)
+
+    ;; Display optimizations
+    (setq fast-but-imprecise-scrolling t
+          redisplay-skip-fontification-on-input t
+          inhibit-compacting-font-caches t
+          highlight-nonselected-windows nil)
+
+    ;; Increase limits for better performance
+    (setq recentf-max-saved-items (if my/ultra-high-spec-system-p 2000 1000)
+          desktop-restore-eager (if my/ultra-high-spec-system-p 20 10)
+          desktop-lazy-verbose nil
+          desktop-lazy-idle-delay 5))
+
+  ;; CPU-based optimizations
+  (when (>= my/cpu-count 8)
+    ;; Enable parallel operations
+    (setq native-comp-async-jobs-number
+          (cond ((>= my/cpu-count 16) (- my/cpu-count 4))
+                ((>= my/cpu-count 12) (- my/cpu-count 2))
+                (t (max 4 (/ my/cpu-count 2)))))
+
+    ;; Optimize minibuffer and completion
+    (setq enable-recursive-minibuffers t
+          minibuffer-depth-indicate-mode t
+          max-mini-window-height 0.5
+          completion-cycle-threshold 3
+          tab-always-indent 'complete))
+
+  ;; LSP optimizations for multicore systems
+  (with-eval-after-load 'lsp-mode
+    (when (>= my/cpu-count 8)
+      (setq lsp-idle-delay 0.1
+            lsp-log-io nil
+            lsp-completion-provider :none
+            lsp-prefer-flymake nil
+            lsp-enable-file-watchers t
+            lsp-file-watch-threshold
+            (if my/ultra-high-spec-system-p 20000 10000))))
+
+  ;; Magit optimizations for large repositories
+  (with-eval-after-load 'magit
+    (when my/high-spec-system-p
+      (setq magit-refresh-status-buffer nil
+            magit-diff-highlight-indentation nil
+            magit-diff-highlight-trailing nil
+            magit-diff-paint-whitespace nil
+            magit-diff-highlight-hunk-body nil
+            magit-diff-refine-hunk nil)))
+
+  (message "Performance optimizations applied! Memory: %.1fGB, CPUs: %d"
+           my/system-memory my/cpu-count))
+
+;; Apply optimizations after init
+(add-hook 'emacs-startup-hook #'my/apply-performance-optimizations)
 
 (provide 'init)
 ;;; init.el ends here
