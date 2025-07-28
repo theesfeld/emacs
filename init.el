@@ -259,6 +259,80 @@ OLD is ignored but included for hook compatibility."
         ednc-popup-max-count 4)
   (add-hook 'ednc-notification-presentation-functions #'ednc-popup-presentation-function))
 
+;;; TTY Frame Configuration - Automatic sizing
+(defun grim/get-terminal-size ()
+  "Get actual terminal size from multiple sources."
+  (when (not (display-graphic-p))
+    (let ((height nil)
+          (width nil))
+      ;; Try method 1: stty size
+      (condition-case nil
+          (with-temp-buffer
+            (when (= 0 (call-process "stty" nil t nil "size"))
+              (goto-char (point-min))
+              (when (looking-at "\\([0-9]+\\) \\([0-9]+\\)")
+                (setq height (string-to-number (match-string 1)))
+                (setq width (string-to-number (match-string 2))))))
+        (error nil))
+      ;; Try method 2: tput
+      (unless (and height width)
+        (condition-case nil
+            (setq height (string-to-number
+                         (with-temp-buffer
+                           (call-process "tput" nil t nil "lines")
+                           (string-trim (buffer-string))))
+                  width (string-to-number
+                        (with-temp-buffer
+                          (call-process "tput" nil t nil "cols")
+                          (string-trim (buffer-string)))))
+          (error nil)))
+      ;; Try method 3: ioctl via external script
+      (unless (and height width)
+        (condition-case nil
+            (let ((size-info (shell-command-to-string
+                             "python3 -c 'import fcntl, termios, struct; h, w = struct.unpack(\"hh\", fcntl.ioctl(0, termios.TIOCGWINSZ, \"1234\")); print(h, w)' 2>/dev/null")))
+              (when (string-match "\\([0-9]+\\) \\([0-9]+\\)" size-info)
+                (setq height (string-to-number (match-string 1 size-info)))
+                (setq width (string-to-number (match-string 2 size-info)))))
+          (error nil)))
+      (cons (or height 24) (or width 80)))))
+
+(defun grim/auto-fix-tty-frame ()
+  "Automatically fix TTY frame size."
+  (when (not (display-graphic-p))
+    (let* ((size (grim/get-terminal-size))
+           (height (car size))
+           (width (cdr size))
+           (current-height (frame-height))
+           (current-width (frame-width)))
+      ;; Only resize if dimensions actually changed
+      (when (or (/= height current-height)
+                (/= width current-width))
+        (set-frame-size (selected-frame) width height)
+        (redraw-display)))))
+
+;; Run immediately on load
+(grim/auto-fix-tty-frame)
+
+;; Set up automatic TTY frame sizing
+(when (not (display-graphic-p))
+  ;; Fix on startup
+  (add-hook 'after-init-hook #'grim/auto-fix-tty-frame)
+  (add-hook 'window-setup-hook #'grim/auto-fix-tty-frame)
+  (add-hook 'after-make-frame-functions
+            (lambda (frame)
+              (select-frame frame)
+              (grim/auto-fix-tty-frame)))
+
+  ;; Fix on terminal resize - use SIGWINCH handler
+  (add-hook 'window-size-change-functions
+            (lambda (frame)
+              (when (eq frame (selected-frame))
+                (grim/auto-fix-tty-frame))))
+
+  ;; Periodic check as fallback (every 2 seconds)
+  (run-with-timer 2 2 #'grim/auto-fix-tty-frame))
+
 ;;; EXWM - Dynamic multi-monitor configuration for Emacs 30.1
 (when (eq window-system 'x)
   (use-package exwm
@@ -872,7 +946,7 @@ If buffer is modified, offer to save first."
     (unless buffer-file-name
       (user-error "Current buffer is not visiting a file"))
     (when (and (buffer-modified-p)
-               (y-or-n-p "Buffer is modified. Save it first? "))
+               (y-or-n-p "Buffer is modified.  Save it first? "))
       (save-buffer))
     (ediff-current-file))
 
@@ -1988,11 +2062,12 @@ If buffer is modified, offer to save first."
 ;;; Frame setup for daemon compatibility
 
 (defun my-after-make-frame-setup (&optional frame)
-  "Ensure UI elements are disabled for new frames, especially daemon clients.
+  "Ensure UI disabled for new frames, ie: daemon clients.
 
-This function explicitly disables \='menu-bar-mode', \='tool-bar-mode', and \='scroll-bar-mode'
-for the specified FRAME (or current frame if nil).  This complements the frame
-parameters set in early-init.el to ensure robust UI element disabling."
+This function explicitly disables \='menu-bar-mode', \='tool-bar-mode',
+and \='scroll-bar-mode' for the specified FRAME (or current frame if nil).
+This complements the frame parameters set in early-init.el to ensure
+robust UI element disabling."
   (with-selected-frame (or frame (selected-frame))
     (menu-bar-mode -1)
     (when (display-graphic-p frame)
