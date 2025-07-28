@@ -374,7 +374,7 @@ OLD is ignored but included for hook compatibility."
     (defun my/exwm-start-tray-apps ()
       "Start system tray applications with delays to ensure proper icon display."
       (interactive)
-      (run-with-timer 2 nil
+      (run-with-timer 1 nil
                       (lambda ()
                         (when (executable-find "nm-applet")
                           (message "Starting nm-applet...")
@@ -389,7 +389,7 @@ OLD is ignored but included for hook compatibility."
                                                             (when (executable-find "blueman-applet")
                                                               (message "Starting blueman-applet...")
                                                               (start-process "blueman-applet" nil "blueman-applet"))
-                                                            (run-with-timer 1 nil
+                                                            (run-with-timer 3 nil
                                                                             (lambda ()
                                                                               (when (executable-find "mullvad-vpn")
                                                                                 (message "Starting mullvad-vpn...")
