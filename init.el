@@ -354,16 +354,18 @@ OLD is ignored but included for hook compatibility."
                               (when (string-match "^\\([a-zA-Z0-9-]+\\) connected" line)
                                 (match-string 1 line)))
                             (split-string xrandr-output "\n"))))
+             (monitor-count (length connected-monitors))
+             (primary-monitor (car connected-monitors))
              (plist nil))
-        (when connected-monitors
-          ;; Assign workspace 0 to first (primary) monitor.
-          (push 0 plist)
-          (push (car connected-monitors) plist)
-          ;; Assign workspaces 1-9 to the next monitor if available, else fallback to primary.
-          (let ((secondary (or (cadr connected-monitors) (car connected-monitors))))
-            (dotimes (ws 9)
-              (push (1+ ws) plist)
-              (push secondary plist))))
+        (when (> monitor-count 0)
+          ;; Assign workspaces sequentially
+          (dotimes (ws 10)
+            (push ws plist)
+            (if (< ws monitor-count)
+                ;; Assign workspace to corresponding monitor (0 to first, 1 to second, etc)
+                (push (nth ws connected-monitors) plist)
+              ;; Extra workspaces go to primary monitor
+              (push primary-monitor plist))))
         (setq exwm-randr-workspace-monitor-plist (nreverse plist))
         (exwm-randr-refresh)))
 
