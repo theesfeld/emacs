@@ -137,6 +137,25 @@
 
 ;;; FONT CONFIGURATION
 
+(defun my/get-current-monitor-name ()
+  "Get the name of the monitor containing the current frame."
+  (let* ((frame (selected-frame))
+         (monitor-attrs (frame-monitor-attributes frame)))
+    (cdr (assq 'name monitor-attrs))))
+
+(defun my/set-font-for-monitor ()
+  "Set font size based on which monitor the frame is on."
+  (when (display-graphic-p)
+    (let ((monitor (my/get-current-monitor-name))
+          (base-height (if (find-font (font-spec :name "AporeticSerifMono Nerd Font"))
+                           170
+                         140)))
+      (if (and monitor (string-match-p "eDP-1" monitor))
+          ;; Larger font for eDP-1
+          (set-face-attribute 'default (selected-frame) :height (+ base-height 75))
+        ;; Normal font for external monitors
+        (set-face-attribute 'default (selected-frame) :height base-height)))))
+
 (when (display-graphic-p)
   (when (find-font (font-spec :name "AporeticSansMono Nerd Font"))
     (set-face-attribute 'default nil
@@ -154,7 +173,16 @@
   ;;   (set-face-attribute 'variable-pitch nil
   ;;                       :font "BerkeleyMonoVariable Nerd Font Mono"
   ;;                       :height 160))
-  )
+
+  ;; Set font size for current monitor on startup
+  (my/set-font-for-monitor)
+
+  ;; Adjust font when frame moves between monitors
+  (add-hook 'window-configuration-change-hook #'my/set-font-for-monitor)
+  (add-hook 'after-make-frame-functions
+            (lambda (frame)
+              (with-selected-frame frame
+                (my/set-font-for-monitor)))))
 
 ;;; EDNC NOTIFICATIONS (DBUS)
 
