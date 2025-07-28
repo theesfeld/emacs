@@ -372,22 +372,28 @@ OLD is ignored but included for hook compatibility."
         (exwm-randr-refresh)))
 
     (defun my/exwm-start-tray-apps ()
-      "Start system tray applications."
+      "Start system tray applications with delays to ensure proper icon display."
       (interactive)
       (run-with-timer 2 nil
                       (lambda ()
                         (when (executable-find "nm-applet")
                           (message "Starting nm-applet...")
                           (start-process "nm-applet" nil "nm-applet"))
-                        (when (executable-find "udiskie")
-                          (message "Starting udiskie...")
-                          (start-process "udiskie" nil "udiskie" "-at"))
-                        (when (executable-find "blueman-applet")
-                          (message "Starting blueman-applet...")
-                          (start-process "blueman-applet" nil "blueman-applet"))
-                        (when (executable-find "mullvad-vpn")
-                          (message "Starting mullvad-vpn...")
-                          (start-process "mullvad-vpn" nil "mullvad-vpn")))))
+                        (run-with-timer 0.5 nil
+                                        (lambda ()
+                                          (when (executable-find "udiskie")
+                                            (message "Starting udiskie...")
+                                            (start-process "udiskie" nil "udiskie" "-at"))
+                                          (run-with-timer 0.5 nil
+                                                          (lambda ()
+                                                            (when (executable-find "blueman-applet")
+                                                              (message "Starting blueman-applet...")
+                                                              (start-process "blueman-applet" nil "blueman-applet"))
+                                                            (run-with-timer 1 nil
+                                                                            (lambda ()
+                                                                              (when (executable-find "mullvad-vpn")
+                                                                                (message "Starting mullvad-vpn...")
+                                                                                (start-process "mullvad-vpn" nil "mullvad-vpn")))))))))))
 
     (defun my/exwm-init-hook ()
       "Custom initialization for EXWM."
