@@ -543,7 +543,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         mouse-wheel-scroll-amount '(1 ((shift) . 1))
         mouse-wheel-progressive-speed nil
         mouse-wheel-follow-mouse t
-        fast-but-imprecise-scrolling nil)
+        fast-but-imprecise-scrolling t)
 
   (pixel-scroll-precision-mode 1)
 
@@ -552,18 +552,37 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
           pixel-scroll-precision-large-scroll-height 40.0
           pixel-scroll-precision-interpolation-factor 30))
 
-  (defun my/smooth-scroll-half-page-down ()
-    "Smooth scroll down half a page."
-    (interactive)
-    (pixel-scroll-precision-interpolate (* 0.5 (window-text-height))))
-
-  (defun my/smooth-scroll-half-page-up ()
-    "Smooth scroll up half a page."
-    (interactive)
-    (pixel-scroll-precision-interpolate (* -0.5 (window-text-height))))
-
-  (global-set-key (kbd "C-v") 'my/smooth-scroll-half-page-down)
-  (global-set-key (kbd "M-v") 'my/smooth-scroll-half-page-up)
+  
+  ;; Performance optimizations for smooth scrolling
+  (setq redisplay-skip-fontification-on-input t
+        jit-lock-defer-time 0
+        jit-lock-context-time 0
+        jit-lock-chunk-size 1000
+        jit-lock-stealth-time 0.2
+        jit-lock-stealth-nice 0.5
+        jit-lock-stealth-verbose nil)
+  
+  ;; Cache line moves for better performance
+  (setq line-move-visual t
+        line-move-ignore-invisible t
+        next-screen-context-lines 5)
+  
+  ;; Optimize display engine
+  (setq-default bidi-display-reordering nil
+                bidi-paragraph-direction 'left-to-right)
+  
+  ;; Increase cache sizes for better performance
+  (setq read-process-output-max (* 1024 1024)
+        gc-cons-percentage 0.1)
+  
+  ;; Disable line numbers in large buffers for performance
+  (add-hook 'prog-mode-hook
+            (lambda ()
+              (when (> (buffer-size) 100000)
+                (display-line-numbers-mode -1))))
+  
+  ;; Enable so-long-mode for very long lines
+  (global-so-long-mode 1)
 
   (setq mode-line-compact nil)
 
