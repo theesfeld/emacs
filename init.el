@@ -534,13 +534,36 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         echo-keystrokes-help nil
         display-time-load-average t)
 
-  (setq scroll-margin 3
-                                        ;scroll-step 1
-                                        ;scroll-conservatively 1
-                                        ;scroll-preserve-screen-position 1
+  (setq scroll-margin 0
+        scroll-step 1
+        scroll-conservatively 10000
+        scroll-preserve-screen-position t
         scroll-error-top-bottom t
-                                        ;auto-window-vscroll nil
-        pixel-scroll-precision-mode 1)
+        auto-window-vscroll nil
+        mouse-wheel-scroll-amount '(1 ((shift) . 1))
+        mouse-wheel-progressive-speed nil
+        mouse-wheel-follow-mouse t
+        fast-but-imprecise-scrolling nil)
+
+  (pixel-scroll-precision-mode 1)
+
+  (when (fboundp 'pixel-scroll-precision-mode)
+    (setq pixel-scroll-precision-interpolate-page t
+          pixel-scroll-precision-large-scroll-height 40.0
+          pixel-scroll-precision-interpolation-factor 30))
+
+  (defun my/smooth-scroll-half-page-down ()
+    "Smooth scroll down half a page."
+    (interactive)
+    (pixel-scroll-precision-interpolate (* 0.5 (window-text-height))))
+
+  (defun my/smooth-scroll-half-page-up ()
+    "Smooth scroll up half a page."
+    (interactive)
+    (pixel-scroll-precision-interpolate (* -0.5 (window-text-height))))
+
+  (global-set-key (kbd "C-v") 'my/smooth-scroll-half-page-down)
+  (global-set-key (kbd "M-v") 'my/smooth-scroll-half-page-up)
 
   (setq mode-line-compact nil)
 
