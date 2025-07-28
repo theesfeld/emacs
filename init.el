@@ -344,60 +344,28 @@ OLD is ignored but included for hook compatibility."
     (setq exwm-systemtray-background-color "#1a1a1a")
     (setq exwm-systemtray-workspace nil)
 
-    ;; (defun my/exwm-configure-monitors ()
-    ;;   "Simplified monitor configuration using xrandr directly."
-    ;;   (start-process "xrandr-auto" nil "xrandr" "--auto")
-    ;;   (run-with-timer 0.1 nil #'exwm-randr-refresh))
-
-    ;; (defvar my/exwm-workspace-monitor-cache nil)
-
-    ;; (defun my/exwm-cache-monitor-config ()
-    ;;   "Cache monitor configuration to avoid repeated xrandr calls."
-    ;;   (setq my/exwm-workspace-monitor-cache
-    ;;         (exwm-randr--get-monitor-alias)))
-
     (defun my/exwm-configure-monitors ()
-      "Automatically detect and configure monitors."
-      (let* ((xrandr-output (shell-command-to-string "xrandr"))
+      "Dynamically configure monitors on plug/unplug using EXWM built-ins."
+      (start-process-shell-command "xrandr" nil "xrandr --auto")
+      (let* ((xrandr-output (shell-command-to-string "xrandr -q"))
              (connected-monitors
-              (seq-filter (lambda (line)
-                            (string-match-p " connected" line))
-                          (split-string xrandr-output "\n")))
-             (monitor-names
-              (mapcar (lambda (line)
-                        (car (split-string line)))
-                      connected-monitors))
-             (primary-monitor (car monitor-names))
-             (external-monitors (cdr monitor-names)))
-
-        (when external-monitors
-          (let ((xrandr-cmd "xrandr --auto"))
-            (let ((prev-monitor primary-monitor))
-              (dolist (monitor external-monitors)
-                (setq xrandr-cmd
-                      (format "%s --output %s --auto --right-of %s"
-                              xrandr-cmd monitor prev-monitor))
-                (setq prev-monitor monitor)))
-
-            (start-process-shell-command "xrandr" nil xrandr-cmd)
-
-            (let ((workspace-plist '())
-                  (workspace-num 0))
-              (setq workspace-plist (append workspace-plist
-                                            (list workspace-num primary-monitor)))
-              (setq workspace-num 1)
-
-              (when external-monitors
-                (dolist (monitor (if (> (length external-monitors) 1)
-                                     external-monitors
-                                   (make-list 9 (car external-monitors))))
-                  (when (< workspace-num 10)
-                    (setq workspace-plist (append workspace-plist
-                                                  (list workspace-num monitor)))
-                    (setq workspace-num (1+ workspace-num)))))
-
-              (setq exwm-randr-workspace-monitor-plist workspace-plist)
-              (exwm-randr-refresh))))))
+              (delq nil
+                    (mapcar (lambda (line)
+                              (when (string-match "^\\([a-zA-Z0-9-]+\\) connected" line)
+                                (match-string 1 line)))
+                            (split-string xrandr-output "\n"))))
+             (plist nil))
+        (when connected-monitors
+          ;; Assign workspace 0 to first (primary) monitor.
+          (push 0 plist)
+          (push (car connected-monitors) plist)
+          ;; Assign workspaces 1-9 to the next monitor if available, else fallback to primary.
+          (let ((secondary (or (cadr connected-monitors) (car connected-monitors))))
+            (dotimes (ws 9)
+              (push (1+ ws) plist)
+              (push secondary plist))))
+        (setq exwm-randr-workspace-monitor-plist (nreverse plist))
+        (exwm-randr-refresh)))
 
     (defun my/exwm-start-tray-apps ()
       "Start system tray applications."
