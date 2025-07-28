@@ -341,7 +341,7 @@ OLD is ignored but included for hook compatibility."
     (add-hook 'exwm-update-class-hook #'my/exwm-update-class)
     (add-hook 'exwm-update-title-hook #'my/exwm-update-title)
 
-    (setq exwm-systemtray-height 22)
+    (setq exwm-systemtray-height 24)
     (setq exwm-systemtray-icon-gap 5)
     (setq exwm-systemtray-background-color "#1a1a1a")
     (setq exwm-systemtray-workspace nil)
