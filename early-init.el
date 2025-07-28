@@ -26,7 +26,7 @@
         native-comp-warning-on-missing-source t
         native-comp-compiler-options '("-O3")
         ;; Reduce parallel jobs to avoid system overload
-        native-comp-async-jobs-number (min 4 (num-processors)))
+        native-comp-async-jobs-number (max 4 (- (num-processors) 2)))
 
   ;; More selective JIT compilation deny list
   (setq native-comp-jit-compilation-deny-list
@@ -58,7 +58,7 @@
     (setq startup-redirect-eln-cache
           (expand-file-name "eln-cache/" user-emacs-directory)))
 
-  (setq native-comp-priority-cpus 2)
+  (setq native-comp-priority-cpus (min 4 (max 2 (/ (num-processors) 4))))
   
   ;; Functions that should never be optimized
   (setq native-comp-never-optimize-functions
@@ -113,7 +113,16 @@
 ;; Package-vc settings for installing from source (new in Emacs 29+)
 (setq package-vc-register-as-project nil) ; Don't register vc packages as projects
 
-;(setq read-process-output-max (* 4 1024 1024))
+(setq read-process-output-max 
+      (let ((mem-gb (if (eq system-type 'gnu/linux)
+                        (/ (string-to-number 
+                            (shell-command-to-string 
+                             "grep MemTotal /proc/meminfo | awk '{print $2}'"))
+                           1048576.0)
+                      32)))
+        (cond ((>= mem-gb 64) (* 32 1024 1024))
+              ((>= mem-gb 32) (* 8 1024 1024))
+              (t (* 1024 1024)))))
 
 (setq process-adaptive-read-buffering nil)      ; More consistent subprocess I/O
 (setq bidi-display-reordering 'left-to-right)   ; Faster for LTR languages
@@ -144,8 +153,10 @@
 
 ;; Font configuration - done early to prevent flashing
 ;; But keep it minimal to speed up startup
-(push '(font . "BerkeleyMonoVariable Nerd Font Mono-14") default-frame-alist)
-(push '(font . "BerkeleyMonoVariable Nerd Font Mono-14") initial-frame-alist)
+;; Only set font for GUI frames
+(when (display-graphic-p)
+  (push '(font . "BerkeleyMonoVariable Nerd Font Mono-14") default-frame-alist)
+  (push '(font . "BerkeleyMonoVariable Nerd Font Mono-14") initial-frame-alist))
 
 ;; Scratch buffer configuration - must be set early for proper initialization
 (setq initial-major-mode 'lisp-interaction-mode)
@@ -158,20 +169,21 @@
 
 ;; Frame parameters optimized for fast startup and reduced flicker
 (setq default-frame-alist
-      '((width . 100)
+      `((width . 100)
         (height . 50)
         (menu-bar-lines . 0)
         (tool-bar-lines . 0)
         (vertical-scroll-bars . nil)
         (horizontal-scroll-bars . nil)
-        (internal-border-width . 0)
-        (left-fringe . 8)
-        (right-fringe . 8)
         (background-color . "#000000")
         (foreground-color . "#ffffff")
-        (alpha-background . 100)          ; Emacs 29+ transparency
-        (ns-appearance . dark)            ; macOS dark mode
-        (ns-transparent-titlebar . t)))   ; macOS transparent titlebar
+        ,@(when (display-graphic-p)
+            '((internal-border-width . 0)
+              (left-fringe . 8)
+              (right-fringe . 8)
+              (alpha-background . 100)      ; Emacs 29+ transparency
+              (ns-appearance . dark)        ; macOS dark mode
+              (ns-transparent-titlebar . t))))) ; macOS transparent titlebar
 
 ;; Initial frame inherits default settings
 (setq initial-frame-alist default-frame-alist)
@@ -187,8 +199,22 @@
 (defvar grim--initial-gc-cons-percentage gc-cons-percentage)
 (defvar grim--initial-file-name-handler-alist file-name-handler-alist)
 
-(defvar grim--system-gc-threshold (* 256 1024 1024))
-(defvar grim--system-gc-percentage 0.3)
+(defvar grim--system-gc-threshold 
+  (let ((mem-gb (if (eq system-type 'gnu/linux)
+                    (/ (string-to-number 
+                        (shell-command-to-string 
+                         "grep MemTotal /proc/meminfo | awk '{print $2}'"))
+                       1048576.0)
+                  32)))
+    (cond ((>= mem-gb 64) (* 2048 1024 1024))
+          ((>= mem-gb 32) (* 512 1024 1024))
+          (t (* 256 1024 1024)))))
+
+(defvar grim--system-gc-percentage 
+  (let ((cpu-count (or (num-processors) 4)))
+    (cond ((>= cpu-count 12) 0.15)
+          ((>= cpu-count 8) 0.2)
+          (t 0.3))))
 
 ;; Temporarily disable GC and file handlers during startup
 (setq gc-cons-threshold most-positive-fixnum
