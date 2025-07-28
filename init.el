@@ -187,12 +187,19 @@
     (let ((monitor (my/get-current-monitor-name))
           (base-height (if (find-font (font-spec :name "AporeticSerifMono Nerd Font"))
                            170
-                         140)))
+                         150))
+          (variable-pitch-height (if (find-font (font-spec :name "AporeticSerif Mono Nerd Font"))
+                                     180
+                                   160)))
       (if (and monitor (string-match-p "eDP-1" monitor))
-          ;; Larger font for eDP-1
-          (set-face-attribute 'default (selected-frame) :height (+ base-height 75))
+          (progn
+            ;; Larger font for eDP-1
+            (set-face-attribute 'default (selected-frame) :height (+ base-height 75))
+            (set-face-attribute 'variable-pitch (selected-frame) :height (+ variable-pitch-height 75)))
         ;; Normal font for external monitors
-        (set-face-attribute 'default (selected-frame) :height base-height)))))
+        (progn
+          (set-face-attribute 'default (selected-frame) :height base-height)
+          (set-face-attribute 'variable-pitch (selected-frame) :height variable-pitch-height))))))
 
 (when (display-graphic-p)
   (when (find-font (font-spec :name "AporeticSansMono Nerd Font"))
@@ -201,8 +208,12 @@
                         :height 150)
     (set-face-attribute 'default nil
                         :font "AporeticSerifMono Nerd Font"
-                        :height 170)
-    )
+                        :height 170))
+
+  (when (find-font (font-spec :name "AporeticSerif Nerd Font"))
+    (set-face-attribute 'variable-pitch nil
+                        :font "AporeticSerif Nerd Font"
+                        :height 180))
 
   ;; (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
   ;;   (set-face-attribute 'default nil
