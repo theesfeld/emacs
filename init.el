@@ -205,9 +205,6 @@
   (when (find-font (font-spec :name "AporeticSansMono Nerd Font"))
     (set-face-attribute 'default nil
                         :font "AporeticSansMono Nerd Font"
-                        :height 150)
-    (set-face-attribute 'default nil
-                        :font "AporeticSerifMono Nerd Font"
                         :height 170))
 
   (when (find-font (font-spec :name "AporeticSerif Nerd Font"))
@@ -232,6 +229,19 @@
             (lambda (frame)
               (with-selected-frame frame
                 (my/set-font-for-monitor)))))
+
+;;; VARIABLE-PITCH COMMENTS IN PROG-MODE
+
+(defun my/prog-mode-variable-pitch-comments ()
+  "Use variable-pitch font for comments in programming modes."
+  (face-remap-add-relative 'font-lock-comment-face
+                           '(:inherit (font-lock-comment-face variable-pitch)))
+  (face-remap-add-relative 'font-lock-comment-delimiter-face
+                           '(:inherit (font-lock-comment-delimiter-face variable-pitch)))
+  (face-remap-add-relative 'font-lock-doc-face
+                           '(:inherit (font-lock-doc-face variable-pitch))))
+
+(add-hook 'prog-mode-hook #'my/prog-mode-variable-pitch-comments)
 
 ;;; EDNC NOTIFICATIONS (DBUS)
 
