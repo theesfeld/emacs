@@ -458,7 +458,6 @@ OLD is ignored but included for hook compatibility."
             ([s-left] . windmove-left)
             ([s-right] . windmove-right)
             ([s-up] . windmove-up)
-            ([?\s-e] . exwm-edit--compose)
             ([s-down] . windmove-down)
             ([?\s-0] . (lambda () (interactive) (exwm-workspace-switch-create 0)))
             ([?\s-1] . (lambda () (interactive) (exwm-workspace-switch-create 1)))
@@ -586,7 +585,59 @@ OLD is ignored but included for hook compatibility."
     :ensure t
     :config
     (setq desktop-environment-screenlock-command "slock")
-    (desktop-environment-mode 1)))
+    (desktop-environment-mode 1))
+
+  ;;; exwm-edit
+  (use-package exwm-edit
+    :ensure t
+    :after exwm
+    :config
+    (setq exwm-edit-split nil)
+    (define-key exwm-mode-map (kbd "C-c C-e") 'exwm-edit--compose)
+    (add-hook 'exwm-edit-compose-hook
+              (lambda ()
+                (message "EXWM Edit buffer created. Use C-c C-c to finish, C-c C-k to cancel.")))
+    ;; Override the compose function to use M-w instead of C-c for copying
+    (defun exwm-edit--compose (&optional no-copy)
+      "Edit text in an EXWM app. Use M-w to copy instead of C-c."
+      (interactive)
+      (let* ((title (exwm-edit--buffer-title (buffer-name)))
+             (existing (get-buffer title))
+             (inhibit-read-only t)
+             (save-interprogram-paste-before-kill t)
+             (selection-coding-system 'utf-8))
+        (when (derived-mode-p 'exwm-mode)
+          (setq exwm-edit--last-window-configuration (current-window-configuration))
+          (if existing
+              (switch-to-buffer-other-window existing)
+            (exwm-input--fake-key ?\C-a)
+            (unless (or no-copy (not exwm-edit-copy-over-contents))
+              (when (gui-get-selection 'CLIPBOARD 'UTF8_STRING)
+                (setq exwm-edit-last-kill (substring-no-properties (gui-get-selection 'CLIPBOARD 'UTF8_STRING))))
+              (exwm-input--fake-key ?\M-w))  ; Use M-w instead of C-c
+            (with-current-buffer (get-buffer-create title)
+              (run-hooks 'exwm-edit-compose-hook)
+              (exwm-edit-mode 1)
+              (pop-to-buffer (current-buffer) exwm-edit-display-buffer-action)
+              (setq-local header-line-format
+                          (substitute-command-keys
+                           "Edit, then exit with `\\[exwm-edit--finish]' or cancel with `\\[exwm-edit--cancel]'"))
+              (unless (or no-copy (not exwm-edit-copy-over-contents))
+                (exwm-edit--yank)))))))
+    ;; Override the paste function to use C-y instead of C-v
+    (defun exwm-edit--send-to-exwm-buffer (text)
+      "Send TEXT to the exwm window using C-y."
+      (kill-new text)
+      (set-window-configuration exwm-edit--last-window-configuration)
+      (setq exwm-edit--last-window-configuration nil)
+      (exwm-input--set-focus (exwm--buffer->id (window-buffer (selected-window))))
+      (if (string= text "")
+          (run-with-timer exwm-edit-paste-delay nil (lambda () (exwm-input--fake-key 'delete)))
+        (run-with-timer exwm-edit-paste-delay nil (lambda ()
+                                                    (exwm-input--fake-key ?\C-y)
+                                                    (run-with-timer 0.1 nil (lambda ()
+                                                                              (when kill-ring
+                                                                                (kill-new (car kill-ring)))))))))))
 
 ;;; init.el version control
 
