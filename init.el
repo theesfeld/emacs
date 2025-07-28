@@ -534,12 +534,13 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         echo-keystrokes-help nil
         display-time-load-average t)
 
-  (setq scroll-margin 3
-        scroll-step 1
-        scroll-conservatively 1
-        scroll-preserve-screen-position 1
-        scroll-error-top-bottom t
-        auto-window-vscroll nil)
+  (setq ;scroll-margin 3
+                                        ;scroll-step 1
+                                        ;scroll-conservatively 1
+                                        ;scroll-preserve-screen-position 1
+                                        ;scroll-error-top-bottom t
+                                        ;auto-window-vscroll nil
+   pixel-scroll-precision-mode 1)
 
   (setq mode-line-compact nil)
 
