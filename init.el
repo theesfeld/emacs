@@ -341,7 +341,7 @@ OLD is ignored but included for hook compatibility."
     (add-hook 'exwm-update-class-hook #'my/exwm-update-class)
     (add-hook 'exwm-update-title-hook #'my/exwm-update-title)
 
-    ;(setq exwm-systemtray-height 22)
+                                        ;(setq exwm-systemtray-height 22)
     (setq exwm-systemtray-icon-gap 5)
     (setq exwm-systemtray-background-color "#1a1a1a")
     (setq exwm-systemtray-workspace nil)
@@ -389,7 +389,7 @@ OLD is ignored but included for hook compatibility."
                                                             (when (executable-find "blueman-applet")
                                                               (message "Starting blueman-applet...")
                                                               (start-process "blueman-applet" nil "blueman-applet"))
-                                                            (run-with-timer 3 nil
+                                                            (run-with-timer 5 nil
                                                                             (lambda ()
                                                                               (when (executable-find "mullvad-vpn")
                                                                                 (message "Starting mullvad-vpn...")
