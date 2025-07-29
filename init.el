@@ -500,6 +500,41 @@ OLD is ignored but included for hook compatibility."
     (setq exwm-systemtray-background-color "#1a1a1a")
     (setq exwm-systemtray-workspace nil)
 
+    (defun my/exwm-debug-monitors ()
+      "Show current monitor configuration and workspace assignments."
+      (interactive)
+      (let* ((xrandr-output (shell-command-to-string "xrandr -q"))
+             (connected-monitors
+              (delq nil
+                    (mapcar (lambda (line)
+                              (when (string-match "^\\([a-zA-Z0-9-]+\\) connected" line)
+                                (match-string 1 line)))
+                            (split-string xrandr-output "\n"))))
+             (external-monitors (seq-remove (lambda (m) (string= m "eDP-1")) connected-monitors)))
+        (message "Connected monitors: %s" connected-monitors)
+        (message "External monitors: %s" external-monitors)
+        (message "Current workspace-monitor plist: %s" exwm-randr-workspace-monitor-plist)
+        (with-current-buffer (get-buffer-create "*EXWM Monitor Debug*")
+          (erase-buffer)
+          (insert "=== EXWM Monitor Configuration Debug ===\n\n")
+          (insert (format "Connected monitors: %s\n" connected-monitors))
+          (insert (format "External monitors: %s\n" external-monitors))
+          (insert (format "Current workspace-monitor plist: %s\n\n" exwm-randr-workspace-monitor-plist))
+          (insert "Workspace assignments:\n")
+          (let ((plist exwm-randr-workspace-monitor-plist))
+            (while plist
+              (insert (format "  Workspace %s -> Monitor %s\n" (car plist) (cadr plist)))
+              (setq plist (cddr plist))))
+          (insert "\n=== xrandr output ===\n")
+          (insert xrandr-output)
+          (display-buffer (current-buffer)))))
+
+    (defun my/exwm-refresh-monitors ()
+      "Manually refresh monitor configuration."
+      (interactive)
+      (my/exwm-configure-monitors)
+      (message "Monitor configuration refreshed"))
+
     (defun my/exwm-configure-monitors ()
       "Dynamically configure monitors on plug/unplug using EXWM built-ins."
       (start-process-shell-command "xrandr" nil "xrandr --auto")
@@ -511,23 +546,58 @@ OLD is ignored but included for hook compatibility."
                                 (match-string 1 line)))
                             (split-string xrandr-output "\n"))))
              (monitor-count (length connected-monitors))
-             (primary-monitor (car connected-monitors))
+             (external-monitors (seq-remove (lambda (m) (string= m "eDP-1")) connected-monitors))
+             (primary-monitor (if external-monitors
+                                  (car external-monitors)  ; First external monitor is primary
+                                (car connected-monitors))) ; Otherwise use first (likely eDP-1)
              (plist nil))
         (when (> monitor-count 0)
-          ;; Apply scaling for eDP-1 monitor
-          (when (member "eDP-1" connected-monitors)
-            (start-process-shell-command "xrandr-scale" nil
-                                         "xrandr --output eDP-1 --scale 0.67x0.67"))
-          ;; Assign workspaces sequentially
+          ;; Configure monitor layout
+          (cond
+           ;; Multiple monitors: arrange them properly
+           ((> monitor-count 1)
+            (let ((xrandr-cmd "xrandr"))
+              ;; Configure eDP-1 with scaling
+              (when (member "eDP-1" connected-monitors)
+                (setq xrandr-cmd (concat xrandr-cmd " --output eDP-1 --scale 0.67x0.67 --pos 0x0")))
+              ;; Configure external monitors
+              (when (nth 0 external-monitors)
+                (setq xrandr-cmd (concat xrandr-cmd
+                                         (format " --output %s --primary --pos %dx0"
+                                                 (nth 0 external-monitors)
+                                                 (if (member "eDP-1" connected-monitors) 1930 0)))))
+              (when (nth 1 external-monitors)
+                (setq xrandr-cmd (concat xrandr-cmd
+                                         (format " --output %s --pos %dx0"
+                                                 (nth 1 external-monitors)
+                                                 (+ (if (member "eDP-1" connected-monitors) 1930 0) 3840)))))
+              ;; Execute the combined xrandr command
+              (start-process-shell-command "xrandr-setup" nil xrandr-cmd)))
+           ;; Single monitor
+           (t
+            (when (member "eDP-1" connected-monitors)
+              (start-process-shell-command "xrandr-single" nil
+                                           "xrandr --output eDP-1 --scale 0.67x0.67 --primary"))))
+          ;; Assign workspaces: eDP-1 gets 0, external monitors get 1, 2, etc.
           (dotimes (ws 10)
-            (push ws plist)
-            (if (< ws monitor-count)
-                ;; Assign workspace to corresponding monitor (0 to first, 1 to second, etc)
-                (push (nth ws connected-monitors) plist)
-              ;; Extra workspaces go to primary monitor
-              (push primary-monitor plist))))
-        (setq exwm-randr-workspace-monitor-plist (nreverse plist))
-        (exwm-randr-refresh)))
+            (cond
+             ;; Workspace 0 always goes to eDP-1 if it exists, otherwise primary
+             ((= ws 0)
+              (setq plist (append plist (list ws (if (member "eDP-1" connected-monitors)
+                                                     "eDP-1"
+                                                   primary-monitor)))))
+             ;; Workspaces 1+ go to external monitors in order
+             ((and (> ws 0) (<= ws (length external-monitors)))
+              (setq plist (append plist (list ws (nth (1- ws) external-monitors)))))
+             ;; Extra workspaces go to primary monitor
+             (t
+              (setq plist (append plist (list ws primary-monitor)))))))
+        (setq exwm-randr-workspace-monitor-plist plist)
+        ;; Add a small delay to ensure xrandr changes are applied
+        (run-with-timer 0.5 nil
+                        (lambda ()
+                          (exwm-randr-refresh)
+                          (message "EXWM workspace configuration updated")))))
 
     (defun my/exwm-start-tray-apps ()
       "Start system tray applications with delays to ensure proper icon display."
@@ -941,7 +1011,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                 eww-mode-hook
                 erc-mode-hook
                 eat-mode-hook
-                ))
+                lisp-interaction-mode-hook))
+
   (add-hook mode (lambda () (display-line-numbers-mode -1))))
 
 ;;; Minions for minor mode management
