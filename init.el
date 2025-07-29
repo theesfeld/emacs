@@ -2808,11 +2808,8 @@ robust UI element disabling."
   :config
   (setq nm-auto-refresh t
         nm-refresh-interval 5)
-  :bind
-  (("C-c n s" . nm-status)
-   ("C-c n u" . nm-ui)
-   ("C-c n w" . nm-ui-wifi)
-   ("C-c n c" . nm-ui-connections)))
+  :bind-keymap
+  ("C-c N" . nm-prefix-map))
 
 (provide 'init)
 ;;; init.el ends here
