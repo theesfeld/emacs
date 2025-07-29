@@ -2736,7 +2736,6 @@ robust UI element disabling."
   :vc (:url "https://github.com/theesfeld/nm" :rev :newest)
   :ensure t
   :demand t
-
   :init
   ;; Core settings (before package loads)
   (setq nm-auto-refresh t
