@@ -440,6 +440,7 @@ OLD is ignored but included for hook compatibility."
 
     (setq exwm-input-global-keys
           `(
+            ([?\s-\ ] . my/app-launcher)
             ([?\s-r] . exwm-reset)
             ([?\s-&] . (lambda (command)
                          (interactive (list (read-shell-command "$ ")))
