@@ -180,26 +180,26 @@
  ((find-font (font-spec :name "AporeticSansMono Nerd Font"))
   (set-face-attribute 'default nil
                       :font "AporeticSansMono Nerd Font"
-                      :height 160))
+                      :height 170))
  ;; ((find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
  ;;  (set-face-attribute 'default nil
  ;;                      :font "BerkeleyMonoVariable Nerd Font Mono"
  ;;                      :height 140))
  (t
-  (set-face-attribute 'default nil :height 160)))
+  (set-face-attribute 'default nil :height 170)))
 
 ;; Set variable-pitch font
 (cond
  ((find-font (font-spec :name "AporeticSerif Nerd Font"))
   (set-face-attribute 'variable-pitch nil
                       :font "AporeticSerif Nerd Font"
-                      :height 180))
+                      :height 150))
  ;; ((find-font (font-spec :name "BerkeleyMonoVariable Nerd Font"))
  ;;  (set-face-attribute 'variable-pitch nil
  ;;                      :font "BerkeleyMonoVariable Nerd Font"
  ;;                      :height 150))
  (t
-  (set-face-attribute 'variable-pitch nil :height 180)))
+  (set-face-attribute 'variable-pitch nil :height 150)))
 
 ;;; VARIABLE-PITCH COMMENTS IN PROG-MODE
 
@@ -2738,99 +2738,6 @@ robust UI element disabling."
 
 ;; Apply optimizations after init
 (add-hook 'emacs-startup-hook #'my/apply-performance-optimizations)
-
-(use-package nm
-  :vc (:url "https://github.com/theesfeld/nm" :rev :newest)
-  :ensure t
-  :demand t
-  :init
-  ;; Core NetworkManager settings (before package loads)
-  (setq nm-auto-refresh t                   ; Auto-refresh network status
-        nm-refresh-interval 5               ; Refresh every 5 seconds
-        nm-service "org.freedesktop.NetworkManager"  ; D-Bus service name
-        nm-path "/org/freedesktop/NetworkManager"    ; D-Bus object path
-        nm-settings-path "/org/freedesktop/NetworkManager/Settings")  ; Settings path
-
-  :config
-  ;; Enable optional features
-  (nm-modeline-mode 1)      ; Show connection status in modeline
-  (nm-notify-mode 1)        ; Enable desktop notifications
-
-  ;; Modeline customization - Display format (NEW in v0.4.0)
-  (setq nm-modeline-display-format 'text-only  ; Choose display format:
-                                        ; 'icon-only - Shows only icons
-                                        ; 'text-only - Shows only connection text
-                                        ; 'icon-and-text - Shows both (default)
-        nm-modeline-format " %s"           ; Format string (%s = status)
-        nm-modeline-refresh-interval 5     ; Update interval in seconds
-        nm-modeline-show-vpn t)            ; Show VPN status
-
-  ;; Modeline icons - Connection types (emoji style)
-  (setq nm-modeline-disconnected-icon "⚠"  ; No connection
-        nm-modeline-ethernet-icon "🖧"     ; Ethernet connection
-        nm-modeline-wifi-icon "📶"         ; WiFi base icon
-        nm-modeline-vpn-icon "🔒")         ; VPN active
-
-  ;; WiFi signal strength icons
-  (setq nm-modeline-wifi-icons
-        '((high . "▂▄▆█")     ; 75-100% signal
-          (medium . "▂▄▆_")   ; 50-74% signal
-          (low . "▂▄__")      ; 25-49% signal
-          (none . "▂___")))   ; 0-24% signal
-
-  ;; Notification settings
-  (setq nm-notify-enabled t                 ; Enable notifications
-        nm-notify-use-notifications-lib t   ; Use desktop notifications
-        nm-notify-connect-message "Connected to %s"
-        nm-notify-disconnect-message "Disconnected from %s"
-        nm-notify-state-change-message "Network state: %s"
-        nm-notify-vpn-connect-message "VPN connected: %s"
-        nm-notify-vpn-disconnect-message "VPN disconnected: %s")
-
-  ;; Security settings - auth-source integration
-  (setq nm-secrets-use-auth-source t        ; Use Emacs auth-source
-        nm-secrets-auth-source-host "NetworkManager"  ; Host for auth entries
-        auth-sources '("~/.authinfo.gpg"))  ; Encrypted password storage
-
-  ;; UI buffer names (customize if you prefer different names)
-  (setq nm-ui-buffer-name "*NetworkManager*"
-        nm-ui-wifi-buffer-name "*NetworkManager WiFi*"
-        nm-ui-connection-buffer-name "*NetworkManager Connection*"
-        nm-ui-devices-buffer-name "*NetworkManager Devices*"
-        nm-ui-ethernet-buffer-name "*NetworkManager Ethernet*")
-
-  ;; UI behavior settings (advanced customization)
-  ;; These are usually set via defvar, but can be customized if needed
-  ;; (setq nm-ui-use-tabulated-list t      ; Use enhanced table views
-  ;;       nm-ui-wifi-auto-scan t           ; Auto-scan when opening WiFi browser
-  ;;       nm-ui-connections-show-auto t)   ; Show autoconnect connections
-
-  :bind-keymap
-  ;; Main prefix key for all NetworkManager commands
-  ("C-c N" . nm-prefix-map)
-
-  :hook
-  ;; Optional hooks for integration with other modes
-  ;; Enable features on startup
-  ((after-init . nm-modeline-mode)      ; Enable modeline on startup
-   (after-init . nm-notify-mode))       ; Enable notifications on startup
-
-  ;; You can also hook into specific major modes if needed
-  ;; ((some-mode . (lambda () (nm-modeline-mode 1))))
-
-  :custom-face
-  ;; Optional face customizations for UI elements
-  ;; Uncomment and modify to customize appearance
-  ;; (nm-ui-signal-excellent ((t (:foreground "green" :weight bold))))
-  ;; (nm-ui-signal-good ((t (:foreground "lime green"))))
-  ;; (nm-ui-signal-fair ((t (:foreground "yellow"))))
-  ;; (nm-ui-signal-poor ((t (:foreground "orange red"))))
-  ;; (nm-ui-security-open ((t (:foreground "red"))))
-  ;; (nm-ui-active-connection ((t (:foreground "green" :weight bold))))
-  ;; (nm-ui-device-connected ((t (:foreground "green"))))
-  ;; (nm-ui-device-disconnected ((t (:foreground "gray"))))
-  ;; (nm-ui-device-unavailable ((t (:foreground "red"))))
-  )
 
 (provide 'init)
 ;;; init.el ends here
