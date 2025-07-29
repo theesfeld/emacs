@@ -431,7 +431,7 @@ OLD is ignored but included for hook compatibility."
           (let ((xrandr-cmd "xrandr"))
             ;; Configure primary monitor (check if it's eDP-1)
             (if (string= primary-monitor "eDP-1")
-                (setq xrandr-cmd (format "%s --output %s --auto --scale 0.67x0.67 --rate 120"
+                (setq xrandr-cmd (format "%s --output %s --auto --scale 0.67x0.67"
                                          xrandr-cmd primary-monitor))
               (setq xrandr-cmd (format "%s --output %s --auto"
                                        xrandr-cmd primary-monitor)))
@@ -440,7 +440,7 @@ OLD is ignored but included for hook compatibility."
               (dolist (monitor external-monitors)
                 (if (string= monitor "eDP-1")
                     (setq xrandr-cmd
-                          (format "%s --output %s --auto --scale 0.67x0.67 --rate 120 --right-of %s"
+                          (format "%s --output %s --auto --scale 0.67x0.67 --right-of %s"
                                   xrandr-cmd monitor prev-monitor))
                   (setq xrandr-cmd
                         (format "%s --output %s --auto --right-of %s"
