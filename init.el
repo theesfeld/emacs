@@ -589,6 +589,10 @@ OLD is ignored but included for hook compatibility."
 
 ;;; emacs configuration section
 
+;; Disable auto-revert to prevent EXWM interruptions
+(global-auto-revert-mode -1)
+(setq auto-revert-interval 999999)  ; Just in case
+
 (defvar my-tmp-dir (expand-file-name "~/.tmp/")
   "Centralized directory for temporary files, backups, and history files.
 This keeps the main .emacs.d directory clean and organizes cache files logically.")
@@ -661,7 +665,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         version-control t
         backup-by-copying t
         backup-directory-alist `((".*" . ,(expand-file-name "backups" my-tmp-dir)))
-        auto-save-default t
+        auto-save-default nil  ; Disable auto-save to prevent EXWM interruptions
         auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-saves/" my-tmp-dir) t))
         auto-save-list-file-prefix (expand-file-name "auto-save-list/.saves-" my-tmp-dir)
         save-place-file (expand-file-name "saveplace/saveplace" my-tmp-dir))
@@ -1287,6 +1291,7 @@ If buffer is modified, offer to save first."
   :init (savehist-mode 1)
   :custom
   (savehist-file (expand-file-name "savehist" my-tmp-dir))
+  (savehist-autosave-interval nil)  ; Disable auto-save, only save on exit
   (savehist-additional-variables
    '(kill-ring
      mark-ring
@@ -1744,13 +1749,21 @@ If buffer is modified, offer to save first."
 (use-package recentf
   :ensure nil
   :hook (after-init . recentf-mode)
+  :init
+  (setq recentf-auto-cleanup nil  ; Disable automatic cleanup/save timer
+        recentf-save-file (expand-file-name "recentf/recentf" my-tmp-dir)
+        recentf-max-saved-items 200
+        recentf-max-menu-items 25)
   :config
-  (setq
-   recentf-save-file (expand-file-name "recentf/recentf" my-tmp-dir)
-   recentf-max-saved-items 200
-   recentf-max-menu-items 25
-   recentf-auto-cleanup nil)
-  (run-at-time nil (* 5 60) 'recentf-save-list)
+  ;; Cancel any timers that recentf might have created
+  (dolist (timer timer-list)
+    (when (and (timerp timer)
+               (eq (timer--function timer) 'recentf-save-list))
+      (cancel-timer timer)))
+
+  ;; Only save when Emacs exits
+  (add-hook 'kill-emacs-hook 'recentf-save-list)
+
   :bind (("C-c r" . consult-recent-file)))
 
 ;;; Dired - Directory Editor
@@ -2655,8 +2668,7 @@ robust UI element disabling."
           global-mark-ring-max 50
           message-log-max (if my/ultra-high-spec-system-p 20000 10000)
           history-length (if my/ultra-high-spec-system-p 2000 1000)
-          savehist-save-minibuffer-history t
-          savehist-autosave-interval 60)
+          savehist-save-minibuffer-history t)
 
     ;; Optimize file operations
     (setq auto-save-interval 1000
@@ -2745,7 +2757,7 @@ robust UI element disabling."
   (nm-notify-mode 1)        ; Enable desktop notifications
 
   ;; Modeline customization - Display format (NEW in v0.4.0)
-  (setq nm-modeline-display-format 'icon-and-text  ; Choose display format:
+  (setq nm-modeline-display-format 'text-only  ; Choose display format:
                                         ; 'icon-only - Shows only icons
                                         ; 'text-only - Shows only connection text
                                         ; 'icon-and-text - Shows both (default)
