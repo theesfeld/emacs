@@ -2804,6 +2804,7 @@ robust UI element disabling."
 (use-package nm
   :vc (:url "https://github.com/theesfeld/nm" :rev :newest)
   :ensure t
+  :demand t
   :config
   (setq nm-auto-refresh t
         nm-refresh-interval 5)
