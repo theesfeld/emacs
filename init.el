@@ -175,53 +175,31 @@
 
 ;;; FONT CONFIGURATION
 
-(defun my/get-current-monitor-name ()
-  "Get the name of the monitor containing the current frame."
-  (let* ((frame (selected-frame))
-         (monitor-attrs (frame-monitor-attributes frame)))
-    (cdr (assq 'name monitor-attrs))))
+;; Set default font
+(cond
+ ((find-font (font-spec :name "AporeticSansMono Nerd Font"))
+  (set-face-attribute 'default nil
+                      :font "AporeticSansMono Nerd Font"
+                      :height 160))
+ ;; ((find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
+ ;;  (set-face-attribute 'default nil
+ ;;                      :font "BerkeleyMonoVariable Nerd Font Mono"
+ ;;                      :height 140))
+ (t
+  (set-face-attribute 'default nil :height 120)))
 
-(defun my/set-font-for-monitor ()
-  "Set font size based on which monitor the frame is on."
-  (when (display-graphic-p)
-    (let ((monitor (my/get-current-monitor-name))
-          (base-height (if (find-font (font-spec :name "AporeticSerifMono Nerd Font"))
-                           170
-                         150))
-          (variable-pitch-height (if (find-font (font-spec :name "AporeticSerif Mono Nerd Font"))
-                                     180
-                                   160)))
-      (set-face-attribute 'default (selected-frame) :height base-height)
-      (set-face-attribute 'variable-pitch (selected-frame) :height variable-pitch-height))))
-
-(when (display-graphic-p)
-  (when (find-font (font-spec :name "AporeticSansMono Nerd Font"))
-    (set-face-attribute 'default nil
-                        :font "AporeticSansMono Nerd Font"
-                        :height 170))
-
-  (when (find-font (font-spec :name "AporeticSerif Nerd Font"))
-    (set-face-attribute 'variable-pitch nil
-                        :font "AporeticSerif Nerd Font"
-                        :height 180))
-
-  ;; (when (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
-  ;;   (set-face-attribute 'default nil
-  ;;                       :font "BerkeleyMonoVariable Nerd Font Mono"
-  ;;                       :height 140)
-  ;;   (set-face-attribute 'variable-pitch nil
-  ;;                       :font "BerkeleyMonoVariable Nerd Font Mono"
-  ;;                       :height 160))
-
-  ;; Set font size for current monitor on startup
-  (my/set-font-for-monitor)
-
-  ;; Adjust font when frame moves between monitors
-  (add-hook 'window-configuration-change-hook #'my/set-font-for-monitor)
-  (add-hook 'after-make-frame-functions
-            (lambda (frame)
-              (with-selected-frame frame
-                (my/set-font-for-monitor)))))
+;; Set variable-pitch font
+(cond
+ ((find-font (font-spec :name "AporeticSerif Nerd Font"))
+  (set-face-attribute 'variable-pitch nil
+                      :font "AporeticSerif Nerd Font"
+                      :height 170))
+ ;; ((find-font (font-spec :name "BerkeleyMonoVariable Nerd Font"))
+ ;;  (set-face-attribute 'variable-pitch nil
+ ;;                      :font "BerkeleyMonoVariable Nerd Font"
+ ;;                      :height 150))
+ (t
+  (set-face-attribute 'variable-pitch nil :height 130)))
 
 ;;; VARIABLE-PITCH COMMENTS IN PROG-MODE
 
@@ -339,79 +317,6 @@ OLD is ignored but included for hook compatibility."
         ednc-popup-max-count 4)
   (add-hook 'ednc-notification-presentation-functions #'ednc-popup-presentation-function))
 
-;;; TTY Frame Configuration - Automatic sizing
-(defun grim/get-terminal-size ()
-  "Get actual terminal size from multiple sources."
-  (when (not (display-graphic-p))
-    (let ((height nil)
-          (width nil))
-      ;; Try method 1: stty size
-      (condition-case nil
-          (with-temp-buffer
-            (when (= 0 (call-process "stty" nil t nil "size"))
-              (goto-char (point-min))
-              (when (looking-at "\\([0-9]+\\) \\([0-9]+\\)")
-                (setq height (string-to-number (match-string 1)))
-                (setq width (string-to-number (match-string 2))))))
-        (error nil))
-      ;; Try method 2: tput
-      (unless (and height width)
-        (condition-case nil
-            (setq height (string-to-number
-                         (with-temp-buffer
-                           (call-process "tput" nil t nil "lines")
-                           (string-trim (buffer-string))))
-                  width (string-to-number
-                        (with-temp-buffer
-                          (call-process "tput" nil t nil "cols")
-                          (string-trim (buffer-string)))))
-          (error nil)))
-      ;; Try method 3: ioctl via external script
-      (unless (and height width)
-        (condition-case nil
-            (let ((size-info (shell-command-to-string
-                             "python3 -c 'import fcntl, termios, struct; h, w = struct.unpack(\"hh\", fcntl.ioctl(0, termios.TIOCGWINSZ, \"1234\")); print(h, w)' 2>/dev/null")))
-              (when (string-match "\\([0-9]+\\) \\([0-9]+\\)" size-info)
-                (setq height (string-to-number (match-string 1 size-info)))
-                (setq width (string-to-number (match-string 2 size-info)))))
-          (error nil)))
-      (cons (or height 24) (or width 80)))))
-
-(defun grim/auto-fix-tty-frame ()
-  "Automatically fix TTY frame size."
-  (when (not (display-graphic-p))
-    (let* ((size (grim/get-terminal-size))
-           (height (car size))
-           (width (cdr size))
-           (current-height (frame-height))
-           (current-width (frame-width)))
-      ;; Only resize if dimensions actually changed
-      (when (or (/= height current-height)
-                (/= width current-width))
-        (set-frame-size (selected-frame) width height)
-        (redraw-display)))))
-
-;; Run immediately on load
-(grim/auto-fix-tty-frame)
-
-;; Set up automatic TTY frame sizing
-(when (not (display-graphic-p))
-  ;; Fix on startup
-  (add-hook 'after-init-hook #'grim/auto-fix-tty-frame)
-  (add-hook 'window-setup-hook #'grim/auto-fix-tty-frame)
-  (add-hook 'after-make-frame-functions
-            (lambda (frame)
-              (select-frame frame)
-              (grim/auto-fix-tty-frame)))
-
-  ;; Fix on terminal resize - use SIGWINCH handler
-  (add-hook 'window-size-change-functions
-            (lambda (frame)
-              (when (eq frame (selected-frame))
-                (grim/auto-fix-tty-frame))))
-
-  ;; Periodic check as fallback (every 2 seconds)
-  (run-with-timer 2 2 #'grim/auto-fix-tty-frame))
 
 ;;; EXWM - Dynamic multi-monitor configuration for Emacs 30.1
 (when (eq window-system 'x)
@@ -484,13 +389,21 @@ OLD is ignored but included for hook compatibility."
       "Update EXWM buffer name to window class name."
       (exwm-workspace-rename-buffer exwm-class-name))
 
+    (defcustom my/exwm-title-max-length 80
+      "Maximum length for EXWM window titles."
+      :type 'integer
+      :group 'exwm)
+
     (defun my/exwm-update-title ()
       "Update EXWM buffer name to window title."
-      (pcase exwm-class-name
-        ("Firefox" (exwm-workspace-rename-buffer
-                    (format "Firefox: %s" exwm-title)))
-        (_ (exwm-workspace-rename-buffer
-            (format "%s: %s" exwm-class-name exwm-title)))))
+      (let ((title (truncate-string-to-width exwm-title
+                                             my/exwm-title-max-length
+                                             nil nil "…")))
+        (pcase exwm-class-name
+          ("Firefox" (exwm-workspace-rename-buffer
+                      (format "Firefox: %s" title)))
+          (_ (exwm-workspace-rename-buffer
+              (format "%s: %s" exwm-class-name title))))))
 
     (add-hook 'exwm-update-class-hook #'my/exwm-update-class)
     (add-hook 'exwm-update-title-hook #'my/exwm-update-title)
@@ -529,75 +442,110 @@ OLD is ignored but included for hook compatibility."
           (insert xrandr-output)
           (display-buffer (current-buffer)))))
 
+    (defvar my/exwm-monitor-config-timer nil
+      "Timer for debouncing monitor configuration changes.")
+
+    (defvar my/exwm-last-monitor-config nil
+      "Cache of last monitor configuration to avoid redundant updates.")
+
+    (defvar my/exwm-monitor-updating nil
+      "Flag to prevent concurrent monitor updates.")
+
     (defun my/exwm-refresh-monitors ()
       "Manually refresh monitor configuration."
       (interactive)
+      (setq my/exwm-last-monitor-config nil) ; Clear cache
       (my/exwm-configure-monitors)
       (message "Monitor configuration refreshed"))
 
+    (defun my/exwm-configure-monitors-debounced ()
+      "Debounced version of monitor configuration."
+      (when my/exwm-monitor-config-timer
+        (cancel-timer my/exwm-monitor-config-timer))
+      (setq my/exwm-monitor-config-timer
+            (run-with-timer 3.0 nil #'my/exwm-configure-monitors))) ; Increased delay to 3 seconds
+
     (defun my/exwm-configure-monitors ()
-      "Dynamically configure monitors on plug/unplug using EXWM built-ins."
-      (start-process-shell-command "xrandr" nil "xrandr --auto")
-      (let* ((xrandr-output (shell-command-to-string "xrandr -q"))
-             (connected-monitors
-              (delq nil
-                    (mapcar (lambda (line)
-                              (when (string-match "^\\([a-zA-Z0-9-]+\\) connected" line)
-                                (match-string 1 line)))
-                            (split-string xrandr-output "\n"))))
-             (monitor-count (length connected-monitors))
-             (external-monitors (seq-remove (lambda (m) (string= m "eDP-1")) connected-monitors))
-             (primary-monitor (if external-monitors
-                                  (car external-monitors)  ; First external monitor is primary
-                                (car connected-monitors))) ; Otherwise use first (likely eDP-1)
-             (plist nil))
-        (when (> monitor-count 0)
-          ;; Configure monitor layout
-          (cond
-           ;; Multiple monitors: arrange them properly
-           ((> monitor-count 1)
-            (let ((xrandr-cmd "xrandr"))
-              ;; Configure eDP-1 with scaling
-              (when (member "eDP-1" connected-monitors)
-                (setq xrandr-cmd (concat xrandr-cmd " --output eDP-1 --scale 0.67x0.67 --pos 0x0")))
-              ;; Configure external monitors
-              (when (nth 0 external-monitors)
-                (setq xrandr-cmd (concat xrandr-cmd
-                                         (format " --output %s --primary --pos %dx0"
-                                                 (nth 0 external-monitors)
-                                                 (if (member "eDP-1" connected-monitors) 1930 0)))))
-              (when (nth 1 external-monitors)
-                (setq xrandr-cmd (concat xrandr-cmd
-                                         (format " --output %s --pos %dx0"
-                                                 (nth 1 external-monitors)
-                                                 (+ (if (member "eDP-1" connected-monitors) 1930 0) 3840)))))
-              ;; Execute the combined xrandr command
-              (start-process-shell-command "xrandr-setup" nil xrandr-cmd)))
-           ;; Single monitor
-           (t
-            (when (member "eDP-1" connected-monitors)
-              (start-process-shell-command "xrandr-single" nil
-                                           "xrandr --output eDP-1 --scale 0.67x0.67 --primary"))))
-          ;; Assign workspaces: eDP-1 gets 0, external monitors get 1, 2, etc.
-          (dotimes (ws 10)
-            (cond
-             ;; Workspace 0 always goes to eDP-1 if it exists, otherwise primary
-             ((= ws 0)
-              (setq plist (append plist (list ws (if (member "eDP-1" connected-monitors)
-                                                     "eDP-1"
-                                                   primary-monitor)))))
-             ;; Workspaces 1+ go to external monitors in order
-             ((and (> ws 0) (<= ws (length external-monitors)))
-              (setq plist (append plist (list ws (nth (1- ws) external-monitors)))))
-             ;; Extra workspaces go to primary monitor
-             (t
-              (setq plist (append plist (list ws primary-monitor)))))))
-        (setq exwm-randr-workspace-monitor-plist plist)
-        ;; Add a small delay to ensure xrandr changes are applied
-        (run-with-timer 0.5 nil
-                        (lambda ()
-                          (exwm-randr-refresh)
-                          (message "EXWM workspace configuration updated")))))
+      "Dynamically configure monitors with caching to reduce xrandr calls."
+      (if my/exwm-monitor-updating
+          (message "Monitor update already in progress, skipping...")
+        (setq my/exwm-monitor-updating t)
+        (unwind-protect
+          (let* ((xrandr-output (shell-command-to-string "xrandr -q"))
+                 (connected-monitors
+                  (delq nil
+                        (mapcar (lambda (line)
+                                  (when (string-match "^\\([a-zA-Z0-9-]+\\) connected" line)
+                                    (match-string 1 line)))
+                                (split-string xrandr-output "\n"))))
+                 (monitor-config (format "%s" connected-monitors)))
+
+            ;; Only proceed if monitor configuration has changed
+            (unless (equal monitor-config my/exwm-last-monitor-config)
+              (setq my/exwm-last-monitor-config monitor-config)
+
+          (let* ((monitor-count (length connected-monitors))
+                 (external-monitors (seq-remove (lambda (m) (string= m "eDP-1")) connected-monitors))
+                 (primary-monitor (if external-monitors
+                                      (car external-monitors)
+                                    (car connected-monitors)))
+                 (plist nil))
+
+            (when (> monitor-count 0)
+              ;; Build a single xrandr command for all monitors
+              (let ((xrandr-cmd "xrandr"))
+                ;; Turn off disconnected monitors first
+                (dolist (output '("DP-1" "DP-2" "HDMI-1" "HDMI-2" "VGA-1"))
+                  (unless (member output connected-monitors)
+                    (setq xrandr-cmd (concat xrandr-cmd " --output " output " --off"))))
+
+                ;; Configure connected monitors
+                (cond
+                 ;; Multiple monitors
+                 ((> monitor-count 1)
+                  (when (member "eDP-1" connected-monitors)
+                    (setq xrandr-cmd (concat xrandr-cmd " --output eDP-1 --mode 2880x1800 --rate 60.00 --scale 0.67x0.67 --pos 0x0")))
+                  (when (nth 0 external-monitors)
+                    (setq xrandr-cmd (concat xrandr-cmd
+                                             (format " --output %s --primary --auto --pos %dx0"
+                                                     (nth 0 external-monitors)
+                                                     (if (member "eDP-1" connected-monitors) 1930 0)))))
+                  (when (nth 1 external-monitors)
+                    (setq xrandr-cmd (concat xrandr-cmd
+                                             (format " --output %s --auto --pos %dx0"
+                                                     (nth 1 external-monitors)
+                                                     (+ (if (member "eDP-1" connected-monitors) 1930 0) 3840))))))
+                 ;; Single monitor
+                 (t
+                  (if (string= (car connected-monitors) "eDP-1")
+                      (setq xrandr-cmd (concat xrandr-cmd " --output eDP-1 --mode 2880x1800 --rate 120.00 --scale 0.67x0.67 --primary"))
+                    (setq xrandr-cmd (concat xrandr-cmd
+                                             (format " --output %s --scale 0.67x0.67 --primary --auto"
+                                                     (car connected-monitors)))))))
+
+                ;; Execute the single combined xrandr command
+                (call-process-shell-command xrandr-cmd nil 0)))
+
+              ;; Build workspace assignment plist
+              (dotimes (ws 10)
+                (cond
+                 ((= ws 0)
+                  (setq plist (append plist (list ws (if (member "eDP-1" connected-monitors)
+                                                         "eDP-1"
+                                                       primary-monitor)))))
+                 ((and (> ws 0) (<= ws (length external-monitors)))
+                  (setq plist (append plist (list ws (nth (1- ws) external-monitors)))))
+                 (t
+                  (setq plist (append plist (list ws primary-monitor))))))
+
+              ;; Update EXWM configuration
+              (setq exwm-randr-workspace-monitor-plist plist)
+
+              ;; Single synchronous refresh - no timer needed
+              (exwm-randr-refresh)
+              (message "EXWM monitor configuration updated: %s" connected-monitors))))
+        ;; Always clear the updating flag
+        (setq my/exwm-monitor-updating nil))))
 
     (defun my/exwm-start-tray-apps ()
       "Start system tray applications with delays to ensure proper icon display."
@@ -629,11 +577,11 @@ OLD is ignored but included for hook compatibility."
 
     (add-hook 'exwm-init-hook #'my/exwm-init-hook)
     (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
-    (add-hook 'exwm-randr-screen-change-hook #'my/exwm-configure-monitors)
+    (add-hook 'exwm-randr-screen-change-hook #'my/exwm-configure-monitors-debounced)
     (exwm-systemtray-mode 1)
     (exwm-randr-mode 1)
     (exwm-wm-mode 1)
-    (my/exwm-configure-monitors))
+    (my/exwm-configure-monitors)))
 
   (defun my/app-launcher ()
     "Launch application using \='completing-read'."
@@ -705,7 +653,7 @@ OLD is ignored but included for hook compatibility."
                                                     (exwm-input--fake-key ?\C-y)
                                                     (run-with-timer 0.1 nil (lambda ()
                                                                               (when kill-ring
-                                                                                (kill-new (car kill-ring)))))))))))
+                                                                                (kill-new (car kill-ring))))))))))
 
 ;;; init.el version control
 
@@ -790,7 +738,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
   (prefer-coding-system 'utf-8)
   (set-default-coding-systems 'utf-8)
-  (set-terminal-coding-system 'utf-8)
   (set-keyboard-coding-system 'utf-8)
   (set-language-environment "UTF-8")
 
@@ -833,13 +780,12 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         mouse-wheel-follow-mouse t
         fast-but-imprecise-scrolling t)
 
-  (when (display-graphic-p)
-    (pixel-scroll-precision-mode 1)
+  (pixel-scroll-precision-mode 1)
 
-    (when (fboundp 'pixel-scroll-precision-mode)
-      (setq pixel-scroll-precision-interpolate-page t
-            pixel-scroll-precision-large-scroll-height 40.0
-            pixel-scroll-precision-interpolation-factor 30)))
+  (when (fboundp 'pixel-scroll-precision-mode)
+    (setq pixel-scroll-precision-interpolate-page t
+          pixel-scroll-precision-large-scroll-height 40.0
+          pixel-scroll-precision-interpolation-factor 30))
 
 
   ;; Performance optimizations for smooth scrolling
@@ -991,7 +937,22 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                       (display-time-mode 1)
                       (setq-default display-line-numbers-type t)
                       (setq-default display-line-numbers-width-start t)
-                      (global-display-line-numbers-mode 1))))
+
+                      ;; Enable line numbers only in programming modes
+                      (add-hook 'prog-mode-hook #'display-line-numbers-mode)
+                      (add-hook 'conf-mode-hook #'display-line-numbers-mode)
+
+                      ;; Explicitly disable line numbers in certain modes
+                      (dolist (mode '(lisp-interaction-mode-hook
+                                      org-mode-hook
+                                      term-mode-hook
+                                      eshell-mode-hook
+                                      pdf-view-mode-hook
+                                      dired-mode-hook
+                                      eww-mode-hook
+                                      erc-mode-hook
+                                      eat-mode-hook))
+                        (add-hook mode (lambda () (display-line-numbers-mode -1)))))))
 
   :bind
   (("C-x k" . kill-current-buffer)
@@ -1001,19 +962,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (mode-line-inactive ((t (:box (:line-width -1 :style released-button)))))
   (mode-line-buffer-id ((t (:weight bold :inherit font-lock-keyword-face))))
   (mode-line-emphasis ((t (:weight bold :inherit warning)))))
-
-;;; Disable line numbers in specific modes
-(dolist (mode '(org-mode-hook
-                term-mode-hook
-                eshell-mode-hook
-                pdf-view-mode-hook
-                dired-mode-hook
-                eww-mode-hook
-                erc-mode-hook
-                eat-mode-hook
-                lisp-interaction-mode-hook))
-
-  (add-hook mode (lambda () (display-line-numbers-mode -1))))
 
 ;;; Minions for minor mode management
 (use-package minions
@@ -1066,11 +1014,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq ef-themes-mixed-fonts t
         ef-themes-variable-pitch-ui t)
 
-  ;; Load appropriate theme based on display type
-  (if (display-graphic-p)
-      (load-theme 'ef-winter t)
-    ;; Use modus-vivendi for TTY mode
-    (load-theme 'modus-vivendi t))
+  ;; Load theme
+  (load-theme 'ef-winter t)
 
   (defun my-ef-themes-mode-line ()
     "Tweak the style of the mode lines."
@@ -1086,9 +1031,8 @@ This function is added to the \=`ef-themes-post-load-hook'."
       (custom-set-faces
        `(font-lock-comment-face ((,c :inherit italic :foreground ,comment)))
        `(font-lock-variable-name-face ((,c :foreground ,variable))))))
-  (when (display-graphic-p)
-    (add-hook 'ef-themes-post-load-hook #'my-ef-themes-custom-faces)
-    (add-hook 'ef-themes-post-load-hook #'my-ef-themes-mode-line)))
+  (add-hook 'ef-themes-post-load-hook #'my-ef-themes-custom-faces)
+  (add-hook 'ef-themes-post-load-hook #'my-ef-themes-mode-line))
 
 (use-package windower
   :ensure t
@@ -2281,13 +2225,11 @@ This complements the frame parameters set in early-init.el to ensure
 robust UI element disabling."
   (with-selected-frame (or frame (selected-frame))
     (menu-bar-mode -1)
-    (when (display-graphic-p frame)
-      (tool-bar-mode -1)
-      (scroll-bar-mode -1))))
+    (tool-bar-mode -1)
+    (scroll-bar-mode -1)))
 
 (unless (daemonp)
-  (when (display-graphic-p)
-    (my-after-make-frame-setup)))
+  (my-after-make-frame-setup))
 
 (add-hook 'after-make-frame-functions #'my-after-make-frame-setup)
 
@@ -2403,17 +2345,16 @@ robust UI element disabling."
 
 (use-package tooltip
   :ensure nil
-  :hook (after-init . (lambda () (when (display-graphic-p) (tooltip-mode 1))))
+  :hook (after-init . tooltip-mode)
   :config
-  (when (display-graphic-p)
-    (setq tooltip-delay 0.5
-          tooltip-short-delay 0.5
-          x-gtk-use-system-tooltips t
-          tooltip-frame-parameters
-          '((name . "tooltip")
-            (internal-border-width . 10)
-            (border-width . 0)
-            (no-special-glyphs . t)))))
+  (setq tooltip-delay 0.5
+        tooltip-short-delay 0.5
+        x-gtk-use-system-tooltips t
+        tooltip-frame-parameters
+        '((name . "tooltip")
+          (internal-border-width . 10)
+          (border-width . 0)
+          (no-special-glyphs . t))))
 
 ;;; `man' (manpages)
 
