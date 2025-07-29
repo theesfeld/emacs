@@ -495,7 +495,6 @@ OLD is ignored but included for hook compatibility."
 
     (add-hook 'exwm-init-hook #'my/exwm-init-hook)
     (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
-    (add-hook 'exwm-randr-screen-change-hook #'my/exwm-configure-monitors-debounced)
     (exwm-systemtray-mode 1)
     (exwm-randr-mode 1)
     (exwm-wm-mode 1)
