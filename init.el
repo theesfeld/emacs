@@ -431,7 +431,7 @@ OLD is ignored but included for hook compatibility."
           (let ((xrandr-cmd "xrandr"))
             ;; Configure primary monitor (check if it's eDP-1)
             (if (string= primary-monitor "eDP-1")
-                (setq xrandr-cmd (format "%s --output %s --auto --scale 0.67x0.67"
+                (setq xrandr-cmd (format "%s --output %s --scale 0.67x0.67 --auto"
                                          xrandr-cmd primary-monitor))
               (setq xrandr-cmd (format "%s --output %s --auto"
                                        xrandr-cmd primary-monitor)))
@@ -440,7 +440,7 @@ OLD is ignored but included for hook compatibility."
               (dolist (monitor external-monitors)
                 (if (string= monitor "eDP-1")
                     (setq xrandr-cmd
-                          (format "%s --output %s --auto --scale 0.67x0.67 --right-of %s"
+                          (format "%s --output %s --scale 0.67x0.67 --auto --right-of %s"
                                   xrandr-cmd monitor prev-monitor))
                   (setq xrandr-cmd
                         (format "%s --output %s --auto --right-of %s"
@@ -489,11 +489,6 @@ OLD is ignored but included for hook compatibility."
                                                                                 (message "Starting mullvad-vpn...")
                                                                                 (start-process "mullvad-vpn" nil "mullvad-vpn")))))))))))
 
-    (defun my/exwm-init-hook ()
-      "Custom initialization for EXWM."
-      (start-process-shell-command "xsetroot-bg" nil "xsetroot -solid '#1a1a1a'"))
-
-    (add-hook 'exwm-init-hook #'my/exwm-init-hook)
     (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
     (exwm-systemtray-mode 1)
     (exwm-randr-mode 1)
