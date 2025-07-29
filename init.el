@@ -2535,16 +2535,6 @@ robust UI element disabling."
         smtpmail-debug-info t
         smtpmail-debug-verb t))
 
-;;; mastodon
-
-(use-package mastodon
-  :ensure t
-  :defer t
-  :config
-  (setq mastodon-active-user "blackdream"
-        mastodon-instance-url "https://defcon.social")
-  (mastodon-discover))
-
 ;;; stupid fucking emojis
 
 (use-package emoji
@@ -2810,6 +2800,18 @@ robust UI element disabling."
 
 ;; Apply optimizations after init
 (add-hook 'emacs-startup-hook #'my/apply-performance-optimizations)
+
+(use-package nm
+  :vc (:url "https://github.com/theesfeld/nm" :rev :newest)
+  :ensure t
+  :config
+  (setq nm-auto-refresh t
+        nm-refresh-interval 5)
+  :bind
+  (("C-c n s" . nm-status)
+   ("C-c n u" . nm-ui)
+   ("C-c n w" . nm-ui-wifi)
+   ("C-c n c" . nm-ui-connections)))
 
 (provide 'init)
 ;;; init.el ends here
