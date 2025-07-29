@@ -191,15 +191,8 @@
           (variable-pitch-height (if (find-font (font-spec :name "AporeticSerif Mono Nerd Font"))
                                      180
                                    160)))
-      (if (and monitor (string-match-p "eDP-1" monitor))
-          (progn
-            ;; Larger font for eDP-1
-            (set-face-attribute 'default (selected-frame) :height (+ base-height 75))
-            (set-face-attribute 'variable-pitch (selected-frame) :height (+ variable-pitch-height 75)))
-        ;; Normal font for external monitors
-        (progn
-          (set-face-attribute 'default (selected-frame) :height base-height)
-          (set-face-attribute 'variable-pitch (selected-frame) :height variable-pitch-height))))))
+      (set-face-attribute 'default (selected-frame) :height base-height)
+      (set-face-attribute 'variable-pitch (selected-frame) :height variable-pitch-height))))
 
 (when (display-graphic-p)
   (when (find-font (font-spec :name "AporeticSansMono Nerd Font"))
@@ -520,6 +513,10 @@ OLD is ignored but included for hook compatibility."
              (primary-monitor (car connected-monitors))
              (plist nil))
         (when (> monitor-count 0)
+          ;; Apply scaling for eDP-1 monitor
+          (when (member "eDP-1" connected-monitors)
+            (start-process-shell-command "xrandr-scale" nil
+                                         "xrandr --output eDP-1 --scale 0.67x0.67"))
           ;; Assign workspaces sequentially
           (dotimes (ws 10)
             (push ws plist)
@@ -1002,11 +999,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
       (load-theme 'ef-winter t)
     ;; Use modus-vivendi for TTY mode
     (load-theme 'modus-vivendi t))
-
-  (unless (find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
-    (when (display-graphic-p)
-      (set-face-attribute 'default nil :height 140)
-      (set-face-attribute 'variable-pitch nil :height 160)))
 
   (defun my-ef-themes-mode-line ()
     "Tweak the style of the mode lines."
