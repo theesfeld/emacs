@@ -2861,9 +2861,52 @@ robust UI element disabling."
   :vc (:url "https://github.com/theesfeld/nm" :rev :newest)
   :ensure t
   :demand t
-  :config
+
+  :init
+  ;; Core settings (before package loads)
   (setq nm-auto-refresh t
         nm-refresh-interval 5)
+
+  :config
+  ;; Enable optional features
+  (nm-modeline-mode 1)      ; Show connection status in modeline
+  (nm-notify-mode 1)        ; Enable desktop notifications
+
+  ;; Modeline customization
+  (setq nm-modeline-format " [%s]"  ; Format string for modeline
+        nm-modeline-refresh-interval 5
+        nm-modeline-show-vpn t)
+
+  ;; Custom icons - WiFi signal strength
+  (setq nm-modeline-wifi-icons
+        '((high . "▂▄▆█")     ; 75-100%
+          (medium . "▂▄▆_")   ; 50-74%
+          (low . "▂▄__")      ; 25-49%
+          (none . "▂___")))   ; 0-24%
+
+  ;; Custom icons - Connection types
+  (setq nm-modeline-disconnected-icon "⚠"
+        nm-modeline-ethernet-icon "🔌"
+        nm-modeline-wifi-icon "📶"
+        nm-modeline-vpn-icon "🔒")
+
+  ;; Alternative: Use Nerd Fonts (requires Nerd Font installed)
+  ;; (setq nm-modeline-use-nerd-fonts t)
+
+  ;; Notification settings
+  (setq nm-notify-connect-message "Connected to %s"
+        nm-notify-disconnect-message "Disconnected from %s"
+        nm-notify-use-notifications-lib t)  ; Use desktop notifications
+
+  ;; Security settings
+  (setq nm-secrets-use-auth-source t        ; Use Emacs auth-source
+        auth-sources '("~/.authinfo.gpg"))  ; Encrypted password storage
+
+  ;; UI preferences
+  (setq nm-ui-use-tabulated-list t         ; Use enhanced table views
+        nm-ui-wifi-auto-scan t              ; Auto-scan when opening WiFi browser
+        nm-ui-connections-show-auto nil)    ; Hide autoconnect connections
+
   :bind-keymap
   ("C-c N" . nm-prefix-map))
 
