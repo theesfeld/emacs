@@ -429,42 +429,52 @@ OLD is ignored but included for hook compatibility."
              (external-monitors (cdr monitor-names)))
 
         ;; Build xrandr command
-        (when external-monitors
-          (let ((xrandr-cmd "xrandr --auto"))
-            ;; Configure each external monitor to the right of the previous
-            (let ((prev-monitor primary-monitor))
-              (dolist (monitor external-monitors)
+        (if external-monitors
+            (let ((xrandr-cmd "xrandr --auto"))
+              ;; Apply scaling to eDP-1 if it's connected
+              (when (member "eDP-1" monitor-names)
                 (setq xrandr-cmd
-                      (format "%s --output %s --auto --right-of %s"
-                              xrandr-cmd monitor prev-monitor))
-                (setq prev-monitor monitor)))
+                      (format "%s --output eDP-1 --scale 0.67x0.67"
+                              xrandr-cmd)))
+              ;; Configure each external monitor to the right of the previous
+              (let ((prev-monitor primary-monitor))
+                (dolist (monitor external-monitors)
+                  (setq xrandr-cmd
+                        (format "%s --output %s --auto --right-of %s"
+                                xrandr-cmd monitor prev-monitor))
+                  (setq prev-monitor monitor)))
 
-            ;; Execute xrandr command
-            (start-process-shell-command "xrandr" nil xrandr-cmd)
+              ;; Execute xrandr command
+              (start-process-shell-command "xrandr" nil xrandr-cmd)
 
-            ;; Configure workspace assignment
-            ;; Put workspace 0 on primary, distribute others on externals
-            (let ((workspace-plist '())
-                  (workspace-num 0))
-              ;; Workspace 0 always on primary monitor
-              (setq workspace-plist (append workspace-plist
-                                            (list workspace-num primary-monitor)))
-              (setq workspace-num 1)
+              ;; Configure workspace assignment
+              ;; Put workspace 0 on primary, distribute others on externals
+              (let ((workspace-plist '())
+                    (workspace-num 0))
+                ;; Workspace 0 always on primary monitor
+                (setq workspace-plist (append workspace-plist
+                                              (list workspace-num primary-monitor)))
+                (setq workspace-num 1)
 
-              ;; Distribute remaining workspaces across external monitors
-              (when external-monitors
-                (dolist (monitor (if (> (length external-monitors) 1)
-                                     external-monitors
-                                   ;; If only one external, put all remaining workspaces there
-                                   (make-list 9 (car external-monitors))))
-                  (when (< workspace-num 10)
-                    (setq workspace-plist (append workspace-plist
-                                                  (list workspace-num monitor)))
-                    (setq workspace-num (1+ workspace-num)))))
+                ;; Distribute remaining workspaces across external monitors
+                (when external-monitors
+                  (dolist (monitor (if (> (length external-monitors) 1)
+                                       external-monitors
+                                     ;; If only one external, put all remaining workspaces there
+                                     (make-list 9 (car external-monitors))))
+                    (when (< workspace-num 10)
+                      (setq workspace-plist (append workspace-plist
+                                                    (list workspace-num monitor)))
+                      (setq workspace-num (1+ workspace-num)))))
 
-              ;; Apply the workspace configuration
-              (setq exwm-randr-workspace-monitor-plist workspace-plist)
-              (exwm-randr-refresh))))))
+                ;; Apply the workspace configuration
+                (setq exwm-randr-workspace-monitor-plist workspace-plist)
+                (exwm-randr-refresh)))
+          ;; No external monitors - just apply scaling to eDP-1 if it exists
+          (when (member "eDP-1" monitor-names)
+            (start-process-shell-command "xrandr" nil
+                                         "xrandr --output eDP-1 --scale 0.67x0.67")
+            (exwm-randr-refresh)))))
 
     (defun my/exwm-start-tray-apps ()
       "Start system tray applications with delays to ensure proper icon display."
@@ -483,13 +493,7 @@ OLD is ignored but included for hook compatibility."
                                                           (lambda ()
                                                             (when (executable-find "blueman-applet")
                                                               (message "Starting blueman-applet...")
-                                                              (start-process "blueman-applet" nil "blueman-applet"))
-                                                            (run-with-timer 5 nil
-                                                                            (lambda ()
-                                                                              (when (executable-find "mullvad-vpn")
-                                                                                (message "Starting mullvad-vpn...")
-                                                                                (start-process "mullvad-vpn" nil "mullvad-vpn")))))))))))
-
+                                                              (start-process "blueman-applet" nil "blueman-applet")))))))))
     (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
     (exwm-systemtray-mode 1)
     (exwm-randr-mode 1)
