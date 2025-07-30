@@ -2201,6 +2201,7 @@ robust UI element disabling."
   :ensure t
   :defer t
   :custom
+  (setenv "TERM" "xterm-256color")
   (eat-kill-buffer-on-exit t)
   (eat-query-before-killing-running-terminal nil)
 
