@@ -47,7 +47,7 @@
   (when (boundp 'native-comp-eln-load-path)
     (startup-redirect-eln-cache
      (expand-file-name "eln-cache/" user-emacs-directory)))
-  
+
   ;; Emacs 30.1: Control synchronous compilation
   (when (boundp 'native-comp-jit-compilation-blocklist)
     (setq native-comp-jit-compilation-blocklist
@@ -59,7 +59,7 @@
           (expand-file-name "eln-cache/" user-emacs-directory)))
 
   (setq native-comp-priority-cpus (min 4 (max 2 (/ (num-processors) 4))))
-  
+
   ;; Functions that should never be optimized
   (setq native-comp-never-optimize-functions
         '(eval-buffer eval-region eval-last-sexp
@@ -113,10 +113,10 @@
 ;; Package-vc settings for installing from source (new in Emacs 29+)
 (setq package-vc-register-as-project nil) ; Don't register vc packages as projects
 
-(setq read-process-output-max 
+(setq read-process-output-max
       (let ((mem-gb (if (eq system-type 'gnu/linux)
-                        (/ (string-to-number 
-                            (shell-command-to-string 
+                        (/ (string-to-number
+                            (shell-command-to-string
                              "grep MemTotal /proc/meminfo | awk '{print $2}'"))
                            1048576.0)
                       32)))
@@ -155,8 +155,8 @@
 ;; But keep it minimal to speed up startup
 ;; Only set font for GUI frames
 (when (display-graphic-p)
-  (push '(font . "BerkeleyMonoVariable Nerd Font Mono-14") default-frame-alist)
-  (push '(font . "BerkeleyMonoVariable Nerd Font Mono-14") initial-frame-alist))
+  (push '(font . "AporeticSansMono Nerd Font") default-frame-alist)
+  (push '(font . "AporeticSerifMono Nerd Font") initial-frame-alist))
 
 ;; Scratch buffer configuration - must be set early for proper initialization
 (setq initial-major-mode 'lisp-interaction-mode)
@@ -199,10 +199,10 @@
 (defvar grim--initial-gc-cons-percentage gc-cons-percentage)
 (defvar grim--initial-file-name-handler-alist file-name-handler-alist)
 
-(defvar grim--system-gc-threshold 
+(defvar grim--system-gc-threshold
   (let ((mem-gb (if (eq system-type 'gnu/linux)
-                    (/ (string-to-number 
-                        (shell-command-to-string 
+                    (/ (string-to-number
+                        (shell-command-to-string
                          "grep MemTotal /proc/meminfo | awk '{print $2}'"))
                        1048576.0)
                   32)))
@@ -210,7 +210,7 @@
           ((>= mem-gb 32) (* 512 1024 1024))
           (t (* 256 1024 1024)))))
 
-(defvar grim--system-gc-percentage 
+(defvar grim--system-gc-percentage
   (let ((cpu-count (or (num-processors) 4)))
     (cond ((>= cpu-count 12) 0.15)
           ((>= cpu-count 8) 0.2)
