@@ -464,29 +464,53 @@ OLD is ignored but included for hook compatibility."
               (mapcar (lambda (line)
                         (car (split-string line)))
                       connected-monitors))
-             (primary-monitor (car monitor-names))
-             (external-monitors (cdr monitor-names)))
+             (external-monitors (seq-filter (lambda (m) (not (string= m "eDP-1"))) monitor-names))
+             (has-laptop (member "eDP-1" monitor-names)))
 
         ;; Build xrandr command
-        (if external-monitors
-            (let ((xrandr-cmd "xrandr --auto"))
-              ;; Apply scaling to eDP-1 if it's connected
-              (when (member "eDP-1" monitor-names)
-                (setq xrandr-cmd
-                      (format "%s --output eDP-1 --scale 0.67x0.67"
-                              xrandr-cmd)))
-              ;; Configure each external monitor to the right of the previous
-              (let ((prev-monitor primary-monitor))
+        (cond
+         ;; Three monitors with laptop on the right
+         ((and has-laptop (>= (length external-monitors) 2))
+          (let* ((left-monitor (car external-monitors))
+                 (center-monitor (cadr external-monitors))
+                 (xrandr-cmd (format "xrandr --output %s --auto --primary" left-monitor)))
+            ;; Position center monitor to the right of left
+            (setq xrandr-cmd (format "%s --output %s --auto --right-of %s"
+                                     xrandr-cmd center-monitor left-monitor))
+            ;; Position laptop (scaled) to the right of center
+            (setq xrandr-cmd (format "%s --output eDP-1 --scale 0.67x0.67 --right-of %s"
+                                     xrandr-cmd center-monitor))
+            ;; Execute command
+            (message "EXWM: Running xrandr command: %s" xrandr-cmd)
+            (shell-command xrandr-cmd)))
+         ;; Two monitors with laptop
+         ((and has-laptop (= (length external-monitors) 1))
+          (let* ((external-monitor (car external-monitors))
+                 (xrandr-cmd (format "xrandr --output %s --auto --primary" external-monitor)))
+            ;; Position laptop to the right
+            (setq xrandr-cmd (format "%s --output eDP-1 --scale 0.67x0.67 --right-of %s"
+                                     xrandr-cmd external-monitor))
+            (message "EXWM: Running xrandr command: %s" xrandr-cmd)
+            (shell-command xrandr-cmd)))
+         ;; Only laptop
+         ((and has-laptop (= (length external-monitors) 0))
+          (message "EXWM: Running xrandr command: xrandr --output eDP-1 --scale 0.67x0.67 --primary")
+          (shell-command "xrandr --output eDP-1 --scale 0.67x0.67 --primary"))
+         ;; No laptop, just external monitors
+         (t
+          (let ((xrandr-cmd "xrandr --auto"))
+            ;; Configure external monitors in sequence
+            (when external-monitors
+              (let ((prev-monitor nil))
                 (dolist (monitor external-monitors)
-                  (setq xrandr-cmd
-                        (format "%s --output %s --auto --right-of %s"
-                                xrandr-cmd monitor prev-monitor))
-                  (setq prev-monitor monitor)))
-              ;; Execute xrandr command
-              (shell-command xrandr-cmd))
-          ;; No external monitors - just apply scaling to eDP-1 if it exists
-          (when (member "eDP-1" monitor-names)
-            (shell-command "xrandr --output eDP-1 --scale 0.67x0.67")))))
+                  (if prev-monitor
+                      (setq xrandr-cmd (format "%s --output %s --auto --right-of %s"
+                                               xrandr-cmd monitor prev-monitor))
+                    (setq xrandr-cmd (format "%s --output %s --auto --primary"
+                                             xrandr-cmd monitor)))
+                  (setq prev-monitor monitor))))
+            (message "EXWM: Running xrandr command: %s" xrandr-cmd)
+            (shell-command xrandr-cmd))))))
 
 
 
