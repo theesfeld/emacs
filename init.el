@@ -518,7 +518,6 @@ OLD is ignored but included for hook compatibility."
             ;; Restart picom with GLX backend
             (when (executable-find "picom")
               (start-process "picom" nil "picom" "-b"))
-            (message "EXWM: Intel Xe monitor configuration applied")))
          ;; Two monitors with laptop
          ((and has-laptop (= (length external-monitors) 1))
           (let* ((external-monitor (car external-monitors))
@@ -542,10 +541,8 @@ OLD is ignored but included for hook compatibility."
             ;; Restart picom with GLX backend
             (when (executable-find "picom")
               (start-process "picom" nil "picom" "-b"))
-            (message "EXWM: Intel Xe monitor configuration applied")))
          ;; Only laptop
          ((and has-laptop (= (length external-monitors) 0))
-          (message "EXWM: Running xrandr command: xrandr --output eDP-1 --scale 0.67x0.67 --primary --pos 0x0")
           (shell-command "xrandr --output eDP-1 --scale 0.67x0.67 --primary --pos 0x0"))
          ;; No laptop, just external monitors
          (t
@@ -558,7 +555,6 @@ OLD is ignored but included for hook compatibility."
                 (when (= current-x 0)
                   (setq xrandr-cmd (concat xrandr-cmd " --primary")))
                 (setq current-x (+ current-x (cadr monitor)))))
-            (message "EXWM: Running xrandr command: %s" xrandr-cmd)
             (shell-command xrandr-cmd))))))
 
     (defun my/exwm-start-tray-apps ()
@@ -1383,7 +1379,8 @@ If buffer is modified, offer to save first."
      (eglot (styles orderless))
      (eglot-capf (styles orderless))))
   (orderless-matching-styles '(orderless-literal
-                               orderless-regexp))
+                               orderless-regexp
+                               orderless-flex))
   (orderless-smart-case t)
   (orderless-style-dispatchers nil)
   (orderless-component-separator #'orderless-escapable-split-on-space))
@@ -2443,8 +2440,6 @@ robust UI element disabling."
           minibuffer-mode))
 
   (setq editorconfig-exec-path (executable-find "editorconfig"))
-
-  (message "EditorConfig optimized for Emacs 30.1 with tree-sitter support"))
 
 ;;; aggressive indent
 
