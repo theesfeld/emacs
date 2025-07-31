@@ -425,47 +425,60 @@ OLD is ignored but included for hook compatibility."
               (mapcar (lambda (line)
                         (car (split-string line)))
                       connected-monitors))
-             (primary-monitor (car monitor-names))
-             (external-monitors (cdr monitor-names)))
+             (has-laptop (member "eDP-1" monitor-names))
+             (external-monitors (seq-filter (lambda (m) (not (string= m "eDP-1"))) monitor-names)))
 
-        (when external-monitors
+        (when (or has-laptop external-monitors)
           (let ((workspace-plist '())
                 (workspace-num 0)
                 (num-external (length external-monitors)))
-            ;; Workspace 0 always on primary monitor
-            (setq workspace-plist (append workspace-plist
-                                          (list workspace-num primary-monitor)))
-            ;; Distribute remaining workspaces evenly across external monitors
-            (if (= num-external 1)
-                ;; Single external monitor gets all remaining workspaces
-                (dotimes (i 9)
-                  (setq workspace-num (1+ workspace-num))
-                  (setq workspace-plist (append workspace-plist
-                                                (list workspace-num (car external-monitors)))))
-              ;; Multiple external monitors - distribute evenly
-              (let ((monitor-index 0))
-                (dotimes (i 9)
-                  (setq workspace-num (1+ workspace-num))
-                  (setq workspace-plist (append workspace-plist
-                                                (list workspace-num
-                                                      (nth monitor-index external-monitors))))
-                  (setq monitor-index (mod (1+ monitor-index) num-external)))))
+            ;; Workspace 0 always on eDP-1 if available
+            (if has-laptop
+                (setq workspace-plist (list workspace-num "eDP-1"))
+              ;; If no laptop, workspace 0 goes to first external
+              (when external-monitors
+                (setq workspace-plist (list workspace-num (car external-monitors)))))
+            ;; Distribute remaining workspaces across external monitors
+            (when external-monitors
+              (if (= num-external 1)
+                  ;; Single external monitor gets all remaining workspaces
+                  (dotimes (i 9)
+                    (setq workspace-num (1+ workspace-num))
+                    (setq workspace-plist (append workspace-plist
+                                                  (list workspace-num (car external-monitors)))))
+                ;; Multiple external monitors - distribute evenly
+                (let ((monitor-index 0))
+                  (dotimes (i 9)
+                    (setq workspace-num (1+ workspace-num))
+                    (setq workspace-plist (append workspace-plist
+                                                  (list workspace-num
+                                                        (nth monitor-index external-monitors))))
+                    (setq monitor-index (mod (1+ monitor-index) num-external))))))
             ;; Set the configuration
             (setq exwm-randr-workspace-monitor-plist workspace-plist)))))
 
     (defun my/exwm-configure-monitors ()
       "Configure xrandr settings and refresh EXWM."
       (let* ((xrandr-output (shell-command-to-string "xrandr"))
-             (connected-monitors
-              (seq-filter (lambda (line)
-                            (string-match-p " connected" line))
-                          (split-string xrandr-output "\n")))
-             (monitor-names
+             (monitor-info
               (mapcar (lambda (line)
-                        (car (split-string line)))
-                      connected-monitors))
-             (external-monitors (seq-filter (lambda (m) (not (string= m "eDP-1"))) monitor-names))
-             (has-laptop (member "eDP-1" monitor-names)))
+                        (when (string-match "\\([^ ]+\\) connected\\(?: primary\\)? \\([0-9]+\\)x\\([0-9]+\\)" line)
+                          (list (match-string 1 line)
+                                (string-to-number (match-string 2 line))
+                                (string-to-number (match-string 3 line)))))
+                      (seq-filter (lambda (line)
+                                    (string-match-p " connected" line))
+                                  (split-string xrandr-output "\n"))))
+             (monitor-info (seq-filter #'identity monitor-info))
+             (external-monitors (seq-filter (lambda (m) (not (string= (car m) "eDP-1"))) monitor-info))
+             (has-laptop (seq-find (lambda (m) (string= (car m) "eDP-1")) monitor-info))
+             (laptop-width (if has-laptop (* 2880 0.67) 0))
+             (current-x 0))
+        ;; Intel Xe driver workaround: kill and restart picom if needed
+        (when (and (executable-find "picom")
+                   (string-match-p "xe" (shell-command-to-string "lsmod | grep -E 'xe|i915'")))
+          (shell-command "pkill picom")
+          (sit-for 0.1))
 
         ;; Build xrandr command
         (cond
@@ -473,42 +486,68 @@ OLD is ignored but included for hook compatibility."
          ((and has-laptop (>= (length external-monitors) 2))
           (let* ((left-monitor (car external-monitors))
                  (center-monitor (cadr external-monitors))
-                 (xrandr-cmd (format "xrandr --output %s --auto --primary" left-monitor)))
-            ;; Position center monitor to the right of left
-            (setq xrandr-cmd (format "%s --output %s --auto --right-of %s"
-                                     xrandr-cmd center-monitor left-monitor))
-            ;; Position laptop (scaled) to the right of center
-            (setq xrandr-cmd (format "%s --output eDP-1 --scale 0.67x0.67 --right-of %s"
-                                     xrandr-cmd center-monitor))
-            ;; Execute command
-            (message "EXWM: Running xrandr command: %s" xrandr-cmd)
-            (shell-command xrandr-cmd)))
+                 (current-x 0))
+            ;; Intel Xe workaround: turn off all monitors first
+            (shell-command (format "xrandr --output %s --off --output %s --off --output eDP-1 --off"
+                                   (car left-monitor) (car center-monitor)))
+            (sit-for 1)
+            ;; Turn on monitors one by one
+            (shell-command (format "xrandr --output %s --auto --pos 0x0 --primary"
+                                   (car left-monitor)))
+            (setq current-x (cadr left-monitor))
+            (shell-command (format "xrandr --output %s --auto --pos %dx0"
+                                   (car center-monitor) current-x))
+            (setq current-x (+ current-x (cadr center-monitor)))
+            (shell-command (format "xrandr --output eDP-1 --auto --pos %dx0"
+                                   current-x))
+            ;; Intel Xe workaround: use transform trick to ensure display updates
+            (sit-for 0.1)
+            (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
+            (sit-for 0.1)
+            (shell-command "xrandr --output eDP-1 --transform none")
+            ;; Restart picom with GLX backend
+            (when (executable-find "picom")
+              (start-process "picom" nil "picom" "-b"))
+            (message "EXWM: Intel Xe monitor configuration applied")))
          ;; Two monitors with laptop
          ((and has-laptop (= (length external-monitors) 1))
           (let* ((external-monitor (car external-monitors))
-                 (xrandr-cmd (format "xrandr --output %s --auto --primary" external-monitor)))
-            ;; Position laptop to the right
-            (setq xrandr-cmd (format "%s --output eDP-1 --scale 0.67x0.67 --right-of %s"
-                                     xrandr-cmd external-monitor))
-            (message "EXWM: Running xrandr command: %s" xrandr-cmd)
-            (shell-command xrandr-cmd)))
+                 (current-x 0))
+            ;; Intel Xe workaround: turn off all monitors first
+            (shell-command (format "xrandr --output %s --off --output eDP-1 --off"
+                                   (car external-monitor)))
+            (sit-for 1)
+            ;; External monitor at origin
+            (shell-command (format "xrandr --output %s --auto --primary --pos 0x0"
+                                   (car external-monitor)))
+            (setq current-x (cadr external-monitor))
+            ;; Laptop to the right without scaling
+            (shell-command (format "xrandr --output eDP-1 --auto --pos %dx0"
+                                   current-x))
+            ;; Intel Xe workaround: use transform trick
+            (sit-for 0.1)
+            (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
+            (sit-for 0.1)
+            (shell-command "xrandr --output eDP-1 --transform none")
+            ;; Restart picom with GLX backend
+            (when (executable-find "picom")
+              (start-process "picom" nil "picom" "-b"))
+            (message "EXWM: Intel Xe monitor configuration applied")))
          ;; Only laptop
          ((and has-laptop (= (length external-monitors) 0))
-          (message "EXWM: Running xrandr command: xrandr --output eDP-1 --scale 0.67x0.67 --primary")
-          (shell-command "xrandr --output eDP-1 --scale 0.67x0.67 --primary"))
+          (message "EXWM: Running xrandr command: xrandr --output eDP-1 --scale 0.67x0.67 --primary --pos 0x0")
+          (shell-command "xrandr --output eDP-1 --scale 0.67x0.67 --primary --pos 0x0"))
          ;; No laptop, just external monitors
          (t
-          (let ((xrandr-cmd "xrandr --auto"))
+          (let ((xrandr-cmd "xrandr"))
             ;; Configure external monitors in sequence
             (when external-monitors
-              (let ((prev-monitor nil))
-                (dolist (monitor external-monitors)
-                  (if prev-monitor
-                      (setq xrandr-cmd (format "%s --output %s --auto --right-of %s"
-                                               xrandr-cmd monitor prev-monitor))
-                    (setq xrandr-cmd (format "%s --output %s --auto --primary"
-                                             xrandr-cmd monitor)))
-                  (setq prev-monitor monitor))))
+              (dolist (monitor external-monitors)
+                (setq xrandr-cmd (format "%s --output %s --auto --pos %dx0"
+                                         xrandr-cmd (car monitor) current-x))
+                (when (= current-x 0)
+                  (setq xrandr-cmd (concat xrandr-cmd " --primary")))
+                (setq current-x (+ current-x (cadr monitor)))))
             (message "EXWM: Running xrandr command: %s" xrandr-cmd)
             (shell-command xrandr-cmd))))))
 
