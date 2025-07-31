@@ -1727,13 +1727,6 @@ If buffer is modified, offer to save first."
         ("C-c l s" . consult-eglot-symbols)))
 
 
-;;; Cape for better completion (works with Eglot)
-(use-package cape
-  :ensure t
-  :bind
-  ("C-c p f" . cape-file)
-  ("C-c p d" . cape-dabbrev)
-  ("C-c p l" . cape-line))
 
 ;;; Org Mode
 (use-package org
