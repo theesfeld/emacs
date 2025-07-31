@@ -601,6 +601,13 @@ OLD is ignored but included for hook compatibility."
   :ensure t
   :config
   (setq desktop-environment-screenlock-command "slock")
+  (setq desktop-environment-screenshot-directory "~/Pictures/Screenshots/")
+  (setq desktop-environment-screenshot-command 
+        (concat "scrot '%Y-%m-%d_%H-%M-%S_$wx$h.png' -e "
+                "'mv $f ~/Pictures/Screenshots/ && xclip -selection clipboard -t image/png -i ~/Pictures/Screenshots/$f'"))
+  (setq desktop-environment-screenshot-partial-command 
+        (concat "scrot -s '%Y-%m-%d_%H-%M-%S_$wx$h_selection.png' -e "
+                "'mv $f ~/Pictures/Screenshots/ && xclip -selection clipboard -t image/png -i ~/Pictures/Screenshots/$f'"))
   (desktop-environment-mode 1))
 
   ;;; exwm-edit
