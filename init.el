@@ -601,12 +601,12 @@ OLD is ignored but included for hook compatibility."
                                                                 (message "Starting blueman-applet...")
                                                                 (start-process "blueman-applet" nil "blueman-applet")))))))))
       ;; Set up randr configuration before enabling randr mode
-      (my/exwm-randr-setup)
-      (setq exwm-randr-screen-change-hook
-            (lambda ()
-              (my/exwm-randr-setup)
-              (my/exwm-configure-monitors)
-              (exwm-randr-refresh)))
+      ;;      (my/exwm-randr-setup)
+      ;;      (setq exwm-randr-screen-change-hook
+      ;;            (lambda ()
+      ;;              (my/exwm-randr-setup)
+      ;;              (my/exwm-configure-monitors)
+      ;;              (exwm-randr-refresh)))
 
       (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
       (exwm-systemtray-mode 1)
