@@ -2363,9 +2363,15 @@ robust UI element disabling."
   :config
   (setenv "TERM" "xterm-256color")
 
-  ;; Custom buffer naming for eat buffers spawned from eshell
-  (defun my/eat-eshell-setup-buffer-name ()
-    "Set eat buffer name based on the command being run."
+  ;; Custom buffer naming and auto-kill for eat buffers spawned from eshell
+  (defun my/eat-kill-buffer-on-process-exit ()
+    "Kill the eat buffer when the process exits."
+    (when (and (eq major-mode 'eat-mode)
+               (not (process-live-p eat--process)))
+      (kill-buffer (current-buffer))))
+  
+  (defun my/eat-eshell-setup-buffer ()
+    "Set eat buffer name based on command and ensure it's killed on exit."
     (when (and (derived-mode-p 'eat-mode)
                (boundp 'eat--process)
                eat--process)
@@ -2377,21 +2383,18 @@ robust UI element disabling."
              (buffer-name (format "*%s*" program-name)))
         (unless (string= (buffer-name) buffer-name)
           (rename-buffer buffer-name t))
-        ;; Set up process sentinel to kill buffer when process exits
-        (set-process-sentinel process
-                              (lambda (proc event)
-                                (when (string-match-p "finished\\|exited" event)
-                                  (let ((buf (process-buffer proc)))
-                                    (when (buffer-live-p buf)
-                                      (kill-buffer buf)))))))))
-
-  (add-hook 'eat-mode-hook #'my/eat-eshell-setup-buffer-name)
-
-  ;; Ensure eshell visual commands spawn eat with proper naming
-  (advice-add 'eat-eshell-visual-command-mode :after
+        ;; Make sure kill-buffer-on-exit is enabled
+        (setq-local eat-kill-buffer-on-exit t)
+        ;; Add timer to check if process is dead
+        (run-with-timer 1 1 #'my/eat-kill-buffer-on-process-exit))))
+  
+  ;; Hook to set up eat buffers
+  (add-hook 'eat-mode-hook #'my/eat-eshell-setup-buffer)
+  
+  ;; Override eat's exit hook to ensure buffer is killed
+  (advice-add 'eat--sentinel :after
               (lambda (&rest _)
-                (when (derived-mode-p 'eat-mode)
-                  (run-at-time 0.1 nil #'my/eat-eshell-setup-buffer-name))))
+                (run-at-time 0.5 nil #'my/eat-kill-buffer-on-process-exit)))
 
   :hook
   (eshell-load . eat-eshell-mode)
