@@ -321,7 +321,7 @@ OLD is ignored but included for hook compatibility."
 ;;; EXWM - Dynamic multi-monitor configuration for Emacs 30.1
 (when (eq window-system 'x)
   (use-package exwm
-    :ensure t
+    :ensure nil
     :init
     (require 'exwm-randr)
     (require 'exwm-systemtray)
@@ -2265,7 +2265,7 @@ If buffer is modified, offer to save first."
   (defalias 'eshell/ll 'eshell/ls)
   (defalias 'eshell/la '(lambda () (eshell/ls "-a")))
   (defalias 'eshell/clear 'eshell/clear-scrollback)
-  
+
   (with-eval-after-load 'pcomplete
     (setq pcomplete-termination-string ""
           pcomplete-ignore-case t
@@ -2274,7 +2274,7 @@ If buffer is modified, offer to save first."
           pcomplete-cycle-cutoff-length 0))
 
   :hook
-  (eshell-mode . (lambda () 
+  (eshell-mode . (lambda ()
                    (display-line-numbers-mode -1)
                    (setq-local pcomplete-cycle-completions nil)
                    (setq-local completion-at-point-functions
@@ -2397,9 +2397,9 @@ robust UI element disabling."
       (setq-local eat-kill-buffer-on-exit t)
       ;; Ensure the kill function is on the exit hook
       (add-hook 'eat-exit-hook #'eat--kill-buffer 90 t)))
-  
+
   (add-hook 'eat-mode-hook #'my/eat-eshell-force-kill-on-exit)
-  
+
   ;; Custom buffer naming for visual commands
   (defun my/eat-visual-buffer-name-advice (orig-func &rest args)
     "Customize buffer names for eshell visual commands."
@@ -2409,7 +2409,7 @@ robust UI element disabling."
                (eat-buffer-name (format "*%s*" cmd-name)))
           (apply orig-func args))
       (apply orig-func args)))
-  
+
   (advice-add 'eat--eshell-exec-visual :around #'my/eat-visual-buffer-name-advice)
 
   :hook
