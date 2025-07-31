@@ -414,204 +414,204 @@ OLD is ignored but included for hook compatibility."
     (setq exwm-systemtray-background-color "#1a1a1a")
     (setq exwm-systemtray-workspace nil)
 
-    (defun my/exwm-randr-setup ()
-      "Set up monitor configuration before EXWM starts."
-      (let* ((xrandr-output (shell-command-to-string "xrandr"))
-             (connected-monitors
-              (seq-filter (lambda (line)
-                            (string-match-p " connected" line))
-                          (split-string xrandr-output "\n")))
-             (monitor-names
-              (mapcar (lambda (line)
-                        (car (split-string line)))
-                      connected-monitors))
-             (has-laptop (member "eDP-1" monitor-names))
-             (external-monitors (seq-filter (lambda (m) (not (string= m "eDP-1"))) monitor-names)))
+    ;; (defun my/exwm-randr-setup ()
+    ;;   "Set up monitor configuration before EXWM starts."
+    ;;   (let* ((xrandr-output (shell-command-to-string "xrandr"))
+    ;;          (connected-monitors
+    ;;           (seq-filter (lambda (line)
+    ;;                         (string-match-p " connected" line))
+    ;;                       (split-string xrandr-output "\n")))
+    ;;          (monitor-names
+    ;;           (mapcar (lambda (line)
+    ;;                     (car (split-string line)))
+    ;;                   connected-monitors))
+    ;;          (has-laptop (member "eDP-1" monitor-names))
+    ;;          (external-monitors (seq-filter (lambda (m) (not (string= m "eDP-1"))) monitor-names)))
 
-        (when (or has-laptop external-monitors)
-          (let ((workspace-plist '())
-                (workspace-num 0)
-                (num-external (length external-monitors)))
-            ;; Workspace 0 always on eDP-1 if available
-            (if has-laptop
-                (setq workspace-plist (list workspace-num "eDP-1"))
-              ;; If no laptop, workspace 0 goes to first external
-              (when external-monitors
-                (setq workspace-plist (list workspace-num (car external-monitors)))))
-            ;; Distribute remaining workspaces across external monitors
-            (when external-monitors
-              (if (= num-external 1)
-                  ;; Single external monitor gets all remaining workspaces
-                  (dotimes (i 9)
-                    (setq workspace-num (1+ workspace-num))
-                    (setq workspace-plist (append workspace-plist
-                                                  (list workspace-num (car external-monitors)))))
-                ;; Multiple external monitors - distribute evenly
-                (let ((monitor-index 0))
-                  (dotimes (i 9)
-                    (setq workspace-num (1+ workspace-num))
-                    (setq workspace-plist (append workspace-plist
-                                                  (list workspace-num
-                                                        (nth monitor-index external-monitors))))
-                    (setq monitor-index (mod (1+ monitor-index) num-external))))))
-            ;; Set the configuration
-            (setq exwm-randr-workspace-monitor-plist workspace-plist)))))
+    ;;     (when (or has-laptop external-monitors)
+    ;;       (let ((workspace-plist '())
+    ;;             (workspace-num 0)
+    ;;             (num-external (length external-monitors)))
+    ;;         ;; Workspace 0 always on eDP-1 if available
+    ;;         (if has-laptop
+    ;;             (setq workspace-plist (list workspace-num "eDP-1"))
+    ;;           ;; If no laptop, workspace 0 goes to first external
+    ;;           (when external-monitors
+    ;;             (setq workspace-plist (list workspace-num (car external-monitors)))))
+    ;;         ;; Distribute remaining workspaces across external monitors
+    ;;         (when external-monitors
+    ;;           (if (= num-external 1)
+    ;;               ;; Single external monitor gets all remaining workspaces
+    ;;               (dotimes (i 9)
+    ;;                 (setq workspace-num (1+ workspace-num))
+    ;;                 (setq workspace-plist (append workspace-plist
+    ;;                                               (list workspace-num (car external-monitors)))))
+    ;;             ;; Multiple external monitors - distribute evenly
+    ;;             (let ((monitor-index 0))
+    ;;               (dotimes (i 9)
+    ;;                 (setq workspace-num (1+ workspace-num))
+    ;;                 (setq workspace-plist (append workspace-plist
+    ;;                                               (list workspace-num
+    ;;                                                     (nth monitor-index external-monitors))))
+    ;;                 (setq monitor-index (mod (1+ monitor-index) num-external))))))
+    ;;         ;; Set the configuration
+    ;;         (setq exwm-randr-workspace-monitor-plist workspace-plist)))))
 
-    (defun my/exwm-configure-monitors ()
-      "Configure xrandr settings and refresh EXWM."
-      (let* ((xrandr-output (shell-command-to-string "xrandr"))
-             (monitor-info
-              (mapcar (lambda (line)
-                        (when (string-match "\\([^ ]+\\) connected\\(?: primary\\)? \\([0-9]+\\)x\\([0-9]+\\)" line)
-                          (list (match-string 1 line)
-                                (string-to-number (match-string 2 line))
-                                (string-to-number (match-string 3 line)))))
-                      (seq-filter (lambda (line)
-                                    (string-match-p " connected" line))
-                                  (split-string xrandr-output "\n"))))
-             (monitor-info (seq-filter #'identity monitor-info))
-             (external-monitors (seq-filter (lambda (m) (not (string= (car m) "eDP-1"))) monitor-info))
-             (has-laptop (seq-find (lambda (m) (string= (car m) "eDP-1")) monitor-info))
-             (laptop-width (if has-laptop (* 2880 0.67) 0))
-             (current-x 0)
-             (picom-was-running (= 0 (call-process "pgrep" nil nil nil "picom")))
-             (picom-killed nil))
-        ;; Intel Xe driver workaround: kill picom only if needed
-        (when (and picom-was-running
-                   (executable-find "picom")
-                   (string-match-p "xe" (shell-command-to-string "lsmod | grep -E 'xe|i915'")))
-          (shell-command "pkill picom")
-          (setq picom-killed t)
-          (sit-for 0.1))
+    ;; (defun my/exwm-configure-monitors ()
+    ;;   "Configure xrandr settings and refresh EXWM."
+    ;;   (let* ((xrandr-output (shell-command-to-string "xrandr"))
+    ;;          (monitor-info
+    ;;           (mapcar (lambda (line)
+    ;;                     (when (string-match "\\([^ ]+\\) connected\\(?: primary\\)? \\([0-9]+\\)x\\([0-9]+\\)" line)
+    ;;                       (list (match-string 1 line)
+    ;;                             (string-to-number (match-string 2 line))
+    ;;                             (string-to-number (match-string 3 line)))))
+    ;;                   (seq-filter (lambda (line)
+    ;;                                 (string-match-p " connected" line))
+    ;;                               (split-string xrandr-output "\n"))))
+    ;;          (monitor-info (seq-filter #'identity monitor-info))
+    ;;          (external-monitors (seq-filter (lambda (m) (not (string= (car m) "eDP-1"))) monitor-info))
+    ;;          (has-laptop (seq-find (lambda (m) (string= (car m) "eDP-1")) monitor-info))
+    ;;          (laptop-width (if has-laptop (* 2880 0.67) 0))
+    ;;          (current-x 0)
+    ;;          (picom-was-running (= 0 (call-process "pgrep" nil nil nil "picom")))
+    ;;          (picom-killed nil))
+    ;;     ;; Intel Xe driver workaround: kill picom only if needed
+    ;;     (when (and picom-was-running
+    ;;                (executable-find "picom")
+    ;;                (string-match-p "xe" (shell-command-to-string "lsmod | grep -E 'xe|i915'")))
+    ;;       (shell-command "pkill picom")
+    ;;       (setq picom-killed t)
+    ;;       (sit-for 0.1))
 
-        ;; Build xrandr command
-        (cond
-         ;; Three monitors with laptop on the right
-         ((and has-laptop (>= (length external-monitors) 2))
-          (let* ((left-monitor (car external-monitors))
-                 (center-monitor (cadr external-monitors))
-                 (current-x 0))
-            ;; First, try fast configuration with single xrandr command
-            (setq current-x (cadr left-monitor))
-            (let ((xrandr-cmd (format "xrandr --output %s --auto --pos 0x0 --primary --output %s --auto --pos %dx0 --output eDP-1 --auto --pos %dx0"
-                                      (car left-monitor)
-                                      (car center-monitor) current-x
-                                      (+ current-x (cadr center-monitor)))))
-              (message "EXWM: Trying fast monitor configuration...")
-              (shell-command xrandr-cmd))
-            ;; Check if eDP-1 needs the transform trick
-            (sit-for 0.1)
-            (let ((edp1-frozen (not (string-match-p "eDP-1.*[0-9]+x[0-9]+\\+" xrandr-output))))
-              (when edp1-frozen
-                (message "EXWM: eDP-1 appears frozen, applying transform trick...")
-                (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
-                (sit-for 0.1)
-                (shell-command "xrandr --output eDP-1 --transform none"))
-              ;; If fast config didn't work properly, fall back to full reset
-              (when (or edp1-frozen
-                        (not (= 0 (call-process "xrandr" nil nil nil "--listactivemonitors"))))
-                (message "EXWM: Fast config failed, using full reset sequence...")
-                ;; Intel Xe workaround: turn off all monitors first
-                (shell-command (format "xrandr --output %s --off --output %s --off --output eDP-1 --off"
-                                       (car left-monitor) (car center-monitor)))
-                (sit-for 0.3)
-                ;; Turn on monitors one by one
-                (shell-command (format "xrandr --output %s --auto --pos 0x0 --primary"
-                                       (car left-monitor)))
-                (shell-command (format "xrandr --output %s --auto --pos %dx0"
-                                       (car center-monitor) current-x))
-                (shell-command (format "xrandr --output eDP-1 --auto --pos %dx0"
-                                       (+ current-x (cadr center-monitor))))
-                ;; Apply transform trick
-                (sit-for 0.1)
-                (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
-                (sit-for 0.1)
-                (shell-command "xrandr --output eDP-1 --transform none")))
-            ;; Restart picom only if we killed it
-            (when (and (or picom-killed (not picom-was-running))
-                       (executable-find "picom"))
-              (start-process "picom" nil "picom" "-b"))
-            (message "EXWM: Monitor configuration complete")))
-         ;; Two monitors with laptop
-         ((and has-laptop (= (length external-monitors) 1))
-          (let* ((external-monitor (car external-monitors))
-                 (current-x (cadr external-monitor)))
-            ;; First, try fast configuration
-            (let ((xrandr-cmd (format "xrandr --output %s --auto --primary --pos 0x0 --output eDP-1 --auto --pos %dx0"
-                                      (car external-monitor) current-x)))
-              (message "EXWM: Configuring two monitors...")
-              (shell-command xrandr-cmd))
-            ;; Check if eDP-1 needs the transform trick
-            (sit-for 0.1)
-            (let ((edp1-frozen (not (string-match-p "eDP-1.*[0-9]+x[0-9]+\\+" (shell-command-to-string "xrandr")))))
-              (when edp1-frozen
-                (message "EXWM: Applying transform trick to eDP-1...")
-                (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
-                (sit-for 0.1)
-                (shell-command "xrandr --output eDP-1 --transform none")))
-            ;; Restart picom only if we killed it
-            (when (and (or picom-killed (not picom-was-running))
-                       (executable-find "picom"))
-              (start-process "picom" nil "picom" "-b"))
-            (message "EXWM: Monitor configuration complete")))
-         ;; Only laptop
-         ((and has-laptop (= (length external-monitors) 0))
-          (message "EXWM: Configuring laptop only with scaling...")
-          (shell-command "xrandr --output eDP-1 --scale 0.67x0.67 --primary --pos 0x0")
-          ;; Restart picom only if we killed it
-          (when (and (or picom-killed (not picom-was-running))
-                     (executable-find "picom"))
-            (start-process "picom" nil "picom" "-b")))
-         ;; No laptop, just external monitors
-         (t
-          (let ((xrandr-cmd "xrandr"))
-            ;; Configure external monitors in sequence
-            (when external-monitors
-              (dolist (monitor external-monitors)
-                (setq xrandr-cmd (format "%s --output %s --auto --pos %dx0"
-                                         xrandr-cmd (car monitor) current-x))
-                (when (= current-x 0)
-                  (setq xrandr-cmd (concat xrandr-cmd " --primary")))
-                (setq current-x (+ current-x (cadr monitor)))))
-            (message "EXWM: Running xrandr command: %s" xrandr-cmd)
-            (shell-command xrandr-cmd)
-            ;; Restart picom only if we killed it
-            (when (and (or picom-killed (not picom-was-running))
-                       (executable-find "picom"))
-              (start-process "picom" nil "picom" "-b"))))))
+    ;;     ;; Build xrandr command
+    ;;     (cond
+    ;;      ;; Three monitors with laptop on the right
+    ;;      ((and has-laptop (>= (length external-monitors) 2))
+    ;;       (let* ((left-monitor (car external-monitors))
+    ;;              (center-monitor (cadr external-monitors))
+    ;;              (current-x 0))
+    ;;         ;; First, try fast configuration with single xrandr command
+    ;;         (setq current-x (cadr left-monitor))
+    ;;         (let ((xrandr-cmd (format "xrandr --output %s --auto --pos 0x0 --primary --output %s --auto --pos %dx0 --output eDP-1 --auto --pos %dx0"
+    ;;                                   (car left-monitor)
+    ;;                                   (car center-monitor) current-x
+    ;;                                   (+ current-x (cadr center-monitor)))))
+    ;;           (message "EXWM: Trying fast monitor configuration...")
+    ;;           (shell-command xrandr-cmd))
+    ;;         ;; Check if eDP-1 needs the transform trick
+    ;;         (sit-for 0.1)
+    ;;         (let ((edp1-frozen (not (string-match-p "eDP-1.*[0-9]+x[0-9]+\\+" xrandr-output))))
+    ;;           (when edp1-frozen
+    ;;             (message "EXWM: eDP-1 appears frozen, applying transform trick...")
+    ;;             (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
+    ;;             (sit-for 0.1)
+    ;;             (shell-command "xrandr --output eDP-1 --transform none"))
+    ;;           ;; If fast config didn't work properly, fall back to full reset
+    ;;           (when (or edp1-frozen
+    ;;                     (not (= 0 (call-process "xrandr" nil nil nil "--listactivemonitors"))))
+    ;;             (message "EXWM: Fast config failed, using full reset sequence...")
+    ;;             ;; Intel Xe workaround: turn off all monitors first
+    ;;             (shell-command (format "xrandr --output %s --off --output %s --off --output eDP-1 --off"
+    ;;                                    (car left-monitor) (car center-monitor)))
+    ;;             (sit-for 0.3)
+    ;;             ;; Turn on monitors one by one
+    ;;             (shell-command (format "xrandr --output %s --auto --pos 0x0 --primary"
+    ;;                                    (car left-monitor)))
+    ;;             (shell-command (format "xrandr --output %s --auto --pos %dx0"
+    ;;                                    (car center-monitor) current-x))
+    ;;             (shell-command (format "xrandr --output eDP-1 --auto --pos %dx0"
+    ;;                                    (+ current-x (cadr center-monitor))))
+    ;;             ;; Apply transform trick
+    ;;             (sit-for 0.1)
+    ;;             (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
+    ;;             (sit-for 0.1)
+    ;;             (shell-command "xrandr --output eDP-1 --transform none")))
+    ;;         ;; Restart picom only if we killed it
+    ;;         (when (and (or picom-killed (not picom-was-running))
+    ;;                    (executable-find "picom"))
+    ;;           (start-process "picom" nil "picom" "-b"))
+    ;;         (message "EXWM: Monitor configuration complete")))
+    ;;      ;; Two monitors with laptop
+    ;;      ((and has-laptop (= (length external-monitors) 1))
+    ;;       (let* ((external-monitor (car external-monitors))
+    ;;              (current-x (cadr external-monitor)))
+    ;;         ;; First, try fast configuration
+    ;;         (let ((xrandr-cmd (format "xrandr --output %s --auto --primary --pos 0x0 --output eDP-1 --auto --pos %dx0"
+    ;;                                   (car external-monitor) current-x)))
+    ;;           (message "EXWM: Configuring two monitors...")
+    ;;           (shell-command xrandr-cmd))
+    ;;         ;; Check if eDP-1 needs the transform trick
+    ;;         (sit-for 0.1)
+    ;;         (let ((edp1-frozen (not (string-match-p "eDP-1.*[0-9]+x[0-9]+\\+" (shell-command-to-string "xrandr")))))
+    ;;           (when edp1-frozen
+    ;;             (message "EXWM: Applying transform trick to eDP-1...")
+    ;;             (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
+    ;;             (sit-for 0.1)
+    ;;             (shell-command "xrandr --output eDP-1 --transform none")))
+    ;;         ;; Restart picom only if we killed it
+    ;;         (when (and (or picom-killed (not picom-was-running))
+    ;;                    (executable-find "picom"))
+    ;;           (start-process "picom" nil "picom" "-b"))
+    ;;         (message "EXWM: Monitor configuration complete")))
+    ;;      ;; Only laptop
+    ;;      ((and has-laptop (= (length external-monitors) 0))
+    ;;       (message "EXWM: Configuring laptop only with scaling...")
+    ;;       (shell-command "xrandr --output eDP-1 --scale 0.67x0.67 --primary --pos 0x0")
+    ;;       ;; Restart picom only if we killed it
+    ;;       (when (and (or picom-killed (not picom-was-running))
+    ;;                  (executable-find "picom"))
+    ;;         (start-process "picom" nil "picom" "-b")))
+    ;;      ;; No laptop, just external monitors
+    ;;      (t
+    ;;       (let ((xrandr-cmd "xrandr"))
+    ;;         ;; Configure external monitors in sequence
+    ;;         (when external-monitors
+    ;;           (dolist (monitor external-monitors)
+    ;;             (setq xrandr-cmd (format "%s --output %s --auto --pos %dx0"
+    ;;                                      xrandr-cmd (car monitor) current-x))
+    ;;             (when (= current-x 0)
+    ;;               (setq xrandr-cmd (concat xrandr-cmd " --primary")))
+    ;;             (setq current-x (+ current-x (cadr monitor)))))
+    ;;         (message "EXWM: Running xrandr command: %s" xrandr-cmd)
+    ;;         (shell-command xrandr-cmd)
+    ;;         ;; Restart picom only if we killed it
+    ;;         (when (and (or picom-killed (not picom-was-running))
+    ;;                    (executable-find "picom"))
+    ;;           (start-process "picom" nil "picom" "-b"))))))
 
 
 
-      (defun my/exwm-start-tray-apps ()
-        "Start system tray applications with delays to ensure proper icon display."
-        (interactive)
-        (run-with-timer 1 nil
-                        (lambda ()
-                          (when (executable-find "nm-applet")
-                            (message "Starting nm-applet...")
-                            (start-process "nm-applet" nil "nm-applet"))
-                          (run-with-timer 0.5 nil
-                                          (lambda ()
-                                            (when (executable-find "udiskie")
-                                              (message "Starting udiskie...")
-                                              (start-process "udiskie" nil "udiskie" "-at"))
-                                            (run-with-timer 0.5 nil
-                                                            (lambda ()
-                                                              (when (executable-find "blueman-applet")
-                                                                (message "Starting blueman-applet...")
-                                                                (start-process "blueman-applet" nil "blueman-applet")))))))))
-      ;; Set up randr configuration before enabling randr mode
-      ;;      (my/exwm-randr-setup)
-      ;;      (setq exwm-randr-screen-change-hook
-      ;;            (lambda ()
-      ;;              (my/exwm-randr-setup)
-      ;;              (my/exwm-configure-monitors)
-      ;;              (exwm-randr-refresh)))
+    (defun my/exwm-start-tray-apps ()
+      "Start system tray applications with delays to ensure proper icon display."
+      (interactive)
+      (run-with-timer 1 nil
+                      (lambda ()
+                        (when (executable-find "nm-applet")
+                          (message "Starting nm-applet...")
+                          (start-process "nm-applet" nil "nm-applet"))
+                        (run-with-timer 0.5 nil
+                                        (lambda ()
+                                          (when (executable-find "udiskie")
+                                            (message "Starting udiskie...")
+                                            (start-process "udiskie" nil "udiskie" "-at"))
+                                          (run-with-timer 0.5 nil
+                                                          (lambda ()
+                                                            (when (executable-find "blueman-applet")
+                                                              (message "Starting blueman-applet...")
+                                                              (start-process "blueman-applet" nil "blueman-applet")))))))))
+    ;; Set up randr configuration before enabling randr mode
+    ;;      (my/exwm-randr-setup)
+    ;;      (setq exwm-randr-screen-change-hook
+    ;;            (lambda ()
+    ;;              (my/exwm-randr-setup)
+    ;;              (my/exwm-configure-monitors)
+    ;;              (exwm-randr-refresh)))
 
-      (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
-      (exwm-systemtray-mode 1)
-      (exwm-randr-mode 1)
-      (exwm-wm-mode 1)))
+    (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
+    (exwm-systemtray-mode 1)
+;;    (exwm-randr-mode 1)
+    (exwm-wm-mode 1)))
 
   (defun my/app-launcher ()
     "Launch application using \='completing-read'."
