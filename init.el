@@ -582,36 +582,36 @@ OLD is ignored but included for hook compatibility."
 
 
 
-    (defun my/exwm-start-tray-apps ()
-      "Start system tray applications with delays to ensure proper icon display."
-      (interactive)
-      (run-with-timer 1 nil
-                      (lambda ()
-                        (when (executable-find "nm-applet")
-                          (message "Starting nm-applet...")
-                          (start-process "nm-applet" nil "nm-applet"))
-                        (run-with-timer 0.5 nil
-                                        (lambda ()
-                                          (when (executable-find "udiskie")
-                                            (message "Starting udiskie...")
-                                            (start-process "udiskie" nil "udiskie" "-at"))
-                                          (run-with-timer 0.5 nil
-                                                          (lambda ()
-                                                            (when (executable-find "blueman-applet")
-                                                              (message "Starting blueman-applet...")
-                                                              (start-process "blueman-applet" nil "blueman-applet")))))))))
-    ;; Set up randr configuration before enabling randr mode
-    (my/exwm-randr-setup)
-    (setq exwm-randr-screen-change-hook
-          (lambda ()
-            (my/exwm-randr-setup)
-            (my/exwm-configure-monitors)
-            (exwm-randr-refresh)))
+      (defun my/exwm-start-tray-apps ()
+        "Start system tray applications with delays to ensure proper icon display."
+        (interactive)
+        (run-with-timer 1 nil
+                        (lambda ()
+                          (when (executable-find "nm-applet")
+                            (message "Starting nm-applet...")
+                            (start-process "nm-applet" nil "nm-applet"))
+                          (run-with-timer 0.5 nil
+                                          (lambda ()
+                                            (when (executable-find "udiskie")
+                                              (message "Starting udiskie...")
+                                              (start-process "udiskie" nil "udiskie" "-at"))
+                                            (run-with-timer 0.5 nil
+                                                            (lambda ()
+                                                              (when (executable-find "blueman-applet")
+                                                                (message "Starting blueman-applet...")
+                                                                (start-process "blueman-applet" nil "blueman-applet")))))))))
+      ;; Set up randr configuration before enabling randr mode
+      (my/exwm-randr-setup)
+      (setq exwm-randr-screen-change-hook
+            (lambda ()
+              (my/exwm-randr-setup)
+              (my/exwm-configure-monitors)
+              (exwm-randr-refresh)))
 
-    (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
-    (exwm-systemtray-mode 1)
-    (exwm-randr-mode 1)
-    (exwm-wm-mode 1)))
+      (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
+      (exwm-systemtray-mode 1)
+      (exwm-randr-mode 1)
+      (exwm-wm-mode 1)))
 
   (defun my/app-launcher ()
     "Launch application using \='completing-read'."
@@ -683,8 +683,7 @@ OLD is ignored but included for hook compatibility."
                                                     (exwm-input--fake-key ?\C-y)
                                                     (run-with-timer 0.1 nil (lambda ()
                                                                               (when kill-ring
-                                                                                (kill-new (car kill-ring))))))))))
-) ; end of (when (eq window-system 'x)
+                                                                                (kill-new (car kill-ring)))))))))))
 
 ;;; init.el version control
 
@@ -2221,7 +2220,7 @@ If buffer is modified, offer to save first."
   (eshell-scroll-to-bottom-on-input 'this)
   (eshell-prompt-regexp "^[^#$\n]*[#$] ")
   (eshell-buffer-maximum-lines 50000)
-  (eshell-visual-commands '("vi" "vim" "nvim" "screen" "tmux" "top" "htop" "less" "more" 
+  (eshell-visual-commands '("vi" "vim" "nvim" "screen" "tmux" "top" "htop" "less" "more"
                             "lynx" "links" "ncftp" "mutt" "pine" "tin" "trn" "elm"
                             "irssi" "mc" "nano" "emacs" "ssh" "telnet" "ftp" "su"
                             "watch" "tail" "head" "pager" "most" "alsamixer" "nethack"
@@ -2364,7 +2363,7 @@ robust UI element disabling."
 
   :config
   (setenv "TERM" "xterm-256color")
-  
+
   ;; Custom buffer naming for eat buffers spawned from eshell
   (defun my/eat-eshell-setup-buffer-name ()
     "Set eat buffer name based on the command being run."
@@ -2386,9 +2385,9 @@ robust UI element disabling."
                                   (let ((buf (process-buffer proc)))
                                     (when (buffer-live-p buf)
                                       (kill-buffer buf)))))))))
-  
+
   (add-hook 'eat-mode-hook #'my/eat-eshell-setup-buffer-name)
-  
+
   ;; Ensure eshell visual commands spawn eat with proper naming
   (advice-add 'eat-eshell-visual-command-mode :after
               (lambda (&rest _)
