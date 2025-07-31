@@ -368,7 +368,16 @@ OLD is ignored but included for hook compatibility."
             ([?\s-6] . (lambda () (interactive) (exwm-workspace-switch-create 6)))
             ([?\s-7] . (lambda () (interactive) (exwm-workspace-switch-create 7)))
             ([?\s-8] . (lambda () (interactive) (exwm-workspace-switch-create 8)))
-            ([?\s-9] . (lambda () (interactive) (exwm-workspace-switch-create 9)))))
+            ([?\s-9] . (lambda () (interactive) (exwm-workspace-switch-create 9)))
+            ;; Desktop environment keys
+            ([XF86AudioLowerVolume] . desktop-environment-volume-decrement)
+            ([XF86AudioRaiseVolume] . desktop-environment-volume-increment)
+            ([XF86AudioMute] . desktop-environment-toggle-mute)
+            ([XF86AudioMicMute] . desktop-environment-toggle-microphone-mute)
+            ([XF86MonBrightnessUp] . desktop-environment-brightness-increment)
+            ([XF86MonBrightnessDown] . desktop-environment-brightness-decrement)
+            ([print] . desktop-environment-screenshot)
+            ([S-print] . desktop-environment-screenshot-part)))
 
     (setq exwm-input-simulation-keys
           '(([?\C-b] . [left])
@@ -602,10 +611,10 @@ OLD is ignored but included for hook compatibility."
   :config
   (setq desktop-environment-screenlock-command "slock")
   (setq desktop-environment-screenshot-directory "~/Pictures/Screenshots/")
-  (setq desktop-environment-screenshot-command 
+  (setq desktop-environment-screenshot-command
         (concat "scrot '%Y-%m-%d_%H-%M-%S_$wx$h.png' -e "
                 "'mv $f ~/Pictures/Screenshots/ && xclip -selection clipboard -t image/png -i ~/Pictures/Screenshots/$f'"))
-  (setq desktop-environment-screenshot-partial-command 
+  (setq desktop-environment-screenshot-partial-command
         (concat "scrot -s '%Y-%m-%d_%H-%M-%S_$wx$h_selection.png' -e "
                 "'mv $f ~/Pictures/Screenshots/ && xclip -selection clipboard -t image/png -i ~/Pictures/Screenshots/$f'"))
   (desktop-environment-mode 1))
@@ -2391,10 +2400,7 @@ robust UI element disabling."
 
   :hook
   (eshell-load . eat-eshell-mode)
-  (eshell-load . eat-eshell-visual-command-mode)
-
-  :bind
-  ("C-c T" . eat))
+  (eshell-load . eat-eshell-visual-command-mode))
 
 
 ;;; Claude Code
@@ -2564,7 +2570,6 @@ robust UI element disabling."
   :defer t
   :bind
   (
-   ("C-c E" . shell)
    :map shell-mode-map
    ("C-c C-k" . comint-clear-buffer)
    ("C-c C-w" . comint-write-output))
@@ -2659,7 +2664,7 @@ robust UI element disabling."
 
 (use-package emoji
   :ensure nil
-  :bind ("C-c e" . emoji-search))
+  :bind ("C-c E" . emoji-search))
 
 ;;; STARTUP INFORMATION
 
