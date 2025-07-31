@@ -607,7 +607,7 @@ OLD is ignored but included for hook compatibility."
     ;;              (exwm-randr-refresh)))
 
     (defun efs/update-displays ()
-      (efs/run-in-background "autorandr --change --force")
+      (shell-command "autorandr --change --force")
       (message "Display config: %s"
                (string-trim (shell-command-to-string "autorandr --current"))))
 
