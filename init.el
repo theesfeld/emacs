@@ -2377,7 +2377,14 @@ robust UI element disabling."
                             "eat"))
              (buffer-name (format "*%s*" program-name)))
         (unless (string= (buffer-name) buffer-name)
-          (rename-buffer buffer-name t)))))
+          (rename-buffer buffer-name t))
+        ;; Set up process sentinel to kill buffer when process exits
+        (set-process-sentinel process
+                              (lambda (proc event)
+                                (when (string-match-p "finished\\|exited" event)
+                                  (let ((buf (process-buffer proc)))
+                                    (when (buffer-live-p buf)
+                                      (kill-buffer buf)))))))))
   
   (add-hook 'eat-mode-hook #'my/eat-eshell-setup-buffer-name)
   
