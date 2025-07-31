@@ -323,10 +323,10 @@ OLD is ignored but included for hook compatibility."
   (use-package exwm
     :ensure nil
     :init
-    ;;(require 'exwm-randr)
-    ;;(require 'exwm-systemtray)
+    (require 'exwm-randr)
+    (require 'exwm-systemtray)
     :config
-    (setq exwm-workspace-number 10)
+    (setq exwm-workspace-number 5)
     (setq exwm-workspace-show-all-buffers t)
     (setq exwm-layout-show-all-buffers t)
     (setq exwm-input-prefix-keys
@@ -457,6 +457,7 @@ OLD is ignored but included for hook compatibility."
             ;; Set the configuration
             (setq exwm-randr-workspace-monitor-plist workspace-plist)))))
 
+
     (defun my/exwm-configure-monitors ()
       "Configure xrandr settings and refresh EXWM."
       (let* ((xrandr-output (shell-command-to-string "xrandr"))
@@ -473,15 +474,11 @@ OLD is ignored but included for hook compatibility."
              (external-monitors (seq-filter (lambda (m) (not (string= (car m) "eDP-1"))) monitor-info))
              (has-laptop (seq-find (lambda (m) (string= (car m) "eDP-1")) monitor-info))
              (laptop-width (if has-laptop (* 2880 0.67) 0))
-             (current-x 0)
-             (picom-was-running (= 0 (call-process "pgrep" nil nil nil "picom")))
-             (picom-killed nil))
-        ;; Intel Xe driver workaround: kill picom only if needed
-        (when (and picom-was-running
-                   (executable-find "picom")
+             (current-x 0))
+        ;; Intel Xe driver workaround: kill and restart picom if needed
+        (when (and (executable-find "picom")
                    (string-match-p "xe" (shell-command-to-string "lsmod | grep -E 'xe|i915'")))
           (shell-command "pkill picom")
-          (setq picom-killed t)
           (sit-for 0.1))
 
         ;; Build xrandr command
@@ -491,77 +488,56 @@ OLD is ignored but included for hook compatibility."
           (let* ((left-monitor (car external-monitors))
                  (center-monitor (cadr external-monitors))
                  (current-x 0))
-            ;; First, try fast configuration with single xrandr command
+            ;; Intel Xe workaround: turn off all monitors first
+            (shell-command (format "xrandr --output %s --off --output %s --off --output eDP-1 --off"
+                                   (car left-monitor) (car center-monitor)))
+            (sit-for 0.3)
+            ;; Turn on monitors one by one
+            (shell-command (format "xrandr --output %s --auto --pos 0x0 --primary"
+                                   (car left-monitor)))
             (setq current-x (cadr left-monitor))
-            (let ((xrandr-cmd (format "xrandr --output %s --auto --pos 0x0 --primary --output %s --auto --pos %dx0 --output eDP-1 --auto --pos %dx0"
-                                      (car left-monitor)
-                                      (car center-monitor) current-x
-                                      (+ current-x (cadr center-monitor)))))
-              (message "EXWM: Trying fast monitor configuration...")
-              (shell-command xrandr-cmd))
-            ;; Check if eDP-1 needs the transform trick
+            (shell-command (format "xrandr --output %s --auto --pos %dx0"
+                                   (car center-monitor) current-x))
+            (setq current-x (+ current-x (cadr center-monitor)))
+            (shell-command (format "xrandr --output eDP-1 --auto --pos %dx0"
+                                   current-x))
+            ;; Intel Xe workaround: use transform trick to ensure display updates
             (sit-for 0.1)
-            (let ((edp1-frozen (not (string-match-p "eDP-1.*[0-9]+x[0-9]+\\+" xrandr-output))))
-              (when edp1-frozen
-                (message "EXWM: eDP-1 appears frozen, applying transform trick...")
-                (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
-                (sit-for 0.1)
-                (shell-command "xrandr --output eDP-1 --transform none"))
-              ;; If fast config didn't work properly, fall back to full reset
-              (when (or edp1-frozen
-                        (not (= 0 (call-process "xrandr" nil nil nil "--listactivemonitors"))))
-                (message "EXWM: Fast config failed, using full reset sequence...")
-                ;; Intel Xe workaround: turn off all monitors first
-                (shell-command (format "xrandr --output %s --off --output %s --off --output eDP-1 --off"
-                                       (car left-monitor) (car center-monitor)))
-                (sit-for 0.3)
-                ;; Turn on monitors one by one
-                (shell-command (format "xrandr --output %s --auto --pos 0x0 --primary"
-                                       (car left-monitor)))
-                (shell-command (format "xrandr --output %s --auto --pos %dx0"
-                                       (car center-monitor) current-x))
-                (shell-command (format "xrandr --output eDP-1 --auto --pos %dx0"
-                                       (+ current-x (cadr center-monitor))))
-                ;; Apply transform trick
-                (sit-for 0.1)
-                (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
-                (sit-for 0.1)
-                (shell-command "xrandr --output eDP-1 --transform none")))
-            ;; Restart picom only if we killed it
-            (when (and (or picom-killed (not picom-was-running))
-                       (executable-find "picom"))
+            (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
+            (sit-for 0.1)
+            (shell-command "xrandr --output eDP-1 --transform none")
+            ;; Restart picom with GLX backend
+            (when (executable-find "picom")
               (start-process "picom" nil "picom" "-b"))
-            (message "EXWM: Monitor configuration complete")))
+            (message "EXWM: Intel Xe monitor configuration applied")))
          ;; Two monitors with laptop
          ((and has-laptop (= (length external-monitors) 1))
           (let* ((external-monitor (car external-monitors))
-                 (current-x (cadr external-monitor)))
-            ;; First, try fast configuration
-            (let ((xrandr-cmd (format "xrandr --output %s --auto --primary --pos 0x0 --output eDP-1 --auto --pos %dx0"
-                                      (car external-monitor) current-x)))
-              (message "EXWM: Configuring two monitors...")
-              (shell-command xrandr-cmd))
-            ;; Check if eDP-1 needs the transform trick
+                 (current-x 0))
+            ;; Intel Xe workaround: turn off all monitors first
+            (shell-command (format "xrandr --output %s --off --output eDP-1 --off"
+                                   (car external-monitor)))
+            (sit-for 1)
+            ;; External monitor at origin
+            (shell-command (format "xrandr --output %s --auto --primary --pos 0x0"
+                                   (car external-monitor)))
+            (setq current-x (cadr external-monitor))
+            ;; Laptop to the right without scaling
+            (shell-command (format "xrandr --output eDP-1 --auto --pos %dx0"
+                                   current-x))
+            ;; Intel Xe workaround: use transform trick
             (sit-for 0.1)
-            (let ((edp1-frozen (not (string-match-p "eDP-1.*[0-9]+x[0-9]+\\+" (shell-command-to-string "xrandr")))))
-              (when edp1-frozen
-                (message "EXWM: Applying transform trick to eDP-1...")
-                (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
-                (sit-for 0.1)
-                (shell-command "xrandr --output eDP-1 --transform none")))
-            ;; Restart picom only if we killed it
-            (when (and (or picom-killed (not picom-was-running))
-                       (executable-find "picom"))
+            (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
+            (sit-for 0.1)
+            (shell-command "xrandr --output eDP-1 --transform none")
+            ;; Restart picom with GLX backend
+            (when (executable-find "picom")
               (start-process "picom" nil "picom" "-b"))
-            (message "EXWM: Monitor configuration complete")))
+            (message "EXWM: Intel Xe monitor configuration applied")))
          ;; Only laptop
          ((and has-laptop (= (length external-monitors) 0))
-          (message "EXWM: Configuring laptop only with scaling...")
-          (shell-command "xrandr --output eDP-1 --scale 0.67x0.67 --primary --pos 0x0")
-          ;; Restart picom only if we killed it
-          (when (and (or picom-killed (not picom-was-running))
-                     (executable-find "picom"))
-            (start-process "picom" nil "picom" "-b")))
+          (message "EXWM: Running xrandr command: xrandr --output eDP-1 --scale 0.67x0.67 --primary --pos 0x0")
+          (shell-command "xrandr --output eDP-1 --scale 0.67x0.67 --primary --pos 0x0"))
          ;; No laptop, just external monitors
          (t
           (let ((xrandr-cmd "xrandr"))
@@ -574,115 +550,110 @@ OLD is ignored but included for hook compatibility."
                   (setq xrandr-cmd (concat xrandr-cmd " --primary")))
                 (setq current-x (+ current-x (cadr monitor)))))
             (message "EXWM: Running xrandr command: %s" xrandr-cmd)
-            (shell-command xrandr-cmd)
-            ;; Restart picom only if we killed it
-            (when (and (or picom-killed (not picom-was-running))
-                       (executable-find "picom"))
-              (start-process "picom" nil "picom" "-b"))))))
+            (shell-command xrandr-cmd))))))
 
-      (defun my/exwm-start-tray-apps ()
-        "Start system tray applications with delays to ensure proper icon display."
-        (interactive)
-        (run-with-timer 1 nil
-                        (lambda ()
-                          (when (executable-find "nm-applet")
-                            (message "Starting nm-applet...")
-                            (start-process "nm-applet" nil "nm-applet"))
-                          (run-with-timer 0.5 nil
-                                          (lambda ()
-                                            (when (executable-find "udiskie")
-                                              (message "Starting udiskie...")
-                                              (start-process "udiskie" nil "udiskie" "-at"))
-                                            (run-with-timer 0.5 nil
-                                                            (lambda ()
-                                                              (when (executable-find "blueman-applet")
-                                                                (message "Starting blueman-applet...")
-                                                                (start-process "blueman-applet" nil "blueman-applet")))))))))
-      ;; Set up randr configuration before enabling randr mode
-      (my/exwm-randr-setup)
-      (setq exwm-randr-screen-change-hook
-            (lambda ()
-              (my/exwm-randr-setup)
-              (my/exwm-configure-monitors)
-              (exwm-randr-refresh)))
+    (defun my/exwm-start-tray-apps ()
+      "Start system tray applications with delays to ensure proper icon display."
+      (interactive)
+      (run-with-timer 1 nil
+                      (lambda ()
+                        (when (executable-find "nm-applet")
+                          (message "Starting nm-applet...")
+                          (start-process "nm-applet" nil "nm-applet"))
+                        (run-with-timer 0.5 nil
+                                        (lambda ()
+                                          (when (executable-find "udiskie")
+                                            (message "Starting udiskie...")
+                                            (start-process "udiskie" nil "udiskie" "-at"))
+                                          (run-with-timer 0.5 nil
+                                                          (lambda ()
+                                                            (when (executable-find "blueman-applet")
+                                                              (message "Starting blueman-applet...")
+                                                              (start-process "blueman-applet" nil "blueman-applet")))))))))
+    ;; Set up randr configuration before enabling randr mode
+    (my/exwm-randr-setup)
+    (setq exwm-randr-screen-change-hook
+          (lambda ()
+            (my/exwm-randr-setup)
+            (my/exwm-configure-monitors)
+            (exwm-randr-refresh)))
 
-      (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
-      (exwm-systemtray-mode 1)
-      (exwm-randr-mode 1)
-      (exwm-wm-mode 1)))
+    (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
+    (exwm-systemtray-mode 1)
+    (exwm-randr-mode 1)
+    (exwm-wm-mode 1)))
 
-  (defun my/app-launcher ()
-    "Launch application using \='completing-read'."
-    (interactive)
-    (let* ((all-commands
-            (split-string
-             (shell-command-to-string
-              "compgen -c | grep -v '^_' | sort -u | head -200")
-             "\n" t))
-           (command (completing-read "Launch: " all-commands)))
-      (when command
-        (start-process-shell-command command nil command))))
+(defun my/app-launcher ()
+  "Launch application using \='completing-read'."
+  (interactive)
+  (let* ((all-commands
+          (split-string
+           (shell-command-to-string
+            "compgen -c | grep -v '^_' | sort -u | head -200")
+           "\n" t))
+         (command (completing-read "Launch: " all-commands)))
+    (when command
+      (start-process-shell-command command nil command))))
 
-  (global-set-key (kbd "s-SPC") #'my/app-launcher)
+(global-set-key (kbd "s-SPC") #'my/app-launcher)
 
-  (use-package desktop-environment
-    :ensure t
-    :config
-    (setq desktop-environment-screenlock-command "slock")
-    (desktop-environment-mode 1))
+(use-package desktop-environment
+  :ensure t
+  :config
+  (setq desktop-environment-screenlock-command "slock")
+  (desktop-environment-mode 1))
 
   ;;; exwm-edit
-  (use-package exwm-edit
-    :ensure t
-    :after exwm
-    :config
-    (setq exwm-edit-split nil)
-    (define-key exwm-mode-map (kbd "C-c C-e") 'exwm-edit--compose)
-    (add-hook 'exwm-edit-compose-hook
-              (lambda ()
-                (message "EXWM Edit buffer created. Use C-c C-c to finish, C-c C-k to cancel.")))
-    ;; Override the compose function to use M-w instead of C-c for copying
-    (defun exwm-edit--compose (&optional no-copy)
-      "Edit text in an EXWM app. Use M-w to copy instead of C-c."
-      (interactive)
-      (let* ((title (exwm-edit--buffer-title (buffer-name)))
-             (existing (get-buffer title))
-             (inhibit-read-only t)
-             (save-interprogram-paste-before-kill t)
-             (selection-coding-system 'utf-8))
-        (when (derived-mode-p 'exwm-mode)
-          (setq exwm-edit--last-window-configuration (current-window-configuration))
-          (if existing
-              (switch-to-buffer-other-window existing)
-            (exwm-input--fake-key ?\C-a)
+(use-package exwm-edit
+  :ensure t
+  :after exwm
+  :config
+  (setq exwm-edit-split nil)
+  (define-key exwm-mode-map (kbd "C-c C-e") 'exwm-edit--compose)
+  (add-hook 'exwm-edit-compose-hook
+            (lambda ()
+              (message "EXWM Edit buffer created. Use C-c C-c to finish, C-c C-k to cancel.")))
+  ;; Override the compose function to use M-w instead of C-c for copying
+  (defun exwm-edit--compose (&optional no-copy)
+    "Edit text in an EXWM app. Use M-w to copy instead of C-c."
+    (interactive)
+    (let* ((title (exwm-edit--buffer-title (buffer-name)))
+           (existing (get-buffer title))
+           (inhibit-read-only t)
+           (save-interprogram-paste-before-kill t)
+           (selection-coding-system 'utf-8))
+      (when (derived-mode-p 'exwm-mode)
+        (setq exwm-edit--last-window-configuration (current-window-configuration))
+        (if existing
+            (switch-to-buffer-other-window existing)
+          (exwm-input--fake-key ?\C-a)
+          (unless (or no-copy (not exwm-edit-copy-over-contents))
+            (when (gui-get-selection 'CLIPBOARD 'UTF8_STRING)
+              (setq exwm-edit-last-kill (substring-no-properties (gui-get-selection 'CLIPBOARD 'UTF8_STRING))))
+            (exwm-input--fake-key ?\M-w))  ; Use M-w instead of C-c
+          (with-current-buffer (get-buffer-create title)
+            (run-hooks 'exwm-edit-compose-hook)
+            (exwm-edit-mode 1)
+            (pop-to-buffer (current-buffer) exwm-edit-display-buffer-action)
+            (setq-local header-line-format
+                        (substitute-command-keys
+                         "Edit, then exit with `\\[exwm-edit--finish]' or cancel with `\\[exwm-edit--cancel]'"))
             (unless (or no-copy (not exwm-edit-copy-over-contents))
-              (when (gui-get-selection 'CLIPBOARD 'UTF8_STRING)
-                (setq exwm-edit-last-kill (substring-no-properties (gui-get-selection 'CLIPBOARD 'UTF8_STRING))))
-              (exwm-input--fake-key ?\M-w))  ; Use M-w instead of C-c
-            (with-current-buffer (get-buffer-create title)
-              (run-hooks 'exwm-edit-compose-hook)
-              (exwm-edit-mode 1)
-              (pop-to-buffer (current-buffer) exwm-edit-display-buffer-action)
-              (setq-local header-line-format
-                          (substitute-command-keys
-                           "Edit, then exit with `\\[exwm-edit--finish]' or cancel with `\\[exwm-edit--cancel]'"))
-              (unless (or no-copy (not exwm-edit-copy-over-contents))
-                (exwm-edit--yank)))))))
-    ;; Override the paste function to use C-y instead of C-v
-    (defun exwm-edit--send-to-exwm-buffer (text)
-      "Send TEXT to the exwm window using C-y."
-      (kill-new text)
-      (set-window-configuration exwm-edit--last-window-configuration)
-      (setq exwm-edit--last-window-configuration nil)
-      (exwm-input--set-focus (exwm--buffer->id (window-buffer (selected-window))))
-      (if (string= text "")
-          (run-with-timer exwm-edit-paste-delay nil (lambda () (exwm-input--fake-key 'delete)))
-        (run-with-timer exwm-edit-paste-delay nil (lambda ()
-                                                    (exwm-input--fake-key ?\C-y)
-                                                    (run-with-timer 0.1 nil (lambda ()
-                                                                              (when kill-ring
-                                                                                (kill-new (car kill-ring))))))))))
-  )
+              (exwm-edit--yank)))))))
+  ;; Override the paste function to use C-y instead of C-v
+  (defun exwm-edit--send-to-exwm-buffer (text)
+    "Send TEXT to the exwm window using C-y."
+    (kill-new text)
+    (set-window-configuration exwm-edit--last-window-configuration)
+    (setq exwm-edit--last-window-configuration nil)
+    (exwm-input--set-focus (exwm--buffer->id (window-buffer (selected-window))))
+    (if (string= text "")
+        (run-with-timer exwm-edit-paste-delay nil (lambda () (exwm-input--fake-key 'delete)))
+      (run-with-timer exwm-edit-paste-delay nil (lambda ()
+                                                  (exwm-input--fake-key ?\C-y)
+                                                  (run-with-timer 0.1 nil (lambda ()
+                                                                            (when kill-ring
+                                                                              (kill-new (car kill-ring))))))))))
 ;;; init.el version control
 
 (use-package vc
