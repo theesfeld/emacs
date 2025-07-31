@@ -2219,6 +2219,7 @@ If buffer is modified, offer to save first."
   (eshell-scroll-to-bottom-on-input 'this)
   (eshell-prompt-regexp "^[^#$\n]*[#$] ")
   (eshell-buffer-maximum-lines 50000)
+  (eshell-destroy-buffer-when-process-dies t)  ; Critical for eat buffer cleanup
   (eshell-visual-commands '("vi" "vim" "nvim" "screen" "tmux" "top" "htop" "less" "more"
                             "lynx" "links" "ncftp" "mutt" "pine" "tin" "trn" "elm"
                             "irssi" "mc" "nano" "emacs" "ssh" "telnet" "ftp" "su"
@@ -2363,35 +2364,31 @@ robust UI element disabling."
   :config
   (setenv "TERM" "xterm-256color")
 
-  ;; Custom buffer naming for eat buffers spawned from eshell
-  (defun my/eat-eshell-setup-buffer-name ()
-    "Set eat buffer name based on the command being run."
+  ;; Force eat-kill-buffer-on-exit for eshell visual commands
+  (defun my/eat-eshell-force-kill-on-exit ()
+    "Force eat-kill-buffer-on-exit for eshell visual commands."
     (when (and (derived-mode-p 'eat-mode)
-               (boundp 'eat--process)
-               eat--process)
-      (let* ((process eat--process)
-             (command (process-command process))
-             (program-name (if command
-                              (file-name-nondirectory (car command))
-                            "eat"))
-             (buffer-name (format "*%s*" program-name)))
-        (unless (string= (buffer-name) buffer-name)
-          (rename-buffer buffer-name t))
-        ;; Set up process sentinel to kill buffer when process exits
-        (set-process-sentinel process
-                              (lambda (proc event)
-                                (when (string-match-p "finished\\|exited" event)
-                                  (let ((buf (process-buffer proc)))
-                                    (when (buffer-live-p buf)
-                                      (kill-buffer buf)))))))))
-
-  (add-hook 'eat-mode-hook #'my/eat-eshell-setup-buffer-name)
-
-  ;; Ensure eshell visual commands spawn eat with proper naming
-  (advice-add 'eat-eshell-visual-command-mode :after
-              (lambda (&rest _)
-                (when (derived-mode-p 'eat-mode)
-                  (run-at-time 0.1 nil #'my/eat-eshell-setup-buffer-name))))
+               ;; Check if this is an eshell-spawned eat buffer
+               (or (local-variable-p 'eshell-parent-buffer)
+                   (and (boundp 'eat--eshell-process) eat--eshell-process)))
+      ;; Override the local setting that eat--eshell-exec-visual sets
+      (setq-local eat-kill-buffer-on-exit t)
+      ;; Ensure the kill function is on the exit hook
+      (add-hook 'eat-exit-hook #'eat--kill-buffer 90 t)))
+  
+  (add-hook 'eat-mode-hook #'my/eat-eshell-force-kill-on-exit)
+  
+  ;; Custom buffer naming for visual commands
+  (defun my/eat-visual-buffer-name-advice (orig-func &rest args)
+    "Customize buffer names for eshell visual commands."
+    (if (and args (stringp (car args)))
+        (let* ((program (car args))
+               (cmd-name (file-name-nondirectory program))
+               (eat-buffer-name (format "*%s*" cmd-name)))
+          (apply orig-func args))
+      (apply orig-func args)))
+  
+  (advice-add 'eat--eshell-exec-visual :around #'my/eat-visual-buffer-name-advice)
 
   :hook
   (eshell-load . eat-eshell-mode)
