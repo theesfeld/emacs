@@ -1548,7 +1548,7 @@ If buffer is modified, offer to save first."
                 "Make completion-preview faster by using basic completion style."
                 (let ((completion-styles '(basic))
                       (orderless-style-dispatchers nil))
-                  (apply orig-fun args))))
+                  (apply orig-fun args)))))
 
 ;;; nerd-icons
 
