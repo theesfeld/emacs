@@ -2220,6 +2220,30 @@ If buffer is modified, offer to save first."
   (eshell-scroll-to-bottom-on-input 'this)
   (eshell-prompt-regexp "^[^#$\n]*[#$] ")
   (eshell-buffer-maximum-lines 50000)
+  (eshell-visual-commands '("vi" "vim" "nvim" "screen" "tmux" "top" "htop" "less" "more" 
+                            "lynx" "links" "ncftp" "mutt" "pine" "tin" "trn" "elm"
+                            "irssi" "mc" "nano" "emacs" "ssh" "telnet" "ftp" "su"
+                            "watch" "tail" "head" "pager" "most" "alsamixer" "nethack"
+                            "cmus" "mocp" "tig" "lftp" "aptitude" "dpkg-reconfigure"
+                            "nmtui" "raspi-config" "bluetoothctl" "virsh" "docker"
+                            "podman" "k9s" "lazygit" "lazydocker" "gdu" "ncdu" "btop"
+                            "gotop" "ytop" "bpytop" "glances" "nmon" "iotop" "iftop"
+                            "nethogs" "bmon" "newsboat" "newsbeuter" "rtorrent"
+                            "transmission-cli" "weechat" "finch" "centerim" "epic"
+                            "epic5" "scrollz" "sic" "ii" "ratpoison" "dvtm" "byobu"
+                            "abduco" "dtach"))
+  (eshell-visual-subcommands '(("git" "log" "diff" "show" "rebase" "add" "commit")
+                               ("systemctl" "status" "edit")
+                               ("journalctl" "")
+                               ("cargo" "install" "build" "test" "run")
+                               ("npm" "install" "update")
+                               ("yarn" "install" "upgrade")
+                               ("apt" "install" "update" "upgrade" "search")
+                               ("apt-get" "install" "update" "upgrade")
+                               ("brew" "install" "update" "upgrade")))
+  (eshell-visual-options '(("git" "--help" "--paginate")
+                          ("man" "")
+                          ("sudo" "-e")))
 
   :config
   (setq eshell-prompt-function
@@ -2324,7 +2348,18 @@ robust UI element disabling."
   (eat-default-terminfo-name "xterm-256color")
 
   (eat-eshell-visual-command-mode-map
-   '(("git" . ("log" "diff" "show"))))
+   '(("git" . ("log" "diff" "show" "rebase" "add" "commit"))
+     ("systemctl" . ("status" "edit"))
+     ("journalctl" . (""))
+     ("cargo" . ("install" "build" "test" "run"))
+     ("npm" . ("install" "update"))
+     ("yarn" . ("install" "upgrade"))
+     ("apt" . ("install" "update" "upgrade" "search"))
+     ("apt-get" . ("install" "update" "upgrade"))
+     ("brew" . ("install" "update" "upgrade"))))
+  (eat-enable-directory-tracking t)
+  (eat-enable-shell-command-history t)
+  (eat-shell-integration-directory-tracking t)
 
   :config
   (setenv "TERM" "xterm-256color")
