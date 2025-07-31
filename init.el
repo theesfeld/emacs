@@ -1396,10 +1396,11 @@ If buffer is modified, offer to save first."
      (buffer (styles basic orderless))
      (eglot (styles orderless))
      (eglot-capf (styles orderless))))
-  (orderless-matching-styles '(orderless-regexp
-                               orderless-literal
-                               orderless-initialism))
-  (orderless-smart-case t))
+  (orderless-matching-styles '(orderless-literal
+                               orderless-regexp))
+  (orderless-smart-case t)
+  (orderless-style-dispatchers nil)
+  (orderless-component-separator #'orderless-escapable-split-on-space))
 
 ;;; savehist
 (use-package savehist
@@ -1526,9 +1527,10 @@ If buffer is modified, offer to save first."
          (eshell-mode . completion-preview-mode))
   :custom
   (completion-preview-minimum-symbol-length 2)
-  (completion-preview-idle-delay 0)
+  (completion-preview-idle-delay 0.05)
   (completion-preview-exact-match-only nil)
   (completion-preview-insert-on-completion t)
+  (completion-preview-sort-function nil)
   :custom-face
   (completion-preview ((t (:inherit shadow :foreground "#FFC107"))))
   (completion-preview-exact ((t (:inherit completion-preview :weight bold))))
@@ -1537,7 +1539,16 @@ If buffer is modified, offer to save first."
         ("TAB" . completion-preview-insert)
         ([tab] . completion-preview-insert)
         ("M-n" . completion-preview-next-candidate)
-        ("M-p" . completion-preview-prev-candidate)))
+        ("M-p" . completion-preview-prev-candidate))
+  :config
+  (setq completion-preview-hook nil)
+  
+  (advice-add 'completion-preview--update :around
+              (lambda (orig-fun &rest args)
+                "Make completion-preview faster by using basic completion style."
+                (let ((completion-styles '(basic))
+                      (orderless-style-dispatchers nil))
+                  (apply orig-fun args))))
 
 ;;; nerd-icons
 
@@ -1719,9 +1730,6 @@ If buffer is modified, offer to save first."
 ;;; Cape for better completion (works with Eglot)
 (use-package cape
   :ensure t
-  :init
-  (add-to-list 'completion-at-point-functions #'cape-file)
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
   :bind
   ("C-c p f" . cape-file)
   ("C-c p d" . cape-dabbrev)
