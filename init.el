@@ -69,14 +69,14 @@
   :demand t
   :if (not (bound-and-true-p byte-compile-current-file))
   :custom
-  (gcmh-idle-delay 10)
-  (gcmh-auto-idle-delay-factor 10)
+  (gcmh-idle-delay 'auto)
+  (gcmh-auto-idle-delay-factor 15)
   (gcmh-high-cons-threshold
-   (cond (my/ultra-high-spec-system-p (* 2048 1024 1024))
+   (cond (my/ultra-high-spec-system-p (* 1024 1024 1024))
          (my/high-spec-system-p (* 512 1024 1024))
          (t (* 128 1024 1024))))
   (gcmh-low-cons-threshold
-   (cond (my/ultra-high-spec-system-p (* 256 1024 1024))
+   (cond (my/ultra-high-spec-system-p (* 64 1024 1024))
          (my/high-spec-system-p (* 64 1024 1024))
          (t (* 20 1024 1024))))
   :config
@@ -1357,8 +1357,8 @@ If buffer is modified, offer to save first."
   :demand t
   :custom
   (vertico-cycle t)
-  (vertico-count 15)
-  (vertico-resize t)
+  (vertico-count 20)
+  (vertico-resize nil)
   (vertico-preselect 'first)
   (vertico-sort-function #'vertico-sort-history-length-alpha)
   :init
@@ -2235,7 +2235,6 @@ If buffer is modified, offer to save first."
                         eshell-script
                         eshell-term
                         eshell-unix
-                        eshell-smart
                         eshell-tramp
                         eshell-xtra
                         eshell-elecslash
