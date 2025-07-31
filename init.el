@@ -606,9 +606,16 @@ OLD is ignored but included for hook compatibility."
     ;;              (my/exwm-configure-monitors)
     ;;              (exwm-randr-refresh)))
 
+    (defun efs/update-displays ()
+      (efs/run-in-background "autorandr --change --force")
+      (message "Display config: %s"
+               (string-trim (shell-command-to-string "autorandr --current"))))
+
     (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
     (exwm-systemtray-mode 1)
-    ;;    (exwm-randr-mode 1)
+    (exwm-randr-mode 1)
+    (add-hook 'exwm-randr-screen-change-hook #'efs/update-displays)
+    (efs/update-displays)
     (exwm-wm-mode 1)))
 
   (defun my/app-launcher ()
