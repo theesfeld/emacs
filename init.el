@@ -2363,6 +2363,29 @@ robust UI element disabling."
 
   :config
   (setenv "TERM" "xterm-256color")
+  
+  ;; Custom buffer naming for eat buffers spawned from eshell
+  (defun my/eat-eshell-setup-buffer-name ()
+    "Set eat buffer name based on the command being run."
+    (when (and (derived-mode-p 'eat-mode)
+               (boundp 'eat--process)
+               eat--process)
+      (let* ((process eat--process)
+             (command (process-command process))
+             (program-name (if command
+                              (file-name-nondirectory (car command))
+                            "eat"))
+             (buffer-name (format "*%s*" program-name)))
+        (unless (string= (buffer-name) buffer-name)
+          (rename-buffer buffer-name t)))))
+  
+  (add-hook 'eat-mode-hook #'my/eat-eshell-setup-buffer-name)
+  
+  ;; Ensure eshell visual commands spawn eat with proper naming
+  (advice-add 'eat-eshell-visual-command-mode :after
+              (lambda (&rest _)
+                (when (derived-mode-p 'eat-mode)
+                  (run-at-time 0.1 nil #'my/eat-eshell-setup-buffer-name))))
 
   :hook
   (eshell-load . eat-eshell-mode)
