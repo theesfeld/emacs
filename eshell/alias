@@ -1,0 +1,9 @@
+alias rg rg --color=always
+alias fd find-dired $PWD $1
+alias d dired $1
+alias g git
+alias emacs find-file $1
+alias cls eshell/clear
+alias la ls -asl --color=yes
+alias ll ls -lh --color=yes
+alias ff find-file $1
