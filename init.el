@@ -580,8 +580,6 @@ OLD is ignored but included for hook compatibility."
     ;;                    (executable-find "picom"))
     ;;           (start-process "picom" nil "picom" "-b"))))))
 
-
-
     (defun my/exwm-start-tray-apps ()
       "Start system tray applications with delays to ensure proper icon display."
       (interactive)
@@ -610,7 +608,7 @@ OLD is ignored but included for hook compatibility."
 
     (add-hook 'exwm-init-hook #'my/exwm-start-tray-apps)
     (exwm-systemtray-mode 1)
-;;    (exwm-randr-mode 1)
+    ;;    (exwm-randr-mode 1)
     (exwm-wm-mode 1)))
 
   (defun my/app-launcher ()
@@ -683,7 +681,7 @@ OLD is ignored but included for hook compatibility."
                                                     (exwm-input--fake-key ?\C-y)
                                                     (run-with-timer 0.1 nil (lambda ()
                                                                               (when kill-ring
-                                                                                (kill-new (car kill-ring)))))))))))
+                                                                                (kill-new (car kill-ring))))))))))
 ;;; init.el version control
 
 (use-package vc
