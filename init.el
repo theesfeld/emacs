@@ -1538,16 +1538,7 @@ If buffer is modified, offer to save first."
         ("TAB" . completion-preview-insert)
         ([tab] . completion-preview-insert)
         ("M-n" . completion-preview-next-candidate)
-        ("M-p" . completion-preview-prev-candidate))
-  :config
-  (setq completion-preview-hook nil)
-  
-  (advice-add 'completion-preview--update :around
-              (lambda (orig-fun &rest args)
-                "Make completion-preview faster by using basic completion style."
-                (let ((completion-styles '(basic))
-                      (orderless-style-dispatchers nil))
-                  (apply orig-fun args)))))
+        ("M-p" . completion-preview-prev-candidate)))
 
 ;;; nerd-icons
 
