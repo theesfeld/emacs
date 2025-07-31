@@ -1522,9 +1522,10 @@ If buffer is modified, offer to save first."
 (use-package completion-preview
   :ensure nil
   :hook ((prog-mode . completion-preview-mode)
-         (conf-mode . completion-preview-mode))
+         (conf-mode . completion-preview-mode)
+         (eshell-mode . completion-preview-mode))
   :custom
-  (completion-preview-minimum-symbol-length 3)
+  (completion-preview-minimum-symbol-length 2)
   (completion-preview-idle-delay 0)
   (completion-preview-exact-match-only nil)
   (completion-preview-insert-on-completion t)
@@ -2244,6 +2245,24 @@ If buffer is modified, offer to save first."
   (eshell-visual-options '(("git" "--help" "--paginate")
                           ("man" "")
                           ("sudo" "-e")))
+  (eshell-modules-list '(eshell-alias
+                        eshell-banner
+                        eshell-basic
+                        eshell-cmpl
+                        eshell-dirs
+                        eshell-glob
+                        eshell-hist
+                        eshell-ls
+                        eshell-pred
+                        eshell-prompt
+                        eshell-script
+                        eshell-term
+                        eshell-unix
+                        eshell-smart
+                        eshell-tramp
+                        eshell-xtra
+                        eshell-elecslash
+                        eshell-rebind))
 
   :config
   (setq eshell-prompt-function
@@ -2255,9 +2274,21 @@ If buffer is modified, offer to save first."
   (defalias 'eshell/ll 'eshell/ls)
   (defalias 'eshell/la '(lambda () (eshell/ls "-a")))
   (defalias 'eshell/clear 'eshell/clear-scrollback)
+  
+  (with-eval-after-load 'pcomplete
+    (setq pcomplete-termination-string ""
+          pcomplete-ignore-case t
+          pcomplete-autolist nil
+          pcomplete-cycle-completions nil
+          pcomplete-cycle-cutoff-length 0))
 
   :hook
-  (eshell-mode . (lambda () (display-line-numbers-mode -1)))
+  (eshell-mode . (lambda () 
+                   (display-line-numbers-mode -1)
+                   (setq-local pcomplete-cycle-completions nil)
+                   (setq-local completion-at-point-functions
+                               '(pcomplete-completions-at-point))
+                   (completion-preview-mode 1)))
 
   :bind
   ("C-c e" . eshell))
