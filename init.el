@@ -323,8 +323,8 @@ OLD is ignored but included for hook compatibility."
   (use-package exwm
     :ensure nil
     :init
-    (require 'exwm-randr)
-    (require 'exwm-systemtray)
+    ;;(require 'exwm-randr)
+    ;;(require 'exwm-systemtray)
     :config
     (setq exwm-workspace-number 10)
     (setq exwm-workspace-show-all-buffers t)
