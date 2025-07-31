@@ -490,7 +490,7 @@ OLD is ignored but included for hook compatibility."
             ;; Intel Xe workaround: turn off all monitors first
             (shell-command (format "xrandr --output %s --off --output %s --off --output eDP-1 --off"
                                    (car left-monitor) (car center-monitor)))
-            (sit-for 1)
+            (sit-for 0.3)
             ;; Turn on monitors one by one
             (shell-command (format "xrandr --output %s --auto --pos 0x0 --primary"
                                    (car left-monitor)))
