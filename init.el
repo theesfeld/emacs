@@ -684,6 +684,7 @@ OLD is ignored but included for hook compatibility."
                                                     (run-with-timer 0.1 nil (lambda ()
                                                                               (when kill-ring
                                                                                 (kill-new (car kill-ring))))))))))
+) ; end of (when (eq window-system 'x)
 
 ;;; init.el version control
 
