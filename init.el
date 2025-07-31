@@ -1530,7 +1530,6 @@ If buffer is modified, offer to save first."
   (completion-preview-idle-delay 0.05)
   (completion-preview-exact-match-only nil)
   (completion-preview-insert-on-completion t)
-  (completion-preview-sort-function nil)
   :custom-face
   (completion-preview ((t (:inherit shadow :foreground "#FFC107"))))
   (completion-preview-exact ((t (:inherit completion-preview :weight bold))))
