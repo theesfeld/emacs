@@ -784,10 +784,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 (setq ring-bell-function 'my/flash-mode-line)
 
-(use-package modus-themes
-  :ensure nil
-  :defer t)
-
 (use-package ef-themes
   :ensure t
   :defer 0.1
