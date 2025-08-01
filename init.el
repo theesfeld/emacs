@@ -34,21 +34,23 @@
 
 (defun my/get-system-memory ()
   "Get system memory in GB."
-  (if (eq system-type 'gnu/linux)
-      (/ (string-to-number
-          (shell-command-to-string
-           "grep MemTotal /proc/meminfo | awk '{print $2}'"))
-         1048576.0)
-    32)) ; Default fallback
-
-(defun my/get-cpu-count ()
-  "Get number of CPU cores."
-  (or (num-processors) 4)) ; Default fallback
+  (cond
+   ((and (eq system-type 'gnu/linux)
+         (file-readable-p "/proc/meminfo"))
+    (with-temp-buffer
+      (insert-file-contents "/proc/meminfo")
+      (goto-char (point-min))
+      (if (re-search-forward "^MemTotal:[[:space:]]+\\([0-9]+\\)" nil t)
+          (/ (string-to-number (match-string 1)) 1048576.0)
+        32)))
+   ((fboundp 'memory-info)
+    (/ (car (memory-info)) 1024.0))
+   (t 32))) ; Default fallback
 
 (defconst my/system-memory (my/get-system-memory)
   "System memory in GB.")
 
-(defconst my/cpu-count (my/get-cpu-count)
+(defconst my/cpu-count (or (num-processors) 4)
   "Number of CPU cores.")
 
 (defconst my/high-spec-system-p
@@ -101,10 +103,10 @@
 
 (defun my-common-auth-get-field (host prop)
   "Find PROP in `auth-sources' for HOST entry."
-  (when-let* ((source (auth-source-search :host host)))
+  (when-let* ((source (car (auth-source-search :host host))))
     (if (eq prop :secret)
-        (funcall (plist-get (car source) prop))
-      (plist-get (flatten-list source) prop))))
+        (funcall (plist-get source prop))
+      (plist-get source prop))))
 
 (defun my/keyboard-quit-dwim ()
   "Do-What-I-Mean behaviour for a general \=`keyboard-quit'."
@@ -121,8 +123,8 @@
 
 (keymap-global-set "<remap> <keyboard-quit>" #'my/keyboard-quit-dwim)
 
-(defun my/exwm-run-program ()
-  "Run a program using vertico completion with command history and PATH suggestions."
+(defun my/program-launcher ()
+  "Launch program using completion with command history and PATH suggestions."
   (interactive)
   (let* ((history-commands
           (when (boundp 'shell-command-history)
@@ -130,38 +132,29 @@
          (path-commands
           (when (executable-find "compgen")
             (split-string
-             (shell-command-to-string "compgen -c | head -200")
+             (shell-command-to-string "compgen -c | grep -v '^_' | sort -u | head -200")
              "\n" t)))
          (common-commands
-          '("firefox" "mpv"))
+          '("firefox" "mpv" "emacs" "alacritty" "pavucontrol"))
          (all-commands
           (delete-dups
            (append history-commands common-commands path-commands)))
          (command
-          (completing-read "Run program: " all-commands nil nil nil
+          (completing-read "Launch program: " all-commands nil nil nil
                            'shell-command-history)))
     (when (and command (not (string-empty-p command)))
-      (start-process-shell-command command nil command))))
+      (start-process-shell-command command nil command)
+      (push command shell-command-history))))
 
 (defun increase-text-and-pane ()
-  "Increase text size and adjust window width proportionally."
+  "Increase text size."
   (interactive)
-  (let* ((orig-scale (or text-scale-mode-amount 0))
-         (scale-factor text-scale-mode-step))
-    (text-scale-increase 1)
-    (when (> (length (window-list)) 1)
-      (enlarge-window-horizontally
-       (round (* (window-width) (- scale-factor 1)))))))
+  (text-scale-increase 1))
 
 (defun decrease-text-and-pane ()
-  "Decrease text size and adjust window width proportionally."
+  "Decrease text size."
   (interactive)
-  (let* ((orig-scale (or text-scale-mode-amount 0))
-         (scale-factor (/ 1.0 text-scale-mode-step)))
-    (text-scale-decrease 1)
-    (when (> (length (window-list)) 1)
-      (shrink-window-horizontally
-       (round (* (window-width) (- 1 scale-factor)))))))
+  (text-scale-decrease 1))
 
 (keymap-global-set "s-=" #'increase-text-and-pane)
 (keymap-global-set "s--" #'decrease-text-and-pane)
@@ -588,19 +581,11 @@ OLD is ignored but included for hook compatibility."
     (exwm-randr-mode 1)
     (exwm-wm-mode 1)))
 
-(defun my/app-launcher ()
-  "Launch application using \='completing-read'."
-  (interactive)
-  (let* ((all-commands
-          (split-string
-           (shell-command-to-string
-            "compgen -c | grep -v '^_' | sort -u | head -200")
-           "\n" t))
-         (command (completing-read "Launch: " all-commands)))
-    (when command
-      (start-process-shell-command command nil command))))
+;; Use the unified launcher
+(defalias 'my/app-launcher 'my/program-launcher)
+(defalias 'my/exwm-run-program 'my/program-launcher)
 
-(global-set-key (kbd "s-SPC") #'my/app-launcher)
+(global-set-key (kbd "s-SPC") #'my/program-launcher)
 
 (use-package desktop-environment
   :ensure t
@@ -2838,83 +2823,88 @@ robust UI element disabling."
 
 ;;; DYNAMIC PERFORMANCE OPTIMIZATIONS
 
-(defun my/apply-performance-optimizations ()
-  "Apply performance optimizations based on system specifications."
-  (interactive)
-
-  ;; Optimize based on available memory
+(defun my/optimize-memory-settings ()
+  "Optimize Emacs settings based on available memory."
   (when my/high-spec-system-p
-    ;; Increase various limits for high-memory systems
     (setq kill-ring-max (if my/ultra-high-spec-system-p 500 200)
           mark-ring-max 50
           global-mark-ring-max 50
           message-log-max (if my/ultra-high-spec-system-p 20000 10000)
           history-length (if my/ultra-high-spec-system-p 2000 1000)
-          savehist-save-minibuffer-history t)
+          savehist-save-minibuffer-history t
+          recentf-max-saved-items (if my/ultra-high-spec-system-p 2000 1000)
+          desktop-restore-eager (if my/ultra-high-spec-system-p 20 10)
+          desktop-lazy-verbose nil
+          desktop-lazy-idle-delay 5)))
 
-    ;; Optimize file operations
+(defun my/optimize-file-operations ()
+  "Optimize file operation settings."
+  (when my/high-spec-system-p
     (setq auto-save-interval 1000
           auto-save-timeout 60
           create-lockfiles nil
           backup-by-copying t
           vc-handled-backends '(Git)
           find-file-visit-truename nil
-          vc-follow-symlinks t)
+          vc-follow-symlinks t)))
 
-    ;; Optimize font rendering for powerful systems
+(defun my/optimize-display-settings ()
+  "Optimize display and rendering settings."
+  (when my/high-spec-system-p
     (setq font-lock-maximum-decoration t
           jit-lock-stealth-time 0.2
           jit-lock-chunk-size (if my/ultra-high-spec-system-p 8192 4096)
-          jit-lock-defer-time 0.05)
-
-    ;; Display optimizations
-    (setq fast-but-imprecise-scrolling t
+          jit-lock-defer-time 0.05
+          fast-but-imprecise-scrolling t
           redisplay-skip-fontification-on-input t
           inhibit-compacting-font-caches t
-          highlight-nonselected-windows nil)
+          highlight-nonselected-windows nil)))
 
-    ;; Increase limits for better performance
-    (setq recentf-max-saved-items (if my/ultra-high-spec-system-p 2000 1000)
-          desktop-restore-eager (if my/ultra-high-spec-system-p 20 10)
-          desktop-lazy-verbose nil
-          desktop-lazy-idle-delay 5))
-
-  ;; CPU-based optimizations
+(defun my/optimize-cpu-settings ()
+  "Optimize settings based on CPU count."
   (when (>= my/cpu-count 8)
-    ;; Enable parallel operations
     (setq native-comp-async-jobs-number
           (cond ((>= my/cpu-count 16) (- my/cpu-count 4))
                 ((>= my/cpu-count 12) (- my/cpu-count 2))
-                (t (max 4 (/ my/cpu-count 2)))))
-
-    ;; Optimize minibuffer and completion
-    (setq enable-recursive-minibuffers t
+                (t (max 4 (/ my/cpu-count 2))))
+          enable-recursive-minibuffers t
           minibuffer-depth-indicate-mode t
           max-mini-window-height 0.5
           completion-cycle-threshold 3
-          tab-always-indent 'complete))
+          tab-always-indent 'complete)))
 
-  ;; LSP optimizations for multicore systems
+(defun my/optimize-lsp-settings ()
+  "Optimize LSP settings for multicore systems."
+  (when (>= my/cpu-count 8)
+    (setq lsp-idle-delay 0.1
+          lsp-log-io nil
+          lsp-completion-provider :none
+          lsp-prefer-flymake nil
+          lsp-enable-file-watchers t
+          lsp-file-watch-threshold
+          (if my/ultra-high-spec-system-p 20000 10000))))
+
+(defun my/optimize-magit-settings ()
+  "Optimize Magit settings for large repositories."
+  (when my/high-spec-system-p
+    (setq magit-refresh-status-buffer nil
+          magit-diff-highlight-indentation nil
+          magit-diff-highlight-trailing nil
+          magit-diff-paint-whitespace nil
+          magit-diff-highlight-hunk-body nil
+          magit-diff-refine-hunk nil)))
+
+(defun my/apply-performance-optimizations ()
+  "Apply all performance optimizations based on system specifications."
+  (interactive)
+  (my/optimize-memory-settings)
+  (my/optimize-file-operations)
+  (my/optimize-display-settings)
+  (my/optimize-cpu-settings)
   (with-eval-after-load 'lsp-mode
-    (when (>= my/cpu-count 8)
-      (setq lsp-idle-delay 0.1
-            lsp-log-io nil
-            lsp-completion-provider :none
-            lsp-prefer-flymake nil
-            lsp-enable-file-watchers t
-            lsp-file-watch-threshold
-            (if my/ultra-high-spec-system-p 20000 10000))))
-
-  ;; Magit optimizations for large repositories
+    (my/optimize-lsp-settings))
   (with-eval-after-load 'magit
-    (when my/high-spec-system-p
-      (setq magit-refresh-status-buffer nil
-            magit-diff-highlight-indentation nil
-            magit-diff-highlight-trailing nil
-            magit-diff-paint-whitespace nil
-            magit-diff-highlight-hunk-body nil
-            magit-diff-refine-hunk nil)))
-
+    (my/optimize-magit-settings))
   (message "Performance optimizations applied! Memory: %.1fGB, CPUs: %d"
            my/system-memory my/cpu-count))
 
