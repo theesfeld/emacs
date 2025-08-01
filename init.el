@@ -24,19 +24,26 @@
   (if (fboundp 'memory-info)
       (/ (car (memory-info)) 1024.0)
     32))
+
 (defconst my/system-memory (my/get-system-memory)
   "System memory in GB.")
+
 (defconst my/cpu-count (or (num-processors) 4)
   "Number of CPU cores.")
+
 (defconst my/high-spec-system-p
   (and (>= my/system-memory 32) (>= my/cpu-count 8))
   "Non-nil if system has high specifications.")
+
 (defconst my/ultra-high-spec-system-p
   (and (>= my/system-memory 64) (>= my/cpu-count 12))
   "Non-nil if system has ultra-high specifications.")
+
 (setq package-vc-register-as-project nil)
+
 (use-package gcmh
-  :ensure t
+  :ensure
+  t
   :demand t
   :custom
   (gcmh-idle-delay 'auto)
@@ -44,17 +51,22 @@
   (gcmh-high-cons-threshold (* 256 1024 1024))
   :config
   (gcmh-mode 1))
+
 (setenv "GPG_AGENT_INFO" nil)
+
 (setq epa-pinentry-mode 'loopback
       epg-pinentry-mode 'loopback)
+
 (when (fboundp 'pinentry-start)
   (pinentry-start))
+
 (defun my-common-auth-get-field (host prop)
   "Find PROP in `auth-sources' for HOST entry."
   (when-let* ((source (car (auth-source-search :host host))))
     (if (eq prop :secret)
         (funcall (plist-get source prop))
       (plist-get source prop))))
+
 (defun my/keyboard-quit-dwim ()
   "Do-What-I-Mean behaviour for a general \=`keyboard-quit'."
   (interactive)
@@ -67,6 +79,7 @@
     (abort-recursive-edit))
    (t
     (keyboard-quit))))
+
 (defun my/program-launcher ()
   "Launch program using completion with command history."
   (interactive)
@@ -74,7 +87,8 @@
           (when (boundp 'shell-command-history)
             (delete-dups (copy-sequence shell-command-history))))
          (common-commands
-          '("firefox" "mpv" "emacs" "pavucontrol" "thunar" "gimp" "inkscape"))
+          '("firefox" "mpv" "emacs" "pavucontrol" "thunar" "gimp"
+            "inkscape"))
          (all-commands
           (delete-dups
            (append history-commands common-commands)))
@@ -84,32 +98,46 @@
     (when (and command (not (string-empty-p command)))
       (start-process-shell-command command nil command)
       (push command shell-command-history))))
+
 (defun increase-text-and-pane ()
   "Increase text size."
   (interactive)
   (text-scale-increase 1))
+
 (defun decrease-text-and-pane ()
   "Decrease text size."
   (interactive)
   (text-scale-decrease 1))
+
 (declare-function completion-preview-insert "completion-preview")
+
 (declare-function completion-preview-next-candidate
                   "completion-preview")
+
 (declare-function completion-preview-prev-candidate
                   "completion-preview")
+
 (declare-function completion-preview--hide "completion-preview")
+
 (defun my/prog-mode-variable-pitch-comments ()
   "Use variable-pitch font for comments in programming modes."
   (face-remap-add-relative 'font-lock-comment-face
-                           '(:inherit (font-lock-comment-face variable-pitch)))
+                           '(:inherit
+                             (font-lock-comment-face variable-pitch)))
   (face-remap-add-relative 'font-lock-comment-delimiter-face
-                           '(:inherit (font-lock-comment-delimiter-face variable-pitch)))
+                           '(:inherit
+                             (font-lock-comment-delimiter-face
+                              variable-pitch)))
   (face-remap-add-relative 'font-lock-doc-face
-                           '(:inherit (font-lock-doc-face variable-pitch))))
+                           '(:inherit
+                             (font-lock-doc-face variable-pitch))))
+
 (add-hook 'prog-mode-hook #'my/prog-mode-variable-pitch-comments)
+
 (when (eq window-system 'x)
   (use-package exwm
-    :ensure nil
+    :ensure
+    nil
     :init
     (require 'exwm-randr)
     (require 'exwm-systemtray)
@@ -137,7 +165,8 @@
             ([?\s-r] . exwm-reset)
             ([?\s-&] . (lambda (command)
                          (interactive (list (read-shell-command "$ ")))
-                         (start-process-shell-command command nil command)))
+                         (start-process-shell-command command nil
+                                                      command)))
             ([?\s-w] . exwm-workspace-switch)
             ([?\s-m] . exwm-workspace-move-window)
             ([?\s-f] . exwm-floating-toggle-floating)
@@ -146,22 +175,47 @@
             ([s-right] . windmove-right)
             ([s-up] . windmove-up)
             ([s-down] . windmove-down)
-            ([?\s-0] . (lambda () (interactive) (exwm-workspace-switch-create 0)))
-            ([?\s-1] . (lambda () (interactive) (exwm-workspace-switch-create 1)))
-            ([?\s-2] . (lambda () (interactive) (exwm-workspace-switch-create 2)))
-            ([?\s-3] . (lambda () (interactive) (exwm-workspace-switch-create 3)))
-            ([?\s-4] . (lambda () (interactive) (exwm-workspace-switch-create 4)))
-            ([?\s-5] . (lambda () (interactive) (exwm-workspace-switch-create 5)))
-            ([?\s-6] . (lambda () (interactive) (exwm-workspace-switch-create 6)))
-            ([?\s-7] . (lambda () (interactive) (exwm-workspace-switch-create 7)))
-            ([?\s-8] . (lambda () (interactive) (exwm-workspace-switch-create 8)))
-            ([?\s-9] . (lambda () (interactive) (exwm-workspace-switch-create 9)))
-            ([XF86AudioLowerVolume] . desktop-environment-volume-decrement)
-            ([XF86AudioRaiseVolume] . desktop-environment-volume-increment)
+            ([?\s-0]
+             . (lambda () (interactive)
+                 (exwm-workspace-switch-create 0)))
+            ([?\s-1]
+             . (lambda () (interactive)
+                 (exwm-workspace-switch-create 1)))
+            ([?\s-2]
+             . (lambda () (interactive)
+                 (exwm-workspace-switch-create 2)))
+            ([?\s-3]
+             . (lambda () (interactive)
+                 (exwm-workspace-switch-create 3)))
+            ([?\s-4]
+             . (lambda () (interactive)
+                 (exwm-workspace-switch-create 4)))
+            ([?\s-5]
+             . (lambda () (interactive)
+                 (exwm-workspace-switch-create 5)))
+            ([?\s-6]
+             . (lambda () (interactive)
+                 (exwm-workspace-switch-create 6)))
+            ([?\s-7]
+             . (lambda () (interactive)
+                 (exwm-workspace-switch-create 7)))
+            ([?\s-8]
+             . (lambda () (interactive)
+                 (exwm-workspace-switch-create 8)))
+            ([?\s-9]
+             . (lambda () (interactive)
+                 (exwm-workspace-switch-create 9)))
+            ([XF86AudioLowerVolume]
+             . desktop-environment-volume-decrement)
+            ([XF86AudioRaiseVolume]
+             . desktop-environment-volume-increment)
             ([XF86AudioMute] . desktop-environment-toggle-mute)
-            ([XF86AudioMicMute] . desktop-environment-toggle-microphone-mute)
-            ([XF86MonBrightnessUp] . desktop-environment-brightness-increment)
-            ([XF86MonBrightnessDown] . desktop-environment-brightness-decrement)
+            ([XF86AudioMicMute]
+             . desktop-environment-toggle-microphone-mute)
+            ([XF86MonBrightnessUp]
+             . desktop-environment-brightness-increment)
+            ([XF86MonBrightnessDown]
+             . desktop-environment-brightness-decrement)
             ([print] . desktop-environment-screenshot)
             ([S-print] . desktop-environment-screenshot-part)))
     (setq exwm-input-simulation-keys
@@ -204,7 +258,8 @@
     (setq exwm-systemtray-workspace nil)
     (defun my/exwm-randr-setup ()
       "Set up monitor configuration before EXWM starts."
-      (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1" 1 "HDMI-1" 2 "HDMI-1")))
+      (setq exwm-randr-workspace-monitor-plist
+            '(0 "eDP-1" 1 "HDMI-1" 2 "HDMI-1")))
     (defun my/exwm-configure-monitors ()
       "Configure xrandr settings and refresh EXWM."
       (call-process "xrandr" nil nil nil "--auto"))
@@ -217,12 +272,22 @@
                           (start-process "nm-applet" nil "nm-applet"))
                         (run-with-timer 0.5 nil
                                         (lambda ()
-                                          (when (executable-find "udiskie")
-                                            (start-process "udiskie" nil "udiskie" "-at"))
+                                          (when
+                                              (executable-find
+                                               "udiskie")
+                                            (start-process "udiskie"
+                                                           nil
+                                                           "udiskie"
+                                                           "-at"))
                                           (run-with-timer 0.5 nil
                                                           (lambda ()
-                                                            (when (executable-find "blueman-applet")
-                                                              (start-process "blueman-applet" nil "blueman-applet")))))))))
+                                                            (when
+                                                                (executable-find
+                                                                 "blueman-applet")
+                                                              (start-process
+                                                               "blueman-applet"
+                                                               nil
+                                                               "blueman-applet")))))))))
     (my/exwm-randr-setup)
     (setq exwm-randr-screen-change-hook
           (lambda ()
@@ -233,14 +298,19 @@
     (exwm-systemtray-mode 1)
     (exwm-randr-mode 1)
     (exwm-wm-mode 1)))
+
 (defalias 'my/app-launcher 'my/program-launcher)
+
 (defalias 'my/exwm-run-program 'my/program-launcher)
+
 (use-package desktop-environment
-  :ensure t
+  :ensure
+  t
   :defer 1
   :config
   (setq desktop-environment-screenlock-command "slock")
-  (setq desktop-environment-screenshot-directory "~/Pictures/Screenshots/")
+  (setq desktop-environment-screenshot-directory
+        "~/Pictures/Screenshots/")
   (setq desktop-environment-screenshot-command
         (concat "scrot '%Y-%m-%d_%H-%M-%S_$wx$h.png' -e "
                 "'mv $f ~/Pictures/Screenshots/ && xclip -selection clipboard -t image/png -i ~/Pictures/Screenshots/$f'"))
@@ -248,15 +318,18 @@
         (concat "scrot -s '%Y-%m-%d_%H-%M-%S_$wx$h_selection.png' -e "
                 "'mv $f ~/Pictures/Screenshots/ && xclip -selection clipboard -t image/png -i ~/Pictures/Screenshots/$f'"))
   (desktop-environment-mode 1))
+
 (use-package exwm-edit
-  :ensure t
+  :ensure
+  t
   :after exwm
   :config
   (setq exwm-edit-split nil)
   (define-key exwm-mode-map (kbd "C-c C-e") 'exwm-edit--compose)
   (add-hook 'exwm-edit-compose-hook
             (lambda ()
-              (message "EXWM Edit buffer created. Use C-c C-c to finish, C-c C-k to cancel.")))
+              (message
+               "EXWM Edit buffer created. Use C-c C-c to finish, C-c C-k to cancel.")))
   (defun exwm-edit--compose (&optional no-copy)
     "Edit text in an EXWM app. Use M-w to copy instead of C-c."
     (interactive)
@@ -266,18 +339,22 @@
            (save-interprogram-paste-before-kill t)
            (selection-coding-system 'utf-8))
       (when (derived-mode-p 'exwm-mode)
-        (setq exwm-edit--last-window-configuration (current-window-configuration))
+        (setq exwm-edit--last-window-configuration
+              (current-window-configuration))
         (if existing
             (switch-to-buffer-other-window existing)
           (exwm-input--fake-key ?\C-a)
           (unless (or no-copy (not exwm-edit-copy-over-contents))
             (when (gui-get-selection 'CLIPBOARD 'UTF8_STRING)
-              (setq exwm-edit-last-kill (substring-no-properties (gui-get-selection 'CLIPBOARD 'UTF8_STRING))))
+              (setq exwm-edit-last-kill
+                    (substring-no-properties
+                     (gui-get-selection 'CLIPBOARD 'UTF8_STRING))))
             (exwm-input--fake-key ?\M-w))
           (with-current-buffer (get-buffer-create title)
             (run-hooks 'exwm-edit-compose-hook)
             (exwm-edit-mode 1)
-            (pop-to-buffer (current-buffer) exwm-edit-display-buffer-action)
+            (pop-to-buffer (current-buffer)
+                           exwm-edit-display-buffer-action)
             (setq-local header-line-format
                         (substitute-command-keys
                          "Edit, then exit with `\\[exwm-edit--finish]' or cancel with `\\[exwm-edit--cancel]'"))
@@ -288,16 +365,27 @@
     (kill-new text)
     (set-window-configuration exwm-edit--last-window-configuration)
     (setq exwm-edit--last-window-configuration nil)
-    (exwm-input--set-focus (exwm--buffer->id (window-buffer (selected-window))))
+    (exwm-input--set-focus
+     (exwm--buffer->id (window-buffer (selected-window))))
     (if (string= text "")
-        (run-with-timer exwm-edit-paste-delay nil (lambda () (exwm-input--fake-key 'delete)))
+        (run-with-timer exwm-edit-paste-delay nil
+                        (lambda () (exwm-input--fake-key 'delete)))
       (run-with-timer exwm-edit-paste-delay nil (lambda ()
-                                                  (exwm-input--fake-key ?\C-y)
-                                                  (run-with-timer 0.1 nil (lambda ()
-                                                                            (when kill-ring
-                                                                              (kill-new (car kill-ring))))))))))
+                                                  (exwm-input--fake-key
+                                                   ?\C-y)
+                                                  (run-with-timer 0.1
+                                                                  nil
+                                                                  (lambda
+                                                                    ()
+                                                                    (when
+                                                                        kill-ring
+                                                                      (kill-new
+                                                                       (car
+                                                                        kill-ring))))))))))
+
 (use-package vc
-  :ensure nil
+  :ensure
+  nil
   :defer 1
   :config
   (defun my-auto-commit-init-el ()
@@ -312,13 +400,18 @@
          nil
          "Auto-commit init.el changes"))))
   :hook (after-save . my-auto-commit-init-el))
+
 (global-auto-revert-mode -1)
+
 (setq auto-revert-interval 999999)
+
 (defvar my-tmp-dir (expand-file-name "~/.tmp/")
   "Centralized directory for temporary files, backups, and history files.
 This keeps the main .emacs.d directory clean and organizes cache files logically.")
+
 (unless (file-exists-p my-tmp-dir)
   (make-directory my-tmp-dir t))
+
 (dolist (dir '("backups"
                "auto-saves"
                "auto-save-list"
@@ -331,8 +424,10 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (let ((subdir (expand-file-name dir my-tmp-dir)))
     (unless (file-exists-p subdir)
       (make-directory subdir t))))
+
 (use-package emacs
-  :ensure nil
+  :ensure
+  nil
   :init
   (setq auth-sources '("~/.authinfo.gpg")
         auth-source-save-behavior nil
@@ -376,14 +471,18 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         kept-old-versions 2
         version-control t
         backup-by-copying t
-        backup-directory-alist `((".*" . ,(expand-file-name "backups" my-tmp-dir)))
+        backup-directory-alist
+        `((".*" . ,(expand-file-name "backups" my-tmp-dir)))
         auto-save-default t
         auto-save-interval 300
         auto-save-timeout 30
-        auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-saves/" my-tmp-dir) t))
-        auto-save-list-file-prefix (expand-file-name "auto-save-list/.saves-" my-tmp-dir)
+        auto-save-file-name-transforms
+        `((".*" ,(expand-file-name "auto-saves/" my-tmp-dir) t))
+        auto-save-list-file-prefix
+        (expand-file-name "auto-save-list/.saves-" my-tmp-dir)
         auto-save-visited-interval 120
-        save-place-file (expand-file-name "saveplace/saveplace" my-tmp-dir))
+        save-place-file
+        (expand-file-name "saveplace/saveplace" my-tmp-dir))
   (auto-save-visited-mode 1)
   (defun my/cleanup-old-temp-files ()
     "Clean up old files in temp directories."
@@ -394,7 +493,9 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
           (when (file-directory-p full-dir)
             (dolist (file (directory-files full-dir t "^[^.]"))
               (when (and (file-regular-p file)
-                         (< (float-time (nth 5 (file-attributes file))) cutoff-time))
+                         (<
+                          (float-time (nth 5 (file-attributes file)))
+                          cutoff-time))
                 (delete-file file))))))))
   (setq history-length 10000
         history-delete-duplicates t
@@ -455,7 +556,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (when (and battery-status-function
              (not (string-match-p "N/A"
                                   (battery-format "%B"
-                                                  (funcall battery-status-function)))))
+                                                  (funcall
+                                                   battery-status-function)))))
     (setq battery-mode-line-format "%b%p%%  ")
     (setq battery-mode-line-limit 85)
     (display-battery-mode 1))
@@ -507,7 +609,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq gnutls-verify-error t)
   (setq gnutls-min-prime-bits 2048)
   (setq network-security-level 'high)
-  (setq nsm-settings-file (expand-file-name "network-security.data" my-tmp-dir))
+  (setq nsm-settings-file
+        (expand-file-name "network-security.data" my-tmp-dir))
   (when (and custom-file (file-exists-p custom-file))
     (load custom-file))
   :hook
@@ -523,8 +626,10 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                       (display-time-mode 1)
                       (setq-default display-line-numbers-type t)
                       (setq-default display-line-numbers-width-start t)
-                      (add-hook 'prog-mode-hook #'display-line-numbers-mode)
-                      (add-hook 'conf-mode-hook #'display-line-numbers-mode)
+                      (add-hook 'prog-mode-hook
+                                #'display-line-numbers-mode)
+                      (add-hook 'conf-mode-hook
+                                #'display-line-numbers-mode)
                       (dolist (mode '(lisp-interaction-mode-hook
                                       org-mode-hook
                                       term-mode-hook
@@ -534,7 +639,9 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                                       eww-mode-hook
                                       erc-mode-hook
                                       eat-mode-hook))
-                        (add-hook mode (lambda () (display-line-numbers-mode -1)))))))
+                        (add-hook mode
+                                  (lambda ()
+                                    (display-line-numbers-mode -1)))))))
   :bind
   (("C-x C-k" . kill-current-buffer)
    ("C-x K" . kill-buffer)
@@ -542,27 +649,37 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
    ("C-i" . consult-imenu))
   :custom-face
   (mode-line ((t (:box (:line-width -1 :style released-button)))))
-  (mode-line-inactive ((t (:box (:line-width -1 :style released-button)))))
-  (mode-line-buffer-id ((t (:weight bold :inherit font-lock-keyword-face))))
+  (mode-line-inactive
+   ((t (:box (:line-width -1 :style released-button)))))
+  (mode-line-buffer-id
+   ((t (:weight bold :inherit font-lock-keyword-face))))
   (mode-line-emphasis ((t (:weight bold :inherit warning)))))
+
 (use-package diminish
-  :ensure t
+  :ensure
+  t
   :defer t
   :config
   (diminish 'eldoc-mode)
   (diminish 'abbrev-mode)
   (diminish 'visual-line-mode)
   (diminish 'subword-mode))
+
 (defun my/flash-mode-line ()
   "Flash the mode line as a visual bell."
   (invert-face 'mode-line)
   (run-with-timer 0.1 nil 'invert-face 'mode-line))
+
 (setq ring-bell-function 'my/flash-mode-line)
+
 (use-package modus-themes
-  :ensure nil
+  :ensure
+  nil
   :defer t)
+
 (use-package ef-themes
-  :ensure t
+  :ensure
+  t
   :defer 0.1
   :init
   (mapc #'disable-theme custom-enabled-themes)
@@ -584,31 +701,41 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq ef-themes-mixed-fonts t
         ef-themes-variable-pitch-ui t)
   (add-hook 'after-init-hook (lambda () (load-theme 'ef-winter t)))
+
   (defun my-ef-themes-mode-line ()
     "Tweak the style of the mode lines."
     (ef-themes-with-colors
       (custom-set-faces
-       `(mode-line ((,c :background ,bg-mode-line :foreground ,fg-mode-line :box (:line-width 1 :color ,fg-dim))))
-       `(mode-line-inactive ((,c :box (:line-width 1 :color ,bg-active)))))))
+       `(mode-line
+         ((,c :background ,bg-mode-line :foreground ,fg-mode-line :box
+              (:line-width 1 :color ,fg-dim))))
+       `(mode-line-inactive
+         ((,c :box (:line-width 1 :color ,bg-active)))))))
+
   (defun my-ef-themes-custom-faces ()
     "My customizations on top of the Ef themes.
 This function is added to the \=`ef-themes-post-load-hook'."
     (ef-themes-with-colors
       (custom-set-faces
-       `(font-lock-comment-face ((,c :inherit italic :foreground ,comment)))
+       `(font-lock-comment-face
+         ((,c :inherit italic :foreground ,comment)))
        `(font-lock-variable-name-face ((,c :foreground ,variable))))))
   (add-hook 'ef-themes-post-load-hook #'my-ef-themes-custom-faces)
   (add-hook 'ef-themes-post-load-hook #'my-ef-themes-mode-line))
+
 (use-package winner
-  :ensure nil
+  :ensure
+  nil
   :defer 0.1
   :config
   (winner-mode 1)
   :bind
   (("C-c <left>" . winner-undo)
    ("C-c <right>" . winner-redo)))
+
 (use-package exec-path-from-shell
-  :ensure t
+  :ensure
+  t
   :defer 0.2
   :config
   (setq exec-path-from-shell-shell-name "/bin/bash")
@@ -619,8 +746,10 @@ This function is added to the \=`ef-themes-post-load-hook'."
       (add-to-list 'exec-path local-bin t)
       (setenv "PATH" (concat local-bin ":" (getenv "PATH")))))
   (exec-path-from-shell-initialize))
+
 (use-package ediff
-  :ensure nil
+  :ensure
+  nil
   :defer t
   :custom
   (ediff-window-setup-function 'ediff-setup-windows-plain)
@@ -656,8 +785,10 @@ If buffer is modified, offer to save first."
       (call-interactively #'ediff-directories)))
   :hook
   (ediff-keymap-setup . (lambda ()
-                          (define-key ediff-mode-map (kbd "Q") #'my/ediff-quit)
-                          (define-key ediff-mode-map (kbd "q") #'my/ediff-quit)))
+                          (define-key ediff-mode-map (kbd "Q")
+                                      #'my/ediff-quit)
+                          (define-key ediff-mode-map (kbd "q")
+                                      #'my/ediff-quit)))
   :bind
   (("C-c d f" . ediff-files)
    ("C-c d b" . ediff-buffers)
@@ -665,16 +796,22 @@ If buffer is modified, offer to save first."
    ("C-c d d" . my/ediff-directories)
    ("C-c d r" . ediff-regions-linewise)
    ("C-c d R" . ediff-regions-wordwise)))
+
 (use-package diff-mode
-  :ensure nil
+  :ensure
+  nil
   :defer t
   :custom-face
   (diff-added ((t (:foreground "green4" :extend t))))
   (diff-removed ((t (:foreground "red3" :extend t))))
-  (diff-hunk-header ((t (:inherit font-lock-comment-face :weight bold))))
-  (diff-file-header ((t (:inherit font-lock-keyword-face :weight bold)))))
+  (diff-hunk-header
+   ((t (:inherit font-lock-comment-face :weight bold))))
+  (diff-file-header
+   ((t (:inherit font-lock-keyword-face :weight bold)))))
+
 (use-package tramp
-  :ensure nil
+  :ensure
+  nil
   :defer t
   :custom
   (tramp-default-method "ssh")
@@ -686,8 +823,10 @@ If buffer is modified, offer to save first."
   (tramp-use-connection-share t)
   (tramp-connection-timeout 10)
   (remote-file-name-inhibit-cache nil)
-  (tramp-auto-save-directory (expand-file-name "tramp-auto-save" my-tmp-dir))
-  (tramp-persistency-file-name (expand-file-name "tramp-persistence" my-tmp-dir))
+  (tramp-auto-save-directory
+   (expand-file-name "tramp-auto-save" my-tmp-dir))
+  (tramp-persistency-file-name
+   (expand-file-name "tramp-persistence" my-tmp-dir))
   (auto-revert-remote-files t)
   (auto-revert-use-notify nil)
   :config
@@ -718,7 +857,9 @@ If buffer is modified, offer to save first."
   :bind
   (("C-c t c" . my/tramp-cleanup-current)
    ("C-c t C" . my/tramp-cleanup-all)))
-(define-derived-mode log-mode fundamental-mode "Log"
+
+(define-derived-mode log-mode fundamental-mode
+  "Log"
   "Major mode for viewing log files with syntax highlighting."
   (setq-local font-lock-defaults
               '((("\\<DEBUG\\>" . font-lock-comment-face)
@@ -731,17 +872,22 @@ If buffer is modified, offer to save first."
                   . font-lock-variable-name-face))))
   (setq buffer-read-only t)
   (auto-revert-tail-mode 1))
+
 (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
+
 (use-package vundo
-  :ensure t
+  :ensure
+  t
   :defer t
   :bind ("C-x u" . vundo)
   :custom
   (vundo-glyph-alist vundo-unicode-symbols)
   (vundo-files-directory (expand-file-name "vundo" my-tmp-dir))
   (vundo-compact-display t))
+
 (use-package rainbow-delimiters
-  :ensure t
+  :ensure
+  t
   :defer t
   :diminish
   :hook ((prog-mode . rainbow-delimiters-mode)
@@ -750,9 +896,12 @@ If buffer is modified, offer to save first."
   :custom
   (rainbow-delimiters-max-face-count 9)
   :config
-  (set-face-attribute 'rainbow-delimiters-depth-1-face nil :weight 'bold))
+  (set-face-attribute 'rainbow-delimiters-depth-1-face nil :weight
+                      'bold))
+
 (use-package highlight-thing
-  :ensure t
+  :ensure
+  t
   :defer t
   :diminish
   :hook (prog-mode . highlight-thing-mode)
@@ -765,9 +914,12 @@ If buffer is modified, offer to save first."
   (highlight-thing-narrow-region-lines 300)
   :custom-face
   (highlight-thing ((t (:inherit highlight :background unspecified
-                                 :underline (:color "#5e81ac" :style line))))))
+                                 :underline
+                                 (:color "#5e81ac" :style line))))))
+
 (use-package indent-bars
-  :ensure t
+  :ensure
+  t
   :defer t
   :diminish
   :hook ((prog-mode . indent-bars-mode)
@@ -793,31 +945,40 @@ If buffer is modified, offer to save first."
      (c function_definition if_statement for_statement
         while_statement switch_statement)
      (cpp function_definition if_statement for_statement
-          while_statement switch_statement class_specifier namespace_definition)
+          while_statement switch_statement class_specifier
+          namespace_definition)
      (rust function_item impl_item match_expression if_expression)
-     (javascript function_declaration function_expression arrow_function
+     (javascript function_declaration function_expression
+                 arrow_function
                  class_declaration if_statement for_statement)
-     (typescript function_declaration function_expression arrow_function
+     (typescript function_declaration function_expression
+                 arrow_function
                  class_declaration if_statement for_statement)
      (go function_declaration method_declaration if_statement
          for_statement switch_statement))))
+
 (use-package files
-  :ensure nil
+  :ensure
+  nil
   :defer t
   :custom
   (global-auto-revert-non-file-buffers t)
   (auto-revert-verbose nil)
   (make-backup-files t)
   (vc-make-backup-files t))
+
 (use-package autorevert
-  :ensure nil
+  :ensure
+  nil
   :diminish (auto-revert-mode . "")
   :hook (after-init . global-auto-revert-mode)
   :custom
   (auto-revert-verbose nil)
   (global-auto-revert-non-file-buffers t))
+
 (use-package smartparens
-  :ensure t
+  :ensure
+  t
   :defer t
   :diminish
   :hook ((prog-mode . smartparens-mode)
@@ -833,8 +994,10 @@ If buffer is modified, offer to save first."
         ("C-M-d" . sp-down-sexp)
         ("C-M-n" . sp-next-sexp)
         ("C-M-p" . sp-previous-sexp)))
+
 (use-package vertico
-  :ensure t
+  :ensure
+  t
   :defer 0.5
   :hook (after-init . vertico-mode)
   :custom
@@ -851,8 +1014,10 @@ If buffer is modified, offer to save first."
         ("DEL" . vertico-directory-delete-char)
         ("M-DEL" . vertico-directory-delete-word)
         ("C-j" . vertico-exit-input)))
+
 (use-package orderless
-  :ensure t
+  :ensure
+  t
   :defer 0.5
   :after vertico
   :custom
@@ -868,16 +1033,20 @@ If buffer is modified, offer to save first."
   (orderless-smart-case t)
   (orderless-style-dispatchers nil)
   (orderless-component-separator #'orderless-escapable-split-on-space))
+
 (use-package marginalia
-  :ensure t
+  :ensure
+  t
   :defer 0.5
   :after vertico
   :init (marginalia-mode 1)
   :bind
   (:map minibuffer-local-map
         ("M-A" . marginalia-cycle)))
+
 (use-package consult
-  :ensure t
+  :ensure
+  t
   :defer 1
   :custom
   (consult-preview-key '(:debounce 0.3 any))
@@ -903,9 +1072,11 @@ If buffer is modified, offer to save first."
             :items ,(lambda ()
                       (consult--buffer-query
                        :predicate (lambda (buf)
-                                    (string-prefix-p " " (buffer-name buf)))
+                                    (string-prefix-p " "
+                                                     (buffer-name buf)))
                        :sort 'visibility))))
-  (add-to-list 'consult-buffer-sources 'consult-source-hidden-buffer 'append)
+  (add-to-list 'consult-buffer-sources 'consult-source-hidden-buffer
+               'append)
   :bind
   (("C-c M-x" . consult-mode-command)
    ("C-c h" . consult-history)
@@ -948,12 +1119,16 @@ If buffer is modified, offer to save first."
   (global-set-key [remap Info-search] #'consult-info)
   (global-set-key [remap isearch-forward] #'consult-line)
   (global-set-key [remap recentf-open-files] #'consult-recent-file))
+
 (use-package consult-yasnippet
-  :ensure t
+  :ensure
+  t
   :after (consult yasnippet)
   :bind ("C-c Y" . consult-yasnippet))
+
 (use-package completion-preview
-  :ensure nil
+  :ensure
+  nil
   :hook ((prog-mode . completion-preview-mode)
          (conf-mode . completion-preview-mode)
          (eshell-mode . completion-preview-mode))
@@ -964,34 +1139,46 @@ If buffer is modified, offer to save first."
   (completion-preview-insert-on-completion t)
   :custom-face
   (completion-preview ((t (:inherit shadow :foreground "#FFC107"))))
-  (completion-preview-exact ((t (:inherit completion-preview :weight bold))))
+  (completion-preview-exact
+   ((t (:inherit completion-preview :weight bold))))
   :bind
   (:map completion-preview-active-mode-map
         ("TAB" . completion-preview-insert)
         ([tab] . completion-preview-insert)
         ("M-n" . completion-preview-next-candidate)
         ("M-p" . completion-preview-prev-candidate)))
+
 (use-package nerd-icons
-  :ensure t
+  :ensure
+  t
   :custom
   (nerd-icons-font-family "AporeticSansMono Nerd Font")
   (nerd-icons-color-icons t))
+
 (use-package nerd-icons-completion
-  :ensure t
+  :ensure
+  t
   :after (nerd-icons marginalia)
   :config
   (nerd-icons-completion-mode)
-  (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
+  (add-hook 'marginalia-mode-hook
+            #'nerd-icons-completion-marginalia-setup))
+
 (use-package expand-region
-  :ensure t
+  :ensure
+  t
   :defer t
   :bind ("C-=" . er/expand-region))
+
 (use-package project
-  :ensure nil
+  :ensure
+  nil
   :defer t
   :custom
-  (project-vc-extra-root-markers '(".project" ".projectile" "Makefile" "package.json"
-                                   "Cargo.toml" "go.mod" "requirements.txt"))
+  (project-vc-extra-root-markers '(".project" ".projectile" "Makefile"
+                                   "package.json"
+                                   "Cargo.toml" "go.mod"
+                                   "requirements.txt"))
   :config
   (defun my/project-find-test-or-impl ()
     "Switch between test and implementation files."
@@ -999,9 +1186,16 @@ If buffer is modified, offer to save first."
     (let* ((current-file (buffer-file-name))
            (test-patterns '("_test" ".test" "-test" "Test" ".spec"))
            (impl-patterns '("_test" ".test" "-test" "Test" ".spec"))
-           (is-test-file (cl-some (lambda (pattern) (string-match-p pattern current-file)) test-patterns)))
+           (is-test-file
+            (cl-some
+             (lambda (pattern) (string-match-p pattern current-file))
+             test-patterns)))
       (if is-test-file
-          (let ((impl-file (replace-regexp-in-string "_test\\|.test\\|-test\\|Test\\|.spec" "" current-file)))
+          (let
+              ((impl-file
+                (replace-regexp-in-string
+                 "_test\\|.test\\|-test\\|Test\\|.spec" ""
+                 current-file)))
             (if (file-exists-p impl-file)
                 (find-file impl-file)
               (project-find-file)))
@@ -1010,8 +1204,10 @@ If buffer is modified, offer to save first."
   (:map project-prefix-map
         ("t" . my/project-find-test-or-impl)
         ("m" . magit-status)))
+
 (use-package kmacro
-  :ensure nil
+  :ensure
+  nil
   :bind
   (("C-x (" . kmacro-start-macro)
    ("C-x )" . kmacro-end-macro)
@@ -1036,13 +1232,17 @@ If buffer is modified, offer to save first."
       (message "No region selected")))
   :bind
   (("C-x C-k r" . my/apply-macro-to-region-lines)))
+
 (use-package diff-hl
-  :ensure t
+  :ensure
+  t
   :defer t
   :hook (magit-post-refresh . diff-hl-magit-post-refresh)
   :config (global-diff-hl-mode +1))
+
 (use-package which-key
-  :ensure nil
+  :ensure
+  nil
   :defer 1
   :diminish
   :custom
@@ -1069,8 +1269,10 @@ If buffer is modified, offer to save first."
     "C-c n q" "query")
   (push '((nil . "\\`\\([[:alnum:]-]+\\)\\+'") . (nil . "\\1+"))
         which-key-replacement-alist))
+
 (use-package flyspell
-  :ensure nil
+  :ensure
+  nil
   :defer t
   :diminish (flyspell-mode . " ✍")
   :hook
@@ -1097,13 +1299,17 @@ If buffer is modified, offer to save first."
   (:map
    flyspell-mode-map
    ("M-$" . flyspell-correct-wrapper)))
+
 (use-package flyspell-correct
-  :ensure t
+  :ensure
+  t
   :after flyspell
   :bind
   (:map flyspell-mode-map ("M-$" . flyspell-correct-wrapper)))
+
 (use-package eglot
-  :ensure nil
+  :ensure
+  nil
   :defer t
   :custom
   (eglot-autoshutdown t)
@@ -1117,7 +1323,8 @@ If buffer is modified, offer to save first."
   :hook
   ((python-mode python-ts-mode
                 js-mode js-ts-mode
-                typescript-mode typescript-ts-mode) . eglot-ensure)
+                typescript-mode typescript-ts-mode)
+   . eglot-ensure)
   :bind
   (:map eglot-mode-map
         ("C-c l r" . xref-find-references)
@@ -1128,14 +1335,18 @@ If buffer is modified, offer to save first."
         ("C-c l R" . eglot-rename)
         ("C-c l f" . eglot-format)
         ("C-c l F" . eglot-format-buffer)))
+
 (use-package consult-eglot
-  :ensure t
+  :ensure
+  t
   :after (eglot consult)
   :bind
   (:map eglot-mode-map
         ("C-c l s" . consult-eglot-symbols)))
+
 (use-package org
-  :ensure nil
+  :ensure
+  nil
   :defer t
   :commands (org-mode org-agenda org-capture org-store-link)
   :bind
@@ -1165,6 +1376,7 @@ If buffer is modified, offer to save first."
      "pdflatex -interaction nonstopmode -output-directory %o %f"))
   :hook
   (org-mode . visual-line-mode))
+
 (with-eval-after-load 'ox-latex
   (add-to-list 'org-latex-classes
                '("citywide"
@@ -1175,18 +1387,24 @@ If buffer is modified, offer to save first."
   (when (executable-find "latexmk")
     (setq org-latex-pdf-process
           '("latexmk -pdf -f -interaction=nonstopmode -output-directory=%o %f"))))
+
 (use-package org-modern
-  :ensure t
+  :ensure
+  t
   :hook (org-mode . org-modern-mode)
   :custom
   (org-modern-label-border 1)
   (org-modern-table-vertical 1)
   (org-modern-table-horizontal 0.2))
+
 (use-package ox-gfm
-  :ensure t
+  :ensure
+  t
   :after org)
+
 (use-package markdown-mode
-  :ensure t
+  :ensure
+  t
   :mode ("\\.md\\'" . gfm-mode)
   :init
   (setq markdown-fontify-code-blocks-natively t)
@@ -1198,8 +1416,10 @@ If buffer is modified, offer to save first."
               ("C-c C-t" . markdown-toggle-gfm-checkbox))
   :config
   (add-hook 'markdown-mode-hook #'auto-fill-mode))
+
 (use-package magit
-  :ensure t
+  :ensure
+  t
   :defer t
   :commands (magit-status magit-dispatch magit-file-dispatch)
   :init
@@ -1211,11 +1431,14 @@ If buffer is modified, offer to save first."
   (git-commit-summary-max-length 50)
   (git-commit-style-convention-checks '(non-empty-second-line))
   (magit-repository-directories '(("~/Code" . 1))))
+
 (use-package forge
-  :ensure t
+  :ensure
+  t
   :after magit
   :custom
   (forge-database-connector 'sqlite-builtin))
+
 (use-package grep
   :config
   (setq grep-find-ignored-directories
@@ -1246,12 +1469,15 @@ If buffer is modified, offer to save first."
            "projectile.cache"
            "workbench.xmi")
          grep-find-ignored-files)))
+
 (use-package recentf
-  :ensure nil
+  :ensure
+  nil
   :hook (after-init . recentf-mode)
   :init
   (setq recentf-auto-cleanup nil
-        recentf-save-file (expand-file-name "recentf/recentf" my-tmp-dir)
+        recentf-save-file
+        (expand-file-name "recentf/recentf" my-tmp-dir)
         recentf-max-saved-items 200
         recentf-max-menu-items 25)
   :config
@@ -1261,8 +1487,10 @@ If buffer is modified, offer to save first."
       (cancel-timer timer)))
   (add-hook 'kill-emacs-hook 'recentf-save-list)
   :bind (("C-c r" . consult-recent-file)))
+
 (use-package dired
-  :ensure nil
+  :ensure
+  nil
   :bind
   ("C-x C-j" . dired-jump)
   :hook
@@ -1287,22 +1515,30 @@ If buffer is modified, offer to save first."
         ("M-o" . dired-omit-mode)
         ("E" . dired-open-externally)
         ("<backspace>" . dired-up-directory)))
+
 (use-package nerd-icons-dired
-  :ensure t
+  :ensure
+  t
   :hook (dired-mode . nerd-icons-dired-mode))
+
 (use-package diredfl
-  :ensure t
+  :ensure
+  t
   :config (diredfl-global-mode 1))
+
 (use-package dired-subtree
-  :ensure t
+  :ensure
+  t
   :bind
   (:map dired-mode-map
         ("<tab>" . dired-subtree-toggle)
         ("<C-tab>" . dired-subtree-cycle))
   :custom
   (dired-subtree-use-backgrounds nil))
+
 (use-package eww
-  :ensure nil
+  :ensure
+  nil
   :defer t
   :custom
   (eww-search-prefix "https://duckduckgo.com/html?q=")
@@ -1317,8 +1553,10 @@ If buffer is modified, offer to save first."
         ("0" . text-scale-set))
   :hook
   (eww-mode . visual-line-mode))
+
 (use-package pdf-tools
-  :ensure t
+  :ensure
+  t
   :defer t
   :mode ("\\.pdf\\'" . pdf-view-mode)
   :init
@@ -1352,8 +1590,10 @@ If buffer is modified, offer to save first."
      (pdf-view-fit-page-to-window)
      (display-line-numbers-mode -1)
      (hl-line-mode -1))))
+
 (use-package denote
-  :ensure t
+  :ensure
+  t
   :defer t
   :hook
   (
@@ -1395,14 +1635,18 @@ If buffer is modified, offer to save first."
         '(rewrite-front-matter modify-file-name))
   (setq denote-date-prompt-use-org-read-date t)
   (denote-rename-buffer-mode 1))
+
 (use-package consult-denote
-  :ensure t
+  :ensure
+  t
   :after denote
   :bind
   (("C-c n f" . consult-denote-find) ("C-c n g" . consult-denote-grep))
   :config (consult-denote-mode 1))
+
 (use-package denote-journal
-  :ensure t
+  :ensure
+  t
   :after denote
   :commands
   (denote-journal-new-entry
@@ -1414,9 +1658,12 @@ If buffer is modified, offer to save first."
         (expand-file-name "journal" denote-directory))
   (setq denote-journal-keyword "journal")
   (setq denote-journal-title-format 'day-date-month-year))
+
 (use-package denote-org :ensure t :after denote :defer t)
+
 (use-package treesit
-  :ensure nil
+  :ensure
+  nil
   :custom
   (treesit-font-lock-level 4)
   :config
@@ -1428,16 +1675,21 @@ If buffer is modified, offer to save first."
           (typescript-mode . typescript-ts-mode)
           (json-mode . json-ts-mode)
           (css-mode . css-ts-mode))))
+
 (use-package treesit-auto
-  :ensure t
+  :ensure
+  t
   :custom
   (treesit-auto-install 'prompt)
   (treesit-auto-langs '(python typescript tsx json bash))
   :config
   (global-treesit-auto-mode))
+
 (use-package so-long :ensure nil :config (global-so-long-mode 1))
+
 (use-package flymake
-  :ensure nil
+  :ensure
+  nil
   :hook
   (prog-mode . flymake-mode)
   :custom
@@ -1458,33 +1710,43 @@ If buffer is modified, offer to save first."
   (setq flymake-diagnostic-functions
         (append flymake-diagnostic-functions
                 '(flymake-proc-legacy-flymake))))
+
 (use-package package-lint-flymake
-  :ensure t
+  :ensure
+  t
   :hook
   (emacs-lisp-mode . package-lint-flymake-setup)
   :config
   (defun my/maybe-enable-package-lint ()
     (when (and (buffer-file-name)
-               (string-match-p "\\(?:packages\\|lisp\\)/" (buffer-file-name))
-               (not (string-match-p "init\\.el\\|config\\.el" (buffer-file-name))))
+               (string-match-p "\\(?:packages\\|lisp\\)/"
+                               (buffer-file-name))
+               (not
+                (string-match-p "init\\.el\\|config\\.el"
+                                (buffer-file-name))))
       (package-lint-flymake-setup)))
   (remove-hook 'emacs-lisp-mode-hook #'package-lint-flymake-setup)
   (add-hook 'emacs-lisp-mode-hook #'my/maybe-enable-package-lint))
+
 (use-package checkdoc
-  :ensure nil
+  :ensure
+  nil
   :custom
   (checkdoc-force-docstrings-flag nil)
   (checkdoc-arguments-in-order-flag nil)
   (checkdoc-verb-check-experimental-flag nil)
   (checkdoc-permit-comma-termination-flag t)
   (checkdoc-spellcheck-documentation-flag nil))
+
 (use-package elisp-mode
-  :ensure nil
+  :ensure
+  nil
   :hook ((emacs-lisp-mode . checkdoc-minor-mode)
          (emacs-lisp-mode . (lambda ()
                               (setq-local flymake-diagnostic-functions
-                                          (append flymake-diagnostic-functions
-                                                  '(elisp-flymake-checkdoc))))))
+                                          (append
+                                           flymake-diagnostic-functions
+                                           '(elisp-flymake-checkdoc))))))
   :bind (:map emacs-lisp-mode-map
               ("C-c C-d" . checkdoc)
               ("C-c C-b" . checkdoc-current-buffer)
@@ -1493,12 +1755,15 @@ If buffer is modified, offer to save first."
   (defun my/checkdoc-maybe-suppress-in-init ()
     "Suppress some checkdoc warnings in init files."
     (when (and (buffer-file-name)
-               (string-match-p "init\\.el\\|early-init\\.el" (buffer-file-name)))
+               (string-match-p "init\\.el\\|early-init\\.el"
+                               (buffer-file-name)))
       (setq-local checkdoc-force-docstrings-flag nil)
       (setq-local checkdoc-symbol-words '("init.el" "early-init.el"))))
   (add-hook 'emacs-lisp-mode-hook #'my/checkdoc-maybe-suppress-in-init))
+
 (use-package yasnippet
-  :ensure t
+  :ensure
+  t
   :defer t
   :diminish yas-minor-mode
   :init
@@ -1508,7 +1773,9 @@ If buffer is modified, offer to save first."
    (list
     (expand-file-name "snippets/" user-emacs-directory)
     (when (locate-library "yasnippet-snippets")
-      (expand-file-name "snippets" (file-name-directory (locate-library "yasnippet-snippets"))))))
+      (expand-file-name "snippets"
+                        (file-name-directory
+                         (locate-library "yasnippet-snippets"))))))
   (yas-prompt-functions '(yas-completing-prompt))
   (yas-choose-keys-first t)
   (yas-choose-tables-first t)
@@ -1517,30 +1784,43 @@ If buffer is modified, offer to save first."
   :bind
   (:map yas-minor-mode-map
         ("C-c y" . yas-insert-snippet)))
+
 (use-package yasnippet-snippets
-  :ensure t
+  :ensure
+  t
   :after yasnippet
   :config
   (let ((snippets-dir (when (locate-library "yasnippet-snippets")
-                        (expand-file-name "snippets" (file-name-directory (locate-library "yasnippet-snippets"))))))
+                        (expand-file-name "snippets"
+                                          (file-name-directory
+                                           (locate-library
+                                            "yasnippet-snippets"))))))
     (when snippets-dir
       (unless (file-directory-p snippets-dir)
-        (warn "yasnippet-snippets directory %s not found; consider reinstalling the package" snippets-dir)))))
+        (warn
+         "yasnippet-snippets directory %s not found; consider reinstalling the package"
+         snippets-dir)))))
+
 (use-package helpful
-  :ensure t
+  :ensure
+  t
   :bind
   ([remap describe-function] . helpful-callable)
   ([remap describe-variable] . helpful-variable)
   ([remap describe-symbol] . helpful-symbol)
   ([remap describe-key] . helpful-key))
+
 (use-package elisp-demos
-  :ensure t
+  :ensure
+  t
   :config
   (advice-add
    'helpful-update
    :after #'elisp-demos-advice-helpful-update))
+
 (use-package 0x0
-  :ensure t
+  :ensure
+  t
   :defer t
   :init
   (setq 0x0-server "https://0x0.st")
@@ -1557,8 +1837,10 @@ If buffer is modified, offer to save first."
   (define-key my-0x0-prefix-map (kbd "d") '0x0-dwim)
   (define-key my-0x0-prefix-map (kbd "p") '0x0-popup)
   )
+
 (use-package eshell
-  :ensure nil
+  :ensure
+  nil
   :defer t
   :custom
   (eshell-directory-name (expand-file-name "eshell" my-tmp-dir))
@@ -1568,47 +1850,60 @@ If buffer is modified, offer to save first."
   (eshell-prompt-regexp "^[^#$\n]*[#$] ")
   (eshell-buffer-maximum-lines 50000)
   (eshell-destroy-buffer-when-process-dies t)
-  (eshell-visual-commands '("vi" "vim" "nvim" "screen" "tmux" "top" "htop" "less" "more"
-                            "lynx" "links" "ncftp" "mutt" "pine" "tin" "trn" "elm"
-                            "irssi" "mc" "nano" "emacs" "ssh" "telnet" "ftp" "su"
-                            "watch" "tail" "head" "pager" "most" "alsamixer" "nethack"
-                            "cmus" "mocp" "tig" "lftp" "aptitude" "dpkg-reconfigure"
-                            "nmtui" "raspi-config" "bluetoothctl" "virsh" "docker"
-                            "podman" "k9s" "lazygit" "lazydocker" "gdu" "ncdu" "btop"
-                            "gotop" "ytop" "bpytop" "glances" "nmon" "iotop" "iftop"
-                            "nethogs" "bmon" "newsboat" "newsbeuter" "rtorrent"
-                            "transmission-cli" "weechat" "finch" "centerim" "epic"
-                            "epic5" "scrollz" "sic" "ii" "ratpoison" "dvtm" "byobu"
+  (eshell-visual-commands '("vi" "vim" "nvim" "screen" "tmux" "top"
+                            "htop" "less" "more"
+                            "lynx" "links" "ncftp" "mutt" "pine" "tin"
+                            "trn" "elm"
+                            "irssi" "mc" "nano" "emacs" "ssh" "telnet"
+                            "ftp" "su"
+                            "watch" "tail" "head" "pager" "most"
+                            "alsamixer" "nethack"
+                            "cmus" "mocp" "tig" "lftp" "aptitude"
+                            "dpkg-reconfigure"
+                            "nmtui" "raspi-config" "bluetoothctl"
+                            "virsh" "docker"
+                            "podman" "k9s" "lazygit" "lazydocker"
+                            "gdu" "ncdu" "btop"
+                            "gotop" "ytop" "bpytop" "glances" "nmon"
+                            "iotop" "iftop"
+                            "nethogs" "bmon" "newsboat" "newsbeuter"
+                            "rtorrent"
+                            "transmission-cli" "weechat" "finch"
+                            "centerim" "epic"
+                            "epic5" "scrollz" "sic" "ii" "ratpoison"
+                            "dvtm" "byobu"
                             "abduco" "dtach"))
-  (eshell-visual-subcommands '(("git" "log" "diff" "show" "rebase" "add" "commit")
-                               ("systemctl" "status" "edit")
-                               ("journalctl" "")
-                               ("cargo" "install" "build" "test" "run")
-                               ("npm" "install" "update")
-                               ("yarn" "install" "upgrade")
-                               ("apt" "install" "update" "upgrade" "search")
-                               ("apt-get" "install" "update" "upgrade")
-                               ("brew" "install" "update" "upgrade")))
+  (eshell-visual-subcommands
+   '(("git" "log" "diff" "show" "rebase" "add" "commit")
+     ("systemctl" "status" "edit")
+     ("journalctl" "")
+     ("cargo" "install" "build" "test" "run")
+     ("npm" "install" "update")
+     ("yarn" "install" "upgrade")
+     ("apt" "install" "update" "upgrade"
+      "search")
+     ("apt-get" "install" "update" "upgrade")
+     ("brew" "install" "update" "upgrade")))
   (eshell-visual-options '(("git" "--help" "--paginate")
-                          ("man" "")
-                          ("sudo" "-e")))
+                           ("man" "")
+                           ("sudo" "-e")))
   (eshell-modules-list '(eshell-alias
-                        eshell-banner
-                        eshell-basic
-                        eshell-cmpl
-                        eshell-dirs
-                        eshell-glob
-                        eshell-hist
-                        eshell-ls
-                        eshell-pred
-                        eshell-prompt
-                        eshell-script
-                        eshell-term
-                        eshell-unix
-                        eshell-tramp
-                        eshell-xtra
-                        eshell-elecslash
-                        eshell-rebind))
+                         eshell-banner
+                         eshell-basic
+                         eshell-cmpl
+                         eshell-dirs
+                         eshell-glob
+                         eshell-hist
+                         eshell-ls
+                         eshell-pred
+                         eshell-prompt
+                         eshell-script
+                         eshell-term
+                         eshell-unix
+                         eshell-tramp
+                         eshell-xtra
+                         eshell-elecslash
+                         eshell-rebind))
   :config
   (setq eshell-prompt-function
         (lambda ()
@@ -1633,13 +1928,17 @@ If buffer is modified, offer to save first."
                    (completion-preview-mode 1)))
   :bind
   ("C-c e" . eshell))
+
 (use-package eshell-syntax-highlighting
-  :ensure t
+  :ensure
+  t
   :after eshell
   :config
   (eshell-syntax-highlighting-global-mode 1))
+
 (use-package message
-  :ensure nil
+  :ensure
+  nil
   :defer t
   :config
   (setq message-citation-line-format "On %a, %b %d %Y, %N wrote:\n")
@@ -1649,6 +1948,7 @@ If buffer is modified, offer to save first."
   (setq message-default-charset 'utf-8)
   (setq message-auto-save-directory
         (expand-file-name "gnus-drafts" my-tmp-dir)))
+
 (defun my-after-make-frame-setup (&optional frame)
   "Ensure UI disabled for new frames, ie: daemon clients.
 This function explicitly disables \='menu-bar-mode', \='tool-bar-mode',
@@ -1659,11 +1959,15 @@ robust UI element disabling."
     (menu-bar-mode -1)
     (tool-bar-mode -1)
     (scroll-bar-mode -1)))
+
 (unless (daemonp)
   (my-after-make-frame-setup))
+
 (add-hook 'after-make-frame-functions #'my-after-make-frame-setup)
+
 (use-package hl-line
-  :ensure nil
+  :ensure
+  nil
   :commands (hl-line-mode)
   :config
   (setq hl-line-sticky-flag nil)
@@ -1671,13 +1975,16 @@ robust UI element disabling."
   :hook
   (prog-mode . hl-line-mode)
   (occur-mode . hl-line-mode))
+
 (use-package sly
-  :ensure t
+  :ensure
+  t
   :defer t
   :mode ("\\.lisp\\'" . lisp-mode)
   :custom
   (inferior-lisp-program "sbcl")
-  (sly-lisp-implementations '((sbcl ("sbcl" "--dynamic-space-size" "2048"))))
+  (sly-lisp-implementations
+   '((sbcl ("sbcl" "--dynamic-space-size" "2048"))))
   (sly-net-coding-system 'utf-8-unix)
   (sly-complete-symbol-function 'sly-simple-completions)
   :config
@@ -1695,14 +2002,19 @@ robust UI element disabling."
               ("C-c C-c" . sly-compile-defun)
               ("C-c C-k" . sly-compile-file)
               ("C-c C-z" . sly-mrepl)))
+
 (use-package auth-source-xoauth2-plugin
-  :ensure t
+  :ensure
+  t
   :defer t
   :custom (auth-source-xoauth2-plugin-mode t))
+
 (require 'mailcap)
 (mailcap-parse-mailcaps)
+
 (use-package eat
-  :ensure t
+  :ensure
+  t
   :defer t
   :custom
   (eat-kill-buffer-on-exit t)
@@ -1730,7 +2042,8 @@ robust UI element disabling."
     "Force eat-kill-buffer-on-exit for eshell visual commands."
     (when (and (derived-mode-p 'eat-mode)
                (or (local-variable-p 'eshell-parent-buffer)
-                   (and (boundp 'eat--eshell-process) eat--eshell-process)))
+                   (and (boundp 'eat--eshell-process)
+                        eat--eshell-process)))
       (setq-local eat-kill-buffer-on-exit t)
       (add-hook 'eat-exit-hook #'eat--kill-buffer 90 t)))
   (add-hook 'eat-mode-hook #'my/eat-eshell-force-kill-on-exit)
@@ -1742,25 +2055,33 @@ robust UI element disabling."
                (eat-buffer-name (format "*%s*" cmd-name)))
           (apply orig-func args))
       (apply orig-func args)))
-  (advice-add 'eat--eshell-exec-visual :around #'my/eat-visual-buffer-name-advice)
+  (advice-add 'eat--eshell-exec-visual :around
+              #'my/eat-visual-buffer-name-advice)
   :hook
   (eshell-load . eat-eshell-mode)
   (eshell-load . eat-eshell-visual-command-mode))
+
 (use-package claude-code
-  :ensure t
+  :ensure
+  t
   :defer t
-  :vc (:url "https://github.com/stevemolitor/claude-code.el" :rev :newest)
+  :vc
+  (:url "https://github.com/stevemolitor/claude-code.el" :rev :newest)
   :config (claude-code-mode)
   :bind-keymap ("C-c v" . claude-code-command-map))
+
 (use-package electric
-  :ensure nil
+  :ensure
+  nil
   :defer t
   :hook ((prog-mode . electric-indent-mode)
          (org-mode . electric-indent-mode))
   :config
   (setq electric-indent-inhibit nil))
+
 (use-package tooltip
-  :ensure nil
+  :ensure
+  nil
   :hook (after-init . tooltip-mode)
   :config
   (setq tooltip-delay 0.5
@@ -1771,14 +2092,18 @@ robust UI element disabling."
           (internal-border-width . 10)
           (border-width . 0)
           (no-special-glyphs . t))))
+
 (use-package man
-  :ensure nil
+  :ensure
+  nil
   :defer t
   :commands (man)
   :config
   (setq Man-notify-method 'pushy))
+
 (use-package proced
-  :ensure nil
+  :ensure
+  nil
   :defer t
   :commands (proced)
   :config
@@ -1787,23 +2112,33 @@ robust UI element disabling."
   (setq proced-auto-update-interval 5)
   (setq proced-descend t)
   (setq proced-filter 'user))
+
 (use-package server
-  :ensure nil
+  :ensure
+  nil
   :config
   (setq server-client-instructions nil)
   (unless (server-running-p)
     (server-start)))
+
 (use-package password-store
-  :ensure t)
+  :ensure
+  t)
+
 (use-package password-store-otp
-  :ensure t)
+  :ensure
+  t)
+
 (use-package pass
-  :ensure t
+  :ensure
+  t
   :after (password-store password-store-otp)
   :bind (("C-c P" . pass))
   :commands (pass))
+
 (use-package isearch
-  :ensure nil
+  :ensure
+  nil
   :defer t
   :config
   (setq search-whitespace-regexp ".*?"
@@ -1827,14 +2162,18 @@ robust UI element disabling."
     :map isearch-mode-map
     ("C-g" . isearch-cancel)
     ("M-/" . isearch-complete)))
+
 (use-package uniquify
-  :ensure nil
+  :ensure
+  nil
   :custom
   (uniquify-buffer-name-style 'post-forward)
   (uniquify-strip-common-suffix t)
   (uniquify-after-kill-buffer-p t))
+
 (use-package minibuffer
-  :ensure nil
+  :ensure
+  nil
   :custom
   (enable-recursive-minibuffers t)
   (minibuffer-depth-indicate-mode t)
@@ -1844,22 +2183,30 @@ robust UI element disabling."
   (setq minibuffer-completion-auto-choose nil)
   (setq completions-max-height 20)
   (minibuffer-depth-indicate-mode 1))
+
 (use-package dictionary
-  :ensure nil
+  :ensure
+  nil
   :defer t
   :custom
   (dictionary-server "dict.org")
   :bind
   ("<f6>" . dictionary-lookup-definition))
+
 (use-package logview
-  :ensure t
+  :ensure
+  t
   :mode (("\\.log\\(?:\\.[0-9]+\\)?\\'" . logview-mode)
-         ("\\<\\(syslog\\|messages\\|error\\|debug\\|server\\|access\\|log\\)\\'" . logview-mode))
+         ("\\<\\(syslog\\|messages\\|error\\|debug\\|server\\|access\\|log\\)\\'"
+          . logview-mode))
   :config
   (add-to-list 'magic-mode-alist
-               '("^\\(?:[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\s-+\\|[A-Za-z]\\{3\\}\\s-+[0-9]\\{1,2\\}\\s-+[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\)" . logview-mode)))
+               '("^\\(?:[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\s-+\\|[A-Za-z]\\{3\\}\\s-+[0-9]\\{1,2\\}\\s-+[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\)"
+                 . logview-mode)))
+
 (use-package journalctl-mode
-  :ensure t
+  :ensure
+  t
   :defer t
   :bind (("C-c j" . journalctl)
          :map journalctl-mode-map
@@ -1884,8 +2231,10 @@ robust UI element disabling."
     "Show logs from today."
     (interactive)
     (journalctl "-S today")))
+
 (use-package pulsar
-  :ensure t
+  :ensure
+  t
   :defer 1
   :custom
   (pulsar-pulse t)
@@ -1925,12 +2274,16 @@ robust UI element disabling."
    (imenu-after-jump . pulsar-reveal-entry))
   :init
   (pulsar-global-mode 1))
+
 (use-package volatile-highlights
-  :ensure t
+  :ensure
+  t
   :defer t
   :init (volatile-highlights-mode 1))
+
 (use-package smtpmail
-  :ensure nil
+  :ensure
+  nil
   :config
   (setq send-mail-function 'smtpmail-send-it
         smtpmail-smtp-server "smtp.mailbox.org"
@@ -1938,16 +2291,23 @@ robust UI element disabling."
         smtpmail-smtp-service 587
         smtpmail-debug-info t
         smtpmail-debug-verb t))
+
 (use-package emoji
-  :ensure nil
+  :ensure
+  nil
   :bind ("C-c E" . emoji-search))
+
 (add-hook 'emacs-startup-hook
           (lambda ()
-            (message "Emacs started in %.2f seconds with %d garbage collections"
-                     (float-time (time-subtract after-init-time before-init-time))
-                     gcs-done)))
+            (message
+             "Emacs started in %.2f seconds with %d garbage collections"
+             (float-time
+              (time-subtract after-init-time before-init-time))
+             gcs-done)))
+
 (use-package erc
-  :ensure nil
+  :ensure
+  nil
   :defer t
   :config
   (setq
@@ -1955,7 +2315,8 @@ robust UI element disabling."
    erc-kill-buffer-on-part t
    erc-kill-queries-on-quit t
    erc-kill-server-buffer-on-quit t
-   erc-prompt (lambda () (concat "[" (or (erc-default-target) "ERC") "] "))
+   erc-prompt
+   (lambda () (concat "[" (or (erc-default-target) "ERC") "] "))
    erc-timestamp-format "[%H:%M] "
    erc-fill-function 'erc-fill-static
    erc-fill-static-center 20
@@ -1966,8 +2327,10 @@ robust UI element disabling."
    erc-log-write-after-send t
    erc-log-write-after-insert t)
   (setq erc-modules '(autojoin button completion fill irccontrols
-                               list log match menu move-to-prompt netsplit
-                               networks noncommands readonly ring stamp track
+                               list log match menu move-to-prompt
+                               netsplit
+                               networks noncommands readonly ring
+                               stamp track
                                sasl))
   (erc-update-modules)
   (setq erc-track-enable-keybindings t
@@ -1994,7 +2357,8 @@ robust UI element disabling."
     (let* ((host "irc.libera.chat")
            (port 6697)
            (auth (car (auth-source-search :host host
-                                          :port (number-to-string port)
+                                          :port
+                                          (number-to-string port)
                                           :require '(:user :secret)
                                           :max 1)))
            (user (plist-get auth :user))
@@ -2041,7 +2405,8 @@ robust UI element disabling."
         (message "No ERC buffers"))))
   :hook
   ((erc-mode . my-erc-completion-setup)
-   (erc-mode . (lambda () (display-line-numbers-mode -1) (hl-line-mode 1)))
+   (erc-mode
+    . (lambda () (display-line-numbers-mode -1) (hl-line-mode 1)))
    (erc-insert-post . erc-save-buffer-in-logs))
   :bind
   (:map erc-mode-map
@@ -2053,8 +2418,10 @@ robust UI element disabling."
         ("C-c C-SPC" . erc-track-switch-buffer)
         :map global-map
         ("C-c L" . my-erc-connect-libera)))
+
 (use-package csv-mode
-  :ensure t
+  :ensure
+  t
   :mode (("\\.[Cc][Ss][Vv]\\'" . csv-mode)
          ("\\.[Tt][Ss][Vv]\\'" . tsv-mode))
   :hook ((csv-mode . csv-align-mode)
@@ -2079,6 +2446,7 @@ robust UI element disabling."
               ("C-c C-b" . csv-backward-field)
               ("C-c C-n" . csv-forward-record)
               ("C-c C-p" . csv-backward-record)))
+
 (defun my/optimize-memory-settings ()
   "Optimize Emacs settings based on available memory."
   (when my/high-spec-system-p
@@ -2090,6 +2458,7 @@ robust UI element disabling."
           desktop-restore-eager (if my/ultra-high-spec-system-p 20 10)
           desktop-lazy-verbose nil
           desktop-lazy-idle-delay 5)))
+
 (defun my/optimize-file-operations ()
   "Optimize file operation settings."
   (when my/high-spec-system-p
@@ -2100,17 +2469,20 @@ robust UI element disabling."
           vc-handled-backends '(Git)
           find-file-visit-truename nil
           vc-follow-symlinks t)))
+
 (defun my/optimize-display-settings ()
   "Optimize display and rendering settings."
   (when my/high-spec-system-p
     (setq font-lock-maximum-decoration t
           jit-lock-stealth-time 0.2
-          jit-lock-chunk-size (if my/ultra-high-spec-system-p 8192 4096)
+          jit-lock-chunk-size
+          (if my/ultra-high-spec-system-p 8192 4096)
           jit-lock-defer-time 0.05
           fast-but-imprecise-scrolling t
           redisplay-skip-fontification-on-input t
           inhibit-compacting-font-caches t
           highlight-nonselected-windows nil)))
+
 (defun my/optimize-cpu-settings ()
   "Optimize settings based on CPU count."
   (when (>= my/cpu-count 8)
@@ -2123,6 +2495,7 @@ robust UI element disabling."
           max-mini-window-height 0.5
           completion-cycle-threshold 3
           tab-always-indent 'complete)))
+
 (defun my/optimize-lsp-settings ()
   "Optimize LSP settings for multicore systems."
   (when (>= my/cpu-count 8)
@@ -2133,6 +2506,7 @@ robust UI element disabling."
           lsp-enable-file-watchers t
           lsp-file-watch-threshold
           (if my/ultra-high-spec-system-p 20000 10000))))
+
 (defun my/optimize-magit-settings ()
   "Optimize Magit settings for large repositories."
   (when my/high-spec-system-p
@@ -2142,6 +2516,7 @@ robust UI element disabling."
           magit-diff-paint-whitespace nil
           magit-diff-highlight-hunk-body nil
           magit-diff-refine-hunk nil)))
+
 (defun my/apply-performance-optimizations ()
   "Apply all performance optimizations based on system specifications."
   (interactive)
@@ -2153,8 +2528,10 @@ robust UI element disabling."
     (my/optimize-lsp-settings))
   (with-eval-after-load 'magit
     (my/optimize-magit-settings))
-  (message "Performance optimizations applied! Memory: %.1fGB, CPUs: %d"
-           my/system-memory my/cpu-count))
+  (message
+   "Performance optimizations applied! Memory: %.1fGB, CPUs: %d"
+   my/system-memory my/cpu-count))
+
 (add-hook 'emacs-startup-hook #'my/apply-performance-optimizations)
 (global-set-key [remap keyboard-quit] 'my/keyboard-quit-dwim)
 (global-set-key (kbd "C-c <left>") 'winner-undo)
@@ -2199,5 +2576,6 @@ robust UI element disabling."
 (global-set-key (kbd "C-=") 'er/expand-region)
 (global-set-key (kbd "C-x u") 'vundo)
 (global-set-key (kbd "C-c Y") 'consult-yasnippet)
+
 (provide 'init)
 ;;; init.el ends here
