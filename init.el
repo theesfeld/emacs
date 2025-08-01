@@ -655,8 +655,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
   (setq history-length 10000
         history-delete-duplicates t
-        savehist-file (expand-file-name "savehist" my-tmp-dir)
-        savehist-save-minibuffer-history t
         password-cache-expiry nil
         auth-source-cache-expiry nil
         plstore-cache-directory my-tmp-dir)
@@ -862,17 +860,15 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (mode-line-buffer-id ((t (:weight bold :inherit font-lock-keyword-face))))
   (mode-line-emphasis ((t (:weight bold :inherit warning)))))
 
-;;; Minions for minor mode management
-(use-package minions
+;;; Diminish
+(use-package diminish
   :ensure t
   :defer t
-  :hook (after-init . minions-mode)
-  :custom
-  (minions-prominent-modes '(flymake-mode
-                             flycheck-mode
-                             lsp-mode
-                             eglot--managed-mode))
-  (minions-mode-line-lighter " ◎"))
+  :config
+  (diminish 'eldoc-mode)
+  (diminish 'abbrev-mode)
+  (diminish 'visual-line-mode)
+  (diminish 'subword-mode))
 
 ;;; Visual bell using built-in functionality
 (defun my/flash-mode-line ()
@@ -935,20 +931,15 @@ This function is added to the \=`ef-themes-post-load-hook'."
   (add-hook 'ef-themes-post-load-hook #'my-ef-themes-custom-faces)
   (add-hook 'ef-themes-post-load-hook #'my-ef-themes-mode-line))
 
-(use-package windower
-  :ensure t
+;;; Winner-mode
+(use-package winner
+  :ensure nil
+  :demand t
+  :config
+  (winner-mode 1)
   :bind
-  (("s-<tab>" . windower-switch-to-last-buffer)
-   ("s-o" . windower-toggle-single)
-   ("s-\\" . windower-toggle-split)
-   ("s-M-<left>" . windower-move-border-left)
-   ("s-M-<down>" . windower-move-border-below)
-   ("s-M-<up>" . windower-move-border-above)
-   ("s-M-<right>" . windower-move-border-right)
-   ("s-S-<left>" . windower-swap-left)
-   ("s-S-<down>" . windower-swap-below)
-   ("s-S-<up>" . windower-swap-above)
-   ("s-S-<right>" . windower-swap-right)))
+  (("C-c <left>" . winner-undo)
+   ("C-c <right>" . winner-redo)))
 
 ;;; shell environment (path, etc)
 
@@ -1266,21 +1257,6 @@ If buffer is modified, offer to save first."
   (orderless-style-dispatchers nil)
   (orderless-component-separator #'orderless-escapable-split-on-space))
 
-;;; savehist
-(use-package savehist
-  :ensure nil
-  :init (savehist-mode 1)
-  :custom
-  (savehist-file (expand-file-name "savehist" my-tmp-dir))
-  (savehist-autosave-interval nil)  ; Disable auto-save, only save on exit
-  (savehist-additional-variables
-   '(kill-ring
-     mark-ring
-     global-mark-ring
-     search-ring
-     regexp-search-ring
-     extended-command-history
-     vertico-repeat-history)))
 
 ;;; marginalia
 (use-package marginalia
@@ -1377,11 +1353,6 @@ If buffer is modified, offer to save first."
   :after (consult yasnippet)
   :bind ("C-c Y" . consult-yasnippet))
 
-(use-package consult-flycheck
-  :ensure t
-  :after (consult flycheck)
-  :bind (:map flycheck-mode-map
-              ("C-c ! c" . consult-flycheck)))
 
 ;;; In-buffer Completion Preview
 (use-package completion-preview
@@ -1452,16 +1423,34 @@ If buffer is modified, offer to save first."
         ("t" . my/project-find-test-or-impl)
         ("m" . magit-status)))
 
-;;; multiple cursors
+;;; Keyboard Macros
 
-(use-package multiple-cursors
-  :ensure t
-  :defer t
+(use-package kmacro
+  :ensure nil
   :bind
-  (("C-S-c C-S-c" . mc/edit-lines)
-   ("C-c >" . mc/mark-next-like-this)
-   ("C-c <" . mc/mark-previous-like-this)
-   ("C-c C-<" . mc/mark-all-like-this)))
+  (("C-x (" . kmacro-start-macro)
+   ("C-x )" . kmacro-end-macro)
+   ("C-x e" . kmacro-end-and-call-macro)
+   ("C-x C-k C-e" . kmacro-edit-macro)
+   ("C-x C-k n" . kmacro-name-last-macro)
+   ("C-x C-k b" . kmacro-bind-to-key)
+   ("C-x C-k C-v" . kmacro-view-macro))
+  :config
+  (setq kmacro-ring-max 20)
+  (defun my/apply-macro-to-region-lines ()
+    "Apply the last keyboard macro to each line in the region."
+    (interactive)
+    (if (use-region-p)
+        (let ((start (region-beginning))
+              (end (region-end)))
+          (goto-char start)
+          (while (< (point) end)
+            (beginning-of-line)
+            (kmacro-call-macro nil)
+            (forward-line 1)))
+      (message "No region selected")))
+  :bind
+  (("C-x C-k r" . my/apply-macro-to-region-lines)))
 
 ;;; diff-hl
 
@@ -1994,6 +1983,37 @@ If buffer is modified, offer to save first."
   (remove-hook 'emacs-lisp-mode-hook #'package-lint-flymake-setup)
   (add-hook 'emacs-lisp-mode-hook #'my/maybe-enable-package-lint))
 
+;;; Checkdoc
+(use-package checkdoc
+  :ensure nil
+  :custom
+  (checkdoc-force-docstrings-flag nil)
+  (checkdoc-arguments-in-order-flag nil)
+  (checkdoc-verb-check-experimental-flag nil)
+  (checkdoc-permit-comma-termination-flag t)
+  (checkdoc-spellcheck-documentation-flag nil))
+
+;;; Elisp-mode enhancements
+(use-package elisp-mode
+  :ensure nil
+  :hook ((emacs-lisp-mode . checkdoc-minor-mode)
+         (emacs-lisp-mode . (lambda ()
+                              (setq-local flymake-diagnostic-functions
+                                          (append flymake-diagnostic-functions
+                                                  '(elisp-flymake-checkdoc))))))
+  :bind (:map emacs-lisp-mode-map
+              ("C-c C-d" . checkdoc)
+              ("C-c C-b" . checkdoc-current-buffer)
+              ("C-c C-c" . checkdoc-comments))
+  :config
+  (defun my/checkdoc-maybe-suppress-in-init ()
+    "Suppress some checkdoc warnings in init files."
+    (when (and (buffer-file-name)
+               (string-match-p "init\\.el\\|early-init\\.el" (buffer-file-name)))
+      (setq-local checkdoc-force-docstrings-flag nil)
+      (setq-local checkdoc-symbol-words '("init.el" "early-init.el"))))
+  (add-hook 'emacs-lisp-mode-hook #'my/checkdoc-maybe-suppress-in-init))
+
 ;;; YAsnippet
 
 (use-package yasnippet
@@ -2202,14 +2222,32 @@ robust UI element disabling."
   (prog-mode . hl-line-mode)
   (occur-mode . hl-line-mode))
 
-;;; sly
+;;; SLY
 
 (use-package sly
   :ensure t
   :defer t
+  :mode ("\\.lisp\\'" . lisp-mode)
   :custom
   (inferior-lisp-program "sbcl")
-  :config  )
+  (sly-lisp-implementations '((sbcl ("sbcl" "--dynamic-space-size" "2048"))))
+  (sly-net-coding-system 'utf-8-unix)
+  (sly-complete-symbol-function 'sly-simple-completions)
+  :config
+  (setq sly-symbol-completion-mode nil)
+  (setq sly-autodoc-use-multiline-p nil)
+  (setq sly-kill-without-query-p t)
+  (setq sly-description-autofocus t)
+  (setq sly-inhibit-pipelining nil)
+  (setq sly-load-failed-fasl 'never)
+  :bind (:map sly-mode-map
+              ("C-c C-d C-d" . sly-describe-symbol)
+              ("C-c C-d C-f" . sly-describe-function)
+              ("M-." . sly-edit-definition)
+              ("M-," . sly-pop-find-definition-stack)
+              ("C-c C-c" . sly-compile-defun)
+              ("C-c C-k" . sly-compile-file)
+              ("C-c C-z" . sly-mrepl)))
 
 ;;; xoauth2
 
@@ -2293,40 +2331,6 @@ robust UI element disabling."
   :config (claude-code-mode)
   :bind-keymap ("C-c v" . claude-code-command-map))
 
-;;; EditorConfig support optimized for Emacs 30.1
-
-(use-package editorconfig
-  :ensure nil
-  :defer t
-  :hook (find-file . (lambda () (when (fboundp 'editorconfig-mode-apply) (editorconfig-mode-apply))))
-  :init
-  (require 'editorconfig nil t)
-  (editorconfig-mode 1)
-
-  (setq editorconfig-trim-whitespaces-mode 'ws-butler-mode
-        editorconfig-get-properties-function
-        #'editorconfig-get-properties-from-exec)
-
-  (setq editorconfig-indentation-alist
-        (append editorconfig-indentation-alist
-                '((typescript-ts-mode typescript-indent-level)
-                  (js-ts-mode js-indent-level)
-                  (tsx-ts-mode tsx-indent-level)
-                  (python-ts-mode python-indent-offset)
-                  (c-ts-mode c-basic-offset)
-                  (c++-ts-mode c-basic-offset)
-                  (rust-ts-mode rust-indent-offset)
-                  (yaml-ts-mode yaml-indent-offset))))
-
-  (setq editorconfig-exclude-modes
-        '(help-mode
-          magit-mode
-          magit-diff-mode
-          dired-mode
-          ibuffer-mode
-          minibuffer-mode))
-
-  (setq editorconfig-exec-path (executable-find "editorconfig")))
 
 ;;; electric-indent
 
@@ -2447,40 +2451,6 @@ robust UI element disabling."
   (setq completions-max-height 20)
   (minibuffer-depth-indicate-mode 1))
 
-;;; Shell (M-x shell)\
-
-(use-package shell
-  :ensure nil
-  :defer t
-  :bind
-  (
-   :map shell-mode-map
-   ("C-c C-k" . comint-clear-buffer)
-   ("C-c C-w" . comint-write-output))
-  :config
-  (setq shell-command-prompt-show-cwd t)
-  (setq ansi-color-for-comint-mode t)
-  (setq shell-input-autoexpand 'input)
-  (setq shell-highlight-undef-enable t)
-  (setq shell-has-auto-cd nil)
-  (setq shell-get-old-input-include-continuation-lines t)
-  (setq shell-kill-buffer-on-exit t)
-  (setq shell-completion-fignore '("~" "#" "%"))
-  (setq-default comint-scroll-to-bottom-on-input t)
-  (setq-default comint-scroll-to-bottom-on-output nil)
-  (setq-default comint-input-autoexpand 'input)
-  (setq comint-prompt-read-only t)
-  (setq comint-buffer-maximum-size 9999)
-  (setq comint-completion-autolist t)
-  (setq comint-input-ignoredups t)
-  (setq tramp-default-remote-shell "/bin/bash")
-
-  (setq shell-font-lock-keywords
-        '(("[ \t]\\([+-][^ \t\n]+\\)" 1 font-lock-builtin-face)
-          ("^[^ \t\n]+:.*" . font-lock-string-face)
-          ("^\\[[1-9][0-9]*\\]" . font-lock-constant-face)))
-
-  (add-hook 'comint-output-filter-functions 'comint-osc-process-output))
 
 ;;; dictionary / definitions
 
@@ -2502,27 +2472,76 @@ robust UI element disabling."
   (add-to-list 'magic-mode-alist
                '("^\\(?:[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\s-+\\|[A-Za-z]\\{3\\}\\s-+[0-9]\\{1,2\\}\\s-+[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\)" . logview-mode)))
 
+;;; Journalctl
 (use-package journalctl-mode
   :ensure t
   :defer t
-  :bind (("C-c j" . journalctl)))
+  :bind (("C-c j" . journalctl)
+         :map journalctl-mode-map
+         ("f" . journalctl-mode-toggle-follow)
+         ("n" . journalctl-next-chunk)
+         ("p" . journalctl-previous-chunk)
+         ("g" . journalctl-refresh)
+         ("q" . kill-current-buffer))
+  :config
+  (setq journalctl-chunk-size 500)
+  (setq journalctl-follow-freq 2)
+  (setq journalctl-units nil)
+  (defun my/journalctl-boot ()
+    "Show logs from current boot."
+    (interactive)
+    (journalctl "-b"))
+  (defun my/journalctl-errors ()
+    "Show only error-level logs."
+    (interactive)
+    (journalctl "-p err"))
+  (defun my/journalctl-today ()
+    "Show logs from today."
+    (interactive)
+    (journalctl "-S today")))
 
-;;; pulsar
+;;; Pulsar
 
 (use-package pulsar
   :ensure t
-  :defer t
+  :demand t
   :custom
   (pulsar-pulse t)
   (pulsar-delay 0.055)
   (pulsar-iterations 10)
-  (pulsar-face 'isearch)
+  (pulsar-face 'pulsar-green)
   (pulsar-highlight-face 'pulsar-yellow)
+  :config
+  (dolist (func '(recenter-top-bottom
+                  reposition-window
+                  bookmark-jump
+                  other-window
+                  delete-window
+                  delete-other-windows
+                  forward-page
+                  backward-page
+                  scroll-up-command
+                  scroll-down-command
+                  windmove-left
+                  windmove-right
+                  windmove-up
+                  windmove-down
+                  winner-undo
+                  winner-redo
+                  tab-next
+                  tab-previous
+                  org-next-visible-heading
+                  org-previous-visible-heading
+                  outline-next-visible-heading
+                  outline-previous-visible-heading))
+    (add-to-list 'pulsar-pulse-functions func))
   :hook
   ((minibuffer-setup . pulsar-pulse-line)
    (consult-after-jump . pulsar-recenter-middle)
-   (consult-after-jump . pulsar-reveal-entry))
-  :config
+   (consult-after-jump . pulsar-reveal-entry)
+   (imenu-after-jump . pulsar-recenter-middle)
+   (imenu-after-jump . pulsar-reveal-entry))
+  :init
   (pulsar-global-mode 1))
 
 ;;; volatile highlighting
@@ -2722,7 +2741,6 @@ robust UI element disabling."
           global-mark-ring-max 50
           message-log-max (if my/ultra-high-spec-system-p 20000 10000)
           history-length (if my/ultra-high-spec-system-p 2000 1000)
-          ;; savehist-save-minibuffer-history already set in savehist package config
           ;; recentf-max-saved-items already set in recentf package config
           desktop-restore-eager (if my/ultra-high-spec-system-p 20 10)
           desktop-lazy-verbose nil
