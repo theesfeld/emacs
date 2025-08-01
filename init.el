@@ -169,30 +169,14 @@
 ;;; FONT CONFIGURATION
 
 ;; Set default font
-(cond
- ((find-font (font-spec :name "AporeticSansMono Nerd Font"))
-  (set-face-attribute 'default nil
-                      :font "AporeticSansMono Nerd Font"
-                      :height 170))
- ;; ((find-font (font-spec :name "BerkeleyMonoVariable Nerd Font Mono"))
- ;;  (set-face-attribute 'default nil
- ;;                      :font "BerkeleyMonoVariable Nerd Font Mono"
- ;;                      :height 140))
- (t
-  (set-face-attribute 'default nil :height 170)))
+(font-spec :name "AporeticSansMono Nerd Font")
+(set-face-attribute 'default nil
+                    :height 190)
 
 ;; Set variable-pitch font
-(cond
- ((find-font (font-spec :name "AporeticSerif Nerd Font"))
-  (set-face-attribute 'variable-pitch nil
-                      :font "AporeticSerif Nerd Font"
-                      :height 150))
- ;; ((find-font (font-spec :name "BerkeleyMonoVariable Nerd Font"))
- ;;  (set-face-attribute 'variable-pitch nil
- ;;                      :font "BerkeleyMonoVariable Nerd Font"
- ;;                      :height 150))
- (t
-  (set-face-attribute 'variable-pitch nil :height 150)))
+(font-spec :name "AporeticSerif Nerd Font")
+(set-face-attribute 'variable-pitch nil
+                    :height 150)
 
 ;;; VARIABLE-PITCH COMMENTS IN PROG-MODE
 
