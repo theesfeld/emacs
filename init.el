@@ -556,17 +556,14 @@ OLD is ignored but included for hook compatibility."
       (run-with-timer 1 nil
                       (lambda ()
                         (when (executable-find "nm-applet")
-                          (message "Starting nm-applet...")
                           (start-process "nm-applet" nil "nm-applet"))
                         (run-with-timer 0.5 nil
                                         (lambda ()
                                           (when (executable-find "udiskie")
-                                            (message "Starting udiskie...")
                                             (start-process "udiskie" nil "udiskie" "-at"))
                                           (run-with-timer 0.5 nil
                                                           (lambda ()
                                                             (when (executable-find "blueman-applet")
-                                                              (message "Starting blueman-applet...")
                                                               (start-process "blueman-applet" nil "blueman-applet")))))))))
     ;; Set up randr configuration before enabling randr mode
     (my/exwm-randr-setup)
