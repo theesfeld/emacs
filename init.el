@@ -517,7 +517,7 @@ OLD is ignored but included for hook compatibility."
             (shell-command "xrandr --output eDP-1 --transform none")
             ;; Restart picom with GLX backend
             (when (executable-find "picom")
-              (start-process "picom" nil "picom" "-b"))
+              (start-process "picom" nil "picom" "-b"))))
          ;; Two monitors with laptop
          ((and has-laptop (= (length external-monitors) 1))
           (let* ((external-monitor (car external-monitors))
@@ -540,7 +540,7 @@ OLD is ignored but included for hook compatibility."
             (shell-command "xrandr --output eDP-1 --transform none")
             ;; Restart picom with GLX backend
             (when (executable-find "picom")
-              (start-process "picom" nil "picom" "-b"))
+              (start-process "picom" nil "picom" "-b"))))
          ;; Only laptop
          ((and has-laptop (= (length external-monitors) 0))
           (shell-command "xrandr --output eDP-1 --scale 0.67x0.67 --primary --pos 0x0"))
@@ -2439,7 +2439,7 @@ robust UI element disabling."
           ibuffer-mode
           minibuffer-mode))
 
-  (setq editorconfig-exec-path (executable-find "editorconfig"))
+  (setq editorconfig-exec-path (executable-find "editorconfig")))
 
 ;;; aggressive indent
 
