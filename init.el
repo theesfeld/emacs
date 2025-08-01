@@ -311,8 +311,7 @@ This function is added to the \=`ef-themes-post-load-hook'."
     (add-hook 'exwm-update-title-hook #'my/exwm-update-title)
     (setq exwm-systemtray-height 24)
     (setq exwm-systemtray-icon-gap 5)
-    (setq exwm-systemtray-background-color "#1a1a1a")
-    (setq exwm-systemtray-workspace nil)
+     (setq exwm-systemtray-workspace nil)
 
     (defun my/exwm-randr-setup ()
       "Set up monitor configuration before EXWM starts."
