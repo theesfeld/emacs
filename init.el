@@ -191,27 +191,6 @@
 
 (add-hook 'prog-mode-hook #'my/prog-mode-variable-pitch-comments)
 
-;;; EDNC NOTIFICATIONS (DBUS)
-
-(use-package ednc
-  :ensure t
-  :defer t
-  :hook (after-init . ednc-mode)
-  :config
-  ;; Basic EDNC configuration - simplified from 100+ lines
-  (setq ednc-notification-presentation-functions nil))
-
-(use-package ednc-popup
-  :vc (:url "https://codeberg.org/akib/emacs-ednc-popup.git" :branch "main")
-  :if (and (not (bound-and-true-p byte-compile-current-file))
-           (not noninteractive))
-  :config
-  (setq ednc-popup-timeout 5
-        ednc-popup-width 50
-        ednc-popup-max-height 10
-        ednc-popup-max-count 4)
-  (add-hook 'ednc-notification-presentation-functions #'ednc-popup-presentation-function))
-
 
 ;;; EXWM - Dynamic multi-monitor configuration for Emacs 30.1
 (when (eq window-system 'x)
@@ -2349,12 +2328,15 @@ robust UI element disabling."
 
   (setq editorconfig-exec-path (executable-find "editorconfig")))
 
-;;; aggressive indent
+;;; electric-indent
 
-(use-package aggressive-indent
-  :ensure t
-  :hook ((prog-mode . aggressive-indent-mode)
-         (org-mode . aggressive-indent-mode)))
+(use-package electric
+  :ensure nil
+  :defer t
+  :hook ((prog-mode . electric-indent-mode)
+         (org-mode . electric-indent-mode))
+  :config
+  (setq electric-indent-inhibit nil))
 
 ;;; Tooltips (tooltip-mode)
 
