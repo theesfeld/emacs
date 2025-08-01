@@ -4,35 +4,81 @@ CLAUDE.md
 claude.md
 .CLAUDE.md
 
-# Emacs temporary and cache files
+# Emacs temporary and generated files
+*.elc
 *~
 \#*\#
-/.emacs.desktop.lock
-*.elc
-auto-save-list
+.\#*
+.*.swp
+*.log
+*.cache
 .cache/
+auto-save-list/
+backups/
 eln-cache/
 
-# Package management
-elpa/
-elpa/archives/
-
-# Session and history files
-history
-bookmarks
-projects
-network-security.data
-tramp
+# Emacs directories
+eshell/
+multisession/
+org-asana-cache/
+saveplace/
+straight/
 transient/
+tree-sitter/
+var/
+vundo/
+url/
+latex/
 
-# Database files
+# Temporary files
+.tmp/
+*.tmp
+
+# Emacs specific files
+.emacs.desktop
+.emacs.desktop.lock
+TAGS
+bookmarks
 forge-database.sqlite
+history
+ido.last
+init.el.bak*
+logview-cache.extmap
+mastodon.plstore
+network-security.data
+places
+projectile-bookmarks.eld
+projectile.cache
+projects
+recentf
+recentf~
+savehist
+smex-items
+snippets/
+tramp
+
+# Documentation and misc files
+*.md
+*.org
+Running
+
+# Debug and test files
+debug-*.el
+test-*.el
+*-fix*.el
+minimal-*.el
+fixed-*.el
+apply-*.el
+
+# Package files
+package*.json
+package-lock.json
 
 # Credentials and secrets
-mastodon.plstore
 *.gpg
 
-# Directory-specific files
-url/
-tree-sitter/
-latex/
+# Keep only these files
+!init.el
+!early-init.el
+!functions.el
+!.gitignore

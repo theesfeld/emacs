@@ -42,6 +42,12 @@
   (and (>= my/system-memory 64) (>= my/cpu-count 12))
   "Non-nil if system has ultra-high specifications.")
 
+(defconst my/tmp-dir (expand-file-name "~/.tmp/")
+  "Directory for temporary files.")
+
+(unless (file-directory-p my/tmp-dir)
+  (make-directory my/tmp-dir t))
+
 (setq package-vc-register-as-project nil)
 
 (use-package gcmh
@@ -562,13 +568,6 @@ This function is added to the \=`ef-themes-post-load-hook'."
 
 (setq auto-revert-interval 999999)
 
-(defvar my-tmp-dir (expand-file-name "~/.tmp/")
-  "Centralized directory for temporary files, backups, and history files.
-This keeps the main .emacs.d directory clean and organizes cache files logically.")
-
-(unless (file-exists-p my-tmp-dir)
-  (make-directory my-tmp-dir t))
-
 (dolist (dir '("backups"
                "auto-saves"
                "auto-save-list"
@@ -578,7 +577,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                "saveplace"
                "undos"
                "gnus-drafts"))
-  (let ((subdir (expand-file-name dir my-tmp-dir)))
+  (let ((subdir (expand-file-name dir my/tmp-dir)))
     (unless (file-exists-p subdir)
       (make-directory subdir t))))
 
@@ -628,24 +627,24 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         version-control t
         backup-by-copying t
         backup-directory-alist
-        `((".*" . ,(expand-file-name "backups" my-tmp-dir)))
+        `((".*" . ,(expand-file-name "backups" my/tmp-dir)))
         auto-save-default t
         auto-save-interval 300
         auto-save-timeout 30
         auto-save-file-name-transforms
-        `((".*" ,(expand-file-name "auto-saves/" my-tmp-dir) t))
+        `((".*" ,(expand-file-name "auto-saves/" my/tmp-dir) t))
         auto-save-list-file-prefix
-        (expand-file-name "auto-save-list/.saves-" my-tmp-dir)
+        (expand-file-name "auto-save-list/.saves-" my/tmp-dir)
         auto-save-visited-interval 120
         save-place-file
-        (expand-file-name "saveplace/saveplace" my-tmp-dir))
+        (expand-file-name "saveplace/saveplace" my/tmp-dir))
   (auto-save-visited-mode 1)
   (defun my/cleanup-old-temp-files ()
     "Clean up old files in temp directories."
     (interactive)
     (let ((cutoff-time (- (float-time) (* 7 24 60 60))))
       (dolist (dir '("auto-saves" "backups" "auto-save-list"))
-        (let ((full-dir (expand-file-name dir my-tmp-dir)))
+        (let ((full-dir (expand-file-name dir my/tmp-dir)))
           (when (file-directory-p full-dir)
             (dolist (file (directory-files full-dir t "^[^.]"))
               (when (and (file-regular-p file)
@@ -657,7 +656,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         history-delete-duplicates t
         password-cache-expiry nil
         auth-source-cache-expiry nil
-        plstore-cache-directory my-tmp-dir)
+        plstore-cache-directory my/tmp-dir)
   (save-place-mode 1)
   (setq truncate-string-ellipsis "…"
         x-stretch-cursor t
@@ -766,7 +765,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq gnutls-min-prime-bits 2048)
   (setq network-security-level 'high)
   (setq nsm-settings-file
-        (expand-file-name "network-security.data" my-tmp-dir))
+        (expand-file-name "network-security.data" my/tmp-dir))
   (when (and custom-file (file-exists-p custom-file))
     (load custom-file))
   :hook
@@ -923,9 +922,9 @@ If buffer is modified, offer to save first."
   (tramp-connection-timeout 10)
   (remote-file-name-inhibit-cache nil)
   (tramp-auto-save-directory
-   (expand-file-name "tramp-auto-save" my-tmp-dir))
+   (expand-file-name "tramp-auto-save" my/tmp-dir))
   (tramp-persistency-file-name
-   (expand-file-name "tramp-persistence" my-tmp-dir))
+   (expand-file-name "tramp-persistence" my/tmp-dir))
   (auto-revert-remote-files t)
   (auto-revert-use-notify nil)
   :config
@@ -980,7 +979,7 @@ If buffer is modified, offer to save first."
   :bind ("C-x u" . vundo)
   :custom
   (vundo-glyph-alist vundo-unicode-symbols)
-  (vundo-files-directory (expand-file-name "vundo" my-tmp-dir))
+  (vundo-files-directory (expand-file-name "vundo" my/tmp-dir))
   (vundo-compact-display t))
 
 (use-package rainbow-delimiters
@@ -1096,7 +1095,7 @@ If buffer is modified, offer to save first."
   (vertico-count 20)
   (vertico-resize nil)
   (vertico-preselect 'first)
-  (vertico-sort-function #'vertico-sort-history-length-alpha)
+  (vertico-sort-function #'vertico-sort-history-alpha)
   :init
   (vertico-mode 1)
   :bind
@@ -1123,6 +1122,19 @@ If buffer is modified, offer to save first."
   (orderless-smart-case t)
   (orderless-style-dispatchers nil)
   (orderless-component-separator #'orderless-escapable-split-on-space))
+
+(use-package savehist
+  :ensure nil
+  :hook (after-init . savehist-mode)
+  :custom
+  (savehist-file (expand-file-name "savehist" my/tmp-dir))
+  (savehist-save-minibuffer-history t)
+  (savehist-additional-variables '(kill-ring
+                                   search-ring
+                                   regexp-search-ring
+                                   extended-command-history
+                                   shell-command-history
+                                   file-name-history)))
 
 (use-package marginalia
   :ensure t
@@ -1541,7 +1553,7 @@ If buffer is modified, offer to save first."
   :init
   (setq recentf-auto-cleanup nil
         recentf-save-file
-        (expand-file-name "recentf/recentf" my-tmp-dir)
+        (expand-file-name "recentf/recentf" my/tmp-dir)
         recentf-max-saved-items 200
         recentf-max-menu-items 25)
   :config
@@ -1886,7 +1898,7 @@ If buffer is modified, offer to save first."
   :ensure nil
   :defer t
   :custom
-  (eshell-directory-name (expand-file-name "eshell" my-tmp-dir))
+  (eshell-directory-name (expand-file-name "eshell" my/tmp-dir))
   (eshell-history-size 10000)
   (eshell-hist-ignoredups t)
   (eshell-scroll-to-bottom-on-input 'this)
@@ -1988,7 +2000,7 @@ If buffer is modified, offer to save first."
   (setq message-kill-buffer-on-exit t)
   (setq message-default-charset 'utf-8)
   (setq message-auto-save-directory
-        (expand-file-name "gnus-drafts" my-tmp-dir)))
+        (expand-file-name "gnus-drafts" my/tmp-dir)))
 
 (defun my-after-make-frame-setup (&optional frame)
   "Ensure UI disabled for new frames, ie: daemon clients.
@@ -2341,7 +2353,7 @@ robust UI element disabling."
    erc-fill-function 'erc-fill-static
    erc-fill-static-center 20
    erc-fill-prefix "      "
-   erc-log-channels-directory (expand-file-name "irc-logs" my-tmp-dir)
+   erc-log-channels-directory (expand-file-name "irc-logs" my/tmp-dir)
    erc-save-buffer-on-part t
    erc-save-queries-on-quit t
    erc-log-write-after-send t
