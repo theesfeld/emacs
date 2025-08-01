@@ -19,6 +19,7 @@
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ;;; Commentary:
 ;;; Code:
+
 (defun my/get-system-memory ()
   "Get system memory in GB."
   (if (fboundp 'memory-info)
@@ -42,8 +43,7 @@
 (setq package-vc-register-as-project nil)
 
 (use-package gcmh
-  :ensure
-  t
+  :ensure t
   :demand t
   :custom
   (gcmh-idle-delay 'auto)
@@ -136,8 +136,7 @@
 
 (when (eq window-system 'x)
   (use-package exwm
-    :ensure
-    nil
+    :ensure nil
     :init
     (require 'exwm-randr)
     (require 'exwm-systemtray)
@@ -410,8 +409,7 @@
 (defalias 'my/exwm-run-program 'my/program-launcher)
 
 (use-package desktop-environment
-  :ensure
-  t
+  :ensure t
   :defer 1
   :config
   (setq desktop-environment-screenlock-command "slock")
@@ -426,8 +424,7 @@
   (desktop-environment-mode 1))
 
 (use-package exwm-edit
-  :ensure
-  t
+  :ensure t
   :after exwm
   :config
   (setq exwm-edit-split nil)
@@ -491,8 +488,7 @@
                                                                         kill-ring))))))))))
 
 (use-package vc
-  :ensure
-  nil
+  :ensure nil
   :defer 1
   :config
   (defun my-auto-commit-init-el ()
@@ -533,8 +529,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
       (make-directory subdir t))))
 
 (use-package emacs
-  :ensure
-  nil
+  :ensure nil
   :init
   (setq auth-sources '("~/.authinfo.gpg")
         auth-source-save-behavior nil
@@ -763,8 +758,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (mode-line-emphasis ((t (:weight bold :inherit warning)))))
 
 (use-package diminish
-  :ensure
-  t
+  :ensure t
   :defer t
   :config
   (diminish 'eldoc-mode)
@@ -780,13 +774,11 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 (setq ring-bell-function 'my/flash-mode-line)
 
 (use-package modus-themes
-  :ensure
-  nil
+  :ensure nil
   :defer t)
 
 (use-package ef-themes
-  :ensure
-  t
+  :ensure t
   :defer 0.1
   :init
   (mapc #'disable-theme custom-enabled-themes)
@@ -829,8 +821,7 @@ This function is added to the \=`ef-themes-post-load-hook'."
   (add-hook 'ef-themes-post-load-hook #'my-ef-themes-mode-line))
 
 (use-package winner
-  :ensure
-  nil
+  :ensure nil
   :defer 0.1
   :config
   (winner-mode 1)
@@ -839,8 +830,7 @@ This function is added to the \=`ef-themes-post-load-hook'."
    ("C-c <right>" . winner-redo)))
 
 (use-package exec-path-from-shell
-  :ensure
-  t
+  :ensure t
   :defer 0.2
   :config
   (setq exec-path-from-shell-shell-name "/bin/bash")
@@ -853,8 +843,7 @@ This function is added to the \=`ef-themes-post-load-hook'."
   (exec-path-from-shell-initialize))
 
 (use-package ediff
-  :ensure
-  nil
+  :ensure nil
   :defer t
   :custom
   (ediff-window-setup-function 'ediff-setup-windows-plain)
@@ -903,8 +892,7 @@ If buffer is modified, offer to save first."
    ("C-c d R" . ediff-regions-wordwise)))
 
 (use-package diff-mode
-  :ensure
-  nil
+  :ensure nil
   :defer t
   :custom-face
   (diff-added ((t (:foreground "green4" :extend t))))
@@ -915,8 +903,7 @@ If buffer is modified, offer to save first."
    ((t (:inherit font-lock-keyword-face :weight bold)))))
 
 (use-package tramp
-  :ensure
-  nil
+  :ensure nil
   :defer t
   :custom
   (tramp-default-method "ssh")
@@ -981,8 +968,7 @@ If buffer is modified, offer to save first."
 (add-to-list 'auto-mode-alist '("\\.log\\'" . log-mode))
 
 (use-package vundo
-  :ensure
-  t
+  :ensure t
   :defer t
   :bind ("C-x u" . vundo)
   :custom
@@ -991,8 +977,7 @@ If buffer is modified, offer to save first."
   (vundo-compact-display t))
 
 (use-package rainbow-delimiters
-  :ensure
-  t
+  :ensure t
   :defer t
   :diminish
   :hook ((prog-mode . rainbow-delimiters-mode)
@@ -1005,8 +990,7 @@ If buffer is modified, offer to save first."
                       'bold))
 
 (use-package highlight-thing
-  :ensure
-  t
+  :ensure t
   :defer t
   :diminish
   :hook (prog-mode . highlight-thing-mode)
@@ -1023,8 +1007,7 @@ If buffer is modified, offer to save first."
                                  (:color "#5e81ac" :style line))))))
 
 (use-package indent-bars
-  :ensure
-  t
+  :ensure t
   :defer t
   :diminish
   :hook ((prog-mode . indent-bars-mode)
@@ -1063,8 +1046,7 @@ If buffer is modified, offer to save first."
          for_statement switch_statement))))
 
 (use-package files
-  :ensure
-  nil
+  :ensure nil
   :defer t
   :custom
   (global-auto-revert-non-file-buffers t)
@@ -1073,8 +1055,7 @@ If buffer is modified, offer to save first."
   (vc-make-backup-files t))
 
 (use-package autorevert
-  :ensure
-  nil
+  :ensure nil
   :diminish (auto-revert-mode . "")
   :hook (after-init . global-auto-revert-mode)
   :custom
@@ -1082,8 +1063,7 @@ If buffer is modified, offer to save first."
   (global-auto-revert-non-file-buffers t))
 
 (use-package smartparens
-  :ensure
-  t
+  :ensure t
   :defer t
   :diminish
   :hook ((prog-mode . smartparens-mode)
@@ -1101,8 +1081,7 @@ If buffer is modified, offer to save first."
         ("C-M-p" . sp-previous-sexp)))
 
 (use-package vertico
-  :ensure
-  t
+  :ensure t
   :defer 0.5
   :hook (after-init . vertico-mode)
   :custom
@@ -1121,8 +1100,7 @@ If buffer is modified, offer to save first."
         ("C-j" . vertico-exit-input)))
 
 (use-package orderless
-  :ensure
-  t
+  :ensure t
   :defer 0.5
   :after vertico
   :custom
@@ -1140,8 +1118,7 @@ If buffer is modified, offer to save first."
   (orderless-component-separator #'orderless-escapable-split-on-space))
 
 (use-package marginalia
-  :ensure
-  t
+  :ensure t
   :defer 0.5
   :after vertico
   :init (marginalia-mode 1)
@@ -1150,8 +1127,7 @@ If buffer is modified, offer to save first."
         ("M-A" . marginalia-cycle)))
 
 (use-package consult
-  :ensure
-  t
+  :ensure t
   :defer 1
   :custom
   (consult-preview-key '(:debounce 0.3 any))
@@ -1226,14 +1202,12 @@ If buffer is modified, offer to save first."
   (global-set-key [remap recentf-open-files] #'consult-recent-file))
 
 (use-package consult-yasnippet
-  :ensure
-  t
+  :ensure t
   :after (consult yasnippet)
   :bind ("C-c Y" . consult-yasnippet))
 
 (use-package completion-preview
-  :ensure
-  nil
+  :ensure nil
   :hook ((prog-mode . completion-preview-mode)
          (conf-mode . completion-preview-mode)
          (eshell-mode . completion-preview-mode))
@@ -1254,15 +1228,13 @@ If buffer is modified, offer to save first."
         ("M-p" . completion-preview-prev-candidate)))
 
 (use-package nerd-icons
-  :ensure
-  t
+  :ensure t
   :custom
   (nerd-icons-font-family "AporeticSansMono Nerd Font")
   (nerd-icons-color-icons t))
 
 (use-package nerd-icons-completion
-  :ensure
-  t
+  :ensure t
   :after (nerd-icons marginalia)
   :config
   (nerd-icons-completion-mode)
@@ -1270,14 +1242,12 @@ If buffer is modified, offer to save first."
             #'nerd-icons-completion-marginalia-setup))
 
 (use-package expand-region
-  :ensure
-  t
+  :ensure t
   :defer t
   :bind ("C-=" . er/expand-region))
 
 (use-package project
-  :ensure
-  nil
+  :ensure nil
   :defer t
   :custom
   (project-vc-extra-root-markers '(".project" ".projectile" "Makefile"
@@ -1311,8 +1281,7 @@ If buffer is modified, offer to save first."
         ("m" . magit-status)))
 
 (use-package kmacro
-  :ensure
-  nil
+  :ensure nil
   :bind
   (("C-x (" . kmacro-start-macro)
    ("C-x )" . kmacro-end-macro)
@@ -1339,15 +1308,13 @@ If buffer is modified, offer to save first."
   (("C-x C-k r" . my/apply-macro-to-region-lines)))
 
 (use-package diff-hl
-  :ensure
-  t
+  :ensure t
   :defer t
   :hook (magit-post-refresh . diff-hl-magit-post-refresh)
   :config (global-diff-hl-mode +1))
 
 (use-package which-key
-  :ensure
-  nil
+  :ensure nil
   :defer 1
   :diminish
   :custom
@@ -1376,8 +1343,7 @@ If buffer is modified, offer to save first."
         which-key-replacement-alist))
 
 (use-package flyspell
-  :ensure
-  nil
+  :ensure nil
   :defer t
   :diminish (flyspell-mode . " ✍")
   :hook
@@ -1406,15 +1372,13 @@ If buffer is modified, offer to save first."
    ("M-$" . flyspell-correct-wrapper)))
 
 (use-package flyspell-correct
-  :ensure
-  t
+  :ensure t
   :after flyspell
   :bind
   (:map flyspell-mode-map ("M-$" . flyspell-correct-wrapper)))
 
 (use-package eglot
-  :ensure
-  nil
+  :ensure nil
   :defer t
   :custom
   (eglot-autoshutdown t)
@@ -1442,16 +1406,14 @@ If buffer is modified, offer to save first."
         ("C-c l F" . eglot-format-buffer)))
 
 (use-package consult-eglot
-  :ensure
-  t
+  :ensure t
   :after (eglot consult)
   :bind
   (:map eglot-mode-map
         ("C-c l s" . consult-eglot-symbols)))
 
 (use-package org
-  :ensure
-  nil
+  :ensure nil
   :defer t
   :commands (org-mode org-agenda org-capture org-store-link)
   :bind
@@ -1494,8 +1456,7 @@ If buffer is modified, offer to save first."
           '("latexmk -pdf -f -interaction=nonstopmode -output-directory=%o %f"))))
 
 (use-package org-modern
-  :ensure
-  t
+  :ensure t
   :hook (org-mode . org-modern-mode)
   :custom
   (org-modern-label-border 1)
@@ -1503,13 +1464,11 @@ If buffer is modified, offer to save first."
   (org-modern-table-horizontal 0.2))
 
 (use-package ox-gfm
-  :ensure
-  t
+  :ensure t
   :after org)
 
 (use-package markdown-mode
-  :ensure
-  t
+  :ensure t
   :mode ("\\.md\\'" . gfm-mode)
   :init
   (setq markdown-fontify-code-blocks-natively t)
@@ -1523,8 +1482,7 @@ If buffer is modified, offer to save first."
   (add-hook 'markdown-mode-hook #'auto-fill-mode))
 
 (use-package magit
-  :ensure
-  t
+  :ensure t
   :defer t
   :commands (magit-status magit-dispatch magit-file-dispatch)
   :init
@@ -1538,8 +1496,7 @@ If buffer is modified, offer to save first."
   (magit-repository-directories '(("~/Code" . 1))))
 
 (use-package forge
-  :ensure
-  t
+  :ensure t
   :after magit
   :custom
   (forge-database-connector 'sqlite-builtin))
@@ -1576,8 +1533,7 @@ If buffer is modified, offer to save first."
          grep-find-ignored-files)))
 
 (use-package recentf
-  :ensure
-  nil
+  :ensure nil
   :hook (after-init . recentf-mode)
   :init
   (setq recentf-auto-cleanup nil
@@ -1594,8 +1550,7 @@ If buffer is modified, offer to save first."
   :bind (("C-c r" . consult-recent-file)))
 
 (use-package dired
-  :ensure
-  nil
+  :ensure nil
   :bind
   ("C-x C-j" . dired-jump)
   :hook
@@ -1622,18 +1577,15 @@ If buffer is modified, offer to save first."
         ("<backspace>" . dired-up-directory)))
 
 (use-package nerd-icons-dired
-  :ensure
-  t
+  :ensure t
   :hook (dired-mode . nerd-icons-dired-mode))
 
 (use-package diredfl
-  :ensure
-  t
+  :ensure t
   :config (diredfl-global-mode 1))
 
 (use-package dired-subtree
-  :ensure
-  t
+  :ensure t
   :bind
   (:map dired-mode-map
         ("<tab>" . dired-subtree-toggle)
@@ -1642,8 +1594,7 @@ If buffer is modified, offer to save first."
   (dired-subtree-use-backgrounds nil))
 
 (use-package eww
-  :ensure
-  nil
+  :ensure nil
   :defer t
   :custom
   (eww-search-prefix "https://duckduckgo.com/html?q=")
@@ -1660,8 +1611,7 @@ If buffer is modified, offer to save first."
   (eww-mode . visual-line-mode))
 
 (use-package pdf-tools
-  :ensure
-  t
+  :ensure t
   :defer t
   :mode ("\\.pdf\\'" . pdf-view-mode)
   :init
@@ -1697,8 +1647,7 @@ If buffer is modified, offer to save first."
      (hl-line-mode -1))))
 
 (use-package denote
-  :ensure
-  t
+  :ensure t
   :defer t
   :hook
   (
@@ -1742,16 +1691,14 @@ If buffer is modified, offer to save first."
   (denote-rename-buffer-mode 1))
 
 (use-package consult-denote
-  :ensure
-  t
+  :ensure t
   :after denote
   :bind
   (("C-c n f" . consult-denote-find) ("C-c n g" . consult-denote-grep))
   :config (consult-denote-mode 1))
 
 (use-package denote-journal
-  :ensure
-  t
+  :ensure t
   :after denote
   :commands
   (denote-journal-new-entry
@@ -1767,8 +1714,7 @@ If buffer is modified, offer to save first."
 (use-package denote-org :ensure t :after denote :defer t)
 
 (use-package treesit
-  :ensure
-  nil
+  :ensure nil
   :custom
   (treesit-font-lock-level 4)
   :config
@@ -1782,8 +1728,7 @@ If buffer is modified, offer to save first."
           (css-mode . css-ts-mode))))
 
 (use-package treesit-auto
-  :ensure
-  t
+  :ensure t
   :custom
   (treesit-auto-install 'prompt)
   (treesit-auto-langs '(python typescript tsx json bash))
@@ -1793,8 +1738,7 @@ If buffer is modified, offer to save first."
 (use-package so-long :ensure nil :config (global-so-long-mode 1))
 
 (use-package flymake
-  :ensure
-  nil
+  :ensure nil
   :hook
   (prog-mode . flymake-mode)
   :custom
@@ -1817,8 +1761,7 @@ If buffer is modified, offer to save first."
                 '(flymake-proc-legacy-flymake))))
 
 (use-package package-lint-flymake
-  :ensure
-  t
+  :ensure t
   :hook
   (emacs-lisp-mode . package-lint-flymake-setup)
   :config
@@ -1834,8 +1777,7 @@ If buffer is modified, offer to save first."
   (add-hook 'emacs-lisp-mode-hook #'my/maybe-enable-package-lint))
 
 (use-package checkdoc
-  :ensure
-  nil
+  :ensure nil
   :custom
   (checkdoc-force-docstrings-flag nil)
   (checkdoc-arguments-in-order-flag nil)
@@ -1844,8 +1786,7 @@ If buffer is modified, offer to save first."
   (checkdoc-spellcheck-documentation-flag nil))
 
 (use-package elisp-mode
-  :ensure
-  nil
+  :ensure nil
   :hook ((emacs-lisp-mode . checkdoc-minor-mode)
          (emacs-lisp-mode . (lambda ()
                               (setq-local flymake-diagnostic-functions
@@ -1867,8 +1808,7 @@ If buffer is modified, offer to save first."
   (add-hook 'emacs-lisp-mode-hook #'my/checkdoc-maybe-suppress-in-init))
 
 (use-package yasnippet
-  :ensure
-  t
+  :ensure t
   :defer t
   :diminish yas-minor-mode
   :init
@@ -1891,8 +1831,7 @@ If buffer is modified, offer to save first."
         ("C-c y" . yas-insert-snippet)))
 
 (use-package yasnippet-snippets
-  :ensure
-  t
+  :ensure t
   :after yasnippet
   :config
   (let ((snippets-dir (when (locate-library "yasnippet-snippets")
@@ -1907,8 +1846,7 @@ If buffer is modified, offer to save first."
          snippets-dir)))))
 
 (use-package helpful
-  :ensure
-  t
+  :ensure t
   :bind
   ([remap describe-function] . helpful-callable)
   ([remap describe-variable] . helpful-variable)
@@ -1916,16 +1854,14 @@ If buffer is modified, offer to save first."
   ([remap describe-key] . helpful-key))
 
 (use-package elisp-demos
-  :ensure
-  t
+  :ensure t
   :config
   (advice-add
    'helpful-update
    :after #'elisp-demos-advice-helpful-update))
 
 (use-package 0x0
-  :ensure
-  t
+  :ensure t
   :defer t
   :init
   (setq 0x0-server "https://0x0.st")
@@ -1944,8 +1880,7 @@ If buffer is modified, offer to save first."
   )
 
 (use-package eshell
-  :ensure
-  nil
+  :ensure nil
   :defer t
   :custom
   (eshell-directory-name (expand-file-name "eshell" my-tmp-dir))
@@ -2035,15 +1970,13 @@ If buffer is modified, offer to save first."
   ("C-c e" . eshell))
 
 (use-package eshell-syntax-highlighting
-  :ensure
-  t
+  :ensure t
   :after eshell
   :config
   (eshell-syntax-highlighting-global-mode 1))
 
 (use-package message
-  :ensure
-  nil
+  :ensure nil
   :defer t
   :config
   (setq message-citation-line-format "On %a, %b %d %Y, %N wrote:\n")
@@ -2071,8 +2004,7 @@ robust UI element disabling."
 (add-hook 'after-make-frame-functions #'my-after-make-frame-setup)
 
 (use-package hl-line
-  :ensure
-  nil
+  :ensure nil
   :commands (hl-line-mode)
   :config
   (setq hl-line-sticky-flag nil)
@@ -2082,8 +2014,7 @@ robust UI element disabling."
   (occur-mode . hl-line-mode))
 
 (use-package sly
-  :ensure
-  t
+  :ensure t
   :defer t
   :mode ("\\.lisp\\'" . lisp-mode)
   :custom
@@ -2109,8 +2040,7 @@ robust UI element disabling."
               ("C-c C-z" . sly-mrepl)))
 
 (use-package auth-source-xoauth2-plugin
-  :ensure
-  t
+  :ensure t
   :defer t
   :custom (auth-source-xoauth2-plugin-mode t))
 
@@ -2119,8 +2049,7 @@ robust UI element disabling."
 (mailcap-parse-mailcaps)
 
 (use-package eat
-  :ensure
-  t
+  :ensure t
   :defer t
   :custom
   (eat-kill-buffer-on-exit t)
@@ -2168,8 +2097,7 @@ robust UI element disabling."
   (eshell-load . eat-eshell-visual-command-mode))
 
 (use-package claude-code
-  :ensure
-  t
+  :ensure t
   :defer t
   :vc
   (:url "https://github.com/stevemolitor/claude-code.el" :rev :newest)
@@ -2177,8 +2105,7 @@ robust UI element disabling."
   :bind-keymap ("C-c v" . claude-code-command-map))
 
 (use-package electric
-  :ensure
-  nil
+  :ensure nil
   :defer t
   :hook ((prog-mode . electric-indent-mode)
          (org-mode . electric-indent-mode))
@@ -2186,8 +2113,7 @@ robust UI element disabling."
   (setq electric-indent-inhibit nil))
 
 (use-package tooltip
-  :ensure
-  nil
+  :ensure nil
   :hook (after-init . tooltip-mode)
   :config
   (setq tooltip-delay 0.5
@@ -2200,16 +2126,14 @@ robust UI element disabling."
           (no-special-glyphs . t))))
 
 (use-package man
-  :ensure
-  nil
+  :ensure nil
   :defer t
   :commands (man)
   :config
   (setq Man-notify-method 'pushy))
 
 (use-package proced
-  :ensure
-  nil
+  :ensure nil
   :defer t
   :commands (proced)
   :config
@@ -2220,31 +2144,28 @@ robust UI element disabling."
   (setq proced-filter 'user))
 
 (use-package server
-  :ensure
-  nil
+  :ensure nil
   :config
   (setq server-client-instructions nil)
   (unless (server-running-p)
     (server-start)))
 
 (use-package password-store
-  :ensure
-  t)
+  :ensure t
+  )
 
 (use-package password-store-otp
-  :ensure
-  t)
+  :ensure t
+  )
 
 (use-package pass
-  :ensure
-  t
+  :ensure t
   :after (password-store password-store-otp)
   :bind (("C-c P" . pass))
   :commands (pass))
 
 (use-package isearch
-  :ensure
-  nil
+  :ensure nil
   :defer t
   :config
   (setq search-whitespace-regexp ".*?"
@@ -2270,16 +2191,14 @@ robust UI element disabling."
     ("M-/" . isearch-complete)))
 
 (use-package uniquify
-  :ensure
-  nil
+  :ensure nil
   :custom
   (uniquify-buffer-name-style 'post-forward)
   (uniquify-strip-common-suffix t)
   (uniquify-after-kill-buffer-p t))
 
 (use-package minibuffer
-  :ensure
-  nil
+  :ensure nil
   :custom
   (enable-recursive-minibuffers t)
   (minibuffer-depth-indicate-mode t)
@@ -2291,8 +2210,7 @@ robust UI element disabling."
   (minibuffer-depth-indicate-mode 1))
 
 (use-package dictionary
-  :ensure
-  nil
+  :ensure nil
   :defer t
   :custom
   (dictionary-server "dict.org")
@@ -2300,8 +2218,7 @@ robust UI element disabling."
   ("<f6>" . dictionary-lookup-definition))
 
 (use-package logview
-  :ensure
-  t
+  :ensure t
   :mode (("\\.log\\(?:\\.[0-9]+\\)?\\'" . logview-mode)
          ("\\<\\(syslog\\|messages\\|error\\|debug\\|server\\|access\\|log\\)\\'"
           . logview-mode))
@@ -2311,8 +2228,7 @@ robust UI element disabling."
                  . logview-mode)))
 
 (use-package journalctl-mode
-  :ensure
-  t
+  :ensure t
   :defer t
   :bind (("C-c j" . journalctl)
          :map journalctl-mode-map
@@ -2339,8 +2255,7 @@ robust UI element disabling."
     (journalctl "-S today")))
 
 (use-package pulsar
-  :ensure
-  t
+  :ensure t
   :defer 1
   :custom
   (pulsar-pulse t)
@@ -2382,14 +2297,12 @@ robust UI element disabling."
   (pulsar-global-mode 1))
 
 (use-package volatile-highlights
-  :ensure
-  t
+  :ensure t
   :defer t
   :init (volatile-highlights-mode 1))
 
 (use-package smtpmail
-  :ensure
-  nil
+  :ensure nil
   :config
   (setq send-mail-function 'smtpmail-send-it
         smtpmail-smtp-server "smtp.mailbox.org"
@@ -2399,8 +2312,7 @@ robust UI element disabling."
         smtpmail-debug-verb t))
 
 (use-package emoji
-  :ensure
-  nil
+  :ensure nil
   :bind ("C-c E" . emoji-search))
 
 (add-hook 'emacs-startup-hook
@@ -2412,8 +2324,7 @@ robust UI element disabling."
              gcs-done)))
 
 (use-package erc
-  :ensure
-  nil
+  :ensure nil
   :defer t
   :config
   (setq
@@ -2526,8 +2437,7 @@ robust UI element disabling."
         ("C-c L" . my-erc-connect-libera)))
 
 (use-package csv-mode
-  :ensure
-  t
+  :ensure t
   :mode (("\\.[Cc][Ss][Vv]\\'" . csv-mode)
          ("\\.[Tt][Ss][Vv]\\'" . tsv-mode))
   :hook ((csv-mode . csv-align-mode)
