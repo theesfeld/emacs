@@ -2074,7 +2074,6 @@ If buffer is modified, offer to save first."
   (remove-hook 'emacs-lisp-mode-hook #'package-lint-flymake-setup)
   (add-hook 'emacs-lisp-mode-hook #'my/maybe-enable-package-lint))
 
-
 ;;; YAsnippet
 
 (use-package yasnippet
