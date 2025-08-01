@@ -233,13 +233,16 @@
             ([?\M-w] . [?\C-c])
             ([?\C-y] . [?\C-v])
             ([?\M-d] . [C-delete])))
+
     (defun my/exwm-update-class ()
       "Update EXWM buffer name to window class name."
       (exwm-workspace-rename-buffer exwm-class-name))
+
     (defcustom my/exwm-title-max-length 80
       "Maximum length for EXWM window titles."
       :type 'integer
       :group 'exwm)
+
     (defun my/exwm-update-title ()
       "Update EXWM buffer name to window title."
       (let ((title (truncate-string-to-width exwm-title
@@ -256,13 +259,116 @@
     (setq exwm-systemtray-icon-gap 5)
     (setq exwm-systemtray-background-color "#1a1a1a")
     (setq exwm-systemtray-workspace nil)
+
     (defun my/exwm-randr-setup ()
       "Set up monitor configuration before EXWM starts."
-      (setq exwm-randr-workspace-monitor-plist
-            '(0 "eDP-1" 1 "HDMI-1" 2 "HDMI-1")))
+      (let* ((xrandr-output (shell-command-to-string "xrandr"))
+             (connected-monitors
+              (seq-filter (lambda (line)
+                            (string-match-p " connected" line))
+                          (split-string xrandr-output "\n")))
+             (monitor-names
+              (mapcar (lambda (line)
+                        (car (split-string line)))
+                      connected-monitors))
+             (has-laptop (member "eDP-1" monitor-names))
+             (external-monitors (seq-filter (lambda (m) (not (string= m "eDP-1"))) monitor-names)))
+        (when (or has-laptop external-monitors)
+          (let ((workspace-plist '())
+                (workspace-num 0)
+                (num-external (length external-monitors)))
+            (if has-laptop
+                (setq workspace-plist (list workspace-num "eDP-1"))
+              (when external-monitors
+                (setq workspace-plist (list workspace-num (car external-monitors)))))
+            (when external-monitors
+              (if (= num-external 1)
+                  (dotimes (i 9)
+                    (setq workspace-num (1+ workspace-num))
+                    (setq workspace-plist (append workspace-plist
+                                                  (list workspace-num (car external-monitors)))))
+                (let ((monitor-index 0))
+                  (dotimes (i 9)
+                    (setq workspace-num (1+ workspace-num))
+                    (setq workspace-plist (append workspace-plist
+                                                  (list workspace-num
+                                                        (nth monitor-index external-monitors))))
+                    (setq monitor-index (mod (1+ monitor-index) num-external))))))
+            (setq exwm-randr-workspace-monitor-plist workspace-plist)))))
+
     (defun my/exwm-configure-monitors ()
       "Configure xrandr settings and refresh EXWM."
-      (call-process "xrandr" nil nil nil "--auto"))
+      (let* ((xrandr-output (shell-command-to-string "xrandr"))
+             (monitor-info
+              (mapcar (lambda (line)
+                        (when (string-match "\\([^ ]+\\) connected\\(?: primary\\)? \\([0-9]+\\)x\\([0-9]+\\)" line)
+                          (list (match-string 1 line)
+                                (string-to-number (match-string 2 line))
+                                (string-to-number (match-string 3 line)))))
+                      (seq-filter (lambda (line)
+                                    (string-match-p " connected" line))
+                                  (split-string xrandr-output "\n"))))
+             (monitor-info (seq-filter #'identity monitor-info))
+             (external-monitors (seq-filter (lambda (m) (not (string= (car m) "eDP-1"))) monitor-info))
+             (has-laptop (seq-find (lambda (m) (string= (car m) "eDP-1")) monitor-info))
+             (laptop-width (if has-laptop (* 2880 0.67) 0))
+             (current-x 0))
+        (when (and (executable-find "picom")
+                   (string-match-p "xe" (shell-command-to-string "lsmod | grep -E 'xe|i915'")))
+          (shell-command "pkill picom")
+          (sit-for 0.1))
+        (cond
+         ((and has-laptop (>= (length external-monitors) 2))
+          (let* ((left-monitor (car external-monitors))
+                 (center-monitor (cadr external-monitors))
+                 (current-x 0))
+            (shell-command (format "xrandr --output %s --off --output %s --off --output eDP-1 --off"
+                                   (car left-monitor) (car center-monitor)))
+            (sit-for 0.3)
+            (shell-command (format "xrandr --output %s --auto --pos 0x0 --primary"
+                                   (car left-monitor)))
+            (setq current-x (cadr left-monitor))
+            (shell-command (format "xrandr --output %s --auto --pos %dx0"
+                                   (car center-monitor) current-x))
+            (setq current-x (+ current-x (cadr center-monitor)))
+            (shell-command (format "xrandr --output eDP-1 --auto --pos %dx0"
+                                   current-x))
+            (sit-for 0.1)
+            (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
+            (sit-for 0.1)
+            (shell-command "xrandr --output eDP-1 --transform none")
+            (when (executable-find "picom")
+              (start-process "picom" nil "picom" "-b"))))
+         ((and has-laptop (= (length external-monitors) 1))
+          (let* ((external-monitor (car external-monitors))
+                 (current-x 0))
+            (shell-command (format "xrandr --output %s --off --output eDP-1 --off"
+                                   (car external-monitor)))
+            (sit-for 1)
+            (shell-command (format "xrandr --output %s --auto --primary --pos 0x0"
+                                   (car external-monitor)))
+            (setq current-x (cadr external-monitor))
+            (shell-command (format "xrandr --output eDP-1 --auto --pos %dx0"
+                                   current-x))
+            (sit-for 0.1)
+            (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
+            (sit-for 0.1)
+            (shell-command "xrandr --output eDP-1 --transform none")
+            (when (executable-find "picom")
+              (start-process "picom" nil "picom" "-b"))))
+         ((and has-laptop (= (length external-monitors) 0))
+          (shell-command "xrandr --output eDP-1 --scale 0.67x0.67 --primary --pos 0x0"))
+         (t
+          (let ((xrandr-cmd "xrandr"))
+            (when external-monitors
+              (dolist (monitor external-monitors)
+                (setq xrandr-cmd (format "%s --output %s --auto --pos %dx0"
+                                         xrandr-cmd (car monitor) current-x))
+                (when (= current-x 0)
+                  (setq xrandr-cmd (concat xrandr-cmd " --primary")))
+                (setq current-x (+ current-x (cadr monitor)))))
+            (shell-command xrandr-cmd))))))
+
     (defun my/exwm-start-tray-apps ()
       "Start system tray applications with delays to ensure proper icon display."
       (interactive)
@@ -330,6 +436,7 @@
             (lambda ()
               (message
                "EXWM Edit buffer created. Use C-c C-c to finish, C-c C-k to cancel.")))
+
   (defun exwm-edit--compose (&optional no-copy)
     "Edit text in an EXWM app. Use M-w to copy instead of C-c."
     (interactive)
@@ -701,7 +808,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq ef-themes-mixed-fonts t
         ef-themes-variable-pitch-ui t)
   (add-hook 'after-init-hook (lambda () (load-theme 'ef-winter t)))
-
   (defun my-ef-themes-mode-line ()
     "Tweak the style of the mode lines."
     (ef-themes-with-colors
@@ -711,7 +817,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
               (:line-width 1 :color ,fg-dim))))
        `(mode-line-inactive
          ((,c :box (:line-width 1 :color ,bg-active)))))))
-
   (defun my-ef-themes-custom-faces ()
     "My customizations on top of the Ef themes.
 This function is added to the \=`ef-themes-post-load-hook'."
@@ -2010,6 +2115,7 @@ robust UI element disabling."
   :custom (auth-source-xoauth2-plugin-mode t))
 
 (require 'mailcap)
+
 (mailcap-parse-mailcaps)
 
 (use-package eat
