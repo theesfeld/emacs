@@ -145,6 +145,51 @@
 
 (add-hook 'prog-mode-hook #'my/prog-mode-variable-pitch-comments)
 
+(use-package ef-themes
+  :ensure t
+  :defer 0.1
+  :init
+  (mapc #'disable-theme custom-enabled-themes)
+  :config
+
+  (custom-set-faces
+   '(cursor ((t (:background "#FFC107")))))
+
+  (setq ef-themes-to-toggle '(ef-winter ef-summer))
+  (keymap-global-set "M-s-<backspace>" 'ef-themes-toggle)
+  (setq ef-themes-headings
+        '((0 variable-pitch light 1.9)
+          (1 variable-pitch light 1.8)
+          (2 variable-pitch regular 1.7)
+          (3 variable-pitch regular 1.6)
+          (4 variable-pitch regular 1.5)
+          (5 variable-pitch 1.4)
+          (6 variable-pitch 1.3)
+          (7 variable-pitch 1.2)
+          (t variable-pitch 1.1)))
+
+  (setq ef-themes-mixed-fonts t
+        ef-themes-variable-pitch-ui t)
+
+  (load-theme 'ef-winter t)
+
+  (defun my-ef-themes-mode-line ()
+    "Tweak the style of the mode lines."
+    (ef-themes-with-colors
+      (custom-set-faces
+       `(mode-line ((,c :background ,bg-mode-line :foreground ,fg-mode-line :box (:line-width 1 :color ,fg-dim))))
+       `(mode-line-inactive ((,c :box (:line-width 1 :color ,bg-active)))))))
+
+  (defun my-ef-themes-custom-faces ()
+    "My customizations on top of the Ef themes.
+This function is added to the \=`ef-themes-post-load-hook'."
+    (ef-themes-with-colors
+      (custom-set-faces
+       `(font-lock-comment-face ((,c :inherit italic :foreground ,comment)))
+       `(font-lock-variable-name-face ((,c :foreground ,variable))))))
+  (add-hook 'ef-themes-post-load-hook #'my-ef-themes-custom-faces)
+  (add-hook 'ef-themes-post-load-hook #'my-ef-themes-mode-line))
+
 (when (eq window-system 'x)
   (use-package exwm
     :ensure nil
@@ -783,49 +828,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (run-with-timer 0.1 nil 'invert-face 'mode-line))
 
 (setq ring-bell-function 'my/flash-mode-line)
-
-(use-package ef-themes
-  :ensure t
-  :defer 0.1
-  :init
-  (mapc #'disable-theme custom-enabled-themes)
-  :config
-  (custom-set-faces
-   '(cursor ((t (:background "#FFC107")))))
-  (setq ef-themes-to-toggle '(ef-winter ef-summer))
-  (keymap-global-set "M-s-<backspace>" 'ef-themes-toggle)
-  (setq ef-themes-headings
-        '((0 variable-pitch light 1.9)
-          (1 variable-pitch light 1.8)
-          (2 variable-pitch regular 1.7)
-          (3 variable-pitch regular 1.6)
-          (4 variable-pitch regular 1.5)
-          (5 variable-pitch 1.4)
-          (6 variable-pitch 1.3)
-          (7 variable-pitch 1.2)
-          (t variable-pitch 1.1)))
-  (setq ef-themes-mixed-fonts t
-        ef-themes-variable-pitch-ui t)
-  (add-hook 'after-init-hook (lambda () (load-theme 'ef-winter t)))
-  (defun my-ef-themes-mode-line ()
-    "Tweak the style of the mode lines."
-    (ef-themes-with-colors
-      (custom-set-faces
-       `(mode-line
-         ((,c :background ,bg-mode-line :foreground ,fg-mode-line :box
-              (:line-width 1 :color ,fg-dim))))
-       `(mode-line-inactive
-         ((,c :box (:line-width 1 :color ,bg-active)))))))
-  (defun my-ef-themes-custom-faces ()
-    "My customizations on top of the Ef themes.
-This function is added to the \=`ef-themes-post-load-hook'."
-    (ef-themes-with-colors
-      (custom-set-faces
-       `(font-lock-comment-face
-         ((,c :inherit italic :foreground ,comment)))
-       `(font-lock-variable-name-face ((,c :foreground ,variable))))))
-  (add-hook 'ef-themes-post-load-hook #'my-ef-themes-custom-faces)
-  (add-hook 'ef-themes-post-load-hook #'my-ef-themes-mode-line))
 
 (use-package winner
   :ensure nil
