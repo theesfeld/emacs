@@ -34,18 +34,9 @@
 
 (defun my/get-system-memory ()
   "Get system memory in GB."
-  (cond
-   ((and (eq system-type 'gnu/linux)
-         (file-readable-p "/proc/meminfo"))
-    (with-temp-buffer
-      (insert-file-contents "/proc/meminfo")
-      (goto-char (point-min))
-      (if (re-search-forward "^MemTotal:[[:space:]]+\\([0-9]+\\)" nil t)
-          (/ (string-to-number (match-string 1)) 1048576.0)
-        32)))
-   ((fboundp 'memory-info)
-    (/ (car (memory-info)) 1024.0))
-   (t 32)))
+  (if (fboundp 'memory-info)
+      (/ (car (memory-info)) 1024.0)
+    32))
 
 (defconst my/system-memory (my/get-system-memory)
   "System memory in GB.")
@@ -65,31 +56,16 @@
 
 (setq package-vc-register-as-project nil)
 
-;;; Garbage Collection Magic Hack (gcmh) - Dynamically Optimized
+;;; Garbage Collection Magic Hack (gcmh)
 (use-package gcmh
   :ensure t
   :demand t
-  :if (not (bound-and-true-p byte-compile-current-file))
   :custom
   (gcmh-idle-delay 'auto)
-  (gcmh-auto-idle-delay-factor 15)
-  (gcmh-high-cons-threshold
-   (cond (my/ultra-high-spec-system-p (* 1024 1024 1024))
-         (my/high-spec-system-p (* 512 1024 1024))
-         (t (* 128 1024 1024))))
-  (gcmh-low-cons-threshold
-   (cond (my/ultra-high-spec-system-p (* 64 1024 1024))
-         (my/high-spec-system-p (* 64 1024 1024))
-         (t (* 20 1024 1024))))
+  (gcmh-auto-idle-delay-factor 10)
+  (gcmh-high-cons-threshold (* 256 1024 1024))
   :config
-  (gcmh-mode 1)
-  (add-hook 'emacs-startup-hook
-            (lambda ()
-              (setq gc-cons-percentage
-                    (cond (my/ultra-high-spec-system-p 0.15)
-                          (my/high-spec-system-p 0.2)
-                          (t 0.1)))
-              (garbage-collect))))
+  (gcmh-mode 1))
 
 ;;; pinentry
 
@@ -121,24 +97,18 @@
    (t
     (keyboard-quit))))
 
-(keymap-global-set "<remap> <keyboard-quit>" #'my/keyboard-quit-dwim)
 
 (defun my/program-launcher ()
-  "Launch program using completion with command history and PATH suggestions."
+  "Launch program using completion with command history."
   (interactive)
   (let* ((history-commands
           (when (boundp 'shell-command-history)
             (delete-dups (copy-sequence shell-command-history))))
-         (path-commands
-          (when (executable-find "compgen")
-            (split-string
-             (shell-command-to-string "compgen -c | grep -v '^_' | sort -u | head -200")
-             "\n" t)))
          (common-commands
-          '("firefox" "mpv" "emacs" "pavucontrol"))
+          '("firefox" "mpv" "emacs" "pavucontrol" "thunar" "gimp" "inkscape"))
          (all-commands
           (delete-dups
-           (append history-commands common-commands path-commands)))
+           (append history-commands common-commands)))
          (command
           (completing-read "Launch program: " all-commands nil nil nil
                            'shell-command-history)))
@@ -156,8 +126,6 @@
   (interactive)
   (text-scale-decrease 1))
 
-(keymap-global-set "s-=" #'increase-text-and-pane)
-(keymap-global-set "s--" #'decrease-text-and-pane)
 
 (declare-function completion-preview-insert "completion-preview")
 (declare-function completion-preview-next-candidate
@@ -166,17 +134,7 @@
                   "completion-preview")
 (declare-function completion-preview--hide "completion-preview")
 
-;;; FONT CONFIGURATION
-
-;; Set default font
-(font-spec :name "AporeticSansMono Nerd Font")
-(set-face-attribute 'default nil
-                    :height 190)
-
-;; Set variable-pitch font
-(font-spec :name "AporeticSerif Nerd Font")
-(set-face-attribute 'variable-pitch nil
-                    :height 150)
+;;; FONT CONFIGURATION - moved to early-init.el
 
 ;;; VARIABLE-PITCH COMMENTS IN PROG-MODE
 
@@ -210,7 +168,7 @@
             ?\M-x
             ?\M-:
             ?\C-\M-j
-            ?\C-\ ;why do i need a comment here wtf
+            ?\C-\\
             XF86AudioLowerVolume
             XF86AudioRaiseVolume
             XF86AudioMute
@@ -299,137 +257,14 @@
 
     (defun my/exwm-randr-setup ()
       "Set up monitor configuration before EXWM starts."
-      (let* ((xrandr-output (shell-command-to-string "xrandr"))
-             (connected-monitors
-              (seq-filter (lambda (line)
-                            (string-match-p " connected" line))
-                          (split-string xrandr-output "\n")))
-             (monitor-names
-              (mapcar (lambda (line)
-                        (car (split-string line)))
-                      connected-monitors))
-             (has-laptop (member "eDP-1" monitor-names))
-             (external-monitors (seq-filter (lambda (m) (not (string= m "eDP-1"))) monitor-names)))
-
-        (when (or has-laptop external-monitors)
-          (let ((workspace-plist '())
-                (workspace-num 0)
-                (num-external (length external-monitors)))
-            ;; Workspace 0 always on eDP-1 if available
-            (if has-laptop
-                (setq workspace-plist (list workspace-num "eDP-1"))
-              ;; If no laptop, workspace 0 goes to first external
-              (when external-monitors
-                (setq workspace-plist (list workspace-num (car external-monitors)))))
-            ;; Distribute remaining workspaces across external monitors
-            (when external-monitors
-              (if (= num-external 1)
-                  ;; Single external monitor gets all remaining workspaces
-                  (dotimes (i 9)
-                    (setq workspace-num (1+ workspace-num))
-                    (setq workspace-plist (append workspace-plist
-                                                  (list workspace-num (car external-monitors)))))
-                ;; Multiple external monitors - distribute evenly
-                (let ((monitor-index 0))
-                  (dotimes (i 9)
-                    (setq workspace-num (1+ workspace-num))
-                    (setq workspace-plist (append workspace-plist
-                                                  (list workspace-num
-                                                        (nth monitor-index external-monitors))))
-                    (setq monitor-index (mod (1+ monitor-index) num-external))))))
-            ;; Set the configuration
-            (setq exwm-randr-workspace-monitor-plist workspace-plist)))))
+      ;; Simplified monitor detection - let EXWM handle it
+      (setq exwm-randr-workspace-monitor-plist '(0 "eDP-1" 1 "HDMI-1" 2 "HDMI-1")))
 
 
     (defun my/exwm-configure-monitors ()
       "Configure xrandr settings and refresh EXWM."
-      (let* ((xrandr-output (shell-command-to-string "xrandr"))
-             (monitor-info
-              (mapcar (lambda (line)
-                        (when (string-match "\\([^ ]+\\) connected\\(?: primary\\)? \\([0-9]+\\)x\\([0-9]+\\)" line)
-                          (list (match-string 1 line)
-                                (string-to-number (match-string 2 line))
-                                (string-to-number (match-string 3 line)))))
-                      (seq-filter (lambda (line)
-                                    (string-match-p " connected" line))
-                                  (split-string xrandr-output "\n"))))
-             (monitor-info (seq-filter #'identity monitor-info))
-             (external-monitors (seq-filter (lambda (m) (not (string= (car m) "eDP-1"))) monitor-info))
-             (has-laptop (seq-find (lambda (m) (string= (car m) "eDP-1")) monitor-info))
-             (laptop-width (if has-laptop (* 2880 0.67) 0))
-             (current-x 0))
-        ;; Intel Xe driver workaround: kill and restart picom if needed
-        (when (and (executable-find "picom")
-                   (string-match-p "xe" (shell-command-to-string "lsmod | grep -E 'xe|i915'")))
-          (shell-command "pkill picom")
-          (sit-for 0.1))
-
-        ;; Build xrandr command
-        (cond
-         ;; Three monitors with laptop on the right
-         ((and has-laptop (>= (length external-monitors) 2))
-          (let* ((left-monitor (car external-monitors))
-                 (center-monitor (cadr external-monitors))
-                 (current-x 0))
-            ;; Intel Xe workaround: turn off all monitors first
-            (shell-command (format "xrandr --output %s --off --output %s --off --output eDP-1 --off"
-                                   (car left-monitor) (car center-monitor)))
-            (sit-for 0.3)
-            ;; Turn on monitors one by one
-            (shell-command (format "xrandr --output %s --auto --pos 0x0 --primary"
-                                   (car left-monitor)))
-            (setq current-x (cadr left-monitor))
-            (shell-command (format "xrandr --output %s --auto --pos %dx0"
-                                   (car center-monitor) current-x))
-            (setq current-x (+ current-x (cadr center-monitor)))
-            (shell-command (format "xrandr --output eDP-1 --auto --pos %dx0"
-                                   current-x))
-            ;; Intel Xe workaround: use transform trick to ensure display updates
-            (sit-for 0.1)
-            (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
-            (sit-for 0.1)
-            (shell-command "xrandr --output eDP-1 --transform none")
-            ;; Restart picom with GLX backend
-            (when (executable-find "picom")
-              (start-process "picom" nil "picom" "-b"))))
-         ;; Two monitors with laptop
-         ((and has-laptop (= (length external-monitors) 1))
-          (let* ((external-monitor (car external-monitors))
-                 (current-x 0))
-            ;; Intel Xe workaround: turn off all monitors first
-            (shell-command (format "xrandr --output %s --off --output eDP-1 --off"
-                                   (car external-monitor)))
-            (sit-for 1)
-            ;; External monitor at origin
-            (shell-command (format "xrandr --output %s --auto --primary --pos 0x0"
-                                   (car external-monitor)))
-            (setq current-x (cadr external-monitor))
-            ;; Laptop to the right without scaling
-            (shell-command (format "xrandr --output eDP-1 --auto --pos %dx0"
-                                   current-x))
-            ;; Intel Xe workaround: use transform trick
-            (sit-for 0.1)
-            (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
-            (sit-for 0.1)
-            (shell-command "xrandr --output eDP-1 --transform none")
-            ;; Restart picom with GLX backend
-            (when (executable-find "picom")
-              (start-process "picom" nil "picom" "-b"))))
-         ;; Only laptop
-         ((and has-laptop (= (length external-monitors) 0))
-          (shell-command "xrandr --output eDP-1 --scale 0.67x0.67 --primary --pos 0x0"))
-         ;; No laptop, just external monitors
-         (t
-          (let ((xrandr-cmd "xrandr"))
-            ;; Configure external monitors in sequence
-            (when external-monitors
-              (dolist (monitor external-monitors)
-                (setq xrandr-cmd (format "%s --output %s --auto --pos %dx0"
-                                         xrandr-cmd (car monitor) current-x))
-                (when (= current-x 0)
-                  (setq xrandr-cmd (concat xrandr-cmd " --primary")))
-                (setq current-x (+ current-x (cadr monitor)))))
-            (shell-command xrandr-cmd))))))
+      ;; Simplified - let xrandr handle auto configuration
+      (call-process "xrandr" nil nil nil "--auto"))
 
     (defun my/exwm-start-tray-apps ()
       "Start system tray applications with delays to ensure proper icon display."
@@ -463,10 +298,10 @@
 (defalias 'my/app-launcher 'my/program-launcher)
 (defalias 'my/exwm-run-program 'my/program-launcher)
 
-(global-set-key (kbd "s-SPC") #'my/program-launcher)
 
 (use-package desktop-environment
   :ensure t
+  :defer 1
   :config
   (setq desktop-environment-screenlock-command "slock")
   (setq desktop-environment-screenshot-directory "~/Pictures/Screenshots/")
@@ -533,7 +368,7 @@
 
 (use-package vc
   :ensure nil
-  :demand t
+  :defer 1
   :config
   (defun my-auto-commit-init-el ()
     "Commit changes to init.el after saving."
@@ -589,7 +424,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (completion-auto-select 'second-tab)
   (completions-sort 'historical)
   (completions-header-format nil)
-  (completion-styles '(basic partial-completion emacs22 initials flex))
+  (completion-styles '(orderless basic))
   (completion-category-overrides
    '((file (styles . (basic partial-completion)))
      (buffer (styles . (basic flex)))
@@ -637,9 +472,10 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   ;; Enable auto-save of visited files
   (auto-save-visited-mode 1)
 
-  ;; Periodic cleanup of old temp files
+  ;; Cleanup function available but not run on startup
   (defun my/cleanup-old-temp-files ()
     "Clean up old files in temp directories."
+    (interactive)
     (let ((cutoff-time (- (float-time) (* 7 24 60 60)))) ; 7 days old
       (dolist (dir '("auto-saves" "backups" "auto-save-list"))
         (let ((full-dir (expand-file-name dir my-tmp-dir)))
@@ -648,10 +484,6 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
               (when (and (file-regular-p file)
                          (< (float-time (nth 5 (file-attributes file))) cutoff-time))
                 (delete-file file))))))))
-
-  ;; Run cleanup on startup and daily
-  (my/cleanup-old-temp-files)
-  (run-with-timer (* 24 60 60) (* 24 60 60) 'my/cleanup-old-temp-files)
 
   (setq history-length 10000
         history-delete-duplicates t
@@ -749,21 +581,14 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq-default mode-line-format
                 '("%e"
                   mode-line-front-space
-                  mode-line-mule-info
-                  mode-line-client
                   mode-line-modified
-                  mode-line-remote
-                  mode-line-frame-identification
                   mode-line-buffer-identification
-                  "  "
+                  " "
                   mode-line-position
-                  "  "
-                  (vc-mode vc-mode)
-                  "  "
+                  " "
                   mode-line-modes
                   mode-line-format-right-align
-                  mode-line-misc-info
-                  mode-line-end-spaces))
+                  mode-line-misc-info))
 
   ;;; Editing Behavior
   (setq-default indent-tabs-mode nil
@@ -911,8 +736,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq ef-themes-mixed-fonts t
         ef-themes-variable-pitch-ui t)
 
-  ;; Load theme
-  (load-theme 'ef-winter t)
+  ;; Load theme after init
+  (add-hook 'after-init-hook (lambda () (load-theme 'ef-winter t)))
 
   (defun my-ef-themes-mode-line ()
     "Tweak the style of the mode lines."
@@ -934,7 +759,7 @@ This function is added to the \=`ef-themes-post-load-hook'."
 ;;; Winner-mode
 (use-package winner
   :ensure nil
-  :demand t
+  :defer 0.1
   :config
   (winner-mode 1)
   :bind
@@ -945,6 +770,7 @@ This function is added to the \=`ef-themes-post-load-hook'."
 
 (use-package exec-path-from-shell
   :ensure t
+  :defer 0.2
   :config
   (setq exec-path-from-shell-shell-name "/bin/bash")
   (setq exec-path-from-shell-arguments '("-l" "-i"))
@@ -1224,7 +1050,8 @@ If buffer is modified, offer to save first."
 ;;; vertico
 (use-package vertico
   :ensure t
-  :demand t
+  :defer 0.5
+  :hook (after-init . vertico-mode)
   :custom
   (vertico-cycle t)
   (vertico-count 20)
@@ -1242,7 +1069,8 @@ If buffer is modified, offer to save first."
 ;;;orderless
 (use-package orderless
   :ensure t
-  :demand t
+  :defer 0.5
+  :after vertico
   :custom
   (completion-styles '(orderless basic))
   (completion-category-defaults nil)
@@ -1261,7 +1089,8 @@ If buffer is modified, offer to save first."
 ;;; marginalia
 (use-package marginalia
   :ensure t
-  :demand t
+  :defer 0.5
+  :after vertico
   :init (marginalia-mode 1)
   :bind
   (:map minibuffer-local-map
@@ -1464,10 +1293,10 @@ If buffer is modified, offer to save first."
 
 (use-package which-key
   :ensure nil
-  :demand t
+  :defer 1
   :diminish
   :custom
-  (which-key-idle-delay 0)
+  (which-key-idle-delay 0.8)
   (which-key-idle-secondary-delay 0)
   (which-key-popup-type 'side-window)
   (which-key-side-window-location 'bottom)
@@ -2504,7 +2333,7 @@ robust UI element disabling."
 
 (use-package pulsar
   :ensure t
-  :demand t
+  :defer 1
   :custom
   (pulsar-pulse t)
   (pulsar-delay 0.055)
@@ -2819,6 +2648,56 @@ robust UI element disabling."
 
 ;; Apply optimizations after init
 (add-hook 'emacs-startup-hook #'my/apply-performance-optimizations)
+
+;;; CENTRALIZED KEYBINDINGS
+
+;; Global keybindings
+(global-set-key [remap keyboard-quit] 'my/keyboard-quit-dwim)
+(global-set-key (kbd "C-c <left>") 'winner-undo)
+(global-set-key (kbd "C-c <right>") 'winner-redo)
+(global-set-key (kbd "s-=") 'increase-text-and-pane)
+(global-set-key (kbd "s--") 'decrease-text-and-pane)
+(global-set-key (kbd "s-SPC") 'my/program-launcher)
+(global-set-key (kbd "C-x C-k") 'kill-current-buffer)
+(global-set-key (kbd "C-x K") 'kill-buffer)
+(global-set-key (kbd "M-y") 'consult-yank-pop)
+(global-set-key (kbd "C-i") 'consult-imenu)
+(global-set-key (kbd "C-x C-j") 'dired-jump)
+(global-set-key (kbd "C-c r") 'consult-recent-file)
+(global-set-key (kbd "M-s .") 'isearch-forward-symbol-at-point)
+(global-set-key (kbd "<f6>") 'dictionary-lookup-definition)
+(global-set-key (kbd "C-c g") 'magit-status)
+(global-set-key (kbd "C-c e") 'eshell)
+(global-set-key (kbd "C-c j") 'journalctl)
+(global-set-key (kbd "C-c P") 'pass)
+(global-set-key (kbd "C-c E") 'emoji-search)
+(global-set-key (kbd "C-c n n") 'denote)
+(global-set-key (kbd "C-c n j") 'denote-journal-new-or-existing-entry)
+(global-set-key (kbd "C-c n d") 'denote-dired)
+(global-set-key (kbd "C-c n f") 'consult-denote-find)
+(global-set-key (kbd "C-c n g") 'consult-denote-grep)
+(global-set-key (kbd "C-c n l") 'denote-link)
+(global-set-key (kbd "C-c n L") 'denote-add-links)
+(global-set-key (kbd "C-c n b") 'denote-backlinks)
+(global-set-key (kbd "C-c n r") 'denote-rename-file)
+(global-set-key (kbd "C-c n R") 'denote-rename-file-using-front-matter)
+(global-set-key (kbd "C-c l") 'org-store-link)
+(global-set-key (kbd "C-c a") 'org-agenda)
+(global-set-key (kbd "C-c c") 'org-capture)
+(global-set-key (kbd "C-c t c") 'my/tramp-cleanup-current)
+(global-set-key (kbd "C-c t C") 'my/tramp-cleanup-all)
+(global-set-key (kbd "C-c d f") 'ediff-files)
+(global-set-key (kbd "C-c d b") 'ediff-buffers)
+(global-set-key (kbd "C-c d c") 'my/ediff-buffer-with-file)
+(global-set-key (kbd "C-c d d") 'my/ediff-directories)
+(global-set-key (kbd "C-c d r") 'ediff-regions-linewise)
+(global-set-key (kbd "C-c d R") 'ediff-regions-wordwise)
+(global-set-key (kbd "C-=") 'er/expand-region)
+(global-set-key (kbd "C-x u") 'vundo)
+(global-set-key (kbd "C-c Y") 'consult-yasnippet)
+
+
+;; Mode-specific keybindings are defined in their respective use-package declarations
 
 (provide 'init)
 ;;; init.el ends here
