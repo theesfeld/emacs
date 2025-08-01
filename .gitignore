@@ -82,3 +82,4 @@ package-lock.json
 !early-init.el
 !functions.el
 !.gitignore
+!README.md
