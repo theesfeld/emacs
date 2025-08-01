@@ -1509,7 +1509,7 @@ If buffer is modified, offer to save first."
          (eshell-mode . completion-preview-mode))
   :custom
   (completion-preview-minimum-symbol-length 2)
-  (completion-preview-idle-delay 0.05)
+  (completion-preview-idle-delay 0)
   (completion-preview-exact-match-only nil)
   (completion-preview-insert-on-completion t)
   :custom-face
