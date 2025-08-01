@@ -970,10 +970,10 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                         (add-hook mode (lambda () (display-line-numbers-mode -1)))))))
 
   :bind
-  (("C-x k" . kill-current-buffer)
+  (("C-x C-k" . kill-current-buffer)
    ("C-x K" . kill-buffer)
    ("M-y" . consult-yank-pop)
-   ("M-i" . consult-imenu))
+   ("C-i" . consult-imenu))
   :custom-face
   (mode-line ((t (:box (:line-width -1 :style released-button)))))
   (mode-line-inactive ((t (:box (:line-width -1 :style released-button)))))
