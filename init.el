@@ -45,7 +45,7 @@
         32)))
    ((fboundp 'memory-info)
     (/ (car (memory-info)) 1024.0))
-   (t 32))) ; Default fallback
+   (t 32)))
 
 (defconst my/system-memory (my/get-system-memory)
   "System memory in GB.")
