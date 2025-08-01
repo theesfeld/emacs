@@ -1,4 +1,5 @@
 ;;; init.el --- Emacs Configuration -*- lexical-binding: t -*-
+
 ;;; version: 0.7.3
 ;; Copyright (C) 2024 William Theesfeld <william@theesfeld.net>
 ;; Author: William Theesfeld <william@theesfeld.net>
@@ -17,7 +18,9 @@
 ;; GNU General Public License for more details.
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 ;;; Commentary:
+
 ;;; Code:
 
 (defun my/get-system-memory ()
@@ -118,6 +121,14 @@
                   "completion-preview")
 
 (declare-function completion-preview--hide "completion-preview")
+
+(font-spec :name "AporeticSansMono Nerd Font")
+(set-face-attribute 'default nil
+                    :height 190)
+
+(font-spec :name "AporeticSerif Nerd Font")
+(set-face-attribute 'variable-pitch nil
+                    :height 150)
 
 (defun my/prog-mode-variable-pitch-comments ()
   "Use variable-pitch font for comments in programming modes."
@@ -745,7 +756,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                                   (lambda ()
                                     (display-line-numbers-mode -1)))))))
   :bind
-  (("C-x C-k" . kill-current-buffer)
+  (("C-x k" . kill-current-buffer)
    ("C-x K" . kill-buffer)
    ("M-y" . consult-yank-pop)
    ("C-i" . consult-imenu))
@@ -1285,11 +1296,7 @@ If buffer is modified, offer to save first."
   :bind
   (("C-x (" . kmacro-start-macro)
    ("C-x )" . kmacro-end-macro)
-   ("C-x e" . kmacro-end-and-call-macro)
-   ("C-x C-k C-e" . kmacro-edit-macro)
-   ("C-x C-k n" . kmacro-name-last-macro)
-   ("C-x C-k b" . kmacro-bind-to-key)
-   ("C-x C-k C-v" . kmacro-view-macro))
+   ("C-x e" . kmacro-end-and-call-macro))
   :config
   (setq kmacro-ring-max 20)
   (defun my/apply-macro-to-region-lines ()
@@ -1304,8 +1311,8 @@ If buffer is modified, offer to save first."
             (kmacro-call-macro nil)
             (forward-line 1)))
       (message "No region selected")))
-  :bind
-  (("C-x C-k r" . my/apply-macro-to-region-lines)))
+  :bind (:map kmacro-keymap
+              ("r" . my/apply-macro-to-region-lines)))
 
 (use-package diff-hl
   :ensure t
@@ -2555,7 +2562,7 @@ robust UI element disabling."
 (global-set-key (kbd "s-=") 'increase-text-and-pane)
 (global-set-key (kbd "s--") 'decrease-text-and-pane)
 (global-set-key (kbd "s-SPC") 'my/program-launcher)
-(global-set-key (kbd "C-x C-k") 'kill-current-buffer)
+(global-set-key (kbd "C-x k") 'kill-current-buffer)
 (global-set-key (kbd "C-x K") 'kill-buffer)
 (global-set-key (kbd "M-y") 'consult-yank-pop)
 (global-set-key (kbd "C-i") 'consult-imenu)
