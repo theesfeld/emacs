@@ -972,7 +972,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   :bind
   (("C-x k" . kill-current-buffer)
    ("C-x K" . kill-buffer)
-   ("M-y" . consult-yank-pop))
+   ("M-y" . consult-yank-pop)
+   ("M-i" . consult-imenu))
   :custom-face
   (mode-line ((t (:box (:line-width -1 :style released-button)))))
   (mode-line-inactive ((t (:box (:line-width -1 :style released-button)))))
