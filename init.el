@@ -135,7 +135,7 @@
              (shell-command-to-string "compgen -c | grep -v '^_' | sort -u | head -200")
              "\n" t)))
          (common-commands
-          '("firefox" "mpv" "emacs" "alacritty" "pavucontrol"))
+          '("firefox" "mpv" "emacs" "pavucontrol"))
          (all-commands
           (delete-dups
            (append history-commands common-commands path-commands)))
@@ -2042,9 +2042,9 @@ If buffer is modified, offer to save first."
   (flymake-start-on-save-buffer t)
   (flymake-start-on-flymake-mode t)
 
-  (flymake-fringe-indicator-position 'right-fringe)
+  (flymake-fringe-indicator-position 'left-fringe)
   (flymake-suppress-zero-counters t)
-  (flymake-show-diagnostics-at-end-of-line t)
+  (flymake-show-diagnostics-at-end-of-line nil)
 
   :bind
   (:map flymake-mode-map
