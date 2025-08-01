@@ -1429,8 +1429,8 @@ If buffer is modified, offer to save first."
 
 (use-package nerd-icons
   :ensure t
-  :defer t
   :custom
+  (nerd-icons-font-family "AporeticSansMono Nerd Font")
   (nerd-icons-color-icons t))
 
 (use-package nerd-icons-completion
@@ -2319,8 +2319,9 @@ robust UI element disabling."
 (use-package editorconfig
   :ensure nil
   :defer t
-  :hook (find-file . editorconfig-mode-apply)
+  :hook (find-file . (lambda () (when (fboundp 'editorconfig-mode-apply) (editorconfig-mode-apply))))
   :init
+  (require 'editorconfig nil t)
   (editorconfig-mode 1)
 
   (setq editorconfig-trim-whitespaces-mode 'ws-butler-mode
