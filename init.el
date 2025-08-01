@@ -1353,6 +1353,18 @@ If buffer is modified, offer to save first."
         ("M-DEL" . vertico-directory-delete-word)
         ("C-j" . vertico-exit-input)))
 
+;;; vertico-prescient
+(use-package vertico-prescient
+  :ensure t
+  :after vertico
+  :custom
+  (vertico-prescient-enable-filtering nil)
+  (vertico-prescient-enable-sorting t)
+  (prescient-sort-full-matches-first t)
+  (prescient-filter-method '(literal regexp initialism fuzzy))
+  :init
+  (vertico-prescient-mode 1)
+  (prescient-persist-mode 1))
 ;;; orderless
 (use-package orderless
   :ensure t
@@ -1367,7 +1379,7 @@ If buffer is modified, offer to save first."
      (eglot-capf (styles orderless))))
   (orderless-matching-styles '(orderless-literal
                                orderless-regexp
-                               ))
+                               orderless-flex))
   (orderless-smart-case t)
   (orderless-style-dispatchers nil)
   (orderless-component-separator #'orderless-escapable-split-on-space))
