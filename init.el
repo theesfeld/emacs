@@ -1379,7 +1379,8 @@ If buffer is modified, offer to save first."
      (eglot (styles orderless))
      (eglot-capf (styles orderless))))
   (orderless-matching-styles '(orderless-literal
-                               orderless-regexp))
+                               orderless-regexp
+                               ))
   (orderless-smart-case t)
   (orderless-style-dispatchers nil)
   (orderless-component-separator #'orderless-escapable-split-on-space))
