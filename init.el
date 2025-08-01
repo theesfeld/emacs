@@ -195,93 +195,11 @@
 
 (use-package ednc
   :ensure t
+  :defer t
   :hook (after-init . ednc-mode)
   :config
-  (require 'consult)
-
-  (defgroup ednc-enhanced nil
-    "Enhanced EDNC notifications."
-    :group 'ednc)
-
-  (defcustom ednc-history-limit 200
-    "Maximum number of notifications to keep in history."
-    :type 'integer
-    :group 'ednc-enhanced)
-
-  (defvar ednc--notification-history nil
-    "List of past notifications for consult browsing.")
-  (defvar ednc--notification-ring (make-ring ednc-history-limit)
-    "Ring buffer for notification history.")
-
-  (defface ednc-notification-time-face
-    '((t :inherit font-lock-comment-face))
-    "Face for timestamps in notification history.")
-
-  (defun ednc--store-in-history (old new)
-    "Store NEW notification in history for consult browsing.
-OLD is ignored but included for hook compatibility."
-    (when new
-      (let* ((time (format-time-string "%Y-%m-%d %H:%M:%S"))
-             (app (ednc-notification-app-name new))
-             (summary (ednc-notification-summary new))
-             (body (ednc-notification-body new))
-             (entry (propertize
-                     (format "%s │ %s: %s"
-                             (propertize time 'face 'ednc-notification-time-face)
-                             (propertize (or app "System") 'face 'font-lock-keyword-face)
-                             summary)
-                     'notification new
-                     'time time
-                     'body body)))
-        (ring-insert ednc--notification-ring entry)
-        (push entry ednc--notification-history))))
-
-  (defun ednc-browse-history ()
-    "Browse notification history with consult."
-    (interactive)
-    (let* ((candidates (ring-elements ednc--notification-ring))
-           (selected
-            (consult--read
-             candidates
-             :prompt "Notification History: "
-             :category 'ednc-notification
-             :sort nil
-             :annotate
-             (lambda (cand)
-               (when-let ((body (get-text-property 0 'body cand)))
-                 (when (not (string-empty-p body))
-                   (concat " " (propertize (truncate-string-to-width body 50)
-                                           'face 'font-lock-doc-face)))))
-             :preview-key '(:debounce 0.2 any)
-             :state
-             (lambda (action cand)
-               (when (and (eq action 'preview) cand)
-                 (when-let ((notification (get-text-property 0 'notification cand)))
-                   (with-current-buffer (get-buffer-create "*EDNC Preview*")
-                     (let ((inhibit-read-only t))
-                       (erase-buffer)
-                       (ednc-view-mode)
-                       (insert "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
-                       (insert (ednc-format-notification notification t))
-                       (insert "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
-                       (goto-char (point-min))
-                       (display-buffer (current-buffer)
-                                       '(display-buffer-below-selected
-                                         (window-height . 0.3)))))))))))
-      (when selected
-        (message "Notification: %s" selected))))
-
-  (defun ednc-clear-history ()
-    "Clear notification history."
-    (interactive)
-    (when (yes-or-no-p "Clear all notification history? ")
-      (setq ednc--notification-history nil)
-      (dotimes (_ (ring-length ednc--notification-ring))
-        (ring-remove ednc--notification-ring))
-      (message "Notification history cleared")))
-
-  (setq ednc-notification-presentation-functions nil)
-  (add-hook 'ednc-notification-presentation-functions #'ednc--store-in-history))
+  ;; Basic EDNC configuration - simplified from 100+ lines
+  (setq ednc-notification-presentation-functions nil))
 
 (use-package ednc-popup
   :vc (:url "https://codeberg.org/akib/emacs-ednc-popup.git" :branch "main")
@@ -729,10 +647,32 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
         version-control t
         backup-by-copying t
         backup-directory-alist `((".*" . ,(expand-file-name "backups" my-tmp-dir)))
-        auto-save-default nil  ; Disable auto-save to prevent EXWM interruptions
+        auto-save-default t  ; Re-enable auto-save with proper directory
+        auto-save-interval 300  ; Save after 300 keystrokes
+        auto-save-timeout 30    ; Save after 30 seconds of idle time
         auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-saves/" my-tmp-dir) t))
         auto-save-list-file-prefix (expand-file-name "auto-save-list/.saves-" my-tmp-dir)
+        auto-save-visited-interval 120  ; Auto-save visited files every 2 minutes
         save-place-file (expand-file-name "saveplace/saveplace" my-tmp-dir))
+
+  ;; Enable auto-save of visited files
+  (auto-save-visited-mode 1)
+
+  ;; Periodic cleanup of old temp files
+  (defun my/cleanup-old-temp-files ()
+    "Clean up old files in temp directories."
+    (let ((cutoff-time (- (float-time) (* 7 24 60 60)))) ; 7 days old
+      (dolist (dir '("auto-saves" "backups" "auto-save-list"))
+        (let ((full-dir (expand-file-name dir my-tmp-dir)))
+          (when (file-directory-p full-dir)
+            (dolist (file (directory-files full-dir t "^[^.]"))
+              (when (and (file-regular-p file)
+                         (< (float-time (nth 5 (file-attributes file))) cutoff-time))
+                (delete-file file))))))))
+
+  ;; Run cleanup on startup and daily
+  (my/cleanup-old-temp-files)
+  (run-with-timer (* 24 60 60) (* 24 60 60) 'my/cleanup-old-temp-files)
 
   (setq history-length 10000
         history-delete-duplicates t
@@ -791,11 +731,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
   (setq read-process-output-max
         (cond (my/ultra-high-spec-system-p (* 32 1024 1024))
               (my/high-spec-system-p (* 8 1024 1024))
-              (t (* 1024 1024)))
-        gc-cons-percentage
-        (cond (my/ultra-high-spec-system-p 0.15)
-              (my/high-spec-system-p 0.2)
-              (t 0.1)))
+              (t (* 1024 1024))))
+  ;; gc-cons-percentage already set in gcmh config
 
   ;; Disable line numbers in large buffers for performance
   (add-hook 'prog-mode-hook
@@ -949,8 +886,8 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 ;;; Minions for minor mode management
 (use-package minions
   :ensure t
-  :config
-  (minions-mode 1)
+  :defer t
+  :hook (after-init . minions-mode)
   :custom
   (minions-prominent-modes '(flymake-mode
                              flycheck-mode
@@ -958,11 +895,13 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
                              eglot--managed-mode))
   (minions-mode-line-lighter " ◎"))
 
-;;; Visual bell in mode-line
-(use-package mode-line-bell
-  :ensure t
-  :config
-  (mode-line-bell-mode 1))
+;;; Visual bell using built-in functionality
+(defun my/flash-mode-line ()
+  "Flash the mode line as a visual bell."
+  (invert-face 'mode-line)
+  (run-with-timer 0.1 nil 'invert-face 'mode-line))
+
+(setq ring-bell-function 'my/flash-mode-line)
 
 ;;; Theme Configuration (separate use-package)
 
@@ -973,7 +912,7 @@ This keeps the main .emacs.d directory clean and organizes cache files logically
 
 (use-package ef-themes
   :ensure t
-  :demand t
+  :defer 0.1  ; Load very early but not blocking startup
   :init
   (mapc #'disable-theme custom-enabled-themes)
   :config
@@ -1154,10 +1093,7 @@ If buffer is modified, offer to save first."
     (remove-hook 'compilation-mode-hook
                  #'tramp-compile-disable-ssh-controlmaster-options))
 
-  (setq read-process-output-max
-        (cond (my/ultra-high-spec-system-p (* 32 1024 1024))
-              (my/high-spec-system-p (* 8 1024 1024))
-              (t (* 1024 1024))))
+  ;; read-process-output-max already set in general optimizations section
 
   (defun my/tramp-cleanup-all ()
     "Clean all TRAMP connections and buffers."
@@ -1493,6 +1429,7 @@ If buffer is modified, offer to save first."
 
 (use-package nerd-icons
   :ensure t
+  :defer t
   :custom
   (nerd-icons-color-icons t))
 
@@ -1504,11 +1441,15 @@ If buffer is modified, offer to save first."
   (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
 
 ;;; expand-region for some reason
-(use-package expand-region :ensure t :bind ("C-=" . er/expand-region))
+(use-package expand-region
+  :ensure t
+  :defer t
+  :bind ("C-=" . er/expand-region))
 
 ;;; Project.el - Built-in project management
 (use-package project
   :ensure nil
+  :defer t
   :custom
   (project-vc-extra-root-markers '(".project" ".projectile" "Makefile" "package.json"
                                    "Cargo.toml" "go.mod" "requirements.txt"))
@@ -2377,8 +2318,9 @@ robust UI element disabling."
 
 (use-package editorconfig
   :ensure nil
-  :demand t
-  :config
+  :defer t
+  :hook (find-file . editorconfig-mode-apply)
+  :init
   (editorconfig-mode 1)
 
   (setq editorconfig-trim-whitespaces-mode 'ws-butler-mode
@@ -2627,25 +2569,13 @@ robust UI element disabling."
 
 ;;; STARTUP INFORMATION
 
-(use-package benchmark-init
-  :ensure t
-  :demand t
-  :hook (after-init . benchmark-init/deactivate)
-  :config
-  (when (fboundp 'profiler-cpu-start)
-    (defun my/profile-init ()
-      "Profile Emacs initialization."
-      (interactive)
-      (profiler-cpu-start)
-      (add-hook 'after-init-hook
-                (lambda ()
-                  (profiler-cpu-stop)
-                  (profiler-report)))))
-  (add-hook 'emacs-startup-hook
-            (lambda ()
-              (message "Emacs started in %.2f seconds with %d garbage collections"
-                       (float-time (time-subtract after-init-time before-init-time))
-                       gcs-done))))
+;; benchmark-init removed - not needed in production
+;; Use M-x emacs-init-time to check startup time
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (message "Emacs started in %.2f seconds with %d garbage collections"
+                     (float-time (time-subtract after-init-time before-init-time))
+                     gcs-done)))
 
 ;;; ERC
 
@@ -2809,8 +2739,8 @@ robust UI element disabling."
           global-mark-ring-max 50
           message-log-max (if my/ultra-high-spec-system-p 20000 10000)
           history-length (if my/ultra-high-spec-system-p 2000 1000)
-          savehist-save-minibuffer-history t
-          recentf-max-saved-items (if my/ultra-high-spec-system-p 2000 1000)
+          ;; savehist-save-minibuffer-history already set in savehist package config
+          ;; recentf-max-saved-items already set in recentf package config
           desktop-restore-eager (if my/ultra-high-spec-system-p 20 10)
           desktop-lazy-verbose nil
           desktop-lazy-idle-delay 5)))
