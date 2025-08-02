@@ -117,6 +117,68 @@
   (interactive)
   (text-scale-decrease 1))
 
+(defun my/sanitize-filename (name)
+  "Convert NAME to safe filename by replacing invalid characters."
+  (replace-regexp-in-string 
+   "[/\\:*?\"<>|]" "_" 
+   (replace-regexp-in-string "^[*]\\|[*]$" "" name)))
+
+(defun my/get-buffer-screenshot-name ()
+  "Get meaningful name for screenshot from current buffer."
+  (let ((name (cond 
+               ((and (boundp 'exwm-class-name) exwm-class-name)
+                exwm-class-name)
+               ((string-match "\\*.*\\*" (buffer-name))
+                (format "emacs-%s" (substring (buffer-name) 1 -1)))
+               (t (buffer-name)))))
+    (my/sanitize-filename name)))
+
+(defun my/screenshot-to-kill-ring ()
+  "Take a screenshot, save to ~/Pictures/Screenshots and add to kill-ring."
+  (interactive)
+  (let* ((buffer-prefix (my/get-buffer-screenshot-name))
+         (timestamp (format-time-string "%Y-%m-%d_%H-%M-%S"))
+         (filename (expand-file-name 
+                   (format "%s_%s.png" buffer-prefix timestamp)
+                   "~/Pictures/Screenshots/"))
+         (dir (file-name-directory filename)))
+    ;; Ensure directory exists
+    (unless (file-exists-p dir)
+      (make-directory dir t))
+    ;; Take screenshot
+    (call-process "scrot" nil nil nil filename)
+    ;; Add to kill-ring (file path for yanking)
+    (kill-new filename)
+    ;; Also copy to system clipboard
+    (call-process "xclip" nil nil nil 
+                  "-selection" "clipboard" 
+                  "-t" "image/png" 
+                  "-i" filename)
+    (message "Screenshot saved to %s and added to kill-ring" filename)))
+
+(defun my/screenshot-selection-to-kill-ring ()
+  "Take a partial screenshot, save to ~/Pictures/Screenshots and add to kill-ring."
+  (interactive)
+  (let* ((buffer-prefix (my/get-buffer-screenshot-name))
+         (timestamp (format-time-string "%Y-%m-%d_%H-%M-%S"))
+         (filename (expand-file-name 
+                   (format "%s_%s_selection.png" buffer-prefix timestamp)
+                   "~/Pictures/Screenshots/"))
+         (dir (file-name-directory filename)))
+    ;; Ensure directory exists
+    (unless (file-exists-p dir)
+      (make-directory dir t))
+    ;; Take screenshot with selection
+    (call-process "scrot" nil nil nil "-s" filename)
+    ;; Add to kill-ring (file path for yanking)
+    (kill-new filename)
+    ;; Also copy to system clipboard
+    (call-process "xclip" nil nil nil 
+                  "-selection" "clipboard" 
+                  "-t" "image/png" 
+                  "-i" filename)
+    (message "Screenshot saved to %s and added to kill-ring" filename)))
+
 (declare-function completion-preview-insert "completion-preview")
 
 (declare-function completion-preview-next-candidate
@@ -276,8 +338,8 @@ This function is added to the \=`ef-themes-post-load-hook'."
              . desktop-environment-brightness-increment)
             ([XF86MonBrightnessDown]
              . desktop-environment-brightness-decrement)
-            ([print] . desktop-environment-screenshot)
-            ([S-print] . desktop-environment-screenshot-part)))
+            ([print] . my/screenshot-to-kill-ring)
+            ([S-print] . my/screenshot-selection-to-kill-ring)))
     (setq exwm-input-simulation-keys
           '(([?\C-b] . [left])
             ([?\C-f] . [right])
@@ -2518,6 +2580,8 @@ robust UI element disabling."
 (global-set-key (kbd "C-c <right>") 'winner-redo)
 (global-set-key (kbd "s-=") 'increase-text-and-pane)
 (global-set-key (kbd "s--") 'decrease-text-and-pane)
+(global-set-key (kbd "<print>") 'my/screenshot-to-kill-ring)
+(global-set-key (kbd "S-<print>") 'my/screenshot-selection-to-kill-ring)
 (global-set-key (kbd "s-SPC") 'my/program-launcher)
 (global-set-key (kbd "C-x k") 'kill-current-buffer)
 (global-set-key (kbd "C-x K") 'kill-buffer)
