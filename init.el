@@ -1199,8 +1199,6 @@ If buffer is modified, offer to save first."
    consult-theme :preview-key nil
    consult-bookmark consult-recent-file consult-xref
    :preview-key '(:debounce 0.4 any))
-  (add-to-list 'consult-buffer-sources 'consult-source-hidden-buffer
-               'append)
   :bind
   (("C-c M-x" . consult-mode-command)
    ("C-c h" . consult-history)
