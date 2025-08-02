@@ -747,6 +747,8 @@ This function is added to the \=`ef-themes-post-load-hook'."
   (setq which-func-modes '(prog-mode)
         which-func-unknown "")
   (setq mode-line-right-align-edge 'right-fringe)
+  (setq vc-follow-symlinks t)
+  (setq auto-revert-check-vc-info t)
   (setq-default mode-line-format
                 '("%e"
                   mode-line-front-space
@@ -754,6 +756,8 @@ This function is added to the \=`ef-themes-post-load-hook'."
                   mode-line-buffer-identification
                   " "
                   mode-line-position
+                  " "
+                  vc-mode
                   " "
                   mode-line-modes
                   mode-line-format-right-align
