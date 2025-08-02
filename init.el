@@ -328,18 +328,16 @@ This function is added to the \=`ef-themes-post-load-hook'."
              (monitor-names (mapcar (lambda (line)
                                     (car (split-string line)))
                                   monitor-lines))
-             (external-monitors (seq-filter (lambda (m) 
-                                            (not (string= m "eDP-1"))) 
+             (external-monitors (seq-filter (lambda (m)
+                                            (not (string= m "eDP-1")))
                                           monitor-names))
              (primary-monitor (if external-monitors
                                 (car external-monitors)
                               "eDP-1"))
              workspace-plist)
-        ;; Workspace 0 always goes to eDP-1 if available, otherwise first external
         (setq workspace-plist (list 0 (if (member "eDP-1" monitor-names)
                                         "eDP-1"
                                       primary-monitor)))
-        ;; Workspaces 1-9 go to primary external monitor or eDP-1 if no externals
         (dotimes (i 9)
           (setq workspace-plist (append workspace-plist
                                       (list (1+ i) primary-monitor))))
@@ -363,26 +361,19 @@ This function is added to the \=`ef-themes-post-load-hook'."
              (xrandr-cmd "xrandr")
              (current-x 0))
         (cond
-         ;; Only eDP-1 connected: scale it down
          ((and has-laptop (null external-monitors))
           (shell-command "xrandr --output eDP-1 --scale 0.67x0.67 --primary --pos 0x0"))
-         ;; External monitors connected: build single xrandr command
          (external-monitors
-          ;; First, configure external monitors left to right
           (dolist (monitor external-monitors)
             (setq xrandr-cmd (format "%s --output %s --auto --pos %dx0"
                                    xrandr-cmd (car monitor) current-x))
-            ;; First external monitor is primary
             (when (= current-x 0)
               (setq xrandr-cmd (concat xrandr-cmd " --primary")))
             (setq current-x (+ current-x (cadr monitor))))
-          ;; Then add eDP-1 to the right if present
           (when has-laptop
             (setq xrandr-cmd (format "%s --output eDP-1 --auto --scale 1x1 --pos %dx0"
                                    xrandr-cmd current-x)))
-          ;; Execute single xrandr command
           (shell-command xrandr-cmd))
-         ;; No monitors connected (shouldn't happen)
          (t
           (message "No monitors detected")))))
 
