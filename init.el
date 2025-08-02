@@ -1254,8 +1254,8 @@ If buffer is modified, offer to save first."
    ("M-r" . consult-history))
   :init
   (recentf-mode 1)
-(setq recentf-max-menu-items 200)
-(setq recentf-max-saved-items 200)
+  (setq recentf-max-menu-items 200)
+  (setq recentf-max-saved-items 200)
   (global-set-key [remap Info-search] #'consult-info)
   (global-set-key [remap isearch-forward] #'consult-line)
   (global-set-key [remap recentf-open-files] #'consult-recent-file))
