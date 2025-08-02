@@ -4,7 +4,7 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Language: Elisp](https://img.shields.io/badge/Language-Emacs%20Lisp-green.svg)](https://www.gnu.org/software/emacs/manual/html_node/elisp/)
 [![EXWM](https://img.shields.io/badge/WM-EXWM-orange.svg)](https://github.com/ch11ng/exwm)
-[![Straight.el](https://img.shields.io/badge/Package%20Manager-use--package-lightgrey.svg)](https://github.com/jwiegley/use-package)
+[![Use Package](https://img.shields.io/badge/Package%20Manager-use--package-lightgrey.svg)](https://github.com/jwiegley/use-package)
 
 A comprehensive Emacs configuration with EXWM window manager, modern completion frameworks, and extensive development tools.
 
