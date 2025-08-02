@@ -119,15 +119,15 @@
 
 (defun my/sanitize-filename (name)
   "Convert NAME to safe filename by replacing invalid characters."
-  (replace-regexp-in-string 
-   "[/\\:*?\"<>|]" "_" 
+  (replace-regexp-in-string
+   "[/\\:*?\"<>|]" "_"
    (replace-regexp-in-string "^[*]\\|[*]$" "" name)))
 
 (defun my/get-buffer-screenshot-name ()
   "Get meaningful name for screenshot from current buffer."
   (let* ((orig-buffer (current-buffer))
          (name (with-current-buffer orig-buffer
-                 (cond 
+                 (cond
                   ((and (boundp 'exwm-class-name) exwm-class-name)
                    exwm-class-name)
                   ((string-match "\\*.*\\*" (buffer-name))
@@ -140,7 +140,7 @@
   (interactive)
   (let* ((buffer-prefix (my/get-buffer-screenshot-name))
          (timestamp (format-time-string "%Y-%m-%d_%H-%M-%S"))
-         (filename (expand-file-name 
+         (filename (expand-file-name
                    (format "%s_%s.png" buffer-prefix timestamp)
                    "~/Pictures/Screenshots/"))
          (dir (file-name-directory filename)))
@@ -159,9 +159,9 @@
                          (buffer-string))))
         (kill-new image-data))
       ;; Also copy to system clipboard
-      (call-process "xclip" nil 0 nil 
-                    "-selection" "clipboard" 
-                    "-t" "image/png" 
+      (call-process "xclip" nil 0 nil
+                    "-selection" "clipboard"
+                    "-t" "image/png"
                     "-i" filename)
       (message "Screenshot saved to %s and added to kill-ring" filename))))
 
@@ -170,7 +170,7 @@
   (interactive)
   (let* ((buffer-prefix (my/get-buffer-screenshot-name))
          (timestamp (format-time-string "%Y-%m-%d_%H-%M-%S"))
-         (filename (expand-file-name 
+         (filename (expand-file-name
                    (format "%s_%s_selection.png" buffer-prefix timestamp)
                    "~/Pictures/Screenshots/"))
          (dir (file-name-directory filename)))
@@ -189,9 +189,9 @@
                          (buffer-string))))
         (kill-new image-data))
       ;; Also copy to system clipboard
-      (call-process "xclip" nil 0 nil 
-                    "-selection" "clipboard" 
-                    "-t" "image/png" 
+      (call-process "xclip" nil 0 nil
+                    "-selection" "clipboard"
+                    "-t" "image/png"
                     "-i" filename)
       (message "Screenshot saved to %s and added to kill-ring" filename))))
 
@@ -756,11 +756,10 @@ This function is added to the \=`ef-themes-post-load-hook'."
                   mode-line-buffer-identification
                   " "
                   mode-line-position
-                  " "
-                  vc-mode
-                  " "
                   mode-line-modes
                   mode-line-format-right-align
+                  vc-mode
+                  " "
                   mode-line-misc-info))
   (setq-default indent-tabs-mode nil
                 tab-width 2
