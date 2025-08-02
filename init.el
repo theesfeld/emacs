@@ -1041,7 +1041,7 @@ If buffer is modified, offer to save first."
   :hook (after-init . vertico-mode)
   :custom
   (vertico-cycle t)
-  (vertico-count 20)
+  (vertico-count 10)
   (vertico-resize nil)
   (vertico-preselect 'first)
   (vertico-sort-function #'vertico-sort-history-alpha)
