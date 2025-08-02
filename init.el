@@ -1199,19 +1199,6 @@ If buffer is modified, offer to save first."
    consult-theme :preview-key nil
    consult-bookmark consult-recent-file consult-xref
    :preview-key '(:debounce 0.4 any))
-  (defvar consult-source-hidden-buffer
-    `(:name "Hidden Buffer"
-            :narrow ?h
-            :category buffer
-            :face consult-buffer
-            :history buffer-name-history
-            :action ,#'consult--buffer-action
-            :items ,(lambda ()
-                      (consult--buffer-query
-                       :predicate (lambda (buf)
-                                    (string-prefix-p " "
-                                                     (buffer-name buf)))
-                       :sort 'visibility))))
   (add-to-list 'consult-buffer-sources 'consult-source-hidden-buffer
                'append)
   :bind
