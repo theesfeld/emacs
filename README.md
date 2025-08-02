@@ -1,5 +1,11 @@
 # Emacs Configuration
 
+[![Emacs](https://img.shields.io/badge/Emacs-30.1%2B-blueviolet.svg)](https://www.gnu.org/software/emacs/)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Language: Elisp](https://img.shields.io/badge/Language-Emacs%20Lisp-green.svg)](https://www.gnu.org/software/emacs/manual/html_node/elisp/)
+[![EXWM](https://img.shields.io/badge/WM-EXWM-orange.svg)](https://github.com/ch11ng/exwm)
+[![Straight.el](https://img.shields.io/badge/Package%20Manager-use--package-lightgrey.svg)](https://github.com/jwiegley/use-package)
+
 A comprehensive Emacs configuration with EXWM window manager, modern completion frameworks, and extensive development tools.
 
 ## Features
@@ -113,3 +119,15 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+---
+
+<div align="center">
+  <a href="https://www.gnu.org/">
+    <img src="https://www.gnu.org/graphics/gnu-head-sm.jpg" alt="GNU" height="80">
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://www.fsf.org/">
+    <img src="https://static.fsf.org/nosvn/associate/crm/5002438.png" alt="FSF Member" height="80">
+  </a>
+</div>
