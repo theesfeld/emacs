@@ -269,7 +269,17 @@ This function is added to the \=`ef-themes-post-load-hook'."
     (ef-themes-with-colors
       (custom-set-faces
        `(font-lock-comment-face ((,c :inherit italic :foreground ,comment)))
-       `(font-lock-variable-name-face ((,c :foreground ,variable))))))
+       `(font-lock-variable-name-face ((,c :foreground ,variable)))
+       `(vc-state-base ((,c :inherit italic :height 0.85)))
+       `(vc-up-to-date-state ((,c :inherit (vc-state-base font-lock-comment-face))))
+       `(vc-edited-state ((,c :inherit (vc-state-base font-lock-warning-face))))
+       `(vc-locally-added-state ((,c :inherit (vc-state-base font-lock-string-face))))
+       `(vc-locked-state ((,c :inherit (vc-state-base font-lock-function-name-face))))
+       `(vc-missing-state ((,c :inherit (vc-state-base font-lock-keyword-face))))
+       `(vc-needs-update-state ((,c :inherit (vc-state-base font-lock-variable-name-face))))
+       `(vc-removed-state ((,c :inherit (vc-state-base font-lock-keyword-face))))
+       `(vc-conflict-state ((,c :inherit (vc-state-base error))))
+       `(vc-unregistered-state ((,c :inherit (vc-state-base shadow)))))))
   (add-hook 'ef-themes-post-load-hook #'my-ef-themes-custom-faces)
   (add-hook 'ef-themes-post-load-hook #'my-ef-themes-mode-line))
 
