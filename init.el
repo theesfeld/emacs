@@ -144,21 +144,16 @@
                    (format "%s_%s.png" buffer-prefix timestamp)
                    "~/Pictures/Screenshots/"))
          (dir (file-name-directory filename)))
-    ;; Ensure directory exists
     (unless (file-exists-p dir)
       (make-directory dir t))
-    ;; Take screenshot - use 0 to discard output
     (call-process "scrot" nil 0 nil filename)
-    ;; Wait a moment for file to be written
     (sleep-for 0.1)
-    ;; Read the image data and add to kill-ring
     (when (file-exists-p filename)
       (let ((image-data (with-temp-buffer
                          (set-buffer-multibyte nil)
                          (insert-file-contents-literally filename)
                          (buffer-string))))
         (kill-new image-data))
-      ;; Also copy to system clipboard
       (call-process "xclip" nil 0 nil
                     "-selection" "clipboard"
                     "-t" "image/png"
@@ -174,21 +169,16 @@
                    (format "%s_%s_selection.png" buffer-prefix timestamp)
                    "~/Pictures/Screenshots/"))
          (dir (file-name-directory filename)))
-    ;; Ensure directory exists
     (unless (file-exists-p dir)
       (make-directory dir t))
-    ;; Take screenshot with selection - use 0 to discard output
     (call-process "scrot" nil 0 nil "-s" filename)
-    ;; Wait a moment for file to be written
     (sleep-for 0.1)
-    ;; Read the image data and add to kill-ring
     (when (file-exists-p filename)
       (let ((image-data (with-temp-buffer
                          (set-buffer-multibyte nil)
                          (insert-file-contents-literally filename)
                          (buffer-string))))
         (kill-new image-data))
-      ;; Also copy to system clipboard
       (call-process "xclip" nil 0 nil
                     "-selection" "clipboard"
                     "-t" "image/png"
