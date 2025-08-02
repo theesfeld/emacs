@@ -1187,6 +1187,13 @@ If buffer is modified, offer to save first."
   (consult-async-input-debounce 0.1)
   (consult-line-numbers-widen t)
   (consult-line-start-from-top t)
+  (consult-imenu-config
+   '((emacs-lisp-mode :toplevel "Packages"
+                      :types ((?f "Functions" font-lock-function-name-face)
+                              (?m "Macros" font-lock-function-name-face)
+                              (?p "Packages" font-lock-constant-face)
+                              (?t "Types" font-lock-type-face)
+                              (?v "Variables" font-lock-variable-name-face)))))
   :config
   (consult-customize
    consult-theme :preview-key nil
@@ -1246,6 +1253,9 @@ If buffer is modified, offer to save first."
    ("M-s" . consult-history)
    ("M-r" . consult-history))
   :init
+  (recentf-mode 1)
+(setq recentf-max-menu-items 200)
+(setq recentf-max-saved-items 200)
   (global-set-key [remap Info-search] #'consult-info)
   (global-set-key [remap isearch-forward] #'consult-line)
   (global-set-key [remap recentf-open-files] #'consult-recent-file))
