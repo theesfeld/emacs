@@ -322,38 +322,28 @@ This function is added to the \=`ef-themes-post-load-hook'."
     (defun my/exwm-randr-setup ()
       "Set up monitor configuration before EXWM starts."
       (let* ((xrandr-output (shell-command-to-string "xrandr"))
-             (connected-monitors
-              (seq-filter (lambda (line)
-                            (string-match-p " connected" line))
-                          (split-string xrandr-output "\n")))
-             (monitor-names
-              (mapcar (lambda (line)
-                        (car (split-string line)))
-                      connected-monitors))
-             (has-laptop (member "eDP-1" monitor-names))
-             (external-monitors (seq-filter (lambda (m) (not (string= m "eDP-1"))) monitor-names)))
-        (when (or has-laptop external-monitors)
-          (let ((workspace-plist '())
-                (workspace-num 0)
-                (num-external (length external-monitors)))
-            (if has-laptop
-                (setq workspace-plist (list workspace-num "eDP-1"))
-              (when external-monitors
-                (setq workspace-plist (list workspace-num (car external-monitors)))))
-            (when external-monitors
-              (if (= num-external 1)
-                  (dotimes (i 9)
-                    (setq workspace-num (1+ workspace-num))
-                    (setq workspace-plist (append workspace-plist
-                                                  (list workspace-num (car external-monitors)))))
-                (let ((monitor-index 0))
-                  (dotimes (i 9)
-                    (setq workspace-num (1+ workspace-num))
-                    (setq workspace-plist (append workspace-plist
-                                                  (list workspace-num
-                                                        (nth monitor-index external-monitors))))
-                    (setq monitor-index (mod (1+ monitor-index) num-external))))))
-            (setq exwm-randr-workspace-monitor-plist workspace-plist)))))
+             (monitor-lines (seq-filter (lambda (line)
+                                        (string-match-p " connected" line))
+                                      (split-string xrandr-output "\n")))
+             (monitor-names (mapcar (lambda (line)
+                                    (car (split-string line)))
+                                  monitor-lines))
+             (external-monitors (seq-filter (lambda (m) 
+                                            (not (string= m "eDP-1"))) 
+                                          monitor-names))
+             (primary-monitor (if external-monitors
+                                (car external-monitors)
+                              "eDP-1"))
+             workspace-plist)
+        ;; Workspace 0 always goes to eDP-1 if available, otherwise first external
+        (setq workspace-plist (list 0 (if (member "eDP-1" monitor-names)
+                                        "eDP-1"
+                                      primary-monitor)))
+        ;; Workspaces 1-9 go to primary external monitor or eDP-1 if no externals
+        (dotimes (i 9)
+          (setq workspace-plist (append workspace-plist
+                                      (list (1+ i) primary-monitor))))
+        (setq exwm-randr-workspace-monitor-plist workspace-plist)))
 
     (defun my/exwm-configure-monitors ()
       "Configure xrandr settings and refresh EXWM."
@@ -370,63 +360,31 @@ This function is added to the \=`ef-themes-post-load-hook'."
              (monitor-info (seq-filter #'identity monitor-info))
              (external-monitors (seq-filter (lambda (m) (not (string= (car m) "eDP-1"))) monitor-info))
              (has-laptop (seq-find (lambda (m) (string= (car m) "eDP-1")) monitor-info))
-             (laptop-width (if has-laptop (* 2880 0.67) 0))
+             (xrandr-cmd "xrandr")
              (current-x 0))
-        (when (and (executable-find "picom")
-                   (string-match-p "xe" (shell-command-to-string "lsmod | grep -E 'xe|i915'")))
-          (shell-command "pkill picom")
-          (sit-for 0.1))
         (cond
-         ((and has-laptop (>= (length external-monitors) 2))
-          (let* ((left-monitor (car external-monitors))
-                 (center-monitor (cadr external-monitors))
-                 (current-x 0))
-            (shell-command (format "xrandr --output %s --off --output %s --off --output eDP-1 --off"
-                                   (car left-monitor) (car center-monitor)))
-            (sit-for 0.3)
-            (shell-command (format "xrandr --output %s --auto --pos 0x0 --primary"
-                                   (car left-monitor)))
-            (setq current-x (cadr left-monitor))
-            (shell-command (format "xrandr --output %s --auto --pos %dx0"
-                                   (car center-monitor) current-x))
-            (setq current-x (+ current-x (cadr center-monitor)))
-            (shell-command (format "xrandr --output eDP-1 --auto --pos %dx0"
-                                   current-x))
-            (sit-for 0.1)
-            (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
-            (sit-for 0.1)
-            (shell-command "xrandr --output eDP-1 --transform none")
-            (when (executable-find "picom")
-              (start-process "picom" nil "picom" "-b"))))
-         ((and has-laptop (= (length external-monitors) 1))
-          (let* ((external-monitor (car external-monitors))
-                 (current-x 0))
-            (shell-command (format "xrandr --output %s --off --output eDP-1 --off"
-                                   (car external-monitor)))
-            (sit-for 1)
-            (shell-command (format "xrandr --output %s --auto --primary --pos 0x0"
-                                   (car external-monitor)))
-            (setq current-x (cadr external-monitor))
-            (shell-command (format "xrandr --output eDP-1 --auto --pos %dx0"
-                                   current-x))
-            (sit-for 0.1)
-            (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
-            (sit-for 0.1)
-            (shell-command "xrandr --output eDP-1 --transform none")
-            (when (executable-find "picom")
-              (start-process "picom" nil "picom" "-b"))))
-         ((and has-laptop (= (length external-monitors) 0))
+         ;; Only eDP-1 connected: scale it down
+         ((and has-laptop (null external-monitors))
           (shell-command "xrandr --output eDP-1 --scale 0.67x0.67 --primary --pos 0x0"))
+         ;; External monitors connected: build single xrandr command
+         (external-monitors
+          ;; First, configure external monitors left to right
+          (dolist (monitor external-monitors)
+            (setq xrandr-cmd (format "%s --output %s --auto --pos %dx0"
+                                   xrandr-cmd (car monitor) current-x))
+            ;; First external monitor is primary
+            (when (= current-x 0)
+              (setq xrandr-cmd (concat xrandr-cmd " --primary")))
+            (setq current-x (+ current-x (cadr monitor))))
+          ;; Then add eDP-1 to the right if present
+          (when has-laptop
+            (setq xrandr-cmd (format "%s --output eDP-1 --auto --scale 1x1 --pos %dx0"
+                                   xrandr-cmd current-x)))
+          ;; Execute single xrandr command
+          (shell-command xrandr-cmd))
+         ;; No monitors connected (shouldn't happen)
          (t
-          (let ((xrandr-cmd "xrandr"))
-            (when external-monitors
-              (dolist (monitor external-monitors)
-                (setq xrandr-cmd (format "%s --output %s --auto --pos %dx0"
-                                         xrandr-cmd (car monitor) current-x))
-                (when (= current-x 0)
-                  (setq xrandr-cmd (concat xrandr-cmd " --primary")))
-                (setq current-x (+ current-x (cadr monitor)))))
-            (shell-command xrandr-cmd))))))
+          (message "No monitors detected")))))
 
     (defun my/exwm-start-tray-apps ()
       "Start system tray applications with delays to ensure proper icon display."
