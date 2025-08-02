@@ -125,12 +125,14 @@
 
 (defun my/get-buffer-screenshot-name ()
   "Get meaningful name for screenshot from current buffer."
-  (let ((name (cond 
-               ((and (boundp 'exwm-class-name) exwm-class-name)
-                exwm-class-name)
-               ((string-match "\\*.*\\*" (buffer-name))
-                (format "emacs-%s" (substring (buffer-name) 1 -1)))
-               (t (buffer-name)))))
+  (let* ((orig-buffer (current-buffer))
+         (name (with-current-buffer orig-buffer
+                 (cond 
+                  ((and (boundp 'exwm-class-name) exwm-class-name)
+                   exwm-class-name)
+                  ((string-match "\\*.*\\*" (buffer-name))
+                   (format "emacs-%s" (substring (buffer-name) 1 -1)))
+                  (t (buffer-name))))))
     (my/sanitize-filename name)))
 
 (defun my/screenshot-to-kill-ring ()
@@ -145,16 +147,23 @@
     ;; Ensure directory exists
     (unless (file-exists-p dir)
       (make-directory dir t))
-    ;; Take screenshot
-    (call-process "scrot" nil nil nil filename)
-    ;; Add to kill-ring (file path for yanking)
-    (kill-new filename)
-    ;; Also copy to system clipboard
-    (call-process "xclip" nil nil nil 
-                  "-selection" "clipboard" 
-                  "-t" "image/png" 
-                  "-i" filename)
-    (message "Screenshot saved to %s and added to kill-ring" filename)))
+    ;; Take screenshot - use 0 to discard output
+    (call-process "scrot" nil 0 nil filename)
+    ;; Wait a moment for file to be written
+    (sleep-for 0.1)
+    ;; Read the image data and add to kill-ring
+    (when (file-exists-p filename)
+      (let ((image-data (with-temp-buffer
+                         (set-buffer-multibyte nil)
+                         (insert-file-contents-literally filename)
+                         (buffer-string))))
+        (kill-new image-data))
+      ;; Also copy to system clipboard
+      (call-process "xclip" nil 0 nil 
+                    "-selection" "clipboard" 
+                    "-t" "image/png" 
+                    "-i" filename)
+      (message "Screenshot saved to %s and added to kill-ring" filename))))
 
 (defun my/screenshot-selection-to-kill-ring ()
   "Take a partial screenshot, save to ~/Pictures/Screenshots and add to kill-ring."
@@ -168,16 +177,23 @@
     ;; Ensure directory exists
     (unless (file-exists-p dir)
       (make-directory dir t))
-    ;; Take screenshot with selection
-    (call-process "scrot" nil nil nil "-s" filename)
-    ;; Add to kill-ring (file path for yanking)
-    (kill-new filename)
-    ;; Also copy to system clipboard
-    (call-process "xclip" nil nil nil 
-                  "-selection" "clipboard" 
-                  "-t" "image/png" 
-                  "-i" filename)
-    (message "Screenshot saved to %s and added to kill-ring" filename)))
+    ;; Take screenshot with selection - use 0 to discard output
+    (call-process "scrot" nil 0 nil "-s" filename)
+    ;; Wait a moment for file to be written
+    (sleep-for 0.1)
+    ;; Read the image data and add to kill-ring
+    (when (file-exists-p filename)
+      (let ((image-data (with-temp-buffer
+                         (set-buffer-multibyte nil)
+                         (insert-file-contents-literally filename)
+                         (buffer-string))))
+        (kill-new image-data))
+      ;; Also copy to system clipboard
+      (call-process "xclip" nil 0 nil 
+                    "-selection" "clipboard" 
+                    "-t" "image/png" 
+                    "-i" filename)
+      (message "Screenshot saved to %s and added to kill-ring" filename))))
 
 (declare-function completion-preview-insert "completion-preview")
 
