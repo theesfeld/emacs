@@ -2609,7 +2609,7 @@ robust UI element disabling."
 (global-set-key (kbd "C-c l") 'org-store-link)
 (global-set-key (kbd "C-c a") 'org-agenda)
 (global-set-key (kbd "C-c c") 'org-capture)
-(global-set-key (kbd "C-c d") 'my/org-daily-review)
+(global-set-key (kbd "C-c o d") 'my/org-daily-review)
 (global-set-key (kbd "C-c t c") 'my/tramp-cleanup-current)
 (global-set-key (kbd "C-c t C") 'my/tramp-cleanup-all)
 (global-set-key (kbd "C-c d f") 'ediff-files)
