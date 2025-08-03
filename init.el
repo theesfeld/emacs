@@ -1464,13 +1464,13 @@ If buffer is modified, offer to save first."
    ("C-c r" . org-refile)
    ("C-c x" . org-archive-subtree-default))
   :custom
-  (org-directory "~/.org/")
+  (org-directory "~/org/")
   (org-default-notes-file (expand-file-name "inbox.org" org-directory))
-  (org-agenda-files '("~/.org/inbox.org"
-                      "~/.org/tasks.org"
-                      "~/.org/projects.org"
-                      "~/.org/someday.org"))
-  (org-archive-location "~/.org/archive.org::* From %s")
+  (org-agenda-files '("~/org/inbox.org"
+                      "~/org/tasks.org"
+                      "~/org/projects.org"
+                      "~/org/someday.org"))
+  (org-archive-location "~/org/archive.org::* From %s")
   (org-startup-indented t)
   (org-startup-folded 'content)
   (org-return-follows-link t)
@@ -1510,14 +1510,14 @@ If buffer is modified, offer to save first."
       ((agenda "" ((org-agenda-span 'day)))
        (todo "NEXT" ((org-agenda-overriding-header "Next Actions")))
        (todo "TODO" ((org-agenda-overriding-header "Inbox")
-                     (org-agenda-files '("~/.org/inbox.org"))))))
+                     (org-agenda-files '("~/org/inbox.org"))))))
      ("w" "Weekly Review"
       ((agenda "" ((org-agenda-span 'week)))
        (todo "TODO|NEXT|WAITING" ((org-agenda-overriding-header "All Open Items")))
        (todo "DONE" ((org-agenda-overriding-header "Completed This Week")
                      (org-agenda-skip-function '(org-agenda-skip-entry-if 'notregexp "CLOSED: \\[.*\\]"))))))
      ("n" "Next Actions" todo "NEXT")
-     ("i" "Inbox" todo "TODO" ((org-agenda-files '("~/.org/inbox.org"))))))
+     ("i" "Inbox" todo "TODO" ((org-agenda-files '("~/org/inbox.org"))))))
   (org-export-with-broken-links t)
   (org-html-validation-link nil)
   (org-latex-pdf-process
@@ -1531,7 +1531,7 @@ If buffer is modified, offer to save first."
     "Open inbox and agenda for daily review."
     (interactive)
     (delete-other-windows)
-    (find-file "~/.org/inbox.org")
+    (find-file "~/org/inbox.org")
     (split-window-horizontally)
     (other-window 1)
     (org-agenda nil "d")))
