@@ -1456,26 +1456,68 @@ If buffer is modified, offer to save first."
 (use-package org
   :ensure nil
   :defer t
-  :commands (org-mode org-agenda org-capture org-store-link)
+  :commands (org-mode org-agenda org-capture org-store-link org-refile)
   :bind
   (("C-c l" . org-store-link)
    ("C-c a" . org-agenda)
-   ("C-c c" . org-capture))
+   ("C-c c" . org-capture)
+   ("C-c r" . org-refile)
+   ("C-c x" . org-archive-subtree-default))
   :custom
-  (org-directory "~/Documents/notes/")
+  (org-directory "~/.org/")
+  (org-default-notes-file (expand-file-name "inbox.org" org-directory))
+  (org-agenda-files '("~/.org/inbox.org"
+                      "~/.org/tasks.org"
+                      "~/.org/projects.org"
+                      "~/.org/someday.org"))
+  (org-archive-location "~/.org/archive.org::* From %s")
   (org-startup-indented t)
-  (org-startup-folded 'show)
+  (org-startup-folded 'content)
   (org-return-follows-link t)
   (org-log-done 'time)
+  (org-log-into-drawer t)
   (org-hide-emphasis-markers t)
-  (org-agenda-files (list org-directory))
   (org-todo-keywords
-   '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)" "CANCELED(c@)")))
+   '((sequence "TODO(t)" "NEXT(n)" "WAITING(w@)" "|" "DONE(d!)" "CANCELLED(c@)")))
+  (org-todo-keyword-faces
+   '(("TODO" . org-warning)
+     ("NEXT" . (:foreground "blue" :weight bold))
+     ("WAITING" . (:foreground "orange" :weight bold))
+     ("DONE" . org-done)
+     ("CANCELLED" . (:foreground "gray" :weight bold))))
   (org-capture-templates
-   '(("t" "Todo" entry (file "todo.org")
-      "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n")
-     ("n" "Note" entry (file "notes.org")
-      "* %? :NOTE:\n%U\n")))
+   '(("t" "Task" entry (file "inbox.org")
+      "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n%i\n%a")
+     ("n" "Note" entry (file "inbox.org")
+      "* %? :NOTE:\n:PROPERTIES:\n:CREATED: %U\n:END:\n%i")
+     ("m" "Meeting" entry (file "inbox.org")
+      "* MEETING with %? :MEETING:\n:PROPERTIES:\n:CREATED: %U\n:END:\n** Date: %^{Date}U\n** Participants:\n   - %^{Participants}\n** Agenda:\n   - %^{Agenda items}\n** Notes:\n   - \n** Action Items:\n   - [ ] \n** Next Steps:\n   - ")
+     ("p" "Phone Call" entry (file "inbox.org")
+      "* PHONE %? :PHONE:\n:PROPERTIES:\n:CREATED: %U\n:END:\n** Who: %^{Who}\n** Notes:\n   - \n** Follow-up:\n   - [ ] ")
+     ("i" "Idea" entry (file "inbox.org")
+      "* %? :IDEA:\n:PROPERTIES:\n:CREATED: %U\n:END:\n%i")))
+  (org-refile-targets '((nil :maxlevel . 3)
+                        (org-agenda-files :maxlevel . 3)))
+  (org-refile-use-outline-path 'file)
+  (org-outline-path-complete-in-steps nil)
+  (org-refile-allow-creating-parent-nodes 'confirm)
+  (org-agenda-span 'day)
+  (org-agenda-start-with-log-mode nil)
+  (org-agenda-window-setup 'current-window)
+  (org-agenda-restore-windows-after-quit t)
+  (org-agenda-custom-commands
+   '(("d" "Daily Review"
+      ((agenda "" ((org-agenda-span 'day)))
+       (todo "NEXT" ((org-agenda-overriding-header "Next Actions")))
+       (todo "TODO" ((org-agenda-overriding-header "Inbox")
+                     (org-agenda-files '("~/.org/inbox.org"))))))
+     ("w" "Weekly Review"
+      ((agenda "" ((org-agenda-span 'week)))
+       (todo "TODO|NEXT|WAITING" ((org-agenda-overriding-header "All Open Items")))
+       (todo "DONE" ((org-agenda-overriding-header "Completed This Week")
+                     (org-agenda-skip-function '(org-agenda-skip-entry-if 'notregexp "CLOSED: \\[.*\\]"))))))
+     ("n" "Next Actions" todo "NEXT")
+     ("i" "Inbox" todo "TODO" ((org-agenda-files '("~/.org/inbox.org"))))))
   (org-export-with-broken-links t)
   (org-html-validation-link nil)
   (org-latex-pdf-process
@@ -1483,7 +1525,16 @@ If buffer is modified, offer to save first."
      "pdflatex -interaction nonstopmode -output-directory %o %f"
      "pdflatex -interaction nonstopmode -output-directory %o %f"))
   :hook
-  (org-mode . visual-line-mode))
+  (org-mode . visual-line-mode)
+  :config
+  (defun my/org-daily-review ()
+    "Open inbox and agenda for daily review."
+    (interactive)
+    (delete-other-windows)
+    (find-file "~/.org/inbox.org")
+    (split-window-horizontally)
+    (other-window 1)
+    (org-agenda nil "d")))
 
 (with-eval-after-load 'ox-latex
   (add-to-list 'org-latex-classes
@@ -1686,73 +1737,6 @@ If buffer is modified, offer to save first."
      (pdf-view-fit-page-to-window)
      (display-line-numbers-mode -1)
      (hl-line-mode -1))))
-
-(use-package denote
-  :ensure t
-  :defer t
-  :hook
-  (
-   (text-mode . denote-fontify-links-mode-maybe)
-   (dired-mode . denote-dired-mode))
-  :bind
-  (:map
-   global-map
-   ("C-c n n" . denote)
-   ("C-c n j" . denote-journal-new-or-existing-entry)
-   ("C-c n d" . denote-dired)
-   ("C-c n g" . denote-grep)
-   ("C-c n l" . denote-link)
-   ("C-c n L" . denote-add-links)
-   ("C-c n b" . denote-backlinks)
-   ("C-c n q c" . denote-query-contents-link)
-   ("C-c n q f" . denote-query-filenames-link)
-   ("C-c n r" . denote-rename-file)
-   ("C-c n R" . denote-rename-file-using-front-matter)
-   :map
-   dired-mode-map
-   ("C-c C-d C-i" . denote-dired-link-marked-notes)
-   ("C-c C-d C-r" . denote-dired-rename-files)
-   ("C-c C-d C-k" . denote-dired-rename-marked-files-with-keywords)
-   ("C-c C-d C-R"
-    .
-    denote-dired-rename-marked-files-using-front-matter))
-  :config
-  (setq denote-directory (expand-file-name "~/Documents/notes/"))
-  (setq denote-save-buffers nil)
-  (setq denote-known-keywords
-        '("emacs" "philosophy" "politics" "economics"))
-  (setq denote-infer-keywords t)
-  (setq denote-sort-keywords t)
-  (setq denote-prompts '(title keywords))
-  (setq denote-excluded-directories-regexp nil)
-  (setq denote-excluded-keywords-regexp nil)
-  (setq denote-rename-confirmations
-        '(rewrite-front-matter modify-file-name))
-  (setq denote-date-prompt-use-org-read-date t)
-  (denote-rename-buffer-mode 1))
-
-(use-package consult-denote
-  :ensure t
-  :after denote
-  :bind
-  (("C-c n f" . consult-denote-find) ("C-c n g" . consult-denote-grep))
-  :config (consult-denote-mode 1))
-
-(use-package denote-journal
-  :ensure t
-  :after denote
-  :commands
-  (denote-journal-new-entry
-   denote-journal-new-or-existing-entry
-   denote-journal-link-or-create-entry)
-  :hook (calendar-mode . denote-journal-calendar-mode)
-  :config
-  (setq denote-journal-directory
-        (expand-file-name "journal" denote-directory))
-  (setq denote-journal-keyword "journal")
-  (setq denote-journal-title-format 'day-date-month-year))
-
-(use-package denote-org :ensure t :after denote :defer t)
 
 (use-package treesit
   :ensure nil
@@ -2611,19 +2595,21 @@ robust UI element disabling."
 (global-set-key (kbd "C-c j") 'journalctl)
 (global-set-key (kbd "C-c P") 'pass)
 (global-set-key (kbd "C-c E") 'emoji-search)
-(global-set-key (kbd "C-c n n") 'denote)
-(global-set-key (kbd "C-c n j") 'denote-journal-new-or-existing-entry)
-(global-set-key (kbd "C-c n d") 'denote-dired)
-(global-set-key (kbd "C-c n f") 'consult-denote-find)
-(global-set-key (kbd "C-c n g") 'consult-denote-grep)
-(global-set-key (kbd "C-c n l") 'denote-link)
-(global-set-key (kbd "C-c n L") 'denote-add-links)
-(global-set-key (kbd "C-c n b") 'denote-backlinks)
-(global-set-key (kbd "C-c n r") 'denote-rename-file)
-(global-set-key (kbd "C-c n R") 'denote-rename-file-using-front-matter)
+;; Denote keybindings (commented out - replaced with org-mode workflow)
+;; (global-set-key (kbd "C-c n n") 'denote)
+;; (global-set-key (kbd "C-c n j") 'denote-journal-new-or-existing-entry)
+;; (global-set-key (kbd "C-c n d") 'denote-dired)
+;; (global-set-key (kbd "C-c n f") 'consult-denote-find)
+;; (global-set-key (kbd "C-c n g") 'consult-denote-grep)
+;; (global-set-key (kbd "C-c n l") 'denote-link)
+;; (global-set-key (kbd "C-c n L") 'denote-add-links)
+;; (global-set-key (kbd "C-c n b") 'denote-backlinks)
+;; (global-set-key (kbd "C-c n r") 'denote-rename-file)
+;; (global-set-key (kbd "C-c n R") 'denote-rename-file-using-front-matter)
 (global-set-key (kbd "C-c l") 'org-store-link)
 (global-set-key (kbd "C-c a") 'org-agenda)
 (global-set-key (kbd "C-c c") 'org-capture)
+(global-set-key (kbd "C-c d") 'my/org-daily-review)
 (global-set-key (kbd "C-c t c") 'my/tramp-cleanup-current)
 (global-set-key (kbd "C-c t C") 'my/tramp-cleanup-all)
 (global-set-key (kbd "C-c d f") 'ediff-files)
