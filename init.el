@@ -1466,11 +1466,11 @@ If buffer is modified, offer to save first."
   :custom
   (org-directory "~/org/")
   (org-default-notes-file (expand-file-name "inbox.org" org-directory))
-  (org-agenda-files '("~/org/inbox.org"
-                      "~/org/tasks.org"
-                      "~/org/projects.org"
-                      "~/org/someday.org"))
-  (org-archive-location "~/org/archive.org::* From %s")
+  (org-agenda-files (list (expand-file-name "inbox.org" org-directory)
+                          (expand-file-name "tasks.org" org-directory)
+                          (expand-file-name "projects.org" org-directory)
+                          (expand-file-name "someday.org" org-directory)))
+  (org-archive-location (concat (expand-file-name "archive.org" org-directory) "::* From %s"))
   (org-startup-indented t)
   (org-startup-folded 'content)
   (org-return-follows-link t)
