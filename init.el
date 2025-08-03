@@ -631,6 +631,7 @@ This function is added to the \=`ef-themes-post-load-hook'."
   (completions-detailed t)
   (completions-format 'one-column)
   (completions-max-height 15)
+  (use-short-answers t)
   :config
   (setq user-full-name "TJ"
         user-mail-address "tj@emacs.su"
