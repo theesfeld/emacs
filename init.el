@@ -867,12 +867,13 @@ This function is added to the \=`ef-themes-post-load-hook'."
 
 (use-package diminish
   :ensure t
-  :defer t
+  :demand t
   :config
   (diminish 'eldoc-mode)
   (diminish 'abbrev-mode)
   (diminish 'visual-line-mode)
-  (diminish 'subword-mode))
+  (diminish 'subword-mode)
+  (diminish 'auto-fill-function))
 
 (defun my/flash-mode-line ()
   "Flash the mode line as a visual bell."
@@ -1117,29 +1118,26 @@ If buffer is modified, offer to save first."
 
 (use-package autorevert
   :ensure nil
-  :diminish (auto-revert-mode . "")
+  :diminish auto-revert-mode
   :hook (after-init . global-auto-revert-mode)
   :custom
   (auto-revert-verbose nil)
   (global-auto-revert-non-file-buffers t))
 
-(use-package smartparens
-  :ensure t
-  :defer t
-  :diminish
-  :hook ((prog-mode . smartparens-mode)
-         (text-mode . smartparens-mode))
+(use-package elec-pair
+  :ensure nil
+  :hook ((prog-mode . electric-pair-mode)
+         (text-mode . electric-pair-mode))
   :config
-  (require 'smartparens-config)
-  (add-hook 'minibuffer-setup-hook #'turn-off-smartparens-mode)
-  :bind
-  (:map smartparens-mode-map
-        ("C-M-f" . sp-forward-sexp)
-        ("C-M-b" . sp-backward-sexp)
-        ("C-M-u" . sp-backward-up-sexp)
-        ("C-M-d" . sp-down-sexp)
-        ("C-M-n" . sp-next-sexp)
-        ("C-M-p" . sp-previous-sexp)))
+  (setq electric-pair-preserve-balance t
+        electric-pair-delete-adjacent-pairs t
+        electric-pair-skip-self 'electric-pair-conservative-skip
+        electric-pair-skip-whitespace nil
+        electric-pair-skip-whitespace-chars '(?\t ?\n ?\r))
+  (add-hook 'minibuffer-setup-hook
+            (lambda ()
+              (when (and (boundp 'electric-pair-mode) electric-pair-mode)
+                (electric-pair-local-mode -1)))))
 
 (use-package vertico
   :ensure t
@@ -1413,7 +1411,7 @@ If buffer is modified, offer to save first."
 (use-package flyspell
   :ensure nil
   :defer t
-  :diminish (flyspell-mode . " ✍")
+  :diminish
   :hook
   ((text-mode . flyspell-mode)
    (org-mode . flyspell-mode)
@@ -2069,6 +2067,7 @@ robust UI element disabling."
 (use-package sly
   :ensure t
   :defer t
+  :diminish
   :mode ("\\.lisp\\'" . lisp-mode)
   :custom
   (inferior-lisp-program "sbcl")
@@ -2307,47 +2306,51 @@ robust UI element disabling."
     (interactive)
     (journalctl "-S today")))
 
-(use-package pulsar
-  :ensure t
-  :defer 1
-  :custom
-  (pulsar-pulse t)
-  (pulsar-delay 0.055)
-  (pulsar-iterations 10)
-  (pulsar-face 'pulsar-green)
-  (pulsar-highlight-face 'pulsar-yellow)
+(use-package pulse
+  :ensure nil
   :config
-  (dolist (func '(recenter-top-bottom
-                  reposition-window
-                  bookmark-jump
-                  other-window
-                  delete-window
-                  delete-other-windows
-                  forward-page
-                  backward-page
-                  scroll-up-command
-                  scroll-down-command
-                  windmove-left
-                  windmove-right
-                  windmove-up
-                  windmove-down
-                  winner-undo
-                  winner-redo
-                  tab-next
-                  tab-previous
-                  org-next-visible-heading
-                  org-previous-visible-heading
-                  outline-next-visible-heading
-                  outline-previous-visible-heading))
-    (add-to-list 'pulsar-pulse-functions func))
-  :hook
-  ((minibuffer-setup . pulsar-pulse-line)
-   (consult-after-jump . pulsar-recenter-middle)
-   (consult-after-jump . pulsar-reveal-entry)
-   (imenu-after-jump . pulsar-recenter-middle)
-   (imenu-after-jump . pulsar-reveal-entry))
-  :init
-  (pulsar-global-mode 1))
+  (setq pulse-iterations 10)
+  (setq pulse-delay 0.055)
+  (set-face-attribute 'pulse-highlight-start-face nil
+                      :background "#51afef")
+  (set-face-attribute 'pulse-highlight-face nil
+                      :background "#51afef")
+  
+  (defun my/pulse-line (&rest _)
+    "Pulse the current line."
+    (pulse-momentary-highlight-one-line (point)))
+  
+  (defun my/pulse-region (start end &rest _)
+    "Pulse region between START and END."
+    (pulse-momentary-highlight-region start end))
+  
+  (dolist (cmd '(recenter-top-bottom
+                 reposition-window
+                 other-window
+                 delete-window
+                 delete-other-windows
+                 forward-page
+                 backward-page
+                 scroll-up-command
+                 scroll-down-command
+                 windmove-left
+                 windmove-right
+                 windmove-up
+                 windmove-down
+                 winner-undo
+                 winner-redo))
+    (advice-add cmd :after #'my/pulse-line))
+  
+  (with-eval-after-load 'bookmark
+    (advice-add 'bookmark-jump :after #'my/pulse-line))
+  
+  (with-eval-after-load 'consult
+    (add-hook 'consult-after-jump-hook #'my/pulse-line))
+  
+  (with-eval-after-load 'imenu
+    (advice-add 'imenu :after #'my/pulse-line))
+  
+  (add-hook 'minibuffer-setup-hook #'my/pulse-line))
 
 (use-package volatile-highlights
   :ensure t
