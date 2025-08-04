@@ -1478,9 +1478,12 @@ If buffer is modified, offer to save first."
   (:map eglot-mode-map
         ("C-c l s" . consult-eglot-symbols)))
 
+;;; Copilot
 (use-package copilot
   :ensure t
-  :vc (:url "https://github.com/copilot-emacs/copilot.el")
+  :vc (:url "https://github.com/copilot-emacs/copilot.el"
+       :rev :newest
+       :branch "main")
   :defer t
   :diminish
   :hook (prog-mode . copilot-mode)
@@ -1494,6 +1497,7 @@ If buffer is modified, offer to save first."
         ("M-p" . copilot-previous-completion))
   :custom
   (copilot-indent-offset-warning-disable t)
+  (copilot-idle-delay 0.25)
   :config
   (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode . 2)))
 
