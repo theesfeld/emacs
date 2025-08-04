@@ -1478,9 +1478,8 @@ If buffer is modified, offer to save first."
   (:map eglot-mode-map
         ("C-c l s" . consult-eglot-symbols)))
 
-;;; Copilot
 (use-package copilot
-  :ensure (:host github :repo "copilot-emacs/copilot.el")
+  :ensure (:url "https://github.com/copilot-emacs/copilot.el")
   :defer t
   :diminish
   :hook (prog-mode . copilot-mode)
@@ -2334,15 +2333,15 @@ robust UI element disabling."
                       :background "#51afef")
   (set-face-attribute 'pulse-highlight-face nil
                       :background "#51afef")
-  
+
   (defun my/pulse-line (&rest _)
     "Pulse the current line."
     (pulse-momentary-highlight-one-line (point)))
-  
+
   (defun my/pulse-region (start end &rest _)
     "Pulse region between START and END."
     (pulse-momentary-highlight-region start end))
-  
+
   (dolist (cmd '(recenter-top-bottom
                  reposition-window
                  other-window
@@ -2359,16 +2358,16 @@ robust UI element disabling."
                  winner-undo
                  winner-redo))
     (advice-add cmd :after #'my/pulse-line))
-  
+
   (with-eval-after-load 'bookmark
     (advice-add 'bookmark-jump :after #'my/pulse-line))
-  
+
   (with-eval-after-load 'consult
     (add-hook 'consult-after-jump-hook #'my/pulse-line))
-  
+
   (with-eval-after-load 'imenu
     (advice-add 'imenu :after #'my/pulse-line))
-  
+
   (add-hook 'minibuffer-setup-hook #'my/pulse-line))
 
 (use-package volatile-highlights
