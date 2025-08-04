@@ -1479,7 +1479,8 @@ If buffer is modified, offer to save first."
         ("C-c l s" . consult-eglot-symbols)))
 
 (use-package copilot
-  :ensure (:url "https://github.com/copilot-emacs/copilot.el")
+  :ensure t
+  :vc (:url "https://github.com/copilot-emacs/copilot.el")
   :defer t
   :diminish
   :hook (prog-mode . copilot-mode)
