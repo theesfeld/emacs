@@ -117,6 +117,74 @@
   (interactive)
   (text-scale-decrease 1))
 
+(defun my/sanitize-filename (name)
+  "Convert NAME to safe filename by replacing invalid characters."
+  (replace-regexp-in-string
+   "[/\\:*?\"<>|]" "_"
+   (replace-regexp-in-string "^[*]\\|[*]$" "" name)))
+
+(defun my/get-buffer-screenshot-name ()
+  "Get meaningful name for screenshot from current buffer."
+  (let* ((orig-buffer (current-buffer))
+         (name (with-current-buffer orig-buffer
+                 (cond
+                  ((and (boundp 'exwm-class-name) exwm-class-name)
+                   exwm-class-name)
+                  ((string-match "\\*.*\\*" (buffer-name))
+                   (format "emacs-%s" (substring (buffer-name) 1 -1)))
+                  (t (buffer-name))))))
+    (my/sanitize-filename name)))
+
+(defun my/screenshot-to-kill-ring ()
+  "Take a screenshot, save to ~/Pictures/Screenshots and add to kill-ring."
+  (interactive)
+  (let* ((buffer-prefix (my/get-buffer-screenshot-name))
+         (timestamp (format-time-string "%Y-%m-%d_%H-%M-%S"))
+         (filename (expand-file-name
+                   (format "%s_%s.png" buffer-prefix timestamp)
+                   "~/Pictures/Screenshots/"))
+         (dir (file-name-directory filename)))
+    (unless (file-exists-p dir)
+      (make-directory dir t))
+    (call-process "scrot" nil 0 nil filename)
+    (sleep-for 0.1)
+    (when (file-exists-p filename)
+      (let ((image-data (with-temp-buffer
+                         (set-buffer-multibyte nil)
+                         (insert-file-contents-literally filename)
+                         (buffer-string))))
+        (kill-new image-data))
+      (call-process "xclip" nil 0 nil
+                    "-selection" "clipboard"
+                    "-t" "image/png"
+                    "-i" filename)
+      (message "Screenshot saved to %s and added to kill-ring" filename))))
+
+(defun my/screenshot-selection-to-kill-ring ()
+  "Take a partial screenshot, save to ~/Pictures/Screenshots and add to kill-ring."
+  (interactive)
+  (let* ((buffer-prefix (my/get-buffer-screenshot-name))
+         (timestamp (format-time-string "%Y-%m-%d_%H-%M-%S"))
+         (filename (expand-file-name
+                   (format "%s_%s_selection.png" buffer-prefix timestamp)
+                   "~/Pictures/Screenshots/"))
+         (dir (file-name-directory filename)))
+    (unless (file-exists-p dir)
+      (make-directory dir t))
+    (call-process "scrot" nil 0 nil "-s" filename)
+    (sleep-for 0.1)
+    (when (file-exists-p filename)
+      (let ((image-data (with-temp-buffer
+                         (set-buffer-multibyte nil)
+                         (insert-file-contents-literally filename)
+                         (buffer-string))))
+        (kill-new image-data))
+      (call-process "xclip" nil 0 nil
+                    "-selection" "clipboard"
+                    "-t" "image/png"
+                    "-i" filename)
+      (message "Screenshot saved to %s and added to kill-ring" filename))))
+
 (declare-function completion-preview-insert "completion-preview")
 
 (declare-function completion-preview-next-candidate
@@ -191,7 +259,17 @@ This function is added to the \=`ef-themes-post-load-hook'."
     (ef-themes-with-colors
       (custom-set-faces
        `(font-lock-comment-face ((,c :inherit italic :foreground ,comment)))
-       `(font-lock-variable-name-face ((,c :foreground ,variable))))))
+       `(font-lock-variable-name-face ((,c :foreground ,variable)))
+       `(vc-state-base ((,c :inherit italic :height 0.85)))
+       `(vc-up-to-date-state ((,c :inherit (vc-state-base font-lock-comment-face))))
+       `(vc-edited-state ((,c :inherit (vc-state-base font-lock-warning-face))))
+       `(vc-locally-added-state ((,c :inherit (vc-state-base font-lock-string-face))))
+       `(vc-locked-state ((,c :inherit (vc-state-base font-lock-function-name-face))))
+       `(vc-missing-state ((,c :inherit (vc-state-base font-lock-keyword-face))))
+       `(vc-needs-update-state ((,c :inherit (vc-state-base font-lock-variable-name-face))))
+       `(vc-removed-state ((,c :inherit (vc-state-base font-lock-keyword-face))))
+       `(vc-conflict-state ((,c :inherit (vc-state-base error))))
+       `(vc-unregistered-state ((,c :inherit (vc-state-base shadow)))))))
   (add-hook 'ef-themes-post-load-hook #'my-ef-themes-custom-faces)
   (add-hook 'ef-themes-post-load-hook #'my-ef-themes-mode-line))
 
@@ -276,8 +354,8 @@ This function is added to the \=`ef-themes-post-load-hook'."
              . desktop-environment-brightness-increment)
             ([XF86MonBrightnessDown]
              . desktop-environment-brightness-decrement)
-            ([print] . desktop-environment-screenshot)
-            ([S-print] . desktop-environment-screenshot-part)))
+            ([print] . my/screenshot-to-kill-ring)
+            ([S-print] . my/screenshot-selection-to-kill-ring)))
     (setq exwm-input-simulation-keys
           '(([?\C-b] . [left])
             ([?\C-f] . [right])
@@ -320,40 +398,46 @@ This function is added to the \=`ef-themes-post-load-hook'."
      (setq exwm-systemtray-workspace nil)
 
     (defun my/exwm-randr-setup ()
-      "Set up monitor configuration before EXWM starts."
+      "Set up monitor configuration with eDP-1 as workspace 0, externals left to right."
       (let* ((xrandr-output (shell-command-to-string "xrandr"))
-             (connected-monitors
-              (seq-filter (lambda (line)
-                            (string-match-p " connected" line))
-                          (split-string xrandr-output "\n")))
-             (monitor-names
-              (mapcar (lambda (line)
-                        (car (split-string line)))
-                      connected-monitors))
-             (has-laptop (member "eDP-1" monitor-names))
-             (external-monitors (seq-filter (lambda (m) (not (string= m "eDP-1"))) monitor-names)))
-        (when (or has-laptop external-monitors)
-          (let ((workspace-plist '())
-                (workspace-num 0)
-                (num-external (length external-monitors)))
-            (if has-laptop
-                (setq workspace-plist (list workspace-num "eDP-1"))
-              (when external-monitors
-                (setq workspace-plist (list workspace-num (car external-monitors)))))
-            (when external-monitors
-              (if (= num-external 1)
-                  (dotimes (i 9)
-                    (setq workspace-num (1+ workspace-num))
-                    (setq workspace-plist (append workspace-plist
-                                                  (list workspace-num (car external-monitors)))))
-                (let ((monitor-index 0))
-                  (dotimes (i 9)
-                    (setq workspace-num (1+ workspace-num))
-                    (setq workspace-plist (append workspace-plist
-                                                  (list workspace-num
-                                                        (nth monitor-index external-monitors))))
-                    (setq monitor-index (mod (1+ monitor-index) num-external))))))
-            (setq exwm-randr-workspace-monitor-plist workspace-plist)))))
+             (monitor-lines (seq-filter (lambda (line)
+                                        (string-match-p " connected" line))
+                                      (split-string xrandr-output "\n")))
+             (monitor-info (mapcar (lambda (line)
+                                   (when (string-match "\\([^ ]+\\) connected.*\\+\\([0-9]+\\)\\+" line)
+                                     (cons (match-string 1 line)
+                                           (string-to-number (match-string 2 line)))))
+                                 monitor-lines))
+             (monitor-info (seq-filter #'identity monitor-info))
+             (external-monitors (seq-sort (lambda (a b)
+                                          (< (cdr a) (cdr b)))
+                                        (seq-filter (lambda (m)
+                                                    (not (string= (car m) "eDP-1")))
+                                                  monitor-info)))
+             (external-monitor-names (mapcar #'car external-monitors))
+             (has-laptop (assoc "eDP-1" monitor-info))
+             workspace-plist)
+        (when has-laptop
+          (setq workspace-plist (list 0 "eDP-1")))
+        (let ((workspace-num (if has-laptop 1 0))
+              (monitor-index 0))
+          (while (and (< workspace-num 10) (< monitor-index (length external-monitor-names)))
+            (setq workspace-plist (append workspace-plist
+                                        (list workspace-num (nth monitor-index external-monitor-names))))
+            (setq workspace-num (1+ workspace-num))
+            (setq monitor-index (1+ monitor-index))))
+        (let ((all-monitor-names (if has-laptop
+                                   (cons "eDP-1" external-monitor-names)
+                                 external-monitor-names))
+              (num-monitors (+ (if has-laptop 1 0) (length external-monitor-names))))
+          (when (and (> num-monitors 0) (< (/ (length workspace-plist) 2) 10))
+            (while (< (/ (length workspace-plist) 2) 10)
+              (let* ((workspace-num (/ (length workspace-plist) 2))
+                     (monitor-index (mod workspace-num num-monitors))
+                     (monitor-name (nth monitor-index all-monitor-names)))
+                (setq workspace-plist (append workspace-plist
+                                            (list workspace-num monitor-name)))))))
+        (setq exwm-randr-workspace-monitor-plist workspace-plist)))
 
     (defun my/exwm-configure-monitors ()
       "Configure xrandr settings and refresh EXWM."
@@ -370,63 +454,24 @@ This function is added to the \=`ef-themes-post-load-hook'."
              (monitor-info (seq-filter #'identity monitor-info))
              (external-monitors (seq-filter (lambda (m) (not (string= (car m) "eDP-1"))) monitor-info))
              (has-laptop (seq-find (lambda (m) (string= (car m) "eDP-1")) monitor-info))
-             (laptop-width (if has-laptop (* 2880 0.67) 0))
+             (xrandr-cmd "xrandr")
              (current-x 0))
-        (when (and (executable-find "picom")
-                   (string-match-p "xe" (shell-command-to-string "lsmod | grep -E 'xe|i915'")))
-          (shell-command "pkill picom")
-          (sit-for 0.1))
         (cond
-         ((and has-laptop (>= (length external-monitors) 2))
-          (let* ((left-monitor (car external-monitors))
-                 (center-monitor (cadr external-monitors))
-                 (current-x 0))
-            (shell-command (format "xrandr --output %s --off --output %s --off --output eDP-1 --off"
-                                   (car left-monitor) (car center-monitor)))
-            (sit-for 0.3)
-            (shell-command (format "xrandr --output %s --auto --pos 0x0 --primary"
-                                   (car left-monitor)))
-            (setq current-x (cadr left-monitor))
-            (shell-command (format "xrandr --output %s --auto --pos %dx0"
-                                   (car center-monitor) current-x))
-            (setq current-x (+ current-x (cadr center-monitor)))
-            (shell-command (format "xrandr --output eDP-1 --auto --pos %dx0"
-                                   current-x))
-            (sit-for 0.1)
-            (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
-            (sit-for 0.1)
-            (shell-command "xrandr --output eDP-1 --transform none")
-            (when (executable-find "picom")
-              (start-process "picom" nil "picom" "-b"))))
-         ((and has-laptop (= (length external-monitors) 1))
-          (let* ((external-monitor (car external-monitors))
-                 (current-x 0))
-            (shell-command (format "xrandr --output %s --off --output eDP-1 --off"
-                                   (car external-monitor)))
-            (sit-for 1)
-            (shell-command (format "xrandr --output %s --auto --primary --pos 0x0"
-                                   (car external-monitor)))
-            (setq current-x (cadr external-monitor))
-            (shell-command (format "xrandr --output eDP-1 --auto --pos %dx0"
-                                   current-x))
-            (sit-for 0.1)
-            (shell-command "xrandr --output eDP-1 --transform 1.001,0,0,0,1.001,0,0,0,1")
-            (sit-for 0.1)
-            (shell-command "xrandr --output eDP-1 --transform none")
-            (when (executable-find "picom")
-              (start-process "picom" nil "picom" "-b"))))
-         ((and has-laptop (= (length external-monitors) 0))
+         ((and has-laptop (null external-monitors))
           (shell-command "xrandr --output eDP-1 --scale 0.67x0.67 --primary --pos 0x0"))
+         (external-monitors
+          (dolist (monitor external-monitors)
+            (setq xrandr-cmd (format "%s --output %s --auto --pos %dx0"
+                                   xrandr-cmd (car monitor) current-x))
+            (when (= current-x 0)
+              (setq xrandr-cmd (concat xrandr-cmd " --primary")))
+            (setq current-x (+ current-x (cadr monitor))))
+          (when has-laptop
+            (setq xrandr-cmd (format "%s --output eDP-1 --auto --scale 1x1 --pos %dx0"
+                                   xrandr-cmd current-x)))
+          (shell-command xrandr-cmd))
          (t
-          (let ((xrandr-cmd "xrandr"))
-            (when external-monitors
-              (dolist (monitor external-monitors)
-                (setq xrandr-cmd (format "%s --output %s --auto --pos %dx0"
-                                         xrandr-cmd (car monitor) current-x))
-                (when (= current-x 0)
-                  (setq xrandr-cmd (concat xrandr-cmd " --primary")))
-                (setq current-x (+ current-x (cadr monitor)))))
-            (shell-command xrandr-cmd))))))
+          (message "No monitors detected")))))
 
     (defun my/exwm-start-tray-apps ()
       "Start system tray applications with delays to ensure proper icon display."
@@ -604,6 +649,7 @@ This function is added to the \=`ef-themes-post-load-hook'."
   (completions-detailed t)
   (completions-format 'one-column)
   (completions-max-height 15)
+  (use-short-answers t)
   :config
   (setq user-full-name "TJ"
         user-mail-address "tj@emacs.su"
@@ -720,6 +766,8 @@ This function is added to the \=`ef-themes-post-load-hook'."
   (setq which-func-modes '(prog-mode)
         which-func-unknown "")
   (setq mode-line-right-align-edge 'right-fringe)
+  (setq vc-follow-symlinks t)
+  (setq auto-revert-check-vc-info t)
   (setq-default mode-line-format
                 '("%e"
                   mode-line-front-space
@@ -727,9 +775,10 @@ This function is added to the \=`ef-themes-post-load-hook'."
                   mode-line-buffer-identification
                   " "
                   mode-line-position
-                  " "
                   mode-line-modes
                   mode-line-format-right-align
+                  vc-mode
+                  " "
                   mode-line-misc-info))
   (setq-default indent-tabs-mode nil
                 tab-width 2
@@ -801,7 +850,13 @@ This function is added to the \=`ef-themes-post-load-hook'."
   (("C-x k" . kill-current-buffer)
    ("C-x K" . kill-buffer)
    ("M-y" . consult-yank-pop)
-   ("C-i" . consult-imenu))
+   ("C-i" . consult-imenu)
+   ("s-=" . increase-text-and-pane)
+   ("s--" . decrease-text-and-pane)
+   ("<print>" . my/screenshot-to-kill-ring)
+   ("S-<print>" . my/screenshot-selection-to-kill-ring)
+   ("s-SPC" . my/program-launcher)
+   ("C-c 0" . my-0x0-prefix-map))
   :custom-face
   (mode-line ((t (:box (:line-width -1 :style released-button)))))
   (mode-line-inactive
@@ -812,12 +867,13 @@ This function is added to the \=`ef-themes-post-load-hook'."
 
 (use-package diminish
   :ensure t
-  :defer t
+  :demand t
   :config
   (diminish 'eldoc-mode)
   (diminish 'abbrev-mode)
   (diminish 'visual-line-mode)
-  (diminish 'subword-mode))
+  (diminish 'subword-mode)
+  (diminish 'auto-fill-function))
 
 (defun my/flash-mode-line ()
   "Flash the mode line as a visual bell."
@@ -1062,29 +1118,26 @@ If buffer is modified, offer to save first."
 
 (use-package autorevert
   :ensure nil
-  :diminish (auto-revert-mode . "")
+  :diminish auto-revert-mode
   :hook (after-init . global-auto-revert-mode)
   :custom
   (auto-revert-verbose nil)
   (global-auto-revert-non-file-buffers t))
 
-(use-package smartparens
-  :ensure t
-  :defer t
-  :diminish
-  :hook ((prog-mode . smartparens-mode)
-         (text-mode . smartparens-mode))
+(use-package elec-pair
+  :ensure nil
+  :hook ((prog-mode . electric-pair-mode)
+         (text-mode . electric-pair-mode))
   :config
-  (require 'smartparens-config)
-  (add-hook 'minibuffer-setup-hook #'turn-off-smartparens-mode)
-  :bind
-  (:map smartparens-mode-map
-        ("C-M-f" . sp-forward-sexp)
-        ("C-M-b" . sp-backward-sexp)
-        ("C-M-u" . sp-backward-up-sexp)
-        ("C-M-d" . sp-down-sexp)
-        ("C-M-n" . sp-next-sexp)
-        ("C-M-p" . sp-previous-sexp)))
+  (setq electric-pair-preserve-balance t
+        electric-pair-delete-adjacent-pairs t
+        electric-pair-skip-self 'electric-pair-conservative-skip
+        electric-pair-skip-whitespace nil
+        electric-pair-skip-whitespace-chars '(?\t ?\n ?\r))
+  (add-hook 'minibuffer-setup-hook
+            (lambda ()
+              (when (and (boundp 'electric-pair-mode) electric-pair-mode)
+                (electric-pair-local-mode -1)))))
 
 (use-package vertico
   :ensure t
@@ -1092,7 +1145,7 @@ If buffer is modified, offer to save first."
   :hook (after-init . vertico-mode)
   :custom
   (vertico-cycle t)
-  (vertico-count 20)
+  (vertico-count 10)
   (vertico-resize nil)
   (vertico-preselect 'first)
   (vertico-sort-function #'vertico-sort-history-alpha)
@@ -1157,26 +1210,18 @@ If buffer is modified, offer to save first."
   (consult-async-input-debounce 0.1)
   (consult-line-numbers-widen t)
   (consult-line-start-from-top t)
+  (consult-imenu-config
+   '((emacs-lisp-mode :toplevel "Packages"
+                      :types ((?f "Functions" font-lock-function-name-face)
+                              (?m "Macros" font-lock-function-name-face)
+                              (?p "Packages" font-lock-constant-face)
+                              (?t "Types" font-lock-type-face)
+                              (?v "Variables" font-lock-variable-name-face)))))
   :config
   (consult-customize
    consult-theme :preview-key nil
    consult-bookmark consult-recent-file consult-xref
    :preview-key '(:debounce 0.4 any))
-  (defvar consult-source-hidden-buffer
-    `(:name "Hidden Buffer"
-            :narrow ?h
-            :category buffer
-            :face consult-buffer
-            :history buffer-name-history
-            :action ,#'consult--buffer-action
-            :items ,(lambda ()
-                      (consult--buffer-query
-                       :predicate (lambda (buf)
-                                    (string-prefix-p " "
-                                                     (buffer-name buf)))
-                       :sort 'visibility))))
-  (add-to-list 'consult-buffer-sources 'consult-source-hidden-buffer
-               'append)
   :bind
   (("C-c M-x" . consult-mode-command)
    ("C-c h" . consult-history)
@@ -1208,6 +1253,12 @@ If buffer is modified, offer to save first."
    ("M-s L" . consult-line-multi)
    ("M-s k" . consult-keep-lines)
    ("M-s u" . consult-focus-lines)
+   ([remap Info-search] . consult-info)
+   ([remap isearch-forward] . consult-line)
+   ([remap recentf-open-files] . consult-recent-file)
+   ("M-y" . consult-yank-pop)
+   ("C-i" . consult-imenu)
+   ("C-c r" . consult-recent-file)
    :map isearch-mode-map
    ("M-e" . consult-isearch-history)
    ("M-s e" . consult-isearch-history)
@@ -1216,9 +1267,9 @@ If buffer is modified, offer to save first."
    ("M-s" . consult-history)
    ("M-r" . consult-history))
   :init
-  (global-set-key [remap Info-search] #'consult-info)
-  (global-set-key [remap isearch-forward] #'consult-line)
-  (global-set-key [remap recentf-open-files] #'consult-recent-file))
+  (recentf-mode 1)
+  (setq recentf-max-menu-items 200)
+  (setq recentf-max-saved-items 200))
 
 (use-package consult-yasnippet
   :ensure t
@@ -1360,7 +1411,7 @@ If buffer is modified, offer to save first."
 (use-package flyspell
   :ensure nil
   :defer t
-  :diminish (flyspell-mode . " ✍")
+  :diminish
   :hook
   ((text-mode . flyspell-mode)
    (org-mode . flyspell-mode)
@@ -1430,26 +1481,69 @@ If buffer is modified, offer to save first."
 (use-package org
   :ensure nil
   :defer t
-  :commands (org-mode org-agenda org-capture org-store-link)
+  :commands (org-mode org-agenda org-capture org-store-link org-refile)
   :bind
   (("C-c l" . org-store-link)
    ("C-c a" . org-agenda)
-   ("C-c c" . org-capture))
+   ("C-c c" . org-capture)
+   ("C-c r" . org-refile)
+   ("C-c x" . org-archive-subtree-default)
+   ("C-c o d" . my/org-daily-review))
   :custom
-  (org-directory "~/Documents/notes/")
+  (org-directory "~/org/")
+  (org-default-notes-file (expand-file-name "inbox.org" org-directory))
+  (org-agenda-files (list (expand-file-name "inbox.org" org-directory)
+                          (expand-file-name "tasks.org" org-directory)
+                          (expand-file-name "projects.org" org-directory)
+                          (expand-file-name "someday.org" org-directory)))
+  (org-archive-location (concat (expand-file-name "archive.org" org-directory) "::* From %s"))
   (org-startup-indented t)
-  (org-startup-folded 'show)
+  (org-startup-folded 'content)
   (org-return-follows-link t)
   (org-log-done 'time)
+  (org-log-into-drawer t)
   (org-hide-emphasis-markers t)
-  (org-agenda-files (list org-directory))
   (org-todo-keywords
-   '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)" "CANCELED(c@)")))
+   '((sequence "TODO(t)" "NEXT(n)" "WAITING(w@)" "|" "DONE(d!)" "CANCELLED(c@)")))
+  (org-todo-keyword-faces
+   '(("TODO" . org-warning)
+     ("NEXT" . (:foreground "blue" :weight bold))
+     ("WAITING" . (:foreground "orange" :weight bold))
+     ("DONE" . org-done)
+     ("CANCELLED" . (:foreground "gray" :weight bold))))
   (org-capture-templates
-   '(("t" "Todo" entry (file "todo.org")
-      "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n")
-     ("n" "Note" entry (file "notes.org")
-      "* %? :NOTE:\n%U\n")))
+   '(("t" "Task" entry (file "inbox.org")
+      "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n%i\n%a")
+     ("n" "Note" entry (file "inbox.org")
+      "* %? :NOTE:\n:PROPERTIES:\n:CREATED: %U\n:END:\n%i")
+     ("m" "Meeting" entry (file "inbox.org")
+      "* MEETING with %? :MEETING:\n:PROPERTIES:\n:CREATED: %U\n:END:\n** Date: %^{Date}U\n** Participants:\n   - %^{Participants}\n** Agenda:\n   - %^{Agenda items}\n** Notes:\n   - \n** Action Items:\n   - [ ] \n** Next Steps:\n   - ")
+     ("p" "Phone Call" entry (file "inbox.org")
+      "* PHONE %? :PHONE:\n:PROPERTIES:\n:CREATED: %U\n:END:\n** Who: %^{Who}\n** Notes:\n   - \n** Follow-up:\n   - [ ] ")
+     ("i" "Idea" entry (file "inbox.org")
+      "* %? :IDEA:\n:PROPERTIES:\n:CREATED: %U\n:END:\n%i")))
+  (org-refile-targets '((nil :maxlevel . 3)
+                        (org-agenda-files :maxlevel . 3)))
+  (org-refile-use-outline-path 'file)
+  (org-outline-path-complete-in-steps nil)
+  (org-refile-allow-creating-parent-nodes 'confirm)
+  (org-agenda-span 'day)
+  (org-agenda-start-with-log-mode nil)
+  (org-agenda-window-setup 'current-window)
+  (org-agenda-restore-windows-after-quit t)
+  (org-agenda-custom-commands
+   '(("d" "Daily Review"
+      ((agenda "" ((org-agenda-span 'day)))
+       (todo "NEXT" ((org-agenda-overriding-header "Next Actions")))
+       (todo "TODO" ((org-agenda-overriding-header "Inbox")
+                     (org-agenda-files '("~/org/inbox.org"))))))
+     ("w" "Weekly Review"
+      ((agenda "" ((org-agenda-span 'week)))
+       (todo "TODO|NEXT|WAITING" ((org-agenda-overriding-header "All Open Items")))
+       (todo "DONE" ((org-agenda-overriding-header "Completed This Week")
+                     (org-agenda-skip-function '(org-agenda-skip-entry-if 'notregexp "CLOSED: \\[.*\\]"))))))
+     ("n" "Next Actions" todo "NEXT")
+     ("i" "Inbox" todo "TODO" ((org-agenda-files '("~/org/inbox.org"))))))
   (org-export-with-broken-links t)
   (org-html-validation-link nil)
   (org-latex-pdf-process
@@ -1457,7 +1551,16 @@ If buffer is modified, offer to save first."
      "pdflatex -interaction nonstopmode -output-directory %o %f"
      "pdflatex -interaction nonstopmode -output-directory %o %f"))
   :hook
-  (org-mode . visual-line-mode))
+  (org-mode . visual-line-mode)
+  :config
+  (defun my/org-daily-review ()
+    "Open inbox and agenda for daily review."
+    (interactive)
+    (delete-other-windows)
+    (find-file "~/org/inbox.org")
+    (split-window-horizontally)
+    (other-window 1)
+    (org-agenda nil "d")))
 
 (with-eval-after-load 'ox-latex
   (add-to-list 'org-latex-classes
@@ -1500,8 +1603,8 @@ If buffer is modified, offer to save first."
   :ensure t
   :defer t
   :commands (magit-status magit-dispatch magit-file-dispatch)
-  :init
-  (global-set-key (kbd "C-c g") 'magit-status)
+  :bind
+  ("C-c g" . magit-status)
   :custom
   (magit-diff-refine-hunk t)
   (magit-refresh-status-buffer nil)
@@ -1660,73 +1763,6 @@ If buffer is modified, offer to save first."
      (pdf-view-fit-page-to-window)
      (display-line-numbers-mode -1)
      (hl-line-mode -1))))
-
-(use-package denote
-  :ensure t
-  :defer t
-  :hook
-  (
-   (text-mode . denote-fontify-links-mode-maybe)
-   (dired-mode . denote-dired-mode))
-  :bind
-  (:map
-   global-map
-   ("C-c n n" . denote)
-   ("C-c n j" . denote-journal-new-or-existing-entry)
-   ("C-c n d" . denote-dired)
-   ("C-c n g" . denote-grep)
-   ("C-c n l" . denote-link)
-   ("C-c n L" . denote-add-links)
-   ("C-c n b" . denote-backlinks)
-   ("C-c n q c" . denote-query-contents-link)
-   ("C-c n q f" . denote-query-filenames-link)
-   ("C-c n r" . denote-rename-file)
-   ("C-c n R" . denote-rename-file-using-front-matter)
-   :map
-   dired-mode-map
-   ("C-c C-d C-i" . denote-dired-link-marked-notes)
-   ("C-c C-d C-r" . denote-dired-rename-files)
-   ("C-c C-d C-k" . denote-dired-rename-marked-files-with-keywords)
-   ("C-c C-d C-R"
-    .
-    denote-dired-rename-marked-files-using-front-matter))
-  :config
-  (setq denote-directory (expand-file-name "~/Documents/notes/"))
-  (setq denote-save-buffers nil)
-  (setq denote-known-keywords
-        '("emacs" "philosophy" "politics" "economics"))
-  (setq denote-infer-keywords t)
-  (setq denote-sort-keywords t)
-  (setq denote-prompts '(title keywords))
-  (setq denote-excluded-directories-regexp nil)
-  (setq denote-excluded-keywords-regexp nil)
-  (setq denote-rename-confirmations
-        '(rewrite-front-matter modify-file-name))
-  (setq denote-date-prompt-use-org-read-date t)
-  (denote-rename-buffer-mode 1))
-
-(use-package consult-denote
-  :ensure t
-  :after denote
-  :bind
-  (("C-c n f" . consult-denote-find) ("C-c n g" . consult-denote-grep))
-  :config (consult-denote-mode 1))
-
-(use-package denote-journal
-  :ensure t
-  :after denote
-  :commands
-  (denote-journal-new-entry
-   denote-journal-new-or-existing-entry
-   denote-journal-link-or-create-entry)
-  :hook (calendar-mode . denote-journal-calendar-mode)
-  :config
-  (setq denote-journal-directory
-        (expand-file-name "journal" denote-directory))
-  (setq denote-journal-keyword "journal")
-  (setq denote-journal-title-format 'day-date-month-year))
-
-(use-package denote-org :ensure t :after denote :defer t)
 
 (use-package treesit
   :ensure nil
@@ -2031,6 +2067,7 @@ robust UI element disabling."
 (use-package sly
   :ensure t
   :defer t
+  :diminish
   :mode ("\\.lisp\\'" . lisp-mode)
   :custom
   (inferior-lisp-program "sbcl")
@@ -2269,47 +2306,51 @@ robust UI element disabling."
     (interactive)
     (journalctl "-S today")))
 
-(use-package pulsar
-  :ensure t
-  :defer 1
-  :custom
-  (pulsar-pulse t)
-  (pulsar-delay 0.055)
-  (pulsar-iterations 10)
-  (pulsar-face 'pulsar-green)
-  (pulsar-highlight-face 'pulsar-yellow)
+(use-package pulse
+  :ensure nil
   :config
-  (dolist (func '(recenter-top-bottom
-                  reposition-window
-                  bookmark-jump
-                  other-window
-                  delete-window
-                  delete-other-windows
-                  forward-page
-                  backward-page
-                  scroll-up-command
-                  scroll-down-command
-                  windmove-left
-                  windmove-right
-                  windmove-up
-                  windmove-down
-                  winner-undo
-                  winner-redo
-                  tab-next
-                  tab-previous
-                  org-next-visible-heading
-                  org-previous-visible-heading
-                  outline-next-visible-heading
-                  outline-previous-visible-heading))
-    (add-to-list 'pulsar-pulse-functions func))
-  :hook
-  ((minibuffer-setup . pulsar-pulse-line)
-   (consult-after-jump . pulsar-recenter-middle)
-   (consult-after-jump . pulsar-reveal-entry)
-   (imenu-after-jump . pulsar-recenter-middle)
-   (imenu-after-jump . pulsar-reveal-entry))
-  :init
-  (pulsar-global-mode 1))
+  (setq pulse-iterations 10)
+  (setq pulse-delay 0.055)
+  (set-face-attribute 'pulse-highlight-start-face nil
+                      :background "#51afef")
+  (set-face-attribute 'pulse-highlight-face nil
+                      :background "#51afef")
+  
+  (defun my/pulse-line (&rest _)
+    "Pulse the current line."
+    (pulse-momentary-highlight-one-line (point)))
+  
+  (defun my/pulse-region (start end &rest _)
+    "Pulse region between START and END."
+    (pulse-momentary-highlight-region start end))
+  
+  (dolist (cmd '(recenter-top-bottom
+                 reposition-window
+                 other-window
+                 delete-window
+                 delete-other-windows
+                 forward-page
+                 backward-page
+                 scroll-up-command
+                 scroll-down-command
+                 windmove-left
+                 windmove-right
+                 windmove-up
+                 windmove-down
+                 winner-undo
+                 winner-redo))
+    (advice-add cmd :after #'my/pulse-line))
+  
+  (with-eval-after-load 'bookmark
+    (advice-add 'bookmark-jump :after #'my/pulse-line))
+  
+  (with-eval-after-load 'consult
+    (add-hook 'consult-after-jump-hook #'my/pulse-line))
+  
+  (with-eval-after-load 'imenu
+    (advice-add 'imenu :after #'my/pulse-line))
+  
+  (add-hook 'minibuffer-setup-hook #'my/pulse-line))
 
 (use-package volatile-highlights
   :ensure t
@@ -2329,6 +2370,13 @@ robust UI element disabling."
 (use-package emoji
   :ensure nil
   :bind ("C-c E" . emoji-search))
+
+(use-package simple
+  :ensure nil
+  :bind
+  (("C-x k" . kill-current-buffer)
+   ("C-x K" . kill-buffer)
+   ([remap keyboard-quit] . my/keyboard-quit-dwim)))
 
 (add-hook 'emacs-startup-hook
           (lambda ()
@@ -2564,49 +2612,6 @@ robust UI element disabling."
    my/system-memory my/cpu-count))
 
 (add-hook 'emacs-startup-hook #'my/apply-performance-optimizations)
-(global-set-key [remap keyboard-quit] 'my/keyboard-quit-dwim)
-(global-set-key (kbd "C-c <left>") 'winner-undo)
-(global-set-key (kbd "C-c <right>") 'winner-redo)
-(global-set-key (kbd "s-=") 'increase-text-and-pane)
-(global-set-key (kbd "s--") 'decrease-text-and-pane)
-(global-set-key (kbd "s-SPC") 'my/program-launcher)
-(global-set-key (kbd "C-x k") 'kill-current-buffer)
-(global-set-key (kbd "C-x K") 'kill-buffer)
-(global-set-key (kbd "M-y") 'consult-yank-pop)
-(global-set-key (kbd "C-i") 'consult-imenu)
-(global-set-key (kbd "C-x C-j") 'dired-jump)
-(global-set-key (kbd "C-c r") 'consult-recent-file)
-(global-set-key (kbd "M-s .") 'isearch-forward-symbol-at-point)
-(global-set-key (kbd "<f6>") 'dictionary-lookup-definition)
-(global-set-key (kbd "C-c g") 'magit-status)
-(global-set-key (kbd "C-c e") 'eshell)
-(global-set-key (kbd "C-c j") 'journalctl)
-(global-set-key (kbd "C-c P") 'pass)
-(global-set-key (kbd "C-c E") 'emoji-search)
-(global-set-key (kbd "C-c n n") 'denote)
-(global-set-key (kbd "C-c n j") 'denote-journal-new-or-existing-entry)
-(global-set-key (kbd "C-c n d") 'denote-dired)
-(global-set-key (kbd "C-c n f") 'consult-denote-find)
-(global-set-key (kbd "C-c n g") 'consult-denote-grep)
-(global-set-key (kbd "C-c n l") 'denote-link)
-(global-set-key (kbd "C-c n L") 'denote-add-links)
-(global-set-key (kbd "C-c n b") 'denote-backlinks)
-(global-set-key (kbd "C-c n r") 'denote-rename-file)
-(global-set-key (kbd "C-c n R") 'denote-rename-file-using-front-matter)
-(global-set-key (kbd "C-c l") 'org-store-link)
-(global-set-key (kbd "C-c a") 'org-agenda)
-(global-set-key (kbd "C-c c") 'org-capture)
-(global-set-key (kbd "C-c t c") 'my/tramp-cleanup-current)
-(global-set-key (kbd "C-c t C") 'my/tramp-cleanup-all)
-(global-set-key (kbd "C-c d f") 'ediff-files)
-(global-set-key (kbd "C-c d b") 'ediff-buffers)
-(global-set-key (kbd "C-c d c") 'my/ediff-buffer-with-file)
-(global-set-key (kbd "C-c d d") 'my/ediff-directories)
-(global-set-key (kbd "C-c d r") 'ediff-regions-linewise)
-(global-set-key (kbd "C-c d R") 'ediff-regions-wordwise)
-(global-set-key (kbd "C-=") 'er/expand-region)
-(global-set-key (kbd "C-x u") 'vundo)
-(global-set-key (kbd "C-c Y") 'consult-yasnippet)
 
 (provide 'init)
 ;;; init.el ends here
