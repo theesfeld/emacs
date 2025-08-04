@@ -1478,23 +1478,7 @@ If buffer is modified, offer to save first."
   (:map eglot-mode-map
         ("C-c l s" . consult-eglot-symbols)))
 
-(use-package codeium
-  :ensure t
-  :vc (:url "https://github.com/Exafunction/codeium.el")
-  :defer t
-  :diminish
-  :custom
-  (codeium-mode-line-enable nil)
-  :hook
-  (prog-mode . (lambda ()
-                 (add-to-list 'completion-at-point-functions
-                              #'codeium-completion-at-point)))
-  :config
-  (setq codeium-completion-functions
-        '(:tick-handler (lambda () t)
-          :in-comment-handler (lambda () nil)
-          :in-string-handler (lambda () nil)
-          :post-completion-handler (lambda () nil))))
+
 
 (use-package org
   :ensure nil
