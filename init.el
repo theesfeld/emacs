@@ -1497,7 +1497,7 @@ If buffer is modified, offer to save first."
         ("M-p" . copilot-previous-completion))
   :custom
   (copilot-indent-offset-warning-disable t)
-  (copilot-idle-delay 0.25)
+  (copilot-idle-delay 0.5)
   :config
   (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode . 2)))
 
