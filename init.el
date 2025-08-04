@@ -417,10 +417,8 @@ This function is added to the \=`ef-themes-post-load-hook'."
              (external-monitor-names (mapcar #'car external-monitors))
              (has-laptop (assoc "eDP-1" monitor-info))
              workspace-plist)
-        ;; Always assign workspace 0 to eDP-1 if it exists
         (when has-laptop
           (setq workspace-plist (list 0 "eDP-1")))
-        ;; Assign workspaces 1, 2, 3... to external monitors in order
         (let ((workspace-num (if has-laptop 1 0))
               (monitor-index 0))
           (while (and (< workspace-num 10) (< monitor-index (length external-monitor-names)))
@@ -428,7 +426,6 @@ This function is added to the \=`ef-themes-post-load-hook'."
                                         (list workspace-num (nth monitor-index external-monitor-names))))
             (setq workspace-num (1+ workspace-num))
             (setq monitor-index (1+ monitor-index))))
-        ;; Continue cycling through all monitors for remaining workspaces
         (let ((all-monitor-names (if has-laptop
                                    (cons "eDP-1" external-monitor-names)
                                  external-monitor-names))
