@@ -850,7 +850,13 @@ This function is added to the \=`ef-themes-post-load-hook'."
   (("C-x k" . kill-current-buffer)
    ("C-x K" . kill-buffer)
    ("M-y" . consult-yank-pop)
-   ("C-i" . consult-imenu))
+   ("C-i" . consult-imenu)
+   ("s-=" . increase-text-and-pane)
+   ("s--" . decrease-text-and-pane)
+   ("<print>" . my/screenshot-to-kill-ring)
+   ("S-<print>" . my/screenshot-selection-to-kill-ring)
+   ("s-SPC" . my/program-launcher)
+   ("C-c 0" . my-0x0-prefix-map))
   :custom-face
   (mode-line ((t (:box (:line-width -1 :style released-button)))))
   (mode-line-inactive
@@ -1249,6 +1255,12 @@ If buffer is modified, offer to save first."
    ("M-s L" . consult-line-multi)
    ("M-s k" . consult-keep-lines)
    ("M-s u" . consult-focus-lines)
+   ([remap Info-search] . consult-info)
+   ([remap isearch-forward] . consult-line)
+   ([remap recentf-open-files] . consult-recent-file)
+   ("M-y" . consult-yank-pop)
+   ("C-i" . consult-imenu)
+   ("C-c r" . consult-recent-file)
    :map isearch-mode-map
    ("M-e" . consult-isearch-history)
    ("M-s e" . consult-isearch-history)
@@ -1259,10 +1271,7 @@ If buffer is modified, offer to save first."
   :init
   (recentf-mode 1)
   (setq recentf-max-menu-items 200)
-  (setq recentf-max-saved-items 200)
-  (global-set-key [remap Info-search] #'consult-info)
-  (global-set-key [remap isearch-forward] #'consult-line)
-  (global-set-key [remap recentf-open-files] #'consult-recent-file))
+  (setq recentf-max-saved-items 200))
 
 (use-package consult-yasnippet
   :ensure t
@@ -1480,7 +1489,8 @@ If buffer is modified, offer to save first."
    ("C-c a" . org-agenda)
    ("C-c c" . org-capture)
    ("C-c r" . org-refile)
-   ("C-c x" . org-archive-subtree-default))
+   ("C-c x" . org-archive-subtree-default)
+   ("C-c o d" . my/org-daily-review))
   :custom
   (org-directory "~/org/")
   (org-default-notes-file (expand-file-name "inbox.org" org-directory))
@@ -1595,8 +1605,8 @@ If buffer is modified, offer to save first."
   :ensure t
   :defer t
   :commands (magit-status magit-dispatch magit-file-dispatch)
-  :init
-  (global-set-key (kbd "C-c g") 'magit-status)
+  :bind
+  ("C-c g" . magit-status)
   :custom
   (magit-diff-refine-hunk t)
   (magit-refresh-status-buffer nil)
@@ -2358,6 +2368,13 @@ robust UI element disabling."
   :ensure nil
   :bind ("C-c E" . emoji-search))
 
+(use-package simple
+  :ensure nil
+  :bind
+  (("C-x k" . kill-current-buffer)
+   ("C-x K" . kill-buffer)
+   ([remap keyboard-quit] . my/keyboard-quit-dwim)))
+
 (add-hook 'emacs-startup-hook
           (lambda ()
             (message
@@ -2592,42 +2609,6 @@ robust UI element disabling."
    my/system-memory my/cpu-count))
 
 (add-hook 'emacs-startup-hook #'my/apply-performance-optimizations)
-(global-set-key [remap keyboard-quit] 'my/keyboard-quit-dwim)
-(global-set-key (kbd "C-c <left>") 'winner-undo)
-(global-set-key (kbd "C-c <right>") 'winner-redo)
-(global-set-key (kbd "s-=") 'increase-text-and-pane)
-(global-set-key (kbd "s--") 'decrease-text-and-pane)
-(global-set-key (kbd "<print>") 'my/screenshot-to-kill-ring)
-(global-set-key (kbd "S-<print>") 'my/screenshot-selection-to-kill-ring)
-(global-set-key (kbd "s-SPC") 'my/program-launcher)
-(global-set-key (kbd "C-x k") 'kill-current-buffer)
-(global-set-key (kbd "C-x K") 'kill-buffer)
-(global-set-key (kbd "M-y") 'consult-yank-pop)
-(global-set-key (kbd "C-i") 'consult-imenu)
-(global-set-key (kbd "C-x C-j") 'dired-jump)
-(global-set-key (kbd "C-c r") 'consult-recent-file)
-(global-set-key (kbd "M-s .") 'isearch-forward-symbol-at-point)
-(global-set-key (kbd "<f6>") 'dictionary-lookup-definition)
-(global-set-key (kbd "C-c g") 'magit-status)
-(global-set-key (kbd "C-c e") 'eshell)
-(global-set-key (kbd "C-c j") 'journalctl)
-(global-set-key (kbd "C-c P") 'pass)
-(global-set-key (kbd "C-c E") 'emoji-search)
-(global-set-key (kbd "C-c l") 'org-store-link)
-(global-set-key (kbd "C-c a") 'org-agenda)
-(global-set-key (kbd "C-c c") 'org-capture)
-(global-set-key (kbd "C-c o d") 'my/org-daily-review)
-(global-set-key (kbd "C-c t c") 'my/tramp-cleanup-current)
-(global-set-key (kbd "C-c t C") 'my/tramp-cleanup-all)
-(global-set-key (kbd "C-c d f") 'ediff-files)
-(global-set-key (kbd "C-c d b") 'ediff-buffers)
-(global-set-key (kbd "C-c d c") 'my/ediff-buffer-with-file)
-(global-set-key (kbd "C-c d d") 'my/ediff-directories)
-(global-set-key (kbd "C-c d r") 'ediff-regions-linewise)
-(global-set-key (kbd "C-c d R") 'ediff-regions-wordwise)
-(global-set-key (kbd "C-=") 'er/expand-region)
-(global-set-key (kbd "C-x u") 'vundo)
-(global-set-key (kbd "C-c Y") 'consult-yasnippet)
 
 (provide 'init)
 ;;; init.el ends here
