@@ -398,27 +398,48 @@ This function is added to the \=`ef-themes-post-load-hook'."
      (setq exwm-systemtray-workspace nil)
 
     (defun my/exwm-randr-setup ()
-      "Set up monitor configuration before EXWM starts."
+      "Set up monitor configuration with eDP-1 as workspace 0, externals left to right."
       (let* ((xrandr-output (shell-command-to-string "xrandr"))
              (monitor-lines (seq-filter (lambda (line)
                                         (string-match-p " connected" line))
                                       (split-string xrandr-output "\n")))
-             (monitor-names (mapcar (lambda (line)
-                                    (car (split-string line)))
-                                  monitor-lines))
-             (external-monitors (seq-filter (lambda (m)
-                                            (not (string= m "eDP-1")))
-                                          monitor-names))
-             (primary-monitor (if external-monitors
-                                (car external-monitors)
-                              "eDP-1"))
+             (monitor-info (mapcar (lambda (line)
+                                   (when (string-match "\\([^ ]+\\) connected.*\\+\\([0-9]+\\)\\+" line)
+                                     (cons (match-string 1 line)
+                                           (string-to-number (match-string 2 line)))))
+                                 monitor-lines))
+             (monitor-info (seq-filter #'identity monitor-info))
+             (external-monitors (seq-sort (lambda (a b)
+                                          (< (cdr a) (cdr b)))
+                                        (seq-filter (lambda (m)
+                                                    (not (string= (car m) "eDP-1")))
+                                                  monitor-info)))
+             (external-monitor-names (mapcar #'car external-monitors))
+             (has-laptop (assoc "eDP-1" monitor-info))
              workspace-plist)
-        (setq workspace-plist (list 0 (if (member "eDP-1" monitor-names)
-                                        "eDP-1"
-                                      primary-monitor)))
-        (dotimes (i 9)
-          (setq workspace-plist (append workspace-plist
-                                      (list (1+ i) primary-monitor))))
+        ;; Always assign workspace 0 to eDP-1 if it exists
+        (when has-laptop
+          (setq workspace-plist (list 0 "eDP-1")))
+        ;; Assign workspaces 1, 2, 3... to external monitors in order
+        (let ((workspace-num (if has-laptop 1 0))
+              (monitor-index 0))
+          (while (and (< workspace-num 10) (< monitor-index (length external-monitor-names)))
+            (setq workspace-plist (append workspace-plist
+                                        (list workspace-num (nth monitor-index external-monitor-names))))
+            (setq workspace-num (1+ workspace-num))
+            (setq monitor-index (1+ monitor-index))))
+        ;; Continue cycling through all monitors for remaining workspaces
+        (let ((all-monitor-names (if has-laptop
+                                   (cons "eDP-1" external-monitor-names)
+                                 external-monitor-names))
+              (num-monitors (+ (if has-laptop 1 0) (length external-monitor-names))))
+          (when (and (> num-monitors 0) (< (/ (length workspace-plist) 2) 10))
+            (while (< (/ (length workspace-plist) 2) 10)
+              (let* ((workspace-num (/ (length workspace-plist) 2))
+                     (monitor-index (mod workspace-num num-monitors))
+                     (monitor-name (nth monitor-index all-monitor-names)))
+                (setq workspace-plist (append workspace-plist
+                                            (list workspace-num monitor-name)))))))
         (setq exwm-randr-workspace-monitor-plist workspace-plist)))
 
     (defun my/exwm-configure-monitors ()
