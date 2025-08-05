@@ -528,6 +528,15 @@ This function is added to the \=`ef-themes-post-load-hook'."
                 "'mv $f ~/Pictures/Screenshots/ && xclip -selection clipboard -t image/png -i ~/Pictures/Screenshots/$f'"))
   (desktop-environment-mode 1))
 
+(use-package desktop
+  :ensure nil
+  :defer t
+  :custom
+  (desktop-save-mode nil)
+  (desktop-restore-eager (if my/ultra-high-spec-system-p 20 10))
+  (desktop-lazy-verbose nil)
+  (desktop-lazy-idle-delay 5))
+
 (use-package exwm-edit
   :ensure t
   :after exwm
@@ -596,6 +605,8 @@ This function is added to the \=`ef-themes-post-load-hook'."
   :ensure nil
   :defer 1
   :config
+    (when my/high-spec-system-p
+    (setq vc-handled-backends '(Git)))
   (defun my-auto-commit-init-el ()
     "Commit changes to init.el after saving."
     (when (and (buffer-file-name)
@@ -817,6 +828,26 @@ This function is added to the \=`ef-themes-post-load-hook'."
         (expand-file-name "network-security.data" my/tmp-dir))
   (when (and custom-file (file-exists-p custom-file))
     (load custom-file))
+  (when my/high-spec-system-p
+    (setq kill-ring-max (if my/ultra-high-spec-system-p 500 200)
+          mark-ring-max 50
+          global-mark-ring-max 50
+          message-log-max (if my/ultra-high-spec-system-p 20000 10000)))
+  (when my/high-spec-system-p
+    (setq auto-save-interval 1000
+          auto-save-timeout 60
+          find-file-visit-truename nil))
+  (when my/high-spec-system-p
+    (setq font-lock-maximum-decoration t
+          jit-lock-chunk-size (if my/ultra-high-spec-system-p 8192 4096)
+          jit-lock-defer-time 0.05
+          inhibit-compacting-font-caches t
+          highlight-nonselected-windows nil))
+  (when (>= my/cpu-count 8)
+    (setq enable-recursive-minibuffers t
+          minibuffer-depth-indicate-mode t
+          max-mini-window-height 0.5
+          completion-cycle-threshold 3))
   :hook
   ((text-mode . visual-wrap-prefix-mode)
    (before-save . (lambda ()
@@ -1455,6 +1486,9 @@ If buffer is modified, offer to save first."
                 '((pylsp (plugins (flake8 (enabled . t))
                                   (black (enabled . t))
                                   (pycodestyle (enabled . :json-false))))))
+  (when (>= my/cpu-count 8)
+    (setq eglot-events-buffer-size 0
+          eglot-connect-timeout 30))
   :hook
   ((python-mode python-ts-mode
                 js-mode js-ts-mode
@@ -1606,12 +1640,16 @@ If buffer is modified, offer to save first."
   :bind
   ("C-c g" . magit-status)
   :custom
-  (magit-diff-refine-hunk t)
+  (magit-diff-refine-hunk (not my/high-spec-system-p))
   (magit-refresh-status-buffer nil)
   (magit-tramp-pipe-stty-settings 'pty)
   (git-commit-summary-max-length 50)
   (git-commit-style-convention-checks '(non-empty-second-line))
-  (magit-repository-directories '(("~/Code" . 1))))
+  (magit-repository-directories '(("~/Code" . 1)))
+  (magit-diff-highlight-indentation (not my/high-spec-system-p))
+  (magit-diff-highlight-trailing (not my/high-spec-system-p))
+  (magit-diff-paint-whitespace (not my/high-spec-system-p))
+  (magit-diff-highlight-hunk-body (not my/high-spec-system-p)))
 
 (use-package forge
   :ensure t
@@ -2526,92 +2564,6 @@ robust UI element disabling."
               ("C-c C-n" . csv-forward-record)
               ("C-c C-p" . csv-backward-record)))
 
-(defun my/optimize-memory-settings ()
-  "Optimize Emacs settings based on available memory."
-  (when my/high-spec-system-p
-    (setq kill-ring-max (if my/ultra-high-spec-system-p 500 200)
-          mark-ring-max 50
-          global-mark-ring-max 50
-          message-log-max (if my/ultra-high-spec-system-p 20000 10000)
-          history-length (if my/ultra-high-spec-system-p 2000 1000)
-          desktop-restore-eager (if my/ultra-high-spec-system-p 20 10)
-          desktop-lazy-verbose nil
-          desktop-lazy-idle-delay 5)))
-
-(defun my/optimize-file-operations ()
-  "Optimize file operation settings."
-  (when my/high-spec-system-p
-    (setq auto-save-interval 1000
-          auto-save-timeout 60
-          create-lockfiles nil
-          backup-by-copying t
-          vc-handled-backends '(Git)
-          find-file-visit-truename nil
-          vc-follow-symlinks t)))
-
-(defun my/optimize-display-settings ()
-  "Optimize display and rendering settings."
-  (when my/high-spec-system-p
-    (setq font-lock-maximum-decoration t
-          jit-lock-stealth-time 0.2
-          jit-lock-chunk-size
-          (if my/ultra-high-spec-system-p 8192 4096)
-          jit-lock-defer-time 0.05
-          fast-but-imprecise-scrolling t
-          redisplay-skip-fontification-on-input t
-          inhibit-compacting-font-caches t
-          highlight-nonselected-windows nil)))
-
-(defun my/optimize-cpu-settings ()
-  "Optimize settings based on CPU count."
-  (when (>= my/cpu-count 8)
-    (setq native-comp-async-jobs-number
-          (cond ((>= my/cpu-count 16) (- my/cpu-count 4))
-                ((>= my/cpu-count 12) (- my/cpu-count 2))
-                (t (max 4 (/ my/cpu-count 2))))
-          enable-recursive-minibuffers t
-          minibuffer-depth-indicate-mode t
-          max-mini-window-height 0.5
-          completion-cycle-threshold 3
-          tab-always-indent 'complete)))
-
-(defun my/optimize-lsp-settings ()
-  "Optimize LSP settings for multicore systems."
-  (when (>= my/cpu-count 8)
-    (setq lsp-idle-delay 0.1
-          lsp-log-io nil
-          lsp-completion-provider :none
-          lsp-prefer-flymake nil
-          lsp-enable-file-watchers t
-          lsp-file-watch-threshold
-          (if my/ultra-high-spec-system-p 20000 10000))))
-
-(defun my/optimize-magit-settings ()
-  "Optimize Magit settings for large repositories."
-  (when my/high-spec-system-p
-    (setq magit-refresh-status-buffer nil
-          magit-diff-highlight-indentation nil
-          magit-diff-highlight-trailing nil
-          magit-diff-paint-whitespace nil
-          magit-diff-highlight-hunk-body nil
-          magit-diff-refine-hunk nil)))
-
-(defun my/apply-performance-optimizations ()
-  "Apply all performance optimizations based on system specifications."
-  (interactive)
-  (my/optimize-memory-settings)
-  (my/optimize-file-operations)
-  (my/optimize-display-settings)
-  (my/optimize-cpu-settings)
-  (with-eval-after-load 'lsp-mode
-    (my/optimize-lsp-settings))
-  (with-eval-after-load 'magit
-    (my/optimize-magit-settings))
-  (message
-   "Performance optimizations applied! Memory: %.1fGB, CPUs: %d"
-   my/system-memory my/cpu-count))
-
-(add-hook 'emacs-startup-hook #'my/apply-performance-optimizations)
 
 (provide 'init)
 ;;; init.el ends here
