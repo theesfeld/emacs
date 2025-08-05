@@ -620,9 +620,6 @@ This function is added to the \=`ef-themes-post-load-hook'."
          "Auto-commit init.el changes"))))
   :hook (after-save . my-auto-commit-init-el))
 
-(global-auto-revert-mode -1)
-
-(setq auto-revert-interval 999999)
 
 (dolist (dir '("backups"
                "auto-saves"
@@ -778,7 +775,6 @@ This function is added to the \=`ef-themes-post-load-hook'."
         which-func-unknown "")
   (setq mode-line-right-align-edge 'right-fringe)
   (setq vc-follow-symlinks t)
-  (setq auto-revert-check-vc-info t)
   (setq-default mode-line-format
                 '("%e"
                   mode-line-front-space
@@ -854,7 +850,6 @@ This function is added to the \=`ef-themes-post-load-hook'."
                     (whitespace-cleanup)))
    (emacs-startup . (lambda ()
                       (global-visual-line-mode 1)
-                      (global-auto-revert-mode 1)
                       (line-number-mode 1)
                       (column-number-mode 1)
                       (size-indication-mode 1)
@@ -1012,8 +1007,6 @@ If buffer is modified, offer to save first."
    (expand-file-name "tramp-auto-save" my/tmp-dir))
   (tramp-persistency-file-name
    (expand-file-name "tramp-persistence" my/tmp-dir))
-  (auto-revert-remote-files t)
-  (auto-revert-use-notify nil)
   :config
   (connection-local-set-profile-variables
    'remote-direct-async-process
@@ -1142,8 +1135,6 @@ If buffer is modified, offer to save first."
   :ensure nil
   :defer t
   :custom
-  (global-auto-revert-non-file-buffers t)
-  (auto-revert-verbose nil)
   (make-backup-files t)
   (vc-make-backup-files t))
 
@@ -1152,8 +1143,12 @@ If buffer is modified, offer to save first."
   :diminish auto-revert-mode
   :hook (after-init . global-auto-revert-mode)
   :custom
-  (auto-revert-verbose nil)
-  (global-auto-revert-non-file-buffers t))
+  (auto-revert-interval 5)  ; Check every 5 seconds (default)
+  (auto-revert-verbose nil)  ; Don't show messages for every revert
+  (global-auto-revert-non-file-buffers t)  ; Also revert buffers like Dired
+  (auto-revert-check-vc-info t)  ; Update version control info
+  (auto-revert-avoid-polling t)  ; Use file notification if available
+  (auto-revert-use-notify t))  ; Use file system notifications
 
 (use-package elec-pair
   :ensure nil
