@@ -20,22 +20,22 @@ A comprehensive Emacs configuration with EXWM window manager, modern completion 
 ### 🎨 UI/UX
 - **Theme**: Ef-themes (Winter/Summer toggle)
 - **Font**: AporeticSansMono Nerd Font
-- **Completion**: Vertico + Orderless + Consult + Marginalia
+- **Completion**: Vertico + Orderless + Consult + Marginalia + Corfu
+- **Auto-completion**: Corfu with global auto-completion
 - **Visual aids**: Rainbow delimiters, indent-bars, highlight-thing
 - Variable-pitch fonts for comments
 
 ### 🛠️ Development Tools
-- **LSP**: Full language server protocol setup
+- **LSP**: Eglot (built-in) for language server protocol
 - **Git**: Magit with Forge integration
-- **Search**: Deadgrep (ripgrep integration)
-- **Snippets**: YASnippet with custom snippets
-- **Multiple cursors**: Enhanced editing capabilities
-- **Smart editing**: Smartparens, expand-region
+- **Search**: Consult-ripgrep for code search
+- **Snippets**: YASnippet with yasnippet-snippets collection
+- **Smart editing**: Electric-pair-mode (built-in), expand-region
+- **Lisp Development**: SLY for Common Lisp
 
 ### 📝 Note-Taking & Organization
-- **Denote**: Note-taking system with custom keybindings
-- **Org-mode**: Enhanced configuration with auto-tangle
-- **GPTel**: AI integration for coding assistance
+- **Org-mode**: Enhanced configuration with capture templates and agenda views
+- **AI Assistant**: Claude-code integration for programming assistance
 
 ## Requirements
 
@@ -71,21 +71,23 @@ git clone https://github.com/theesfeld/emacs.git ~/.config/emacs
 - `s-[arrow]`: Navigate windows
 
 ### Development
-- `C-c l`: LSP commands prefix
+- `C-c l`: LSP/Eglot commands prefix
 - `C-c g`: Magit status
 - `C-c p`: Project commands
-- `C-c s`: Search commands (deadgrep)
+- `C-c s`: Search commands (consult-ripgrep)
+- `C-n` / `C-p`: Navigate completion candidates (Corfu)
+- `TAB`: Complete selection (Corfu)
 
 ### Notes & Organization
-- `C-c n`: Denote commands prefix
 - `C-c o`: Org-mode commands
-- `C-c w`: GPTel (AI) commands
+- `C-c v`: Claude-code (AI) commands
+- `C-c P`: Password-store (pass) commands
 
 ## Configuration Structure
 
 - `init.el`: Main configuration file
 - `early-init.el`: Performance optimizations and early settings
-- `functions.el`: Custom utility functions
+- `CLAUDE.md`: Project-specific AI assistant instructions
 - `~/.tmp/`: Centralized temporary files directory
 
 ## Performance Features
