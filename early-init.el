@@ -15,34 +15,32 @@
 
 ;;; Code:
 
-;; Disable garbage collection during startup
 (setq gc-cons-threshold most-positive-fixnum
       gc-cons-percentage 0.6)
 
-;; Disable file handlers during startup
 (defvar grim--file-name-handler-alist file-name-handler-alist)
 (setq file-name-handler-alist nil)
 
-;; Restore settings after startup
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist grim--file-name-handler-alist)
             (garbage-collect)))
 
-;; Native compilation settings (Emacs 30.1)
 (when (native-comp-available-p)
   (setq native-comp-async-report-warnings-errors 'silent
         native-comp-jit-compilation t
-        native-comp-async-jobs-number (min 4 (/ (num-processors) 2))))
+        native-comp-async-jobs-number
+        (let ((cpu-count (or (num-processors) 4)))
+          (cond ((>= cpu-count 16) (- cpu-count 4))
+                ((>= cpu-count 12) (- cpu-count 2))
+                ((>= cpu-count 8) (max 4 (/ cpu-count 2)))
+                (t (min 4 (/ cpu-count 2)))))))
 
-;; Disable custom.el
 (setq custom-file (make-temp-file "emacs-custom-"))
 
-;; Package initialization
 (setq package-enable-at-startup t
       package-quickstart t)
 
-;; Frame parameters for no flicker
 (setq default-frame-alist
       '((menu-bar-lines . 0)
         (tool-bar-lines . 0)
@@ -52,7 +50,6 @@
         (foreground-color . "#ffffff")
         (font . "AporeticSansMono Nerd Font")))
 
-;; Miscellaneous
 (setq frame-resize-pixelwise t
       inhibit-startup-screen t
       load-prefer-newer t)

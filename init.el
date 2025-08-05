@@ -185,15 +185,10 @@
                     "-i" filename)
       (message "Screenshot saved to %s and added to kill-ring" filename))))
 
-(declare-function completion-preview-insert "completion-preview")
-
-(declare-function completion-preview-next-candidate
-                  "completion-preview")
-
-(declare-function completion-preview-prev-candidate
-                  "completion-preview")
-
-(declare-function completion-preview--hide "completion-preview")
+(declare-function corfu-next "corfu")
+(declare-function corfu-previous "corfu")
+(declare-function corfu-complete "corfu")
+(declare-function corfu-quit "corfu")
 
 (font-spec :name "AporeticSansMono Nerd Font")
 (set-face-attribute 'default nil
@@ -528,6 +523,15 @@ This function is added to the \=`ef-themes-post-load-hook'."
                 "'mv $f ~/Pictures/Screenshots/ && xclip -selection clipboard -t image/png -i ~/Pictures/Screenshots/$f'"))
   (desktop-environment-mode 1))
 
+(use-package desktop
+  :ensure nil
+  :defer t
+  :custom
+  (desktop-save-mode nil)
+  (desktop-restore-eager (if my/ultra-high-spec-system-p 20 10))
+  (desktop-lazy-verbose nil)
+  (desktop-lazy-idle-delay 5))
+
 (use-package exwm-edit
   :ensure t
   :after exwm
@@ -596,6 +600,8 @@ This function is added to the \=`ef-themes-post-load-hook'."
   :ensure nil
   :defer 1
   :config
+    (when my/high-spec-system-p
+    (setq vc-handled-backends '(Git)))
   (defun my-auto-commit-init-el ()
     "Commit changes to init.el after saving."
     (when (and (buffer-file-name)
@@ -609,9 +615,6 @@ This function is added to the \=`ef-themes-post-load-hook'."
          "Auto-commit init.el changes"))))
   :hook (after-save . my-auto-commit-init-el))
 
-(global-auto-revert-mode -1)
-
-(setq auto-revert-interval 999999)
 
 (dolist (dir '("backups"
                "auto-saves"
@@ -767,7 +770,6 @@ This function is added to the \=`ef-themes-post-load-hook'."
         which-func-unknown "")
   (setq mode-line-right-align-edge 'right-fringe)
   (setq vc-follow-symlinks t)
-  (setq auto-revert-check-vc-info t)
   (setq-default mode-line-format
                 '("%e"
                   mode-line-front-space
@@ -817,13 +819,32 @@ This function is added to the \=`ef-themes-post-load-hook'."
         (expand-file-name "network-security.data" my/tmp-dir))
   (when (and custom-file (file-exists-p custom-file))
     (load custom-file))
+  (when my/high-spec-system-p
+    (setq kill-ring-max (if my/ultra-high-spec-system-p 500 200)
+          mark-ring-max 50
+          global-mark-ring-max 50
+          message-log-max (if my/ultra-high-spec-system-p 20000 10000)))
+  (when my/high-spec-system-p
+    (setq auto-save-interval 1000
+          auto-save-timeout 60
+          find-file-visit-truename nil))
+  (when my/high-spec-system-p
+    (setq font-lock-maximum-decoration t
+          jit-lock-chunk-size (if my/ultra-high-spec-system-p 8192 4096)
+          jit-lock-defer-time 0.05
+          inhibit-compacting-font-caches t
+          highlight-nonselected-windows nil))
+  (when (>= my/cpu-count 8)
+    (setq enable-recursive-minibuffers t
+          minibuffer-depth-indicate-mode t
+          max-mini-window-height 0.5
+          completion-cycle-threshold 3))
   :hook
   ((text-mode . visual-wrap-prefix-mode)
    (before-save . (lambda ()
                     (whitespace-cleanup)))
    (emacs-startup . (lambda ()
                       (global-visual-line-mode 1)
-                      (global-auto-revert-mode 1)
                       (line-number-mode 1)
                       (column-number-mode 1)
                       (size-indication-mode 1)
@@ -981,8 +1002,6 @@ If buffer is modified, offer to save first."
    (expand-file-name "tramp-auto-save" my/tmp-dir))
   (tramp-persistency-file-name
    (expand-file-name "tramp-persistence" my/tmp-dir))
-  (auto-revert-remote-files t)
-  (auto-revert-use-notify nil)
   :config
   (connection-local-set-profile-variables
    'remote-direct-async-process
@@ -1111,8 +1130,6 @@ If buffer is modified, offer to save first."
   :ensure nil
   :defer t
   :custom
-  (global-auto-revert-non-file-buffers t)
-  (auto-revert-verbose nil)
   (make-backup-files t)
   (vc-make-backup-files t))
 
@@ -1121,8 +1138,12 @@ If buffer is modified, offer to save first."
   :diminish auto-revert-mode
   :hook (after-init . global-auto-revert-mode)
   :custom
-  (auto-revert-verbose nil)
-  (global-auto-revert-non-file-buffers t))
+  (auto-revert-interval 5)  ; Check every 5 seconds (default)
+  (auto-revert-verbose nil)  ; Don't show messages for every revert
+  (global-auto-revert-non-file-buffers t)  ; Also revert buffers like Dired
+  (auto-revert-check-vc-info t)  ; Update version control info
+  (auto-revert-avoid-polling t)  ; Use file notification if available
+  (auto-revert-use-notify t))  ; Use file system notifications
 
 (use-package elec-pair
   :ensure nil
@@ -1276,26 +1297,36 @@ If buffer is modified, offer to save first."
   :after (consult yasnippet)
   :bind ("C-c Y" . consult-yasnippet))
 
-(use-package completion-preview
-  :ensure nil
-  :hook ((prog-mode . completion-preview-mode)
-         (conf-mode . completion-preview-mode)
-         (eshell-mode . completion-preview-mode))
+;;; Corfu
+(use-package corfu
+  :ensure t
+  :defer t
+  :diminish
+  :init
+  (global-corfu-mode)
   :custom
-  (completion-preview-minimum-symbol-length 2)
-  (completion-preview-idle-delay 0)
-  (completion-preview-exact-match-only nil)
-  (completion-preview-insert-on-completion t)
-  :custom-face
-  (completion-preview ((t (:inherit shadow :foreground "#FFC107"))))
-  (completion-preview-exact
-   ((t (:inherit completion-preview :weight bold))))
+  (corfu-cycle t)                 ; Enable cycling for `corfu-next/previous'
+  (corfu-auto t)                  ; Enable auto completion
+  (corfu-auto-delay 0.1)          ; Delay before auto-completion
+  (corfu-auto-prefix 2)           ; Minimum prefix length for auto-completion
+  (corfu-quit-at-boundary nil)    ; Never quit at completion boundary
+  (corfu-quit-no-match nil)       ; Never quit, even if there is no match
+  (corfu-preview-current nil)     ; Disable current candidate preview
+  (corfu-preselect 'prompt)       ; Preselect the prompt
+  (corfu-on-exact-match nil)      ; Configure handling of exact matches
+  (corfu-scroll-margin 5)         ; Use scroll margin
   :bind
-  (:map completion-preview-active-mode-map
-        ("TAB" . completion-preview-insert)
-        ([tab] . completion-preview-insert)
-        ("M-n" . completion-preview-next-candidate)
-        ("M-p" . completion-preview-prev-candidate)))
+  (:map corfu-map
+        ("TAB" . corfu-complete)
+        ([tab] . corfu-complete)
+        ("RET" . corfu-complete)
+        ([return] . corfu-complete)
+        ("C-n" . corfu-next)
+        ("C-p" . corfu-previous)
+        ("<down>" . corfu-next)
+        ("<up>" . corfu-previous)
+        ("C-g" . corfu-quit)
+        ("ESC" . corfu-quit)))
 
 (use-package nerd-icons
   :ensure t
@@ -1455,6 +1486,9 @@ If buffer is modified, offer to save first."
                 '((pylsp (plugins (flake8 (enabled . t))
                                   (black (enabled . t))
                                   (pycodestyle (enabled . :json-false))))))
+  (when (>= my/cpu-count 8)
+    (setq eglot-events-buffer-size 0
+          eglot-connect-timeout 30))
   :hook
   ((python-mode python-ts-mode
                 js-mode js-ts-mode
@@ -1606,12 +1640,16 @@ If buffer is modified, offer to save first."
   :bind
   ("C-c g" . magit-status)
   :custom
-  (magit-diff-refine-hunk t)
+  (magit-diff-refine-hunk (not my/high-spec-system-p))
   (magit-refresh-status-buffer nil)
   (magit-tramp-pipe-stty-settings 'pty)
   (git-commit-summary-max-length 50)
   (git-commit-style-convention-checks '(non-empty-second-line))
-  (magit-repository-directories '(("~/Code" . 1))))
+  (magit-repository-directories '(("~/Code" . 1)))
+  (magit-diff-highlight-indentation (not my/high-spec-system-p))
+  (magit-diff-highlight-trailing (not my/high-spec-system-p))
+  (magit-diff-paint-whitespace (not my/high-spec-system-p))
+  (magit-diff-highlight-hunk-body (not my/high-spec-system-p)))
 
 (use-package forge
   :ensure t
@@ -2016,7 +2054,7 @@ If buffer is modified, offer to save first."
                    (setq-local pcomplete-cycle-completions nil)
                    (setq-local completion-at-point-functions
                                '(pcomplete-completions-at-point))
-                   (completion-preview-mode 1)))
+))
   :bind
   ("C-c e" . eshell))
 
@@ -2315,15 +2353,15 @@ robust UI element disabling."
                       :background "#51afef")
   (set-face-attribute 'pulse-highlight-face nil
                       :background "#51afef")
-  
+
   (defun my/pulse-line (&rest _)
     "Pulse the current line."
     (pulse-momentary-highlight-one-line (point)))
-  
+
   (defun my/pulse-region (start end &rest _)
     "Pulse region between START and END."
     (pulse-momentary-highlight-region start end))
-  
+
   (dolist (cmd '(recenter-top-bottom
                  reposition-window
                  other-window
@@ -2340,16 +2378,16 @@ robust UI element disabling."
                  winner-undo
                  winner-redo))
     (advice-add cmd :after #'my/pulse-line))
-  
+
   (with-eval-after-load 'bookmark
     (advice-add 'bookmark-jump :after #'my/pulse-line))
-  
+
   (with-eval-after-load 'consult
     (add-hook 'consult-after-jump-hook #'my/pulse-line))
-  
+
   (with-eval-after-load 'imenu
     (advice-add 'imenu :after #'my/pulse-line))
-  
+
   (add-hook 'minibuffer-setup-hook #'my/pulse-line))
 
 (use-package volatile-highlights
@@ -2472,9 +2510,8 @@ robust UI element disabling."
         (switch-to-buffer (caar erc-modified-channels-alist))
       (message "No channel activity")))
   (defun my-erc-completion-setup ()
-    "Enable completion-preview for ERC."
-    (setq-local pcomplete-cycle-completions nil)
-    (completion-preview-mode 1))
+    "Enable completion for ERC."
+    (setq-local pcomplete-cycle-completions nil))
   (defun my-erc-switch-to-buffer ()
     "Switch to any ERC buffer using consult."
     (interactive)
@@ -2526,92 +2563,6 @@ robust UI element disabling."
               ("C-c C-n" . csv-forward-record)
               ("C-c C-p" . csv-backward-record)))
 
-(defun my/optimize-memory-settings ()
-  "Optimize Emacs settings based on available memory."
-  (when my/high-spec-system-p
-    (setq kill-ring-max (if my/ultra-high-spec-system-p 500 200)
-          mark-ring-max 50
-          global-mark-ring-max 50
-          message-log-max (if my/ultra-high-spec-system-p 20000 10000)
-          history-length (if my/ultra-high-spec-system-p 2000 1000)
-          desktop-restore-eager (if my/ultra-high-spec-system-p 20 10)
-          desktop-lazy-verbose nil
-          desktop-lazy-idle-delay 5)))
-
-(defun my/optimize-file-operations ()
-  "Optimize file operation settings."
-  (when my/high-spec-system-p
-    (setq auto-save-interval 1000
-          auto-save-timeout 60
-          create-lockfiles nil
-          backup-by-copying t
-          vc-handled-backends '(Git)
-          find-file-visit-truename nil
-          vc-follow-symlinks t)))
-
-(defun my/optimize-display-settings ()
-  "Optimize display and rendering settings."
-  (when my/high-spec-system-p
-    (setq font-lock-maximum-decoration t
-          jit-lock-stealth-time 0.2
-          jit-lock-chunk-size
-          (if my/ultra-high-spec-system-p 8192 4096)
-          jit-lock-defer-time 0.05
-          fast-but-imprecise-scrolling t
-          redisplay-skip-fontification-on-input t
-          inhibit-compacting-font-caches t
-          highlight-nonselected-windows nil)))
-
-(defun my/optimize-cpu-settings ()
-  "Optimize settings based on CPU count."
-  (when (>= my/cpu-count 8)
-    (setq native-comp-async-jobs-number
-          (cond ((>= my/cpu-count 16) (- my/cpu-count 4))
-                ((>= my/cpu-count 12) (- my/cpu-count 2))
-                (t (max 4 (/ my/cpu-count 2))))
-          enable-recursive-minibuffers t
-          minibuffer-depth-indicate-mode t
-          max-mini-window-height 0.5
-          completion-cycle-threshold 3
-          tab-always-indent 'complete)))
-
-(defun my/optimize-lsp-settings ()
-  "Optimize LSP settings for multicore systems."
-  (when (>= my/cpu-count 8)
-    (setq lsp-idle-delay 0.1
-          lsp-log-io nil
-          lsp-completion-provider :none
-          lsp-prefer-flymake nil
-          lsp-enable-file-watchers t
-          lsp-file-watch-threshold
-          (if my/ultra-high-spec-system-p 20000 10000))))
-
-(defun my/optimize-magit-settings ()
-  "Optimize Magit settings for large repositories."
-  (when my/high-spec-system-p
-    (setq magit-refresh-status-buffer nil
-          magit-diff-highlight-indentation nil
-          magit-diff-highlight-trailing nil
-          magit-diff-paint-whitespace nil
-          magit-diff-highlight-hunk-body nil
-          magit-diff-refine-hunk nil)))
-
-(defun my/apply-performance-optimizations ()
-  "Apply all performance optimizations based on system specifications."
-  (interactive)
-  (my/optimize-memory-settings)
-  (my/optimize-file-operations)
-  (my/optimize-display-settings)
-  (my/optimize-cpu-settings)
-  (with-eval-after-load 'lsp-mode
-    (my/optimize-lsp-settings))
-  (with-eval-after-load 'magit
-    (my/optimize-magit-settings))
-  (message
-   "Performance optimizations applied! Memory: %.1fGB, CPUs: %d"
-   my/system-memory my/cpu-count))
-
-(add-hook 'emacs-startup-hook #'my/apply-performance-optimizations)
 
 (provide 'init)
 ;;; init.el ends here
