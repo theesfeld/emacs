@@ -185,15 +185,10 @@
                     "-i" filename)
       (message "Screenshot saved to %s and added to kill-ring" filename))))
 
-(declare-function completion-preview-insert "completion-preview")
-
-(declare-function completion-preview-next-candidate
-                  "completion-preview")
-
-(declare-function completion-preview-prev-candidate
-                  "completion-preview")
-
-(declare-function completion-preview--hide "completion-preview")
+(declare-function corfu-next "corfu")
+(declare-function corfu-previous "corfu")
+(declare-function corfu-complete "corfu")
+(declare-function corfu-quit "corfu")
 
 (font-spec :name "AporeticSansMono Nerd Font")
 (set-face-attribute 'default nil
@@ -1302,26 +1297,36 @@ If buffer is modified, offer to save first."
   :after (consult yasnippet)
   :bind ("C-c Y" . consult-yasnippet))
 
-(use-package completion-preview
-  :ensure nil
-  :hook ((prog-mode . completion-preview-mode)
-         (conf-mode . completion-preview-mode)
-         (eshell-mode . completion-preview-mode))
+;;; Corfu
+(use-package corfu
+  :ensure t
+  :defer t
+  :diminish
+  :init
+  (global-corfu-mode)
   :custom
-  (completion-preview-minimum-symbol-length 2)
-  (completion-preview-idle-delay 0)
-  (completion-preview-exact-match-only nil)
-  (completion-preview-insert-on-completion t)
-  :custom-face
-  (completion-preview ((t (:inherit shadow :foreground "#FFC107"))))
-  (completion-preview-exact
-   ((t (:inherit completion-preview :weight bold))))
+  (corfu-cycle t)                 ; Enable cycling for `corfu-next/previous'
+  (corfu-auto t)                  ; Enable auto completion
+  (corfu-auto-delay 0.1)          ; Delay before auto-completion
+  (corfu-auto-prefix 2)           ; Minimum prefix length for auto-completion
+  (corfu-quit-at-boundary nil)    ; Never quit at completion boundary
+  (corfu-quit-no-match nil)       ; Never quit, even if there is no match
+  (corfu-preview-current nil)     ; Disable current candidate preview
+  (corfu-preselect 'prompt)       ; Preselect the prompt
+  (corfu-on-exact-match nil)      ; Configure handling of exact matches
+  (corfu-scroll-margin 5)         ; Use scroll margin
   :bind
-  (:map completion-preview-active-mode-map
-        ("TAB" . completion-preview-insert)
-        ([tab] . completion-preview-insert)
-        ("M-n" . completion-preview-next-candidate)
-        ("M-p" . completion-preview-prev-candidate)))
+  (:map corfu-map
+        ("TAB" . corfu-complete)
+        ([tab] . corfu-complete)
+        ("RET" . corfu-complete)
+        ([return] . corfu-complete)
+        ("C-n" . corfu-next)
+        ("C-p" . corfu-previous)
+        ("<down>" . corfu-next)
+        ("<up>" . corfu-previous)
+        ("C-g" . corfu-quit)
+        ("ESC" . corfu-quit)))
 
 (use-package nerd-icons
   :ensure t
@@ -2049,7 +2054,7 @@ If buffer is modified, offer to save first."
                    (setq-local pcomplete-cycle-completions nil)
                    (setq-local completion-at-point-functions
                                '(pcomplete-completions-at-point))
-                   (completion-preview-mode 1)))
+))
   :bind
   ("C-c e" . eshell))
 
@@ -2505,9 +2510,8 @@ robust UI element disabling."
         (switch-to-buffer (caar erc-modified-channels-alist))
       (message "No channel activity")))
   (defun my-erc-completion-setup ()
-    "Enable completion-preview for ERC."
-    (setq-local pcomplete-cycle-completions nil)
-    (completion-preview-mode 1))
+    "Enable completion for ERC."
+    (setq-local pcomplete-cycle-completions nil))
   (defun my-erc-switch-to-buffer ()
     "Switch to any ERC buffer using consult."
     (interactive)

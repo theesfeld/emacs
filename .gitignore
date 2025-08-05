@@ -1,85 +1,17 @@
-# CLAUDE files (AI assistant instructions)
+# CLAUDE files - NEVER track these
 CLAUDE.md
 .claude/
 claude.md
 .CLAUDE.md
+*.claude
+claude/
 
-# Emacs temporary and generated files
-*.elc
-*~
-\#*\#
-.\#*
-.*.swp
-*.log
-*.cache
-.cache/
-auto-save-list/
-backups/
-eln-cache/
+# Ignore everything by default
+*
+*/
 
-# Emacs directories
-eshell/
-multisession/
-org-asana-cache/
-saveplace/
-straight/
-transient/
-tree-sitter/
-var/
-vundo/
-url/
-latex/
-
-# Temporary files
-.tmp/
-*.tmp
-
-# Emacs specific files
-.emacs.desktop
-.emacs.desktop.lock
-TAGS
-bookmarks
-forge-database.sqlite
-history
-ido.last
-init.el.bak*
-logview-cache.extmap
-mastodon.plstore
-network-security.data
-places
-projectile-bookmarks.eld
-projectile.cache
-projects
-recentf
-recentf~
-savehist
-smex-items
-snippets/
-tramp
-
-# Documentation and misc files
-*.md
-*.org
-Running
-
-# Debug and test files
-debug-*.el
-test-*.el
-*-fix*.el
-minimal-*.el
-fixed-*.el
-apply-*.el
-
-# Package files
-package*.json
-package-lock.json
-
-# Credentials and secrets
-*.gpg
-
-# Keep only these files
+# But track these specific files ONLY
+!.gitignore
 !init.el
 !early-init.el
-!functions.el
-!.gitignore
 !README.md
