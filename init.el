@@ -1317,7 +1317,6 @@ If buffer is modified, offer to save first."
   (corfu-popupinfo-delay 0.5)
   (corfu-echo-documentation nil)
   (corfu-separator ?\s)
-  (global-corfu-modes '(not (minibuffer-mode)))
   :bind
   (:map corfu-map
         ("TAB" . corfu-complete)
@@ -1331,6 +1330,7 @@ If buffer is modified, offer to save first."
         ("C-g" . corfu-quit)
         ("ESC" . corfu-quit)
         ("SPC" . corfu-insert-separator)))
+
 (use-package nerd-icons
   :ensure t
   :custom
