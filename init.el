@@ -1331,9 +1331,7 @@ If buffer is modified, offer to save first."
         ("C-g" . corfu-quit)
         ("ESC" . corfu-quit)
         ("SPC" . corfu-insert-separator)
-        ("M-d" . corfu-popupinfo-toggle)
-        ("M-p" . corfu-popupinfo-scroll-down)
-        ("M-n" . corfu-popupinfo-scroll-up)))
+        ("M-d" . corfu-popupinfo-toggle)))
 
 (use-package nerd-icons
   :ensure t
