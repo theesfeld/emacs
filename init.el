@@ -1307,14 +1307,17 @@ If buffer is modified, offer to save first."
   :custom
   (corfu-cycle t)                 ; Enable cycling for `corfu-next/previous'
   (corfu-auto t)                  ; Enable auto completion
-  (corfu-auto-delay 0.1)          ; Delay before auto-completion
+  (corfu-auto-delay 0.15)         ; Slightly longer delay for less intrusive completion
   (corfu-auto-prefix 2)           ; Minimum prefix length for auto-completion
-  (corfu-quit-at-boundary nil)    ; Never quit at completion boundary
-  (corfu-quit-no-match nil)       ; Never quit, even if there is no match
+  (corfu-quit-at-boundary 'separator) ; Quit at word boundary when inserting separator
+  (corfu-quit-no-match 'separator)    ; Hide popup when no match after separator
   (corfu-preview-current nil)     ; Disable current candidate preview
   (corfu-preselect 'prompt)       ; Preselect the prompt
   (corfu-on-exact-match nil)      ; Configure handling of exact matches
   (corfu-scroll-margin 5)         ; Use scroll margin
+  (corfu-popupinfo-delay 0.5)     ; Delay for documentation popup
+  (corfu-echo-documentation nil)  ; Don't echo documentation in minibuffer
+  (corfu-separator ?\s)            ; Use space as separator (for orderless)
   :bind
   (:map corfu-map
         ("TAB" . corfu-complete)
@@ -1326,7 +1329,11 @@ If buffer is modified, offer to save first."
         ("<down>" . corfu-next)
         ("<up>" . corfu-previous)
         ("C-g" . corfu-quit)
-        ("ESC" . corfu-quit)))
+        ("ESC" . corfu-quit)
+        ("SPC" . corfu-insert-separator)
+        ("M-d" . corfu-popupinfo-toggle)
+        ("M-p" . corfu-popupinfo-scroll-down)
+        ("M-n" . corfu-popupinfo-scroll-up)))
 
 (use-package nerd-icons
   :ensure t
