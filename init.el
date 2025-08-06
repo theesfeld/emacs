@@ -1329,7 +1329,7 @@ If buffer is modified, offer to save first."
         ("<up>" . corfu-previous)
         ("C-g" . corfu-quit)
         ("ESC" . corfu-quit)
-        ("SPC" . corfu-quit)))
+        ("SPC" . corfu-insert-separator)))
 (use-package nerd-icons
   :ensure t
   :custom
