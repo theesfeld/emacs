@@ -1,10 +1,17 @@
+# CLAUDE files - NEVER track these
+CLAUDE.md
+.claude/
+claude.md
+.CLAUDE.md
+*.claude
+claude/
+
 # Ignore everything by default
 *
 */
 
-# But track these specific files
+# But track these specific files ONLY
 !.gitignore
 !init.el
 !early-init.el
 !README.md
-!CLAUDE.md
