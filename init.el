@@ -1297,7 +1297,6 @@ If buffer is modified, offer to save first."
   :after (consult yasnippet)
   :bind ("C-c Y" . consult-yasnippet))
 
-;;; Corfu
 (use-package corfu
   :ensure t
   :defer t
@@ -1305,19 +1304,20 @@ If buffer is modified, offer to save first."
   :init
   (global-corfu-mode)
   :custom
-  (corfu-cycle t)                 ; Enable cycling for `corfu-next/previous'
-  (corfu-auto t)                  ; Enable auto completion
-  (corfu-auto-delay 0.15)         ; Slightly longer delay for less intrusive completion
-  (corfu-auto-prefix 2)           ; Minimum prefix length for auto-completion
-  (corfu-quit-at-boundary 'separator) ; Quit at word boundary when inserting separator
-  (corfu-quit-no-match 'separator)    ; Hide popup when no match after separator
-  (corfu-preview-current nil)     ; Disable current candidate preview
-  (corfu-preselect 'prompt)       ; Preselect the prompt
-  (corfu-on-exact-match nil)      ; Configure handling of exact matches
-  (corfu-scroll-margin 5)         ; Use scroll margin
-  (corfu-popupinfo-delay 0.5)     ; Delay for documentation popup
-  (corfu-echo-documentation nil)  ; Don't echo documentation in minibuffer
-  (corfu-separator ?\s)            ; Use space as separator (for orderless)
+  (corfu-cycle t)
+  (corfu-auto t)
+  (corfu-auto-delay 0.15)
+  (corfu-auto-prefix 3)
+  (corfu-quit-at-boundary 'separator)
+  (corfu-quit-no-match t)
+  (corfu-preview-current nil)
+  (corfu-preselect 'prompt)
+  (corfu-on-exact-match nil)
+  (corfu-scroll-margin 5)
+  (corfu-popupinfo-delay 0.5)
+  (corfu-echo-documentation nil)
+  (corfu-separator ?\s)
+  (global-corfu-modes '((not t) . t))
   :bind
   (:map corfu-map
         ("TAB" . corfu-complete)
@@ -1330,9 +1330,7 @@ If buffer is modified, offer to save first."
         ("<up>" . corfu-previous)
         ("C-g" . corfu-quit)
         ("ESC" . corfu-quit)
-        ("SPC" . corfu-insert-separator)
-        ("M-d" . corfu-popupinfo-toggle)))
-
+        ("SPC" . corfu-insert-separator)))
 (use-package nerd-icons
   :ensure t
   :custom
