@@ -1307,9 +1307,9 @@ If buffer is modified, offer to save first."
   (corfu-cycle t)
   (corfu-auto t)
   (corfu-auto-delay 0.15)
-  (corfu-auto-prefix 2)
+  (corfu-auto-prefix 3)
   (corfu-quit-at-boundary 'separator)
-  (corfu-quit-no-match 'separator)
+  (corfu-quit-no-match t)
   (corfu-preview-current nil)
   (corfu-preselect 'prompt)
   (corfu-on-exact-match nil)
@@ -1317,6 +1317,7 @@ If buffer is modified, offer to save first."
   (corfu-popupinfo-delay 0.5)
   (corfu-echo-documentation nil)
   (corfu-separator ?\s)
+  (global-corfu-modes '((not t) . t))
   :bind
   (:map corfu-map
         ("TAB" . corfu-complete)
