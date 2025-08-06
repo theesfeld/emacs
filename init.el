@@ -1328,8 +1328,8 @@ If buffer is modified, offer to save first."
   (:map corfu-map
         ("TAB" . corfu-complete)
         ([tab] . corfu-complete)
-        ("RET" . my/corfu-quit-and-newline)
-        ([return] . my/corfu-quit-and-newline)
+        ("RET" . nil)
+        ([return] . nil)
         ("C-n" . corfu-next)
         ("C-p" . corfu-previous)
         ("<down>" . corfu-next)
