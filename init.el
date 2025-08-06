@@ -1311,18 +1311,25 @@ If buffer is modified, offer to save first."
   (corfu-quit-at-boundary 'separator)
   (corfu-quit-no-match t)
   (corfu-preview-current nil)
-  (corfu-preselect 'first)  ; Changed from 'prompt to 'first
+  (corfu-preselect 'first)  ; Keep this for TAB convenience
   (corfu-on-exact-match nil)
   (corfu-scroll-margin 5)
   (corfu-popupinfo-delay 0.5)
   (corfu-echo-documentation nil)
   (corfu-separator ?\s)
+  :config
+  ;; Custom function to just dismiss corfu and continue
+  (defun my/corfu-quit-and-newline ()
+    "Quit corfu and insert newline."
+    (interactive)
+    (corfu-quit)
+    (newline))
   :bind
   (:map corfu-map
         ("TAB" . corfu-complete)
         ([tab] . corfu-complete)
-        ("RET" . corfu-insert)
-        ([return] . corfu-insert)
+        ("RET" . my/corfu-quit-and-newline)
+        ([return] . my/corfu-quit-and-newline)
         ("C-n" . corfu-next)
         ("C-p" . corfu-previous)
         ("<down>" . corfu-next)
