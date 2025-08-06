@@ -2571,7 +2571,7 @@ robust UI element disabling."
   :ensure t
   :custom
   ;; Set default opacity
-  (buffer-background-opacity 0.8)
+  (buffer-background-opacity 0.2)
   :config
   ;; Configure different backgrounds for different buffer types
   (setq buffer-background-color-alist
@@ -2596,8 +2596,9 @@ robust UI element disabling."
 
   ;; Enable global mode for automatic buffer assignment
   (buffer-background-global-mode 1)
+(buffer-background-mode t)
 
-  ;; Optional: Set up keybindings
+;; Optional: Set up keybindings
   :bind (("C-c b c" . buffer-background-set-color)
          ("C-c b t" . buffer-background-toggle)
          ("C-c b x" . buffer-background-clear)
