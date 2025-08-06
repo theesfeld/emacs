@@ -1311,7 +1311,7 @@ If buffer is modified, offer to save first."
   (corfu-quit-at-boundary 'separator)
   (corfu-quit-no-match t)
   (corfu-preview-current nil)
-  (corfu-preselect 'prompt)
+  (corfu-preselect 'first)  ; Changed from 'prompt to 'first
   (corfu-on-exact-match nil)
   (corfu-scroll-margin 5)
   (corfu-popupinfo-delay 0.5)
@@ -1321,8 +1321,8 @@ If buffer is modified, offer to save first."
   (:map corfu-map
         ("TAB" . corfu-complete)
         ([tab] . corfu-complete)
-        ("RET" . corfu-complete)
-        ([return] . corfu-complete)
+        ("RET" . corfu-insert)
+        ([return] . corfu-insert)
         ("C-n" . corfu-next)
         ("C-p" . corfu-previous)
         ("<down>" . corfu-next)
