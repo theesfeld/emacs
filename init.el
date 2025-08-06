@@ -2566,6 +2566,43 @@ robust UI element disabling."
               ("C-c C-n" . csv-forward-record)
               ("C-c C-p" . csv-backward-record)))
 
+(use-package buffer-background
+  :vc (:url "https://github.com/theesfeld/buffer-background")
+  :ensure t
+  :custom
+  ;; Set default opacity
+  (buffer-background-opacity 0.8)
+  :config
+  ;; Configure different backgrounds for different buffer types
+  (setq buffer-background-color-alist
+        '(;; Simple color assignments
+          ("*scratch*" . "#2d2d2d")
+          ("*Messages*" . "green")
+
+          ;; Color with custom opacity
+          ("*Warnings*" . (:color "#3d1a1a" :opacity 0.8))
+
+          ;; Major modes with colors
+          (org-mode . (:color "#1e1e2e" :opacity 0.9))
+          (python-mode . (:color "#002b36" :opacity 0.8))
+
+          ;; File extensions
+          ((file . "txt") . (:color "#1c1c1c" :opacity 0.7))
+
+          ;; Custom predicates for special conditions
+          ((lambda (buf)
+             (file-remote-p default-directory))
+           . (:color "#1a1a3d" :opacity 0.8))))
+
+  ;; Enable global mode for automatic buffer assignment
+  (buffer-background-global-mode 1)
+
+  ;; Optional: Set up keybindings
+  :bind (("C-c b c" . buffer-background-set-color)
+         ("C-c b t" . buffer-background-toggle)
+         ("C-c b x" . buffer-background-clear)
+         ("C-c b o" . buffer-background-set-opacity)
+         ("C-c b s" . buffer-background-show-color-source)))
 
 (provide 'init)
 ;;; init.el ends here
