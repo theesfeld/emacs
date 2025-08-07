@@ -2393,8 +2393,9 @@ robust UI element disabling."
   :bind ("C-c v" . claude-code-ide-menu)
   :config
   (claude-code-ide-emacs-tools-setup)
-(setq claude-code-ide-terminal-backend 'eat)
-(setq claude-code-ide-buffer-name-function
+  (setq claude-code-ide-terminal-backend 'eat
+        claude-code-ide-use-side-window nil
+        claude-code-ide-buffer-name-function
       (lambda (directory)
         (if directory
             (format "*Claude:%s*" (file-name-nondirectory (directory-file-name directory)))
