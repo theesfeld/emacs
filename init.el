@@ -2190,7 +2190,7 @@ robust UI element disabling."
   (eshell-load . eat-eshell-visual-command-mode))
 
 (use-package claude-code-ide
-  :vc :url ("https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
+  :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
   :bind ("C-c v" . claude-code-ide-menu)
   :config
   (claude-code-ide-emacs-tools-setup)
