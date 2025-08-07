@@ -1334,7 +1334,6 @@ If buffer is modified, offer to save first."
         ("ESC" . corfu-quit)
         ("SPC" . nil)))
 
-;;; completion-preview
 (use-package completion-preview
   :ensure nil
   :hook ((prog-mode text-mode) . completion-preview-mode)
@@ -1828,7 +1827,6 @@ If buffer is modified, offer to save first."
      (display-line-numbers-mode -1)
      (hl-line-mode -1))))
 
-;;; treesit
 (use-package treesit
   :ensure nil
   :custom
@@ -1874,7 +1872,7 @@ If buffer is modified, offer to save first."
           (sh-mode . bash-ts-mode)
           (typescript-mode . typescript-ts-mode)
           (yaml-mode . yaml-ts-mode)))
-  
+
   (defun my/install-missing-grammars ()
     "Install missing tree-sitter grammars interactively."
     (interactive)
@@ -1883,35 +1881,35 @@ If buffer is modified, offer to save first."
         (unless (treesit-language-available-p lang)
           (when (y-or-n-p (format "Install tree-sitter grammar for %s? " lang))
             (treesit-install-language-grammar lang))))))
-  
+
   (setq treesit-simple-indent-presets
         (append treesit-simple-indent-presets
                 '((jsx-indent . (lambda (node parent bol)
                                   (if (string-match-p "jsx" (treesit-node-type node))
                                       js-indent-level
                                     0))))))
-  
+
   (defun my/treesit-setup ()
     "Setup tree-sitter for current buffer."
     (when (and (treesit-available-p)
                (treesit-language-at-point-function))
       (treesit-font-lock-recompute-features)))
-  
+
   (add-hook 'prog-mode-hook #'my/treesit-setup)
-  
+
   (setq treesit-primary-parser 'auto)
-  
+
   (setq treesit-aggregated-simple-imenu-settings
         '((nil "Function" "\\`function_definition\\'" nil nil)
           (nil "Class" "\\`class_definition\\'" nil nil)
           (nil "Method" "\\`method_definition\\'" nil nil)))
-  
+
   (setq treesit-aggregated-outline-predicate
         (lambda (node)
           (string-match-p
            "\\`\\(function\\|class\\|method\\|module\\)_definition\\'"
            (treesit-node-type node))))
-  
+
   (defun my/treesit-configure-outline ()
     "Configure outline-minor-mode for tree-sitter."
     (when (and (treesit-available-p)
@@ -1923,9 +1921,9 @@ If buffer is modified, offer to save first."
                       (if node
                           (length (treesit-node-parent-chain node))
                         1))))))
-  
+
   (add-hook 'tree-sitter-after-first-parse-hook #'my/treesit-configure-outline)
-  
+
   (with-eval-after-load 'which-function
     (setq which-func-functions
           (cons (lambda ()
@@ -1944,7 +1942,6 @@ If buffer is modified, offer to save first."
                          t)))))
                 which-func-functions))))
 
-;;; Tree-sitter language modes
 (use-package c-ts-mode
   :ensure nil
   :after treesit
@@ -1953,13 +1950,11 @@ If buffer is modified, offer to save first."
   (setq c-ts-mode-indent-style 'gnu)
   (setq c-ts-mode-indent-offset 2))
 
-;;; c++-ts-mode
 (use-package c++-ts-mode
   :ensure nil
   :after treesit
   :mode ("\\.\\(cpp\\|cxx\\|cc\\|C\\|hpp\\|hxx\\|hh\\|H\\)\\'" . c++-ts-mode))
 
-;;; python-ts-mode
 (use-package python-ts-mode
   :ensure nil
   :after treesit
@@ -1967,7 +1962,6 @@ If buffer is modified, offer to save first."
   :config
   (setq python-ts-mode-indent-offset 4))
 
-;;; js-ts-mode
 (use-package js-ts-mode
   :ensure nil
   :after treesit
@@ -1975,7 +1969,6 @@ If buffer is modified, offer to save first."
   :config
   (setq js-ts-mode-indent-offset 2))
 
-;;; typescript-ts-mode
 (use-package typescript-ts-mode
   :ensure nil
   :after treesit
@@ -1983,37 +1976,31 @@ If buffer is modified, offer to save first."
   :config
   (setq typescript-ts-mode-indent-offset 2))
 
-;;; tsx-ts-mode
 (use-package tsx-ts-mode
   :ensure nil
   :after treesit
   :mode ("\\.tsx\\'" . tsx-ts-mode))
 
-;;; json-ts-mode
 (use-package json-ts-mode
   :ensure nil
   :after treesit
   :mode ("\\.json\\'" . json-ts-mode))
 
-;;; yaml-ts-mode
 (use-package yaml-ts-mode
   :ensure nil
   :after treesit
   :mode ("\\.ya?ml\\'" . yaml-ts-mode))
 
-;;; toml-ts-mode
 (use-package toml-ts-mode
   :ensure nil
   :after treesit
   :mode ("\\.toml\\'" . toml-ts-mode))
 
-;;; markdown-ts-mode
 (use-package markdown-ts-mode
   :ensure nil
   :after treesit
   :mode ("\\.md\\'" . markdown-ts-mode))
 
-;;; rust-ts-mode
 (use-package rust-ts-mode
   :ensure nil
   :after treesit
@@ -2021,19 +2008,16 @@ If buffer is modified, offer to save first."
   :config
   (setq rust-ts-mode-indent-offset 4))
 
-;;; go-ts-mode
 (use-package go-ts-mode
   :ensure nil
   :after treesit
   :mode ("\\.go\\'" . go-ts-mode))
 
-;;; bash-ts-mode
 (use-package bash-ts-mode
   :ensure nil
   :after treesit
   :mode ("\\.\\(sh\\|bash\\|zsh\\)\\'" . bash-ts-mode))
 
-;;; kill-ring-deindent
 (use-package simple
   :ensure nil
   :config
@@ -2042,7 +2026,6 @@ If buffer is modified, offer to save first."
   (setq read-minibuffer-restore-windows t)
   (setq kill-do-not-save-duplicates t))
 
-;;; so-long
 (use-package so-long :ensure nil :config (global-so-long-mode 1))
 
 (use-package flymake
@@ -2416,13 +2399,6 @@ robust UI element disabling."
         (if directory
             (format "*Claude:%s*" (file-name-nondirectory (directory-file-name directory)))
           "*Claude:Global*"))))
-
-;; (use-package claude-code
-;;   :ensure t
-;;   :defer t
-;;   :vc (:url "https://github.com/stevemolitor/claude-code.el" :rev :newest)
-;;   :config (claude-code-mode)
-;;   :bind-keymap ("C-c v" . claude-code-command-map))
 
 (use-package electric
   :ensure nil
