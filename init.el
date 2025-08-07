@@ -20,6 +20,7 @@
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
+;; Emacs 30.1 configuration
 ;;; Code:
 
 (defun my/get-system-memory ()
@@ -1347,7 +1348,7 @@ If buffer is modified, offer to save first."
         (lambda (completions)
           (seq-sort-by #'length #'< completions)))
   :bind
-  (:map completion-preview-mode-map
+  (:map completion-preview-active-mode-map
         ("TAB" . completion-preview-insert)
         ("M-TAB" . completion-preview-complete)
         ("C-n" . completion-preview-next)
@@ -1892,7 +1893,7 @@ If buffer is modified, offer to save first."
   (defun my/treesit-setup ()
     "Setup tree-sitter for current buffer."
     (when (and (treesit-available-p)
-               (treesit-language-at-point-function))
+               (bound-and-true-p treesit-language-at-point-function))
       (treesit-font-lock-recompute-features)))
 
   (add-hook 'prog-mode-hook #'my/treesit-setup)
