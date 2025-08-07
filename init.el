@@ -2189,13 +2189,24 @@ robust UI element disabling."
   (eshell-load . eat-eshell-mode)
   (eshell-load . eat-eshell-visual-command-mode))
 
-(use-package claude-code
-  :ensure t
-  :defer t
-  :vc
-  (:url "https://github.com/stevemolitor/claude-code.el" :rev :newest)
-  :config (claude-code-mode)
-  :bind-keymap ("C-c v" . claude-code-command-map))
+(use-package claude-code-ide
+  :vc :url ("https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
+  :bind ("C-c v" . claude-code-ide-menu)
+  :config
+  (claude-code-ide-emacs-tools-setup)
+(setq claude-code-ide-terminal-backend 'eat)
+(setq claude-code-ide-buffer-name-function
+      (lambda (directory)
+        (if directory
+            (format "*Claude:%s*" (file-name-nondirectory (directory-file-name directory)))
+          "*Claude:Global*"))))
+
+;; (use-package claude-code
+;;   :ensure t
+;;   :defer t
+;;   :vc (:url "https://github.com/stevemolitor/claude-code.el" :rev :newest)
+;;   :config (claude-code-mode)
+;;   :bind-keymap ("C-c v" . claude-code-command-map))
 
 (use-package electric
   :ensure nil
