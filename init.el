@@ -20,6 +20,7 @@
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
+;; Emacs 30.1 configuration
 ;;; Code:
 
 (defun my/get-system-memory ()
@@ -653,6 +654,9 @@ This function is added to the \=`ef-themes-post-load-hook'."
   (completions-format 'one-column)
   (completions-max-height 15)
   (use-short-answers t)
+  (completion-eager-display t)
+  (completion-show-help t)
+  (completion-auto-wrap t)
   :config
   (setq user-full-name "TJ"
         user-mail-address "tj@emacs.su"
@@ -1311,26 +1315,45 @@ If buffer is modified, offer to save first."
   (corfu-quit-at-boundary 'separator)
   (corfu-quit-no-match t)
   (corfu-preview-current nil)
-  (corfu-preselect 'prompt)
+  (corfu-preselect 'first)
   (corfu-on-exact-match nil)
   (corfu-scroll-margin 5)
   (corfu-popupinfo-delay 0.5)
   (corfu-echo-documentation nil)
   (corfu-separator ?\s)
-  (global-corfu-modes '((not t) . t))
   :bind
   (:map corfu-map
         ("TAB" . corfu-complete)
         ([tab] . corfu-complete)
-        ("RET" . corfu-complete)
-        ([return] . corfu-complete)
+        ("RET" . nil)
+        ([return] . nil)
         ("C-n" . corfu-next)
         ("C-p" . corfu-previous)
         ("<down>" . corfu-next)
         ("<up>" . corfu-previous)
         ("C-g" . corfu-quit)
         ("ESC" . corfu-quit)
-        ("SPC" . corfu-insert-separator)))
+        ("SPC" . nil)))
+
+(use-package completion-preview
+  :ensure nil
+  :hook ((prog-mode text-mode) . completion-preview-mode)
+  :custom
+  (completion-preview-idle-delay 0.2)
+  (completion-preview-minimum-prefix-length 2)
+  (completion-preview-insert-on-completion t)
+  (completion-preview-exact-match-only nil)
+  :config
+  (setq completion-preview-sort-function
+        (lambda (completions)
+          (seq-sort-by #'length #'< completions)))
+  :bind
+  (:map completion-preview-active-mode-map
+        ("TAB" . completion-preview-insert)
+        ("M-TAB" . completion-preview-complete)
+        ("C-n" . completion-preview-next)
+        ("C-p" . completion-preview-prev)))
+
 (use-package nerd-icons
   :ensure t
   :custom
@@ -1809,23 +1832,200 @@ If buffer is modified, offer to save first."
   :ensure nil
   :custom
   (treesit-font-lock-level 4)
+  (treesit-auto-install-grammar t)
+  (treesit-language-source-alist
+   '((bash "https://github.com/tree-sitter/tree-sitter-bash")
+     (c "https://github.com/tree-sitter/tree-sitter-c")
+     (cmake "https://github.com/uyha/tree-sitter-cmake")
+     (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
+     (css "https://github.com/tree-sitter/tree-sitter-css")
+     (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+     (go "https://github.com/tree-sitter/tree-sitter-go")
+     (html "https://github.com/tree-sitter/tree-sitter-html")
+     (java "https://github.com/tree-sitter/tree-sitter-java")
+     (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+     (json "https://github.com/tree-sitter/tree-sitter-json")
+     (lua "https://github.com/tree-sitter-grammars/tree-sitter-lua")
+     (make "https://github.com/alemuller/tree-sitter-make")
+     (markdown "https://github.com/tree-sitter-grammars/tree-sitter-markdown")
+     (python "https://github.com/tree-sitter/tree-sitter-python")
+     (rust "https://github.com/tree-sitter/tree-sitter-rust")
+     (toml "https://github.com/tree-sitter/tree-sitter-toml")
+     (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+     (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+     (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
   :config
   (setq major-mode-remap-alist
         '((c-mode . c-ts-mode)
           (c++-mode . c++-ts-mode)
-          (python-mode . python-ts-mode)
+          (conf-toml-mode . toml-ts-mode)
+          (css-mode . css-ts-mode)
+          (go-mode . go-ts-mode)
+          (html-mode . html-ts-mode)
+          (java-mode . java-ts-mode)
           (javascript-mode . js-ts-mode)
-          (typescript-mode . typescript-ts-mode)
+          (js-mode . js-ts-mode)
           (json-mode . json-ts-mode)
-          (css-mode . css-ts-mode))))
+          (lua-mode . lua-ts-mode)
+          (markdown-mode . markdown-ts-mode)
+          (python-mode . python-ts-mode)
+          (rust-mode . rust-ts-mode)
+          (sh-mode . bash-ts-mode)
+          (typescript-mode . typescript-ts-mode)
+          (yaml-mode . yaml-ts-mode)))
 
-(use-package treesit-auto
-  :ensure t
-  :custom
-  (treesit-auto-install 'prompt)
-  (treesit-auto-langs '(python typescript tsx json bash))
+  (defun my/install-missing-grammars ()
+    "Install missing tree-sitter grammars interactively."
+    (interactive)
+    (dolist (lang-source treesit-language-source-alist)
+      (let ((lang (car lang-source)))
+        (unless (treesit-language-available-p lang)
+          (when (y-or-n-p (format "Install tree-sitter grammar for %s? " lang))
+            (treesit-install-language-grammar lang))))))
+
+  (setq treesit-simple-indent-presets
+        (append treesit-simple-indent-presets
+                '((jsx-indent . (lambda (node parent bol)
+                                  (if (string-match-p "jsx" (treesit-node-type node))
+                                      js-indent-level
+                                    0))))))
+
+  (defun my/treesit-setup ()
+    "Setup tree-sitter for current buffer."
+    (when (and (treesit-available-p)
+               (bound-and-true-p treesit-language-at-point-function))
+      (treesit-font-lock-recompute-features)))
+
+  (add-hook 'prog-mode-hook #'my/treesit-setup)
+
+  (setq treesit-primary-parser 'auto)
+
+  (setq treesit-aggregated-simple-imenu-settings
+        '((nil "Function" "\\`function_definition\\'" nil nil)
+          (nil "Class" "\\`class_definition\\'" nil nil)
+          (nil "Method" "\\`method_definition\\'" nil nil)))
+
+  (setq treesit-aggregated-outline-predicate
+        (lambda (node)
+          (string-match-p
+           "\\`\\(function\\|class\\|method\\|module\\)_definition\\'"
+           (treesit-node-type node))))
+
+  (defun my/treesit-configure-outline ()
+    "Configure outline-minor-mode for tree-sitter."
+    (when (and (treesit-available-p)
+               (treesit-parser-list))
+      (setq-local outline-regexp "")
+      (setq-local outline-level
+                  (lambda ()
+                    (let ((node (treesit-node-at (point))))
+                      (if node
+                          (length (treesit-node-parent-chain node))
+                        1))))))
+
+  (add-hook 'tree-sitter-after-first-parse-hook #'my/treesit-configure-outline)
+
+  (with-eval-after-load 'which-function
+    (setq which-func-functions
+          (cons (lambda ()
+                  (when (and (treesit-available-p)
+                             (treesit-parser-list))
+                    (let ((node (treesit-node-at (point))))
+                      (when node
+                        (treesit-node-text
+                         (or (treesit-parent-until
+                              node
+                              (lambda (n)
+                                (string-match-p
+                                 "\\`\\(function\\|method\\)_definition\\'"
+                                 (treesit-node-type n))))
+                             node)
+                         t)))))
+                which-func-functions))))
+
+(use-package c-ts-mode
+  :ensure nil
+  :after treesit
+  :mode ("\\.[ch]\\'" . c-ts-mode)
   :config
-  (global-treesit-auto-mode))
+  (setq c-ts-mode-indent-style 'gnu)
+  (setq c-ts-mode-indent-offset 2))
+
+(use-package c++-ts-mode
+  :ensure nil
+  :after treesit
+  :mode ("\\.\\(cpp\\|cxx\\|cc\\|C\\|hpp\\|hxx\\|hh\\|H\\)\\'" . c++-ts-mode))
+
+(use-package python-ts-mode
+  :ensure nil
+  :after treesit
+  :mode ("\\.py[iw]?\\'" . python-ts-mode)
+  :config
+  (setq python-ts-mode-indent-offset 4))
+
+(use-package js-ts-mode
+  :ensure nil
+  :after treesit
+  :mode ("\\.m?js\\'" . js-ts-mode)
+  :config
+  (setq js-ts-mode-indent-offset 2))
+
+(use-package typescript-ts-mode
+  :ensure nil
+  :after treesit
+  :mode ("\\.ts\\'" . typescript-ts-mode)
+  :config
+  (setq typescript-ts-mode-indent-offset 2))
+
+(use-package tsx-ts-mode
+  :ensure nil
+  :after treesit
+  :mode ("\\.tsx\\'" . tsx-ts-mode))
+
+(use-package json-ts-mode
+  :ensure nil
+  :after treesit
+  :mode ("\\.json\\'" . json-ts-mode))
+
+(use-package yaml-ts-mode
+  :ensure nil
+  :after treesit
+  :mode ("\\.ya?ml\\'" . yaml-ts-mode))
+
+(use-package toml-ts-mode
+  :ensure nil
+  :after treesit
+  :mode ("\\.toml\\'" . toml-ts-mode))
+
+(use-package markdown-ts-mode
+  :ensure nil
+  :after treesit
+  :mode ("\\.md\\'" . markdown-ts-mode))
+
+(use-package rust-ts-mode
+  :ensure nil
+  :after treesit
+  :mode ("\\.rs\\'" . rust-ts-mode)
+  :config
+  (setq rust-ts-mode-indent-offset 4))
+
+(use-package go-ts-mode
+  :ensure nil
+  :after treesit
+  :mode ("\\.go\\'" . go-ts-mode))
+
+(use-package bash-ts-mode
+  :ensure nil
+  :after treesit
+  :mode ("\\.\\(sh\\|bash\\|zsh\\)\\'" . bash-ts-mode))
+
+(use-package simple
+  :ensure nil
+  :config
+  (kill-ring-deindent-mode 1)
+  (setq next-error-message-highlight t)
+  (setq read-minibuffer-restore-windows t)
+  (setq kill-do-not-save-duplicates t))
 
 (use-package so-long :ensure nil :config (global-so-long-mode 1))
 
@@ -2189,13 +2389,18 @@ robust UI element disabling."
   (eshell-load . eat-eshell-mode)
   (eshell-load . eat-eshell-visual-command-mode))
 
-(use-package claude-code
-  :ensure t
-  :defer t
-  :vc
-  (:url "https://github.com/stevemolitor/claude-code.el" :rev :newest)
-  :config (claude-code-mode)
-  :bind-keymap ("C-c v" . claude-code-command-map))
+(use-package claude-code-ide
+  :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
+  :bind ("C-c v" . claude-code-ide-menu)
+  :config
+  (claude-code-ide-emacs-tools-setup)
+  (setq claude-code-ide-terminal-backend 'eat
+        claude-code-ide-use-side-window nil
+        claude-code-ide-buffer-name-function
+      (lambda (directory)
+        (if directory
+            (format "*Claude:%s*" (file-name-nondirectory (directory-file-name directory)))
+          "*Claude:Global*"))))
 
 (use-package electric
   :ensure nil
@@ -2565,7 +2770,6 @@ robust UI element disabling."
               ("C-c C-b" . csv-backward-field)
               ("C-c C-n" . csv-forward-record)
               ("C-c C-p" . csv-backward-record)))
-
 
 (provide 'init)
 ;;; init.el ends here
