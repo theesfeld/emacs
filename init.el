@@ -269,7 +269,7 @@ This function is added to the \=`ef-themes-post-load-hook'."
 
 (when (eq window-system 'x)
   (use-package exwm
-    :ensure nil
+    :ensure t
     :init
     (require 'exwm-randr)
     (require 'exwm-systemtray)
