@@ -2112,11 +2112,11 @@ If buffer is modified, offer to save first."
               ("C-c C-d" . checkdoc)
               ("C-c C-b" . checkdoc-current-buffer)
               ("C-c C-c" . checkdoc-comments)
-              ("C-c C-e b" . eval-buffer)
-              ("C-c C-e e" . eval-last-sexp)
-              ("C-c C-e r" . eval-region)
-              ("C-c C-e f" . eval-defun)
-              ("C-c C-e l" . load-library))
+              ("C-c e b" . eval-buffer)
+              ("C-c e e" . eval-last-sexp)
+              ("C-c e r" . eval-region)
+              ("C-c e f" . eval-defun)
+              ("C-c e l" . load-library))
   :config
   (defun my/checkdoc-maybe-suppress-in-init ()
     "Suppress some checkdoc warnings in init files."
