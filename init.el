@@ -874,7 +874,7 @@ This function is added to the \=`ef-themes-post-load-hook'."
   (("C-x k" . kill-current-buffer)
    ("C-x K" . kill-buffer)
    ("M-y" . consult-yank-pop)
-   ("C-i" . consult-imenu)
+   ("C-c i" . consult-imenu)
    ("s-=" . increase-text-and-pane)
    ("s--" . decrease-text-and-pane)
    ("<print>" . my/screenshot-to-kill-ring)
@@ -1281,7 +1281,6 @@ If buffer is modified, offer to save first."
    ([remap isearch-forward] . consult-line)
    ([remap recentf-open-files] . consult-recent-file)
    ("M-y" . consult-yank-pop)
-   ("C-i" . consult-imenu)
    ("C-c r" . consult-recent-file)
    :map isearch-mode-map
    ("M-e" . consult-isearch-history)
