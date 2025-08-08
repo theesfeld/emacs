@@ -2061,6 +2061,28 @@ If buffer is modified, offer to save first."
   (remove-hook 'emacs-lisp-mode-hook #'package-lint-flymake-setup)
   (add-hook 'emacs-lisp-mode-hook #'my/maybe-enable-package-lint))
 
+;;; Elisp-autofmt
+(use-package elisp-autofmt
+  :ensure t
+  :defer t
+  :commands (elisp-autofmt-mode elisp-autofmt-buffer)
+  :hook (emacs-lisp-mode . elisp-autofmt-mode))
+
+;;; Elisp-def for better navigation
+(use-package elisp-def
+  :ensure t
+  :defer t
+  :hook (emacs-lisp-mode . elisp-def-mode)
+  :config
+  (setq elisp-def-use-helpful-when-available t))
+
+;;; Inspector for runtime inspection
+(use-package inspector
+  :ensure t
+  :defer t
+  :bind (:map emacs-lisp-mode-map
+              ("C-c C-i" . inspector-inspect-last-result)))
+
 (use-package checkdoc
   :ensure nil
   :custom
@@ -2073,15 +2095,28 @@ If buffer is modified, offer to save first."
 (use-package elisp-mode
   :ensure nil
   :hook ((emacs-lisp-mode . checkdoc-minor-mode)
+         (emacs-lisp-mode . eldoc-mode)
          (emacs-lisp-mode . (lambda ()
                               (setq-local flymake-diagnostic-functions
                                           (append
                                            flymake-diagnostic-functions
-                                           '(elisp-flymake-checkdoc))))))
+                                           '(elisp-flymake-checkdoc
+                                             elisp-flymake-byte-compile)))
+                              ;; Enable aggressive byte-compile warnings
+                              (setq-local byte-compile-warnings
+                                          '(not obsolete docstrings
+                                                cl-functions interactive-only
+                                                lexical make-local
+                                                mapcar constants suspicious)))))
   :bind (:map emacs-lisp-mode-map
               ("C-c C-d" . checkdoc)
               ("C-c C-b" . checkdoc-current-buffer)
-              ("C-c C-c" . checkdoc-comments))
+              ("C-c C-c" . checkdoc-comments)
+              ("C-c C-e b" . eval-buffer)
+              ("C-c C-e e" . eval-last-sexp)
+              ("C-c C-e r" . eval-region)
+              ("C-c C-e f" . eval-defun)
+              ("C-c C-e l" . load-library))
   :config
   (defun my/checkdoc-maybe-suppress-in-init ()
     "Suppress some checkdoc warnings in init files."
