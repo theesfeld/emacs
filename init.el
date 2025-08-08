@@ -963,16 +963,19 @@ If buffer is modified, offer to save first."
     (interactive)
     (let ((ediff-default-filtering-regexp ""))
       (call-interactively #'ediff-directories)))
+  :hook
+  (ediff-keymap-setup . (lambda ()
+                          (define-key ediff-mode-map (kbd "Q")
+                                      #'my/ediff-quit)
+                          (define-key ediff-mode-map (kbd "q")
+                                      #'my/ediff-quit)))
   :bind
   (("C-c d f" . ediff-files)
    ("C-c d b" . ediff-buffers)
    ("C-c d c" . my/ediff-buffer-with-file)
    ("C-c d d" . my/ediff-directories)
    ("C-c d r" . ediff-regions-linewise)
-   ("C-c d R" . ediff-regions-wordwise)
-   :map ediff-mode-map
-   ("Q" . my/ediff-quit)
-   ("q" . my/ediff-quit)))
+   ("C-c d R" . ediff-regions-wordwise)))
 
 (use-package diff-mode
   :ensure nil
