@@ -454,7 +454,7 @@ This function is added to the \=`ef-themes-post-load-hook'."
              (current-x 0))
         (cond
          ((and has-laptop (null external-monitors))
-          (shell-command "xrandr --output eDP-1 --scale 0.75x0.75 --primary --pos 0x0"))
+          (shell-command "xrandr --output eDP-1 --scale 0.8x0.8 --primary --pos 0x0"))
          (external-monitors
           (dolist (monitor external-monitors)
             (setq xrandr-cmd (format "%s --output %s --auto --pos %dx0"
