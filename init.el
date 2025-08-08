@@ -217,13 +217,13 @@
   :defer 0.1
   :init
   (mapc #'disable-theme custom-enabled-themes)
+  :bind ("M-s-<backspace>" . ef-themes-toggle)
   :config
 
   (custom-set-faces
    '(cursor ((t (:background "#FFC107")))))
 
   (setq ef-themes-to-toggle '(ef-winter ef-summer))
-  (keymap-global-set "M-s-<backspace>" 'ef-themes-toggle)
   (setq ef-themes-headings
         '((0 variable-pitch light 1.9)
           (1 variable-pitch light 1.8)
@@ -534,9 +534,10 @@ This function is added to the \=`ef-themes-post-load-hook'."
 (use-package exwm-edit
   :ensure t
   :after exwm
+  :bind (:map exwm-mode-map
+              ("C-c C-e" . exwm-edit--compose))
   :config
   (setq exwm-edit-split nil)
-  (define-key exwm-mode-map (kbd "C-c C-e") 'exwm-edit--compose)
   (add-hook 'exwm-edit-compose-hook
             (lambda ()
               (message
@@ -962,19 +963,16 @@ If buffer is modified, offer to save first."
     (interactive)
     (let ((ediff-default-filtering-regexp ""))
       (call-interactively #'ediff-directories)))
-  :hook
-  (ediff-keymap-setup . (lambda ()
-                          (define-key ediff-mode-map (kbd "Q")
-                                      #'my/ediff-quit)
-                          (define-key ediff-mode-map (kbd "q")
-                                      #'my/ediff-quit)))
   :bind
   (("C-c d f" . ediff-files)
    ("C-c d b" . ediff-buffers)
    ("C-c d c" . my/ediff-buffer-with-file)
    ("C-c d d" . my/ediff-directories)
    ("C-c d r" . ediff-regions-linewise)
-   ("C-c d R" . ediff-regions-wordwise)))
+   ("C-c d R" . ediff-regions-wordwise)
+   :map ediff-mode-map
+   ("Q" . my/ediff-quit)
+   ("q" . my/ediff-quit)))
 
 (use-package diff-mode
   :ensure nil
@@ -2021,13 +2019,6 @@ If buffer is modified, offer to save first."
   :after treesit
   :mode ("\\.\\(sh\\|bash\\|zsh\\)\\'" . bash-ts-mode))
 
-(use-package simple
-  :ensure nil
-  :config
-  (kill-ring-deindent-mode 1)
-  (setq next-error-message-highlight t)
-  (setq read-minibuffer-restore-windows t)
-  (setq kill-do-not-save-duplicates t))
 
 (use-package so-long :ensure nil :config (global-so-long-mode 1))
 
@@ -2160,18 +2151,18 @@ If buffer is modified, offer to save first."
   :init
   (setq 0x0-server "https://0x0.st")
   (setq 0x0-use-curl t)
-  :config
-  (setq 0x0-kill-ring-results t)
   (defvar my-0x0-prefix-map (make-sparse-keymap)
     "Prefix keymap for 0x0 commands.")
   (define-prefix-command 'my-0x0-prefix-map)
-  (global-set-key (kbd "C-c 0") 'my-0x0-prefix-map)
-  (define-key my-0x0-prefix-map (kbd "f") '0x0-upload-file)
-  (define-key my-0x0-prefix-map (kbd "s") '0x0-shorten-uri)
-  (define-key my-0x0-prefix-map (kbd "t") '0x0-upload-text)
-  (define-key my-0x0-prefix-map (kbd "d") '0x0-dwim)
-  (define-key my-0x0-prefix-map (kbd "p") '0x0-popup)
-  )
+  :bind-keymap ("C-c 0" . my-0x0-prefix-map)
+  :bind (:map my-0x0-prefix-map
+              ("f" . 0x0-upload-file)
+              ("s" . 0x0-shorten-uri)
+              ("t" . 0x0-upload-text)
+              ("d" . 0x0-dwim)
+              ("p" . 0x0-popup))
+  :config
+  (setq 0x0-kill-ring-results t))
 
 (use-package eshell
   :ensure nil
@@ -2624,7 +2615,12 @@ robust UI element disabling."
   :bind
   (("C-x k" . kill-current-buffer)
    ("C-x K" . kill-buffer)
-   ([remap keyboard-quit] . my/keyboard-quit-dwim)))
+   ([remap keyboard-quit] . my/keyboard-quit-dwim))
+  :config
+  (kill-ring-deindent-mode 1)
+  (setq next-error-message-highlight t)
+  (setq read-minibuffer-restore-windows t)
+  (setq kill-do-not-save-duplicates t))
 
 (add-hook 'emacs-startup-hook
           (lambda ()
