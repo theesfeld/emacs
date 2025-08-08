@@ -23,6 +23,27 @@
 ;; Emacs 30.1 configuration
 ;;; Code:
 
+(setq package-archives
+      '(("gnu-elpa" . "https://elpa.gnu.org/packages/")          ; Official GNU packages
+        ("gnu-elpa-devel" . "https://elpa.gnu.org/devel/")       ; GNU development packages
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/")            ; NonGNU ELPA
+        ("melpa" . "https://melpa.org/packages/")))              ; Community packages
+
+(setq package-check-signature 'allow-unsigned) ; Allow unsigned for MELPA compatibility
+
+(setq package-archive-priorities
+      '(("gnu-elpa" . 10)
+        ("gnu-elpa-devel" . 8)
+        ("nongnu" . 5)
+        ("melpa" . 3)))
+
+(setq package-archive-column-width 12
+      package-version-column-width 28
+      package-install-upgrade-built-in t
+      package-native-compile t)           ; Native compile packages
+
+(setq package-vc-register-as-project nil) ; Don't register vc packages as projects
+
 (defun my/get-system-memory ()
   "Get system memory in GB."
   (if (fboundp 'memory-info)
