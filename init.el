@@ -1074,63 +1074,63 @@ If buffer is modified, offer to save first."
   (set-face-attribute 'rainbow-delimiters-depth-1-face nil :weight
                       'bold))
 
-;(use-package highlight-thing
-;  :ensure t
-;  :defer t
-;  :diminish
-;  :hook (prog-mode . highlight-thing-mode)
-;  :custom
-;  (highlight-thing-delay-seconds 0.5)
-;  (highlight-thing-what-thing 'symbol)
-;  (highlight-thing-case-sensitive-p t)
-;  (highlight-thing-exclude-thing-under-point t)
-;  (highlight-thing-limit-to-region-in-large-buffers-p t)
-;  (highlight-thing-narrow-region-lines 300)
-;  :custom-face
-;  (highlight-thing ((t (:inherit highlight :background unspecified
-;                                 :underline
-;                                 (:color "#5e81ac" :style line))))))
+(use-package highlight-thing
+  :ensure t
+  :defer t
+  :diminish
+  :hook (prog-mode . highlight-thing-mode)
+  :custom
+  (highlight-thing-delay-seconds 0.5)
+  (highlight-thing-what-thing 'symbol)
+  (highlight-thing-case-sensitive-p t)
+  (highlight-thing-exclude-thing-under-point t)
+  (highlight-thing-limit-to-region-in-large-buffers-p t)
+  (highlight-thing-narrow-region-lines 300)
+  :custom-face
+  (highlight-thing ((t (:inherit highlight :background unspecified
+                                 :underline
+                                 (:color "#5e81ac" :style line))))))
 
-;(use-package indent-bars
-;  :ensure t
-;  :defer t
-;  :diminish
-;  :hook ((prog-mode . indent-bars-mode)
-;         (yaml-mode . indent-bars-mode)
-;         (python-mode . indent-bars-mode))
-;  :custom
-;  (indent-bars-pattern ".")
-;  (indent-bars-width-frac 0.2)
-;  (indent-bars-pad-frac 0.1)
-;  (indent-bars-zigzag nil)
-;  (indent-bars-display-on-blank-lines t)
-;  (indent-bars-prefer-character nil)
-;  (indent-bars-highlight-current-depth '(:blend 0.3))
-;  (indent-bars-no-descend-strings t)
-;  (indent-bars-no-descend-lists t)
-;  (indent-bars-depth-update-delay 0.1)
-;  (indent-bars-treesit-support t)
-;  (indent-bars-treesit-scope
-;   '((python function_definition class_definition for_statement
-;             if_statement while_statement with_statement)
-;     (emacs-lisp defun defmacro defvar defcustom let let*
-;                 when unless if progn save-excursion)
-;     (c function_definition if_statement for_statement
-;        while_statement switch_statement)
-;     (cpp function_definition if_statement for_statement
-;          while_statement switch_statement class_specifier
-;          namespace_definition)
-;     (rust function_item impl_item match_expression if_expression)
-;     (javascript function_declaration function_expression
-;                 arrow_function
-;                 class_declaration if_statement for_statement)
-;     (typescript function_declaration function_expression
-;                 arrow_function
-;                 class_declaration if_statement for_statement)
-;     (go function_declaration method_declaration if_statement
-;         for_statement switch_statement))))
+(use-package indent-bars
+  :ensure t
+  :defer t
+  :diminish
+  :hook ((prog-mode . indent-bars-mode)
+         (yaml-mode . indent-bars-mode)
+         (python-mode . indent-bars-mode))
+  :custom
+  (indent-bars-pattern ".")
+  (indent-bars-width-frac 0.2)
+  (indent-bars-pad-frac 0.1)
+  (indent-bars-zigzag nil)
+  (indent-bars-display-on-blank-lines t)
+  (indent-bars-prefer-character nil)
+  (indent-bars-highlight-current-depth '(:blend 0.3))
+  (indent-bars-no-descend-strings t)
+  (indent-bars-no-descend-lists t)
+  (indent-bars-depth-update-delay 0.1)
+  (indent-bars-treesit-support t)
+  (indent-bars-treesit-scope
+   '((python function_definition class_definition for_statement
+             if_statement while_statement with_statement)
+     (emacs-lisp defun defmacro defvar defcustom let let*
+                 when unless if progn save-excursion)
+     (c function_definition if_statement for_statement
+        while_statement switch_statement)
+     (cpp function_definition if_statement for_statement
+          while_statement switch_statement class_specifier
+          namespace_definition)
+     (rust function_item impl_item match_expression if_expression)
+     (javascript function_declaration function_expression
+                 arrow_function
+                 class_declaration if_statement for_statement)
+     (typescript function_declaration function_expression
+                 arrow_function
+                 class_declaration if_statement for_statement)
+     (go function_declaration method_declaration if_statement
+         for_statement switch_statement))))
 
-(use-package files
+  (use-package files
   :ensure nil
   :defer t
   :custom
@@ -2156,24 +2156,24 @@ If buffer is modified, offer to save first."
    'helpful-update
    :after #'elisp-demos-advice-helpful-update))
 
-;(use-package 0x0
-;  :ensure t
-;  :defer t
-;  :init
-;  (setq 0x0-server "https://0x0.st")
-;  (setq 0x0-use-curl t)
-;  :config
-;  (setq 0x0-kill-ring-results t)
-;  (defvar my-0x0-prefix-map (make-sparse-keymap)
-;    "Prefix keymap for 0x0 commands.")
-;  (define-prefix-command 'my-0x0-prefix-map)
-;  (global-set-key (kbd "C-c 0") 'my-0x0-prefix-map)
-;  (define-key my-0x0-prefix-map (kbd "f") '0x0-upload-file)
-;  (define-key my-0x0-prefix-map (kbd "s") '0x0-shorten-uri)
-;  (define-key my-0x0-prefix-map (kbd "t") '0x0-upload-text)
-;  (define-key my-0x0-prefix-map (kbd "d") '0x0-dwim)
-;  (define-key my-0x0-prefix-map (kbd "p") '0x0-popup)
-;  )
+(use-package 0x0
+  :ensure t
+  :defer t
+  :init
+  (setq 0x0-server "https://0x0.st")
+  (setq 0x0-use-curl t)
+  :config
+  (setq 0x0-kill-ring-results t)
+  (defvar my-0x0-prefix-map (make-sparse-keymap)
+    "Prefix keymap for 0x0 commands.")
+  (define-prefix-command 'my-0x0-prefix-map)
+  (global-set-key (kbd "C-c 0") 'my-0x0-prefix-map)
+  (define-key my-0x0-prefix-map (kbd "f") '0x0-upload-file)
+  (define-key my-0x0-prefix-map (kbd "s") '0x0-shorten-uri)
+  (define-key my-0x0-prefix-map (kbd "t") '0x0-upload-text)
+  (define-key my-0x0-prefix-map (kbd "d") '0x0-dwim)
+  (define-key my-0x0-prefix-map (kbd "p") '0x0-popup)
+  )
 
 (use-package eshell
   :ensure nil
@@ -2393,18 +2393,18 @@ robust UI element disabling."
   (eshell-load . eat-eshell-mode)
   (eshell-load . eat-eshell-visual-command-mode))
 
-(use-package claude-code-ide
-  :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
-  :bind ("C-c v" . claude-code-ide-menu)
-  :config
-  (claude-code-ide-emacs-tools-setup)
-  (setq claude-code-ide-terminal-backend 'eat
-        claude-code-ide-use-side-window nil
-        claude-code-ide-buffer-name-function
-      (lambda (directory)
-        (if directory
-            (format "*Claude:%s*" (file-name-nondirectory (directory-file-name directory)))
-          "*Claude:Global*"))))
+;(use-package claude-code-ide
+;  :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
+;  :bind ("C-c v" . claude-code-ide-menu)
+;  :config
+;  (claude-code-ide-emacs-tools-setup)
+;  (setq claude-code-ide-terminal-backend 'eat
+;        claude-code-ide-use-side-window nil
+;        claude-code-ide-buffer-name-function
+;      (lambda (directory)
+;        (if directory
+;            (format "*Claude:%s*" (file-name-nondirectory (directory-file-name directory)))
+;          "*Claude:Global*"))))
 
 (use-package electric
   :ensure nil
