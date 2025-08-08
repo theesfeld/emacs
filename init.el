@@ -2287,7 +2287,7 @@ If buffer is modified, offer to save first."
                                '(pcomplete-completions-at-point))
 ))
   :bind
-  ("C-c e" . eshell))
+  ("C-c E" . eshell))
 
 (use-package eshell-syntax-highlighting
   :ensure t
