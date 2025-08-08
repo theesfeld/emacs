@@ -54,5 +54,20 @@
       inhibit-startup-screen t
       load-prefer-newer t)
 
+(setq package-archives
+      '(("gnu-elpa" . "https://elpa.gnu.org/packages/")
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+        ("melpa" . "https://melpa.org/packages/")))
+(setq package-check-signature 'allow-unsigned)
+(setq package-archive-priorities
+      '(("gnu-elpa" . 10)
+        ("nongnu" . 5)
+        ("melpa" . 3)))
+(setq package-archive-column-width 12
+      package-version-column-width 28
+      package-install-upgrade-built-in t
+      package-native-compile t)
+(setq package-vc-register-as-project nil)
+
 (provide 'early-init)
 ;;; early-init.el ends here
