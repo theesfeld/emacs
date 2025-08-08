@@ -1659,6 +1659,10 @@ If buffer is modified, offer to save first."
   :config
   (add-hook 'markdown-mode-hook #'auto-fill-mode))
 
+(use-package transient
+  :ensure nil
+  :after magit)
+
 (use-package magit
   :ensure t
   :defer t
